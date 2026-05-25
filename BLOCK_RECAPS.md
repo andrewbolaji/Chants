@@ -735,3 +735,46 @@ None (deleteAccount added to existing functions/src/index.ts).
 
 ### Commit
 `e66f6a0`
+
+---
+
+## Block 7 Finish Pass: v1 Hardening Audits
+**Status:** CLOSED
+**Commit (final reviewed code):** `0e85e74`
+**Tests:** 142 passing (50 Dart + 73 rules emulator + 19 seed/counter)
+**Analyze:** `flutter analyze` -- 0 issues
+
+### What was done
+- **C1:** Mobile layout review. All screens use token-based spacing (Spacing constants). No fixed-width containers that break at 375px. ListView for all scrollable content. maxLines with ellipsis on titles and previews.
+- **C2:** Empty/loading/error state audit. 15 screens enumerated, all three states present where applicable. Fan voice copy on all empty and error states.
+- **C3:** Copy pass. 34 strings audited. "Canonical" renamed to "Verified" in UI. Community chants show no badge. Zero em dashes and en dashes.
+- **C4:** Access-control sweep. 23 authorization points verified against the rules emulator (73 passing tests). Every auth and authorization boundary proven.
+- **C5:** Dependency audit. All 17 direct dependencies permissively licensed (BSD-3, MIT, Apache-2.0). No copyleft. No borrowed templates.
+- **C6:** Final test sweep. 142 tests, 0 failures, 0 analysis issues.
+- **Doc update A:** SPEC updated. v1.0 is code-complete hardened foundation. Public release target is v1.1 (social layer is core). DECISIONS entry recorded.
+- **Doc update B:** WISHLIST duplicate-and-variants model added as the first v1.1 feature.
+
+### Disposition table
+
+**Security frame**
+
+| Finding | Severity | Disposition |
+|---------|----------|-------------|
+| All 23 authorization points hold in emulator | N/A | Verified: 73 rules emulator tests passing. Every boundary tested including banned users, role escalation, counter inflation, report dedup, canonical self-promotion. |
+| Account deletion callable: actor from auth context | N/A | Verified in code: request.auth.uid used directly, no client parameter. |
+| Account deletion: cannot target another user | N/A | Verified: no targetId parameter in the callable. Only the caller's own UID. |
+
+**Taste frame**
+
+| Finding | Severity | Disposition |
+|---------|----------|-------------|
+| "Verified" badge is clear and earned | N/A | Amber badge on verified chants. Community chants show no badge. Clean and honest. |
+| Fan voice consistent across 34 audited strings | N/A | Verified. "Nice one. It's live." / "Know the words." / "Something off about this one?" |
+| No em dashes or en dashes | N/A | Verified: grep returns 0 across lib/, test/, seed_data/. |
+| 9th-grade reading level | N/A | Verified: all copy is short, direct, plain language. |
+
+### New DECISIONS entries
+2 entries: release at v1.1 not v1.0, "Verified" rename.
+
+### Commit
+`0e85e74`
