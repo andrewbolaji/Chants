@@ -257,6 +257,46 @@ describe("profiles", () => {
       role: "operator",
     }));
   });
+
+  it("denies create with role 'operator' (privilege escalation)", async () => {
+    const db = testEnv.authenticatedContext("user1").firestore();
+    await assertFails(setDoc(doc(db, "profiles", "user1"), {
+      displayName: "Hacker",
+      role: "operator",
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    }));
+  });
+
+  it("allows create with role 'user' (pinned)", async () => {
+    const db = testEnv.authenticatedContext("user2").firestore();
+    await assertSucceeds(setDoc(doc(db, "profiles", "user2"), {
+      displayName: "LegitFan",
+      role: "user",
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    }));
+  });
+
+  it("denies create with empty displayName", async () => {
+    const db = testEnv.authenticatedContext("user3").firestore();
+    await assertFails(setDoc(doc(db, "profiles", "user3"), {
+      displayName: "",
+      role: "user",
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    }));
+  });
+
+  it("denies create with displayName over 50 chars", async () => {
+    const db = testEnv.authenticatedContext("user4").firestore();
+    await assertFails(setDoc(doc(db, "profiles", "user4"), {
+      displayName: "x".repeat(51),
+      role: "user",
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    }));
+  });
 });
 
 // ===================== CHANTS =====================
@@ -551,6 +591,17 @@ describe("reports", () => {
     const db = testEnv.authenticatedContext("op1").firestore();
     await assertSucceeds(getDoc(doc(db, "reports", "r1")));
   });
+
+  it("denies create with status other than 'pending'", async () => {
+    const db = testEnv.authenticatedContext("user1").firestore();
+    await assertFails(addDoc(collection(db, "reports"), {
+      chantId: "ch1",
+      reportedBy: "user1",
+      reason: "Offensive content",
+      createdAt: Timestamp.now(),
+      status: "reviewed",
+    }));
+  });
 });
 
 // ===================== AUDIT LOG =====================
@@ -681,6 +732,18 @@ describe("feedback", () => {
     await seedOperator("op1");
     const db = testEnv.authenticatedContext("op1").firestore();
     await assertSucceeds(getDoc(doc(db, "feedback", "fb1")));
+  });
+
+  it("denies create with resolved true", async () => {
+    const db = testEnv.authenticatedContext("user1").firestore();
+    await assertFails(addDoc(collection(db, "feedback"), {
+      userId: "user1",
+      category: "suggestion",
+      message: "Trying to pre-resolve",
+      followUpOk: false,
+      resolved: true,
+      createdAt: Timestamp.now(),
+    }));
   });
 
   it("denies update on feedback", async () => {
