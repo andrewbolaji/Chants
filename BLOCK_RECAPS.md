@@ -310,3 +310,113 @@ Seeded chant, set upvotes=42, downvotes=3, score=39, commentCount=7, flagCount=2
 
 ### Commit
 `e722895`
+
+---
+
+## Block 3: Submission and Basic Moderation
+**Status:** CLOSED
+**Commit (final reviewed code):** `070a52e`
+**Tests:** 128 passing (44 Dart + 70 rules emulator + 14 seed validation)
+**Analyze:** `flutter analyze` -- 0 issues
+**Gates verified:** 2 deliberate breaks: (1) ban-evasion rule (removed banned from blocked keys, test caught it), (2) server-side title length (set to 999999, test caught it). Both reverted.
+
+### What was built
+- **Submission screen:** Authenticated user adds a chant (community status, counters 0, text-only). Client and server-side validation with length limits (Fix 3). subjectTag/playerId consistency enforced.
+- **Cloud Functions (3 deployed to europe-west2):** onReportCreated (flagCount increment, auto-hide at 3), onModerationAction (callable, operator-only: hide, unhide, remove, ban), onChantCreated (soft rate limit).
+- **Moderation screen:** Operator-only. Flagged/hidden chants with action buttons. Ban-by-UID tab.
+- **Ban enforcement:** banned field on profiles, pinned on create, blocked on self-update (Fix 1). Checked on chant/vote/report creates.
+- **Report dedup:** Doc ID = userId_chantId. One report per user per chant.
+- **Moderation closes the loop (Fix 4):** hide/remove resolves reports to reviewed. unhide resets flagCount and dismisses reports.
+- **Rate limiting (soft, Fix 2b):** Client-side throttle for UX plus Function auto-hides bursts. Not hard enforcement. Documented.
+- **Audit logging:** Every moderation action and auto-action writes to auditLog via Cloud Functions (tamper-proof).
+
+### Disposition table
+
+**Security frame (primary)**
+
+| Finding | Severity | Disposition |
+|---------|----------|-------------|
+| Ban evasion: user could set own banned to false | High | Fixed (Fix 1). banned added to blocked keys on self-update. Test proves DENIED. Deliberate break verified. |
+| Server-side field length bypass via direct SDK | High | Fixed (Fix 3). title <= 200, lyrics <= 5000, tuneName <= 200, contextNotes <= 500 enforced in rules. Tests prove oversized fields DENIED. Deliberate break verified. |
+| Chant create by banned user | N/A | Verified: isNotBanned() check on chant, vote, and report creates. Test proves banned user DENIED. |
+| Vote create/update by banned user | N/A | Verified: isNotBanned() on all vote write paths. |
+| Report create by banned user | N/A | Verified: isNotBanned() on report create. Banned users cannot weaponize reporting. |
+| Profile create pins banned = false | N/A | Verified: create with banned = true is DENIED. |
+| Report dedup prevents duplicate flag inflation | N/A | Verified: wrong doc ID is DENIED. Doc ID convention structurally prevents duplicates. |
+| Audit log integrity (Function-only writes) | N/A | Verified: auditLog write: if false in rules. Functions use Admin SDK. |
+| Moderation callable derives actor from auth context | N/A | Verified: actorUid = request.auth.uid, never from client parameter. Audit trail cannot be spoofed. |
+| Rendering of malicious user content | Low | Defended: Flutter Text widget escapes by default (no XSS). Max lengths prevent extreme strings. maxLines and ellipsis on list views. |
+| Banned user session lag | Low | Defended: security rules check banned on every write regardless of client state. Client catches PERMISSION_DENIED and shows ban message. |
+| Mass-flagging at threshold 3 | Low | Defended: one-report-per-user dedup prevents single-actor inflation. Auto-hide is pending review (operator can unhide). Threshold increase is a data change if abuse observed. |
+
+**Taste frame**
+
+| Finding | Severity | Disposition |
+|---------|----------|-------------|
+| 9th-grade submission copy | N/A | Verified: "Nice one. It's live. Now go get the lads singing it." / "Give your chant a title." / "Name the tune." |
+| Ban message is clear and actionable | N/A | Verified: "Your account cannot submit right now. If you think this is a mistake, use the suggestion box." |
+| No em dashes | N/A | Verified: grep returns 0 hits. |
+| Content-integrity rule: user content stored as given | N/A | Verified: no transformation or correction of user-supplied text in submission or storage. |
+
+**Operational frame**
+
+| Finding | Severity | Disposition |
+|---------|----------|-------------|
+| Rate limit is soft, not hard | Medium | Defended (Fix 2b): documented as soft enforcement. Client pre-check for UX, Function auto-hides bursts. Hardening trigger: observed spam abuse. |
+| Moderation closes the loop (Fix 4) | N/A | Verified: hide/remove resolves reports. Unhide resets flagCount and dismisses reports. |
+| Functions deployed to europe-west2 | N/A | Matches Firestore location for latency. |
+
+### New DECISIONS entries
+11 new entries covering: privileged field protection pattern, soft rate limiting, server-side length limits, media deferral, ban semantics, auto-hide threshold, report dedup, moderation callable security, moderation loop closure, banned check cost.
+
+### Schema changes
+- profiles: added `banned` (bool, default false, pinned on create, blocked on self-update)
+- reports: doc ID convention changed to `userId_chantId` (dedup enforcement)
+
+### Sensitive-data analysis
+- No new PII introduced. User-submitted chant content (title, lyrics) is user-generated but not PII. createdBy is the user's UID (already in the system).
+
+### Final checks (measured)
+- `flutter analyze`: 0 issues
+- `flutter test`: 44 passing
+- Rules emulator: 70 passing
+- Seed validation: 14 passing
+- **Total: 128 tests**
+- Verify-the-verification: 2 deliberate breaks caught (ban evasion, length limit), reverted
+- Functions deployed: 3 (onReportCreated, onModerationAction, onChantCreated)
+- Rules deployed with all Block 3 hardening
+
+### Files created
+| File | Lines |
+|------|-------|
+| lib/presentation/submit/submit_chant_screen.dart | 266 |
+| lib/presentation/moderation/moderation_screen.dart | 230 |
+| lib/data/repositories/moderation_repository.dart | 36 |
+| functions/src/audit.ts | 18 |
+
+### Files modified
+| File | Change |
+|------|--------|
+| firestore.rules | Added isNotBanned(), banned pin/block, server-side length limits, report dedup (140 lines) |
+| functions/src/index.ts | Real function logic: onReportCreated, onModerationAction, onChantCreated (225 lines) |
+| lib/data/models/user_profile.dart | Added banned field |
+| lib/data/repositories/report_repository.dart | Deterministic doc ID, hasReported check |
+| lib/app/router.dart | Added submit and moderation routes |
+| lib/app/providers.dart | Added moderationRepositoryProvider |
+| lib/presentation/browse/team_screen.dart | Added "Add a chant" FAB |
+| lib/presentation/browse/player_screen.dart | Added "Add a chant" FAB, sportId/competitionId params |
+| lib/presentation/home/home_screen.dart | Operator moderation link |
+| test/data/models/user_profile_test.dart | Added banned field tests (8 tests) |
+| test_rules/firestore_rules.test.ts | Added 14 new tests: ban enforcement, profile pins, report dedup, length limits |
+| DECISIONS.md | 11 new entries |
+
+### Deferred (with triggers)
+| Item | Trigger |
+|------|---------|
+| Media upload (Storage rules, file validation) | Next step (Block 3b or Block 6), when text submission is proven stable |
+| Hard rate limiting via HTTPS callable | Observed spam abuse |
+| Content policy real text | Andrew supplies it; screen has placeholder |
+| Custom claims migration for banned + operator | Read cost justifies it or operator extends beyond founder |
+
+### Commit
+`070a52e`
