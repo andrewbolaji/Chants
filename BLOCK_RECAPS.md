@@ -420,3 +420,105 @@ Seeded chant, set upvotes=42, downvotes=3, score=39, commentCount=7, flagCount=2
 
 ### Commit
 `070a52e`
+
+---
+
+## Block 4: Voting, Ranking, and Canonical Promotion
+**Status:** CLOSED
+**Commit (final reviewed code):** `6e1000c`
+**Tests:** 137 passing (45 Dart + 73 rules emulator + 19 seed/counter/reconciliation)
+**Analyze:** `flutter analyze` -- 0 issues
+**Gates verified:** Deliberately broke the flip delta logic (skipped removing old vote effect), 3 counter tests failed (6-step sequence at step 3, flip test, implicit in reconciliation). Reverted.
+
+### What was built
+- **Vote UI:** Upvote/downvote controls on chant cards and detail page. Net score displayed. User vote state highlighted. Toggle/flip/clear. Auth required, banned users see permission error.
+- **onVoteWritten Function:** Handles all 6 transitions (create up, create down, flip up-to-down, flip down-to-up, delete up, delete down) via before/after diff with atomic FieldValue.increment. Single function, no branching.
+- **Reconciliation script (Fix A):** seed/reconcile.ts recomputes chant counters from votes collection ground truth. Runnable for one chant or all. Idempotency limitation documented with trigger for event.id dedup.
+- **Cross-implementation invariant test:** 6-step vote sequence matrix asserts counters match ground truth after each step. Plus reconciliation-of-drift test.
+- **Composite indexes (Fix B):** teamId+hidden+removed+score desc (club ranking), status+hidden+removed+score desc (promotion candidates). No unused indexes.
+- **Canonical promotion:** Operator-confirms at score >= 10. promote/demote actions in onModerationAction callable. Promotion candidates tab in moderation screen. Canonical is sticky.
+- **Fix C:** Rules test proves non-operator cannot set status to canonical.
+- **Score sort live:** Club page chantsForTeamStream now uses server-side orderBy score desc.
+
+### Disposition table
+
+**Operational frame (primary)**
+
+| Finding | Severity | Disposition |
+|---------|----------|-------------|
+| Counter drift from at-least-once delivery | Medium | Defended (Fix A). Reconciliation script built and tested. Idempotency limitation documented with trigger for event.id dedup. The invariant test catches delta logic errors but cannot simulate duplicate delivery. |
+| Flip transition moves both counters | N/A | Verified: delta is (-1, +1, -2) for up-to-down and (+1, -1, +2) for down-to-up. Invariant test step 3 covers it. |
+| Delete transition decrements correctly | N/A | Verified: steps 5 and 6 of the invariant test. |
+| No-op when before and after are equal | N/A | Verified: separate test case, delta is (0, 0, 0). |
+| Re-seed does not reset live counters | N/A | Verified in Block 2 Fix A live test (counters at non-zero survived re-seed). |
+| Composite indexes match actual queries | N/A | Verified (Fix B): teamId+score for chantsForTeamStream, status+score for promotionCandidatesStream. No unused indexes. |
+
+**Security frame**
+
+| Finding | Severity | Disposition |
+|---------|----------|-------------|
+| Vote integrity: one per user, value 1 or -1 | N/A | Verified: Block 1 rules and tests still pass. Doc ID = userId_chantId. |
+| Counters are Function-only, not client-writable | N/A | Verified: Block 1 create rule pins all counters to 0, update rule blocks them for non-operators. |
+| Banned users cannot vote | N/A | Verified: Block 3 isNotBanned() on vote create/update. Test proves DENIED. |
+| Non-operator cannot self-promote to canonical (Fix C) | N/A | Verified: 3 new rules tests. Author update rule blocks status changes. Operator can. |
+| Canonical-promotion gaming via vote brigade | Low | Defended: threshold only surfaces candidates, operator confirms. No chant becomes canonical without human review. Trigger to raise threshold: first observed gaming attempt. |
+
+**Taste frame**
+
+| Finding | Severity | Disposition |
+|---------|----------|-------------|
+| Vote UI is clean: score, up arrow, down arrow | N/A | Verified: net score displayed, user vote highlighted, no separate up/down counts. |
+| Vote toggle disables during write (no rapid-tap issue) | N/A | Verified: _busy flag prevents concurrent writes. Server rules enforce regardless. |
+| No em dashes | N/A | Verified. |
+
+### New DECISIONS entries
+7 new entries: score formula (net), canonical promotion (operator-confirms at 10), voting on canonical (allowed, sticky), vote display, counter idempotency limitation, composite indexes.
+
+### Schema changes
+- 2 composite indexes added to firestore.indexes.json
+- No Firestore field changes (counters were defined in Block 1)
+
+### Sensitive-data analysis
+No new PII. Vote docs contain userId (already in the system).
+
+### Final checks (measured)
+- `flutter analyze`: 0 issues
+- `flutter test`: 45 passing
+- Rules emulator: 73 passing (3 new promotion tests)
+- Seed/counter tests: 19 passing (5 new counter/reconciliation tests)
+- **Total: 137 tests**
+- Functions deployed: 4 (onVoteWritten new, 3 existing updated with promote/demote)
+- Indexes deployed: 2
+
+### Files created
+| File | Lines |
+|------|-------|
+| lib/presentation/shared/vote_controls.dart | 121 |
+| seed/reconcile.ts | 79 |
+| seed/reconcile.test.ts | 115 |
+
+### Files modified
+| File | Change |
+|------|--------|
+| functions/src/index.ts | Added onVoteWritten, promote/demote in callable |
+| lib/presentation/shared/chant_card.dart | Added VoteControls |
+| lib/presentation/browse/chant_detail_screen.dart | Added VoteControls |
+| lib/presentation/moderation/moderation_screen.dart | Added promotion candidates tab with PromotionCard |
+| lib/data/repositories/chant_repository.dart | Server-side orderBy score, promotionCandidatesStream |
+| lib/data/repositories/moderation_repository.dart | Added promoteChant, demoteChant |
+| firestore.indexes.json | 2 composite indexes |
+| test_rules/firestore_rules.test.ts | 3 canonical promotion tests |
+| test/presentation/shared/chant_card_test.dart | Fixed for ProviderScope, added score test |
+| seed/package.json | Test glob for both test files |
+| DECISIONS.md | 7 new entries |
+| WISHLIST.md | Rotating home-screen quote entry |
+
+### Deferred (with triggers)
+| Item | Trigger |
+|------|---------|
+| Event.id dedup for onVoteWritten | Observed counter drift or volume growth |
+| Wilson score or time-decay ranking | Vote volume makes net score produce poor ranking |
+| Raise promotion threshold | First observed gaming attempt |
+
+### Commit
+`6e1000c`
