@@ -58,3 +58,9 @@ functions/node_modules/
 # Rules test build output and deps
 test_rules/lib/
 test_rules/node_modules/
+
+# Seed script
+seed/lib/
+seed/node_modules/
+serviceAccountKey.json
+*-firebase-adminsdk-*.json

@@ -4,13 +4,11 @@ class Player {
   final String id;
   final String teamId;
   final String name;
-  final String position;
 
   const Player({
     required this.id,
     required this.teamId,
     required this.name,
-    required this.position,
   });
 
   factory Player.fromJson(Map<String, dynamic> json, {required String id}) {
@@ -18,7 +16,6 @@ class Player {
       id: id,
       teamId: json['teamId'] as String,
       name: json['name'] as String,
-      position: json['position'] as String,
     );
   }
 
@@ -30,7 +27,6 @@ class Player {
     return {
       'teamId': teamId,
       'name': name,
-      'position': position,
     };
   }
 
@@ -38,13 +34,11 @@ class Player {
     String? id,
     String? teamId,
     String? name,
-    String? position,
   }) {
     return Player(
       id: id ?? this.id,
       teamId: teamId ?? this.teamId,
       name: name ?? this.name,
-      position: position ?? this.position,
     );
   }
 }

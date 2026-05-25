@@ -66,6 +66,31 @@
 
 ---
 
+### v2: Hear-the-tune link
+**The idea:** An optional tuneLink field linking out to the tune on an external platform so fans can hear it. Link only, never host or stream audio in-app.
+**Why pin, not build:** Needs the tune-name field (already present) and a UX pass on submission and detail.
+**Trigger to promote:** Submission polish in v1.1, or users asking to hear the tune.
+
+### v2: Community-validated context
+**The idea:** Let the community confirm or refine a chant's context via the votes and suggestions mechanic.
+**Why pin, not build:** Rides on Block 7 (comments and collaborative lyric suggestions). v1.1+.
+**Trigger to promote:** Block 7 ships and context notes are actively read.
+
+### v2: Song-type chant flag
+**The idea:** A type marking a chant as an actual released copyrighted song, making the app show attribution plus a hear-it link plus an optional crowd clip and withhold hosted lyrics unless licensed. Recurring across clubs.
+**Why pin, not build:** Needs the licensing posture to be codified per song type.
+**Trigger to promote:** Seeding the first club anthems that are released songs.
+
+### v2: Player aliases and nicknames
+**The idea:** An aliases array on players so search resolves nicknames and full names (for example Kaka and Ricardo Izecson dos Santos Leite).
+**Why pin, not build:** Pairs with the deferred full-text search index.
+**Trigger to promote:** Full-text search ships, or a user fails to find a player by nickname.
+
+### v2: Propose-from-player-page
+**The idea:** Submitting a chant scoped to the player you are viewing, pre-filling that player.
+**Why pin, not build:** Small UX on top of Block 3 submission. Relates to the v1.1 new-signing creation prompts.
+**Trigger to promote:** Block 3 submission ships and users ask to scope their chant to a player page.
+
 ## v3+ candidates (need scale or customer pull)
 (Empty.)
 

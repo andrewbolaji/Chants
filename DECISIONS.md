@@ -29,6 +29,11 @@
 | 2026-05-24 | profiles collection includes updatedAt timestamp | Supports display name changes and future profile edits. |
 | 2026-05-24 | Storage and Cloud Functions deployment deferred to Block 3 | Trigger: media upload needing a live bucket, which is also when we decide Blaze billing. Block 1 stays on the free Spark plan (Auth and Firestore only). storage.rules (deny all) stays in the repo for Block 3. |
 | 2026-05-24 | Firestore location: europe-west2 (London) | Permanent. Chosen for the UK audience (Premier League fans). Cannot be changed after creation. |
+| 2026-05-25 | Player position field removed | Players are name-only. If position is reintroduced it must be an array, not a single value (players play multiple positions). |
+| 2026-05-25 | Discovery shuffle: fetch all visible chants, shuffle client-side | No orderBy, no limit. At seed volume (~100 chants) this is trivially cheap. v2 trigger: paginate or add a random-seed field when volume outgrows a single fetch. |
+| 2026-05-25 | Seed re-run safety: existing docs get content-only updates | On re-seed, only content fields (title, lyrics, tuneName, etc.) are updated. Counters, flags, createdBy, and createdAt are never overwritten. Protects vote tallies and moderation state. |
+| 2026-05-25 | No composite indexes for equality-only queries with client-side sort | At Block 2 volume, Firestore zig-zag merge handles equality-only queries (teamId + hidden + removed) without composite indexes. Composite indexes added only when orderBy is needed server-side. |
+| 2026-05-25 | Released-song anthems: attribution plus context plus optional crowd clip, never hosted lyrics | Songs like You'll Never Walk Alone, Blue Moon, Sweet Caroline are seeded as attribution and context only, unless a licence or permission is obtained. North London Forever omitted from Arsenal seed pending permission. |
 
 ## Notes for Later Blocks
 | Date | Note | Relevant Block |

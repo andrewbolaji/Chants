@@ -6,7 +6,7 @@ import {
 } from "@firebase/rules-unit-testing";
 import { readFileSync } from "fs";
 import { resolve } from "path";
-import { Timestamp, setDoc, getDoc, doc, collection, addDoc, updateDoc, deleteDoc } from "firebase/firestore";
+import { Timestamp, setDoc, getDoc, doc, collection, addDoc, updateDoc, deleteDoc, query, where, getDocs } from "firebase/firestore";
 
 const PROJECT_ID = "chants-test";
 
@@ -199,7 +199,7 @@ describe("players", () => {
   it("allows public read", async () => {
     await testEnv.withSecurityRulesDisabled(async (context) => {
       const db = context.firestore();
-      await setDoc(doc(db, "players", "p1"), { teamId: "t1", name: "Saka", position: "RW" });
+      await setDoc(doc(db, "players", "p1"), { teamId: "t1", name: "Saka" });
     });
     const unauth = testEnv.unauthenticatedContext().firestore();
     await assertSucceeds(getDoc(doc(unauth, "players", "p1")));
@@ -208,7 +208,7 @@ describe("players", () => {
   it("denies write for non-operator", async () => {
     await seedUserProfile("user1");
     const db = testEnv.authenticatedContext("user1").firestore();
-    await assertFails(setDoc(doc(db, "players", "p1"), { teamId: "t1", name: "Saka", position: "RW" }));
+    await assertFails(setDoc(doc(db, "players", "p1"), { teamId: "t1", name: "Saka" }));
   });
 });
 
@@ -761,5 +761,77 @@ describe("feedback", () => {
     await seedUserProfile("user1");
     const db = testEnv.authenticatedContext("user1").firestore();
     await assertFails(updateDoc(doc(db, "feedback", "fb1"), { resolved: true }));
+  });
+});
+
+// ===================== REPORT WRITE CORRECTNESS (Fix D) =====================
+
+describe("report write correctness", () => {
+  it("allows well-formed report create with status pending", async () => {
+    const db = testEnv.authenticatedContext("user1").firestore();
+    await assertSucceeds(addDoc(collection(db, "reports"), {
+      chantId: "ch1",
+      reportedBy: "user1",
+      reason: "Hate speech or slurs: offensive language",
+      createdAt: Timestamp.now(),
+      status: "pending",
+    }));
+  });
+
+  it("denies report create by unauthenticated user", async () => {
+    const db = testEnv.unauthenticatedContext().firestore();
+    await assertFails(addDoc(collection(db, "reports"), {
+      chantId: "ch1",
+      reportedBy: "user1",
+      reason: "Test",
+      createdAt: Timestamp.now(),
+      status: "pending",
+    }));
+  });
+
+  it("denies report create with reportedBy != auth uid", async () => {
+    const db = testEnv.authenticatedContext("user1").firestore();
+    await assertFails(addDoc(collection(db, "reports"), {
+      chantId: "ch1",
+      reportedBy: "someone_else",
+      reason: "Test",
+      createdAt: Timestamp.now(),
+      status: "pending",
+    }));
+  });
+});
+
+// ===================== CHANT LIST QUERY BOUNDARY (Fix D) =====================
+
+describe("chant list query boundary", () => {
+  beforeEach(async () => {
+    // Seed one visible and one hidden chant
+    await seedVisibleChant("ch-visible", "user1");
+    await seedHiddenChant("ch-hidden");
+  });
+
+  it("allows list query WITH hidden==false and removed==false filters", async () => {
+    const db = testEnv.unauthenticatedContext().firestore();
+    const q = query(
+      collection(db, "chants"),
+      where("hidden", "==", false),
+      where("removed", "==", false)
+    );
+    await assertSucceeds(getDocs(q));
+  });
+
+  it("denies list query WITHOUT hidden/removed filters", async () => {
+    const db = testEnv.unauthenticatedContext().firestore();
+    const q = query(collection(db, "chants"));
+    await assertFails(getDocs(q));
+  });
+
+  it("denies list query with only hidden filter (missing removed)", async () => {
+    const db = testEnv.unauthenticatedContext().firestore();
+    const q = query(
+      collection(db, "chants"),
+      where("hidden", "==", false)
+    );
+    await assertFails(getDocs(q));
   });
 });
