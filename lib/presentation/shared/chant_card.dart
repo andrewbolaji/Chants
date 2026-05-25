@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:chants/data/models/chant.dart';
+import 'package:chants/presentation/shared/vote_controls.dart';
 
 class ChantCard extends StatelessWidget {
   final Chant chant;
@@ -55,11 +56,19 @@ class ChantCard extends StatelessWidget {
                     ),
               ),
               const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
+              Row(
                 children: [
-                  _Tag(label: chant.subjectTag),
-                  if (chant.realOrParody == 'parody') const _Tag(label: 'parody'),
+                  Expanded(
+                    child: Wrap(
+                      spacing: 8,
+                      children: [
+                        _Tag(label: chant.subjectTag),
+                        if (chant.realOrParody == 'parody')
+                          const _Tag(label: 'parody'),
+                      ],
+                    ),
+                  ),
+                  VoteControls(chant: chant),
                 ],
               ),
             ],

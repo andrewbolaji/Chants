@@ -2,6 +2,10 @@
 
 ## v1.1 (committed, fast follow after v1 ships and gets real use)
 
+### v1.1: Home screen rotating quote
+**The idea:** A single shared quote everyone sees on the home screen, rotating roughly every 3 days, chosen date-deterministically from a curated quotes collection (no per-user randomness, no server cron). Andrew appends entries over time, each copyright-cleared before adding. Real attributed football quotes preferred over copyrighted song lyrics. Goes on the home screen, NOT the OS launch or splash screen (platform guidance keeps that minimal, and it flashes too fast to read).
+**Why v1.1:** Home-screen polish once the core content is proven.
+
 ### v1.1: Comments, replies, and collaborative lyric suggestions
 **The idea:** Threaded discussion on a chant, plus a lyric-suggestion mechanic where the most-upvoted tweaks surface at the top, turning comments into a refinement engine.
 **Why v1.1:** The social layer is what makes the app sticky, but v1 has to prove find-and-add first. Reporting and moderation apply.

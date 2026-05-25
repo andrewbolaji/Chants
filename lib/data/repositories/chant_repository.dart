@@ -19,16 +19,14 @@ class ChantRepository {
         .where('removed', isEqualTo: false);
   }
 
-  /// All visible chants for a team. Sorted client-side (small N per club).
+  /// All visible chants for a team, ordered by score (most popular first).
+  /// Uses composite index: teamId + hidden + removed + score desc.
   Stream<List<Chant>> chantsForTeamStream({required String teamId}) {
     return _visibleChants()
         .where('teamId', isEqualTo: teamId)
+        .orderBy('score', descending: true)
         .snapshots()
-        .map((snap) {
-      final chants = snap.docs.map(Chant.fromFirestore).toList();
-      chants.sort((a, b) => b.score.compareTo(a.score));
-      return chants;
-    });
+        .map((snap) => snap.docs.map(Chant.fromFirestore).toList());
   }
 
   /// All visible chants for a player. Sorted client-side.
@@ -70,5 +68,22 @@ class ChantRepository {
     required Map<String, dynamic> fields,
   }) async {
     await _collection.doc(chantId).update(fields);
+  }
+
+  /// Promotion candidates: community chants with score >= threshold.
+  /// Uses composite index: status + hidden + removed + score desc.
+  static const promotionThreshold = 10;
+
+  Stream<List<Chant>> promotionCandidatesStream() {
+    return _collection
+        .where('status', isEqualTo: 'community')
+        .where('hidden', isEqualTo: false)
+        .where('removed', isEqualTo: false)
+        .orderBy('score', descending: true)
+        .snapshots()
+        .map((snap) => snap.docs
+            .map(Chant.fromFirestore)
+            .where((c) => c.score >= promotionThreshold)
+            .toList());
   }
 }

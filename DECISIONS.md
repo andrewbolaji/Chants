@@ -45,6 +45,12 @@
 | 2026-05-25 | Moderation callable derives actor UID from auth context | Never from a client-supplied parameter. Audit trail cannot be spoofed. |
 | 2026-05-25 | Moderation closes the loop (Fix 4) | hide/remove resolves associated reports to reviewed. unhide resets flagCount to 0 and dismisses reports so cleared false positives do not re-trigger. |
 | 2026-05-25 | banned check via get() adds read cost | Folded into the existing operator-role custom-claims migration trigger: when read costs justify it or operator actions extend beyond the founder. |
+| 2026-05-25 | Score formula: net (upvotes minus downvotes) for v1 | Simple and transparent. Wilson score or time decay is a v2 refinement. Trigger: enough vote volume that net score produces poor ranking. |
+| 2026-05-25 | Canonical promotion: operator-confirms at score >= 10 | Votes surface candidates, operator confirms. Canonical is sticky (downvotes do not demote, only operator demotes). A pure threshold is brigade-able and cheapens the label. |
+| 2026-05-25 | Voting allowed on canonical chants | Downvotes lower ranking but do not change status. Canonical is a quality and authenticity judgment, not just popularity. |
+| 2026-05-25 | Vote display: net score with highlighted user vote | No separate up/down counts for regular users. Operators see full counts in moderation screen. |
+| 2026-05-25 | Vote counter Function is NOT idempotent (at-least-once risk) | Firestore triggers are at-least-once. The before/after diff with FieldValue.increment is correct under contention but a duplicate delivery double-applies the delta. Reconciliation script (seed/reconcile.ts) recomputes counters from ground truth. Trigger to add event.id dedup: observed drift or volume growth. |
+| 2026-05-25 | Composite indexes: teamId+hidden+removed+score desc, status+hidden+removed+score desc | Two indexes for score-sort queries (club page ranking and promotion candidates). No discovery score index (stays client-side shuffle). |
 
 ## Notes for Later Blocks
 | Date | Note | Relevant Block |

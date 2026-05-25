@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chants/app/providers.dart';
 import 'package:chants/data/models/chant.dart';
 import 'package:chants/presentation/report/report_sheet.dart';
+import 'package:chants/presentation/shared/vote_controls.dart';
 
 class ChantDetailScreen extends ConsumerWidget {
   final Chant chant;
@@ -82,6 +83,10 @@ class ChantDetailScreen extends ConsumerWidget {
                   ),
               ],
             ),
+            const SizedBox(height: 16),
+
+            // Vote controls
+            VoteControls(chant: chant),
             const SizedBox(height: 24),
 
             // Tune

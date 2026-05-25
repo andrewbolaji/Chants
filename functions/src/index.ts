@@ -1,5 +1,5 @@
 import * as admin from "firebase-admin";
-import { onDocumentCreated } from "firebase-functions/v2/firestore";
+import { onDocumentCreated, onDocumentWritten } from "firebase-functions/v2/firestore";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { writeAuditEntry } from "./audit";
 
@@ -146,10 +146,42 @@ export const onModerationAction = onCall(
         return { success: true };
       }
 
+      case "promote": {
+        const chantSnap = await db.collection("chants").doc(targetId).get();
+        if (!chantSnap.exists) {
+          throw new HttpsError("not-found", "Chant not found.");
+        }
+        await db.collection("chants").doc(targetId).update({ status: "canonical" });
+        await writeAuditEntry({
+          actorId: actorUid,
+          action: "promote",
+          targetType: "chant",
+          targetId,
+          detail: "Community chant promoted to canonical by operator.",
+        });
+        return { success: true };
+      }
+
+      case "demote": {
+        const chantSnap2 = await db.collection("chants").doc(targetId).get();
+        if (!chantSnap2.exists) {
+          throw new HttpsError("not-found", "Chant not found.");
+        }
+        await db.collection("chants").doc(targetId).update({ status: "community" });
+        await writeAuditEntry({
+          actorId: actorUid,
+          action: "demote",
+          targetType: "chant",
+          targetId,
+          detail: "Canonical chant demoted to community by operator.",
+        });
+        return { success: true };
+      }
+
       default:
         throw new HttpsError(
           "invalid-argument",
-          `Unknown action "${action}". Valid: hide, unhide, remove, ban.`
+          `Unknown action "${action}". Valid: hide, unhide, remove, ban, promote, demote.`
         );
     }
   }
@@ -203,6 +235,49 @@ export const onChantCreated = onDocumentCreated(
         detail: `Auto-hidden: user submitted ${totalSubmissions} chants in the last hour (limit ${limit}).`,
       });
     }
+  }
+);
+
+// --- onVoteWritten ---
+// Maintains upvotes, downvotes, and score on the chant via atomic increments.
+// Handles create, flip (update), and delete in one function using before/after diff.
+// NOTE: Firestore triggers are at-least-once. This function is NOT idempotent.
+// A duplicate delivery would double-apply the delta. The reconciliation script
+// (reconcile.ts) recomputes counters from ground truth as the remedy.
+// Trigger to add event.id dedup: observed drift or volume growth.
+export const onVoteWritten = onDocumentWritten(
+  { document: "votes/{voteId}", region: "europe-west2" },
+  async (event) => {
+    const beforeData = event.data?.before?.data();
+    const afterData = event.data?.after?.data();
+
+    const chantId = (afterData?.chantId || beforeData?.chantId) as string;
+    if (!chantId) return;
+
+    let upDelta = 0;
+    let downDelta = 0;
+
+    // Remove old vote effect
+    if (beforeData) {
+      if (beforeData.value === 1) upDelta -= 1;
+      else if (beforeData.value === -1) downDelta -= 1;
+    }
+
+    // Add new vote effect
+    if (afterData) {
+      if (afterData.value === 1) upDelta += 1;
+      else if (afterData.value === -1) downDelta += 1;
+    }
+
+    if (upDelta === 0 && downDelta === 0) return;
+
+    const scoreDelta = upDelta - downDelta;
+
+    await db.collection("chants").doc(chantId).update({
+      upvotes: admin.firestore.FieldValue.increment(upDelta),
+      downvotes: admin.firestore.FieldValue.increment(downDelta),
+      score: admin.firestore.FieldValue.increment(scoreDelta),
+    });
   }
 );
 

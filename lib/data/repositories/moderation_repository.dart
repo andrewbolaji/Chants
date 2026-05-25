@@ -33,4 +33,18 @@ class ModerationRepository {
       'targetId': userId,
     });
   }
+
+  Future<void> promoteChant(String chantId) async {
+    await _functions.httpsCallable('onModerationAction').call({
+      'action': 'promote',
+      'targetId': chantId,
+    });
+  }
+
+  Future<void> demoteChant(String chantId) async {
+    await _functions.httpsCallable('onModerationAction').call({
+      'action': 'demote',
+      'targetId': chantId,
+    });
+  }
 }

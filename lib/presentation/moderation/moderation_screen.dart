@@ -16,15 +16,20 @@ class ModerationScreen extends ConsumerWidget {
         .where('hidden', isEqualTo: true)
         .snapshots();
 
+    final candidatesStream = ref
+        .watch(chantRepositoryProvider)
+        .promotionCandidatesStream();
+
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Moderation'),
           bottom: const TabBar(
             tabs: [
-              Tab(text: 'Flagged / Hidden'),
-              Tab(text: 'Ban user'),
+              Tab(text: 'Flagged'),
+              Tab(text: 'Promote'),
+              Tab(text: 'Ban'),
             ],
           ),
         ),
@@ -60,7 +65,38 @@ class ModerationScreen extends ConsumerWidget {
                 );
               },
             ),
-            // Tab 2: ban user
+            // Tab 2: promotion candidates
+            StreamBuilder<List<Chant>>(
+              stream: candidatesStream,
+              builder: (context, snap) {
+                if (snap.hasError) {
+                  return const ErrorState(
+                      message: 'Could not load candidates.');
+                }
+                if (!snap.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                final candidates = snap.data!;
+                if (candidates.isEmpty) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(32),
+                      child: Text(
+                          'No promotion candidates yet. Community chants need a score of 10 or more.'),
+                    ),
+                  );
+                }
+                return ListView.builder(
+                  padding: const EdgeInsets.all(8),
+                  itemCount: candidates.length,
+                  itemBuilder: (context, index) {
+                    final chant = candidates[index];
+                    return _PromotionCard(chant: chant, ref: ref);
+                  },
+                );
+              },
+            ),
+            // Tab 3: ban user
             const _BanUserTab(),
           ],
         ),
@@ -151,6 +187,65 @@ class _ModerationCard extends StatelessWidget {
         const SnackBar(content: Text('Action failed. Try again.')),
       );
     }
+  }
+}
+
+class _PromotionCard extends StatelessWidget {
+  final Chant chant;
+  final WidgetRef ref;
+
+  const _PromotionCard({required this.chant, required this.ref});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(chant.title,
+                style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 4),
+            Text(
+              'Score: ${chant.score} | Status: ${chant.status}',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              chant.lyrics,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                FilledButton.tonal(
+                  onPressed: () async {
+                    try {
+                      await ref
+                          .read(moderationRepositoryProvider)
+                          .promoteChant(chant.id);
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text('Promoted to canonical.')),
+                      );
+                    } catch (e) {
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Promotion failed.')),
+                      );
+                    }
+                  },
+                  child: const Text('Promote'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

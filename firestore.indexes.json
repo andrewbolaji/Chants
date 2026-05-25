@@ -1,4 +1,25 @@
 {
-  "indexes": [],
+  "indexes": [
+    {
+      "collectionGroup": "chants",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "teamId", "order": "ASCENDING" },
+        { "fieldPath": "hidden", "order": "ASCENDING" },
+        { "fieldPath": "removed", "order": "ASCENDING" },
+        { "fieldPath": "score", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "chants",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "hidden", "order": "ASCENDING" },
+        { "fieldPath": "removed", "order": "ASCENDING" },
+        { "fieldPath": "score", "order": "DESCENDING" }
+      ]
+    }
+  ],
   "fieldOverrides": []
 }

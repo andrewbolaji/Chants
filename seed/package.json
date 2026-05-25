@@ -4,7 +4,7 @@
   "scripts": {
     "seed": "ts-node seed.ts",
     "seed:club": "ts-node seed.ts",
-    "test": "mocha --require ts-node/register --timeout 10000 --exit 'validate.test.ts'"
+    "test": "mocha --require ts-node/register --timeout 10000 --exit '*.test.ts'"
   },
   "dependencies": {
     "firebase-admin": "^13.0.0"

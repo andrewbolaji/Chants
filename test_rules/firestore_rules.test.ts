@@ -1112,3 +1112,35 @@ describe("server-side length limits", () => {
     }));
   });
 });
+
+// ===================== BLOCK 4: CANONICAL PROMOTION (Fix C) =====================
+
+describe("canonical promotion rules", () => {
+  it("denies non-operator setting status to canonical via client write", async () => {
+    await seedVisibleChant("ch1", "user1");
+    await seedUserProfile("user1");
+    const db = testEnv.authenticatedContext("user1").firestore();
+    await assertFails(updateDoc(doc(db, "chants", "ch1"), {
+      status: "canonical",
+    }));
+  });
+
+  it("allows operator to set status to canonical", async () => {
+    await seedVisibleChant("ch1", "user1");
+    await seedOperator("op1");
+    const db = testEnv.authenticatedContext("op1").firestore();
+    await assertSucceeds(updateDoc(doc(db, "chants", "ch1"), {
+      status: "canonical",
+    }));
+  });
+
+  it("denies author self-promoting their own chant", async () => {
+    await seedVisibleChant("ch1", "user1");
+    await seedUserProfile("user1");
+    const db = testEnv.authenticatedContext("user1").firestore();
+    // Author update rule blocks status changes
+    await assertFails(updateDoc(doc(db, "chants", "ch1"), {
+      status: "canonical",
+    }));
+  });
+});
