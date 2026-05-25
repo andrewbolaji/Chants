@@ -47,4 +47,8 @@ class ModerationRepository {
       'targetId': chantId,
     });
   }
+
+  Future<void> deleteAccount() async {
+    await _functions.httpsCallable('deleteAccount').call({});
+  }
 }

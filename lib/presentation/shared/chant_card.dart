@@ -80,18 +80,14 @@ class ChantCard extends StatelessWidget {
                 if (chant.subjectTag != 'club') ...[
                   Text(
                     chant.subjectTag,
-                    style: textTheme.labelSmall?.copyWith(
-                      color: AppColors.textFaint,
-                    ),
+                    style: textTheme.labelSmall,
                   ),
                   const SizedBox(width: Spacing.sm),
                 ],
                 if (chant.realOrParody == 'parody')
                   Text(
                     'parody',
-                    style: textTheme.labelSmall?.copyWith(
-                      color: AppColors.textFaint,
-                    ),
+                    style: textTheme.labelSmall,
                   ),
                 const Spacer(),
                 VoteControls(chant: chant),

@@ -57,7 +57,14 @@
 | 2026-05-25 | Feedback resolved field has no write path in v1 | Operator reads feedback but cannot mark it resolved (rules allow no updates). Resolving and filtering feedback belongs to the v1.1 moderation console (Block 10). Trigger: feedback volume outgrows a plain newest-first list. |
 | 2026-05-25 | Feedback email notification deferred | Database-only for v1. Operator reads in-app. Email delivery needs an email provider plus an API key secret. Trigger: feedback volume or operator wants alerts. |
 | 2026-05-25 | Banned users can submit feedback | Intentional: feedback is the appeal channel. The Block 3 ban message directs users to the suggestion box. isNotBanned() is NOT added to the feedback create rule. |
-| 2026-05-25 | Home screen overflow menu for low-frequency utilities | Feedback, content policy, and sign-out live in a three-dot overflow menu. Moderation (operator-only) stays as a direct icon for fast access. Scales as more settings appear. |
+| 2026-05-25 | Home screen overflow menu for low-frequency utilities | Feedback, content policy, sign-out, and delete account live in a three-dot overflow menu. Moderation (operator-only) stays as a direct icon for fast access. |
+| 2026-05-25 | In-app account deletion (Apple 5.1.1(v), Google Play) | deleteAccount callable Function: removes auth, profile, votes, reports, feedback; reconciles counters on voted chants; anonymizes createdBy on submitted chants to "deleted-user". Submitted chants kept as community content. |
+| 2026-05-25 | Soft launch: closed beta first (D1) | TestFlight (iOS) and Google closed testing (Android). 1 to 2 weeks, then promote to public. Validates on real devices. |
+| 2026-05-25 | Age rating: mature, Apple 17+ and Google equivalent (D2) | Profanity stays in chant culture. Declared honestly. |
+| 2026-05-25 | Firebase Crashlytics for launch observability (D4) | Free, first-party. Adds a crash-diagnostics line to privacy declaration. |
+| 2026-05-25 | Firebase App Check: soft-enforce at launch (D6) | Debug provider for dev, DeviceCheck/PlayIntegrity for release. Soft-enforce (log, do not reject) at launch. Flip to full enforcement after 1 to 2 weeks of clean telemetry. |
+| 2026-05-25 | Billing alerts at $10/$50/$100/$250, kill-switch at $500 (C15) | Budget alerts for escalating early warning. $500 kill-switch disables billing as last-resort circuit breaker. Tripping takes the app offline by design. Retune with real cost-per-user data after launch. |
+| 2026-05-25 | firebase_storage removed from pubspec (C10) | Not used until media ships. Re-add when needed. |
 
 ## Notes for Later Blocks
 | Date | Note | Relevant Block |

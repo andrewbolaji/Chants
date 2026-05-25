@@ -177,18 +177,19 @@ Passion project first, business bet second. No billing in v1. Business-tier idea
 ## 12. Build order
 
 v1 (releasable):
-- **Block 1:** Foundation and the agnostic data model. Repo, setup, hosting, backend, auth, the Sport / Competition / Team / Chant model (Football and PL enabled, any-league-any-sport ready), chant fields incl. denormalized counters at 0, content-policy page stub.
-- **Block 2:** The archive and the seed. Browse and search, cross-club discovery shuffle, learn-focused detail page, the ~5-canonical-per-club seed (policy-checked), report button on every chant.
-- **Block 3:** Submission and basic moderation. Add new or existing chant with optional media, community status on entry, report-and-remove, ban, rate-limits, fail-safe defaults, audit logging. (Submission and moderation ship together.)
-- **Block 4:** Voting. Upvote / downvote, ranking, the path for a community chant to earn canonical status.
-- **Block 5:** Suggestion box. Small Block.
-- **Block 6:** Polish and ship v1. Mobile review, empty / loading / error states, copy pass, content-policy review, access-control verification with a second account, real use on the seeded archive, production deploy.
+- **Block 1:** Foundation and the agnostic data model.
+- **Block 2:** The archive and the seed.
+- **Block 3:** Submission and basic moderation.
+- **Block 4:** Voting.
+- **Block 5:** Suggestion box.
+- **Block 6:** Visual design and beautification. Design system in tokens, restyle every screen.
+- **Block 7:** Polish and ship v1. Mobile review, copy pass, access-control sweep, account deletion, App Check, billing kill-switch, release config, content-policy swap, production deploy.
 
 v1.1 (social layer, keep the gap short):
-- **Block 7:** Comments, replies, and collaborative lyric suggestions.
-- **Block 8:** Follow and feeds (For You, Following).
-- **Block 9:** Creation prompts and share-out.
-- **Block 10:** Moderation console.
+- **Block 8:** Comments, replies, and collaborative lyric suggestions.
+- **Block 9:** Follow and feeds (For You, Following).
+- **Block 10:** Creation prompts and share-out.
+- **Block 11:** Moderation console.
 
 ---
 

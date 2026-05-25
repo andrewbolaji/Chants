@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chants/app/providers.dart';
+import 'package:chants/app/spacing.dart';
 import 'package:chants/data/models/chant.dart';
 import 'package:chants/data/models/feedback_entry.dart';
 import 'package:chants/presentation/shared/error_state.dart';
@@ -58,13 +59,13 @@ class ModerationScreen extends ConsumerWidget {
                 if (docs.isEmpty) {
                   return const Center(
                     child: Padding(
-                      padding: EdgeInsets.all(32),
+                      padding: EdgeInsets.all(Spacing.xxl),
                       child: Text('No flagged or hidden chants. All clear.'),
                     ),
                   );
                 }
                 return ListView.builder(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(Spacing.sm),
                   itemCount: docs.length,
                   itemBuilder: (context, index) {
                     final chant = Chant.fromFirestore(docs[index]);
@@ -88,14 +89,14 @@ class ModerationScreen extends ConsumerWidget {
                 if (candidates.isEmpty) {
                   return const Center(
                     child: Padding(
-                      padding: EdgeInsets.all(32),
+                      padding: EdgeInsets.all(Spacing.xxl),
                       child: Text(
                           'No promotion candidates yet. Community chants need a score of 10 or more.'),
                     ),
                   );
                 }
                 return ListView.builder(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(Spacing.sm),
                   itemCount: candidates.length,
                   itemBuilder: (context, index) {
                     final chant = candidates[index];
@@ -119,19 +120,19 @@ class ModerationScreen extends ConsumerWidget {
                 if (docs.isEmpty) {
                   return const Center(
                     child: Padding(
-                      padding: EdgeInsets.all(32),
+                      padding: EdgeInsets.all(Spacing.xxl),
                       child: Text('No feedback yet.'),
                     ),
                   );
                 }
                 return ListView.builder(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(Spacing.sm),
                   itemCount: docs.length,
                   itemBuilder: (context, index) {
                     final fb = FeedbackEntry.fromFirestore(docs[index]);
                     return Card(
                       child: Padding(
-                        padding: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(Spacing.md),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -177,7 +178,7 @@ class _ModerationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(Spacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -262,7 +263,7 @@ class _PromotionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(Spacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -353,7 +354,7 @@ class _BanUserTabState extends ConsumerState<_BanUserTab> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(Spacing.xl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

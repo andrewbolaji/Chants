@@ -47,6 +47,8 @@ class HomeScreen extends ConsumerWidget {
                   Navigator.pushNamed(context, AppRouter.contentPolicy);
                 case 'signout':
                   ref.read(authRepositoryProvider).signOut();
+                case 'delete':
+                  _showDeleteAccountDialog(context, ref);
               }
             },
             itemBuilder: (context) => [
@@ -61,6 +63,10 @@ class HomeScreen extends ConsumerWidget {
               PopupMenuItem(
                 value: 'signout',
                 child: Text('Sign out', style: textTheme.bodyMedium?.copyWith(color: AppColors.textPrimary)),
+              ),
+              PopupMenuItem(
+                value: 'delete',
+                child: Text('Delete account', style: textTheme.bodyMedium?.copyWith(color: AppColors.error)),
               ),
             ],
           ),
@@ -120,6 +126,47 @@ class HomeScreen extends ConsumerWidget {
           // Discovery shuffle
           const DiscoverySection(),
         ],
+      ),
+    );
+  }
+}
+
+Future<void> _showDeleteAccountDialog(BuildContext context, WidgetRef ref) async {
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Delete your account?'),
+      content: const Text(
+        'This will permanently delete your account, your votes, your reports, '
+        'and your feedback. Your submitted chants will stay as community '
+        'content with your name removed. This cannot be undone.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: AppColors.error,
+          ),
+          onPressed: () => Navigator.pop(ctx, true),
+          child: const Text('Delete my account'),
+        ),
+      ],
+    ),
+  );
+
+  if (confirmed != true || !context.mounted) return;
+
+  try {
+    await ref.read(moderationRepositoryProvider).deleteAccount();
+    // Auth state change will redirect to sign-in
+  } catch (e) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Could not delete your account. Try again or contact us via feedback.'),
       ),
     );
   }

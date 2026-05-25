@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chants/app/providers.dart';
+import 'package:chants/app/spacing.dart';
 
 const _categories = ['suggestion', 'bug', 'question', 'other'];
 
@@ -67,13 +68,13 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
         appBar: AppBar(title: const Text('Feedback')),
         body: Center(
           child: Padding(
-            padding: const EdgeInsets.all(32),
+            padding: const EdgeInsets.all(Spacing.xxl),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Icon(Icons.check_circle_outline, size: 64),
                 const SizedBox(height: 16),
-                const Text(
+                Text(
                   'Got it. We read every one.',
                   style: Theme.of(context).textTheme.titleMedium,
                   textAlign: TextAlign.center,
@@ -93,7 +94,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Send feedback')),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(Spacing.lg),
         children: [
           const Text('What is this about?'),
           const SizedBox(height: 8),

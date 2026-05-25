@@ -281,6 +281,84 @@ export const onVoteWritten = onDocumentWritten(
   }
 );
 
+// --- deleteAccount (callable) ---
+// Deletes the calling user's account and all associated data.
+// Apple 5.1.1(v) and Google Play require in-app account deletion.
+// Actor derived from auth context. A user can only delete their own account.
+export const deleteAccount = onCall(
+  { region: "europe-west2" },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Sign in required.");
+    }
+    const uid = request.auth.uid;
+
+    // 1. Delete all votes by this user and reconcile affected chants
+    const votes = await db.collection("votes").where("userId", "==", uid).get();
+    const affectedChantIds = new Set<string>();
+    for (const voteDoc of votes.docs) {
+      affectedChantIds.add(voteDoc.data().chantId);
+      await voteDoc.ref.delete();
+    }
+
+    // Reconcile counters on each affected chant
+    for (const chantId of affectedChantIds) {
+      await reconcileChantCounters(chantId);
+    }
+
+    // 2. Delete all reports by this user
+    const reports = await db.collection("reports").where("reportedBy", "==", uid).get();
+    for (const reportDoc of reports.docs) {
+      await reportDoc.ref.delete();
+    }
+
+    // 3. Delete all feedback by this user
+    const feedback = await db.collection("feedback").where("userId", "==", uid).get();
+    for (const fbDoc of feedback.docs) {
+      await fbDoc.ref.delete();
+    }
+
+    // 4. Anonymize createdBy on all chants by this user
+    const chants = await db.collection("chants").where("createdBy", "==", uid).get();
+    for (const chantDoc of chants.docs) {
+      await chantDoc.ref.update({ createdBy: "deleted-user" });
+    }
+
+    // 5. Delete profile
+    await db.collection("profiles").doc(uid).delete();
+
+    // 6. Audit log
+    await writeAuditEntry({
+      actorId: uid,
+      action: "delete-account",
+      targetType: "user",
+      targetId: uid,
+      detail: `User deleted their own account. ${votes.size} votes removed, ${chants.size} chants anonymized.`,
+    });
+
+    // 7. Delete Firebase Auth account
+    await admin.auth().deleteUser(uid);
+
+    return { success: true };
+  }
+);
+
+// --- Helper: reconcile chant counters from votes collection ---
+async function reconcileChantCounters(chantId: string): Promise<void> {
+  const votesSnap = await db.collection("votes").where("chantId", "==", chantId).get();
+  let upvotes = 0;
+  let downvotes = 0;
+  for (const doc of votesSnap.docs) {
+    if (doc.data().value === 1) upvotes++;
+    else if (doc.data().value === -1) downvotes++;
+  }
+  await db.collection("chants").doc(chantId).update({
+    upvotes,
+    downvotes,
+    score: upvotes - downvotes,
+  });
+}
+
 // --- Helper: resolve reports for a chant ---
 async function resolveReportsForChant(
   chantId: string,
