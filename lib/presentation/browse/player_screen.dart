@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chants/app/providers.dart';
 import 'package:chants/app/router.dart';
+import 'package:chants/app/spacing.dart';
 import 'package:chants/data/models/chant.dart';
 import 'package:chants/data/models/player.dart';
 import 'package:chants/presentation/shared/chant_card.dart';
@@ -28,30 +29,29 @@ class PlayerScreen extends ConsumerWidget {
     final isSignedIn = ref.watch(authStateProvider).valueOrNull != null;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(player.name),
-      ),
-      floatingActionButton: isSignedIn && sportId != null && competitionId != null
-          ? FloatingActionButton.extended(
-              onPressed: () => Navigator.pushNamed(
-                context,
-                AppRouter.submitChant,
-                arguments: {
-                  'teamId': player.teamId,
-                  'sportId': sportId,
-                  'competitionId': competitionId,
-                  'playerId': player.id,
-                },
-              ),
-              icon: const Icon(Icons.add),
-              label: const Text('Add a chant'),
-            )
-          : null,
+      appBar: AppBar(title: Text(player.name)),
+      floatingActionButton:
+          isSignedIn && sportId != null && competitionId != null
+              ? FloatingActionButton.extended(
+                  onPressed: () => Navigator.pushNamed(
+                    context,
+                    AppRouter.submitChant,
+                    arguments: {
+                      'teamId': player.teamId,
+                      'sportId': sportId,
+                      'competitionId': competitionId,
+                      'playerId': player.id,
+                    },
+                  ),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add a chant'),
+                )
+              : null,
       body: StreamBuilder<List<Chant>>(
         stream: chantsStream,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return ErrorState(
+            return const ErrorState(
               message: 'Could not load chants. Pull down to try again.',
             );
           }
@@ -65,16 +65,18 @@ class PlayerScreen extends ConsumerWidget {
             );
           }
           return ListView.builder(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.only(
+              top: Spacing.sm,
+              bottom: Spacing.xxxl * 2,
+            ),
             itemCount: chants.length,
             itemBuilder: (context, index) {
-              final chant = chants[index];
               return ChantCard(
-                chant: chant,
+                chant: chants[index],
                 onTap: () => Navigator.pushNamed(
                   context,
                   AppRouter.chantDetail,
-                  arguments: chant,
+                  arguments: chants[index],
                 ),
               );
             },

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:chants/app/colors.dart';
 import 'package:chants/app/providers.dart';
+import 'package:chants/app/spacing.dart';
 import 'package:chants/data/models/chant.dart';
 import 'package:chants/data/models/player.dart';
 
@@ -56,7 +58,6 @@ class _SubmitChantScreenState extends ConsumerState<SubmitChantScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    // subjectTag/playerId consistency
     if (_subjectTag == 'player' && _selectedPlayerId == null) {
       setState(() => _error = 'Pick which player this chant is for.');
       return;
@@ -109,7 +110,8 @@ class _SubmitChantScreenState extends ConsumerState<SubmitChantScreen> {
         displayError =
             'Your account cannot submit right now. If you think this is a mistake, use the suggestion box.';
       } else {
-        displayError = 'Could not submit your chant. Check your connection and try again.';
+        displayError =
+            'Could not submit your chant. Check your connection and try again.';
       }
       setState(() {
         _error = displayError;
@@ -123,14 +125,16 @@ class _SubmitChantScreenState extends ConsumerState<SubmitChantScreen> {
     final playersStream = ref
         .watch(playerRepositoryProvider)
         .playersForTeamStream(teamId: widget.teamId);
+    final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Add a chant')),
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: Spacing.xl),
           children: [
+            const SizedBox(height: Spacing.lg),
             TextFormField(
               controller: _titleController,
               decoration: const InputDecoration(
@@ -141,8 +145,7 @@ class _SubmitChantScreenState extends ConsumerState<SubmitChantScreen> {
               validator: (v) =>
                   v == null || v.trim().isEmpty ? 'Give your chant a title.' : null,
             ),
-            const SizedBox(height: 12),
-
+            const SizedBox(height: Spacing.md),
             TextFormField(
               controller: _lyricsController,
               decoration: const InputDecoration(
@@ -155,8 +158,7 @@ class _SubmitChantScreenState extends ConsumerState<SubmitChantScreen> {
               validator: (v) =>
                   v == null || v.trim().isEmpty ? 'Add the lyrics.' : null,
             ),
-            const SizedBox(height: 12),
-
+            const SizedBox(height: Spacing.md),
             TextFormField(
               controller: _tuneNameController,
               decoration: const InputDecoration(
@@ -167,8 +169,7 @@ class _SubmitChantScreenState extends ConsumerState<SubmitChantScreen> {
               validator: (v) =>
                   v == null || v.trim().isEmpty ? 'Name the tune.' : null,
             ),
-            const SizedBox(height: 12),
-
+            const SizedBox(height: Spacing.md),
             TextFormField(
               controller: _contextController,
               decoration: const InputDecoration(
@@ -178,12 +179,10 @@ class _SubmitChantScreenState extends ConsumerState<SubmitChantScreen> {
               maxLength: 500,
               maxLines: 3,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: Spacing.xl),
 
-            // Subject tag
-            Text('Who is it about?',
-                style: Theme.of(context).textTheme.titleSmall),
-            const SizedBox(height: 8),
+            Text('Who is it about?', style: textTheme.labelMedium),
+            const SizedBox(height: Spacing.sm),
             SegmentedButton<String>(
               segments: const [
                 ButtonSegment(value: 'club', label: Text('Club')),
@@ -197,26 +196,27 @@ class _SubmitChantScreenState extends ConsumerState<SubmitChantScreen> {
                 if (_subjectTag != 'player') _selectedPlayerId = null;
               }),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: Spacing.md),
 
-            // Player picker (only if subjectTag is player)
             if (_subjectTag == 'player')
               StreamBuilder<List<Player>>(
                 stream: playersStream,
                 builder: (context, snap) {
                   if (!snap.hasData) {
                     return const Padding(
-                      padding: EdgeInsets.all(8),
+                      padding: EdgeInsets.all(Spacing.sm),
                       child: CircularProgressIndicator(),
                     );
                   }
-                  final players = snap.data!..sort((a, b) => a.name.compareTo(b.name));
+                  final players = snap.data!
+                    ..sort((a, b) => a.name.compareTo(b.name));
                   return DropdownButtonFormField<String>(
                     initialValue: _selectedPlayerId,
-                    decoration: const InputDecoration(labelText: 'Which player?'),
+                    decoration:
+                        const InputDecoration(labelText: 'Which player?'),
                     items: players
-                        .map((p) =>
-                            DropdownMenuItem(value: p.id, child: Text(p.name)))
+                        .map((p) => DropdownMenuItem(
+                            value: p.id, child: Text(p.name)))
                         .toList(),
                     onChanged: (v) => setState(() => _selectedPlayerId = v),
                     validator: (v) =>
@@ -224,11 +224,10 @@ class _SubmitChantScreenState extends ConsumerState<SubmitChantScreen> {
                   );
                 },
               ),
-            const SizedBox(height: 12),
+            const SizedBox(height: Spacing.lg),
 
-            // Real or parody
-            Text('Type', style: Theme.of(context).textTheme.titleSmall),
-            const SizedBox(height: 8),
+            Text('Type', style: textTheme.labelMedium),
+            const SizedBox(height: Spacing.sm),
             SegmentedButton<String>(
               segments: const [
                 ButtonSegment(value: 'real', label: Text('Original')),
@@ -240,14 +239,14 @@ class _SubmitChantScreenState extends ConsumerState<SubmitChantScreen> {
             ),
 
             if (_error != null) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: Spacing.lg),
               Text(
                 _error!,
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
+                style: textTheme.bodySmall?.copyWith(color: AppColors.error),
               ),
             ],
 
-            const SizedBox(height: 24),
+            const SizedBox(height: Spacing.xl),
             FilledButton(
               onPressed: _submitting ? null : _submit,
               child: _submitting
@@ -258,6 +257,7 @@ class _SubmitChantScreenState extends ConsumerState<SubmitChantScreen> {
                     )
                   : const Text('Submit'),
             ),
+            const SizedBox(height: Spacing.xxxl),
           ],
         ),
       ),

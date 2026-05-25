@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:chants/app/colors.dart';
 import 'package:chants/app/providers.dart';
+import 'package:chants/app/spacing.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {
   const SignUpScreen({super.key});
@@ -61,23 +63,25 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Sign Up')),
+      appBar: AppBar(title: const Text('Sign up')),
       body: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.symmetric(horizontal: Spacing.xl),
         child: Form(
           key: _formKey,
           child: ListView(
             children: [
-              const SizedBox(height: 24),
+              const SizedBox(height: Spacing.xl),
               TextFormField(
                 controller: _displayNameController,
                 decoration: const InputDecoration(labelText: 'Display name'),
                 autofillHints: const [AutofillHints.username],
-                validator: (v) => v == null || v.trim().isEmpty
-                    ? 'Pick a display name.'
-                    : null,
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) return 'Pick a display name.';
+                  if (v.trim().length > 50) return '50 characters max.';
+                  return null;
+                },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: Spacing.md),
               TextFormField(
                 controller: _emailController,
                 decoration: const InputDecoration(labelText: 'Email'),
@@ -86,7 +90,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 validator: (v) =>
                     v == null || v.isEmpty ? 'Enter your email.' : null,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: Spacing.md),
               TextFormField(
                 controller: _passwordController,
                 decoration: const InputDecoration(labelText: 'Password'),
@@ -97,15 +101,15 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                     : null,
               ),
               if (_error != null) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: Spacing.md),
                 Text(
                   _error!,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.error,
-                  ),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.error,
+                      ),
                 ),
               ],
-              const SizedBox(height: 24),
+              const SizedBox(height: Spacing.xl),
               FilledButton(
                 onPressed: _loading ? null : _signUp,
                 child: _loading
@@ -114,7 +118,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                         width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('Create Account'),
+                    : const Text('Create account'),
               ),
             ],
           ),

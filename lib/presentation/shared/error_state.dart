@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:chants/app/colors.dart';
+import 'package:chants/app/spacing.dart';
 
 class ErrorState extends StatelessWidget {
   final String message;
@@ -14,24 +16,24 @@ class ErrorState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(Spacing.xxxl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               Icons.error_outline,
-              size: 48,
-              color: Theme.of(context).colorScheme.error,
+              size: 40,
+              color: AppColors.error,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: Spacing.lg),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyLarge,
+              style: Theme.of(context).textTheme.bodyMedium,
             ),
             if (onRetry != null) ...[
-              const SizedBox(height: 16),
-              FilledButton.tonal(
+              const SizedBox(height: Spacing.lg),
+              FilledButton(
                 onPressed: onRetry,
                 child: const Text('Try again'),
               ),

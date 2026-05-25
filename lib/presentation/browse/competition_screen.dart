@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:chants/app/colors.dart';
 import 'package:chants/app/providers.dart';
 import 'package:chants/app/router.dart';
+import 'package:chants/app/spacing.dart';
 import 'package:chants/data/models/team.dart';
 import 'package:chants/presentation/shared/empty_state.dart';
 import 'package:chants/presentation/shared/error_state.dart';
@@ -21,6 +23,7 @@ class CompetitionScreen extends ConsumerWidget {
     final teamsStream = ref
         .watch(teamRepositoryProvider)
         .teamsForCompetitionStream(competitionId: competitionId);
+    final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
       appBar: AppBar(title: Text(competitionName)),
@@ -28,7 +31,7 @@ class CompetitionScreen extends ConsumerWidget {
         stream: teamsStream,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return ErrorState(
+            return const ErrorState(
               message: 'Could not load clubs. Pull down to try again.',
             );
           }
@@ -43,23 +46,25 @@ class CompetitionScreen extends ConsumerWidget {
             );
           }
           teams.sort((a, b) => a.name.compareTo(b.name));
-          return ListView.builder(
-            padding: const EdgeInsets.all(8),
+          return ListView.separated(
+            padding: const EdgeInsets.symmetric(vertical: Spacing.sm),
             itemCount: teams.length,
+            separatorBuilder: (_, _) => const Divider(
+              indent: Spacing.lg,
+              endIndent: Spacing.lg,
+            ),
             itemBuilder: (context, index) {
               final team = teams[index];
-              return Card(
-                child: ListTile(
-                  leading: const CircleAvatar(
-                    child: Icon(Icons.shield_outlined),
-                  ),
-                  title: Text(team.name),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => Navigator.pushNamed(
-                    context,
-                    AppRouter.team,
-                    arguments: team,
-                  ),
+              return ListTile(
+                title: Text(team.name, style: textTheme.titleMedium),
+                trailing: Icon(
+                  Icons.chevron_right,
+                  color: AppColors.textFaint,
+                ),
+                onTap: () => Navigator.pushNamed(
+                  context,
+                  AppRouter.team,
+                  arguments: team,
                 ),
               );
             },

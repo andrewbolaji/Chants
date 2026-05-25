@@ -75,7 +75,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                 const SizedBox(height: 16),
                 const Text(
                   'Got it. We read every one.',
-                  style: TextStyle(fontSize: 18),
+                  style: Theme.of(context).textTheme.titleMedium,
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 24),

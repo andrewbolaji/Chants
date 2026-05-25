@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:chants/app/colors.dart';
 import 'package:chants/app/providers.dart';
+import 'package:chants/app/spacing.dart';
 import 'package:chants/data/models/chant.dart';
 import 'package:chants/presentation/report/report_sheet.dart';
 import 'package:chants/presentation/shared/vote_controls.dart';
@@ -13,10 +15,11 @@ class ChantDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authStateProvider);
     final isSignedIn = authState.valueOrNull != null;
+    final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(chant.title),
+        title: const Text(''),
         actions: [
           IconButton(
             icon: const Icon(Icons.flag_outlined),
@@ -39,143 +42,132 @@ class ChantDetailScreen extends ConsumerWidget {
           ),
         ],
       ),
+      // Vote controls pinned at bottom as large tap targets
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          border: Border(
+            top: BorderSide(color: AppColors.divider, width: 0.5),
+          ),
+        ),
+        padding: const EdgeInsets.symmetric(
+          horizontal: Spacing.lg,
+          vertical: Spacing.sm,
+        ),
+        child: SafeArea(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              VoteControls(chant: chant, large: true),
+            ],
+          ),
+        ),
+      ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: Spacing.xl),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Cover image placeholder
-            Container(
-              height: 160,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                Icons.music_note,
-                size: 48,
-                color: Theme.of(context).colorScheme.outline,
-              ),
-            ),
-            const SizedBox(height: 16),
+            const SizedBox(height: Spacing.lg),
 
-            // Status and tags
+            // Quiet metadata row: status, subject tag, real/parody
             Wrap(
-              spacing: 8,
-              runSpacing: 4,
+              spacing: Spacing.sm,
+              runSpacing: Spacing.xs,
               children: [
-                _Badge(
-                  label: chant.status == 'canonical' ? 'Canonical' : 'Community',
-                  isPrimary: chant.status == 'canonical',
-                  context: context,
-                ),
-                _Badge(
-                  label: chant.subjectTag,
-                  isPrimary: false,
-                  context: context,
-                ),
+                if (chant.status == 'canonical')
+                  _Badge(label: 'Canonical', isAmber: true)
+                else
+                  const _Badge(label: 'Community', isAmber: false),
+                _Badge(label: chant.subjectTag, isAmber: false),
                 if (chant.realOrParody == 'parody')
-                  _Badge(
-                    label: 'Parody',
-                    isPrimary: false,
-                    context: context,
-                  ),
+                  const _Badge(label: 'Parody', isAmber: false),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: Spacing.xl),
 
-            // Vote controls
-            VoteControls(chant: chant),
-            const SizedBox(height: 24),
-
-            // Tune
+            // Title: bold, large
             Text(
-              'To the tune of:',
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+              chant.title,
+              style: textTheme.headlineMedium,
+            ),
+            const SizedBox(height: Spacing.lg),
+
+            // Tune: icon + name
+            Row(
+              children: [
+                Icon(
+                  Icons.music_note_outlined,
+                  size: 16,
+                  color: AppColors.textMuted,
+                ),
+                const SizedBox(width: Spacing.sm),
+                Expanded(
+                  child: Text(
+                    chant.tuneName,
+                    style: textTheme.bodyMedium,
                   ),
+                ),
+              ],
             ),
-            const SizedBox(height: 2),
-            Text(
-              chant.tuneName,
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-            const SizedBox(height: 24),
+            const SizedBox(height: Spacing.xxl),
 
-            // Lyrics
+            // Lyrics: the hero. Large, airy, high contrast.
             Text(
-              'Lyrics',
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+              chant.lyrics,
+              style: textTheme.bodyLarge,
             ),
-            const SizedBox(height: 8),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerLow,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                chant.lyrics,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      height: 1.8,
-                    ),
-              ),
-            ),
-            const SizedBox(height: 24),
+            const SizedBox(height: Spacing.xxl),
 
-            // Context notes (if present)
+            // Context notes (only when non-empty)
             if (chant.contextNotes != null &&
                 chant.contextNotes!.isNotEmpty) ...[
-              Text(
-                'Context',
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-              ),
-              const SizedBox(height: 4),
-              Text(chant.contextNotes!),
-              const SizedBox(height: 24),
-            ],
-
-            // Media placeholder (only if media exists)
-            if (chant.mediaType != 'none') ...[
-              Text(
-                'Media',
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-              ),
-              const SizedBox(height: 8),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(Spacing.lg),
                 decoration: BoxDecoration(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(12),
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(Radii.sm),
                 ),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.play_circle_outline,
-                        color: Theme.of(context).colorScheme.outline),
-                    const SizedBox(width: 8),
                     Text(
-                      'Audio will be available soon.',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurfaceVariant,
-                          ),
+                      'Context',
+                      style: textTheme.labelMedium,
+                    ),
+                    const SizedBox(height: Spacing.xs),
+                    Text(
+                      chant.contextNotes!,
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                   ],
                 ),
               ),
+              const SizedBox(height: Spacing.xl),
             ],
+
+            // Media: only if present, no empty placeholder (Addition E)
+            if (chant.mediaType != 'none') ...[
+              Row(
+                children: [
+                  Icon(
+                    Icons.play_circle_outline,
+                    size: 16,
+                    color: AppColors.textMuted,
+                  ),
+                  const SizedBox(width: Spacing.sm),
+                  Text(
+                    'Audio will be available soon.',
+                    style: textTheme.bodyMedium,
+                  ),
+                ],
+              ),
+              const SizedBox(height: Spacing.xl),
+            ],
+
+            const SizedBox(height: Spacing.xxxl),
           ],
         ),
       ),
@@ -185,28 +177,29 @@ class ChantDetailScreen extends ConsumerWidget {
 
 class _Badge extends StatelessWidget {
   final String label;
-  final bool isPrimary;
-  final BuildContext context;
+  final bool isAmber;
 
-  const _Badge({
-    required this.label,
-    required this.isPrimary,
-    required this.context,
-  });
+  const _Badge({required this.label, required this.isAmber});
 
   @override
-  Widget build(BuildContext _) {
+  Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.sm,
+        vertical: 2,
+      ),
       decoration: BoxDecoration(
-        color: isPrimary
-            ? Theme.of(context).colorScheme.primaryContainer
-            : Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(12),
+        color: isAmber
+            ? AppColors.amber.withValues(alpha: 0.15)
+            : AppColors.surfaceRaised,
+        borderRadius: BorderRadius.circular(Radii.sm),
       ),
       child: Text(
         label,
-        style: Theme.of(context).textTheme.labelSmall,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: isAmber ? AppColors.amber : AppColors.textMuted,
+              fontWeight: isAmber ? FontWeight.w600 : FontWeight.w500,
+            ),
       ),
     );
   }

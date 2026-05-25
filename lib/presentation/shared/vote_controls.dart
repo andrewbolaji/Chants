@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:chants/app/colors.dart';
 import 'package:chants/app/providers.dart';
 import 'package:chants/data/models/chant.dart';
 
 class VoteControls extends ConsumerStatefulWidget {
   final Chant chant;
+  final bool large;
 
-  const VoteControls({super.key, required this.chant});
+  const VoteControls({super.key, required this.chant, this.large = false});
 
   @override
   ConsumerState<VoteControls> createState() => _VoteControlsState();
 }
 
 class _VoteControlsState extends ConsumerState<VoteControls> {
-  int? _userVote; // 1, -1, or null
+  int? _userVote;
   bool _loaded = false;
   bool _busy = false;
 
@@ -54,7 +56,6 @@ class _VoteControlsState extends ConsumerState<VoteControls> {
     try {
       final voteRepo = ref.read(voteRepositoryProvider);
       if (_userVote == value) {
-        // Toggle off: remove the vote
         await voteRepo.removeVote(
           userId: user.uid,
           chantId: widget.chant.id,
@@ -65,7 +66,6 @@ class _VoteControlsState extends ConsumerState<VoteControls> {
           _busy = false;
         });
       } else {
-        // Cast or flip
         await voteRepo.castVote(
           userId: user.uid,
           chantId: widget.chant.id,
@@ -80,8 +80,7 @@ class _VoteControlsState extends ConsumerState<VoteControls> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _busy = false);
-      final msg = e.toString();
-      if (msg.contains('PERMISSION_DENIED')) {
+      if (e.toString().contains('PERMISSION_DENIED')) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -94,40 +93,64 @@ class _VoteControlsState extends ConsumerState<VoteControls> {
 
   @override
   Widget build(BuildContext context) {
-    if (!_loaded) return const SizedBox(width: 80);
+    if (!_loaded) return const SizedBox(width: 88);
 
     final score = widget.chant.score;
-    final theme = Theme.of(context);
+    final iconSize = widget.large ? 28.0 : 22.0;
+    final scoreStyle = widget.large
+        ? Theme.of(context).textTheme.titleMedium
+        : Theme.of(context).textTheme.titleSmall;
 
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          score.toString(),
-          style: theme.textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.bold,
+        // Upvote
+        SizedBox(
+          width: 48,
+          height: 48,
+          child: IconButton(
+            icon: Icon(
+              _userVote == 1
+                  ? Icons.keyboard_arrow_up_rounded
+                  : Icons.keyboard_arrow_up_rounded,
+              size: iconSize,
+            ),
+            color: _userVote == 1 ? AppColors.amber : AppColors.textMuted,
+            onPressed: _busy ? null : () => _onVote(1),
+            tooltip: 'Upvote',
           ),
         ),
-        const SizedBox(width: 4),
-        IconButton(
-          icon: Icon(
-            _userVote == 1 ? Icons.thumb_up : Icons.thumb_up_outlined,
-            size: 20,
+
+        // Score
+        SizedBox(
+          width: widget.large ? 48 : 32,
+          child: Text(
+            score.toString(),
+            textAlign: TextAlign.center,
+            style: scoreStyle?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: score > 0
+                  ? AppColors.textPrimary
+                  : score < 0
+                      ? AppColors.textMuted
+                      : AppColors.textMuted,
+            ),
           ),
-          color: _userVote == 1 ? theme.colorScheme.primary : null,
-          visualDensity: VisualDensity.compact,
-          onPressed: _busy ? null : () => _onVote(1),
-          tooltip: 'Upvote',
         ),
-        IconButton(
-          icon: Icon(
-            _userVote == -1 ? Icons.thumb_down : Icons.thumb_down_outlined,
-            size: 20,
+
+        // Downvote
+        SizedBox(
+          width: 48,
+          height: 48,
+          child: IconButton(
+            icon: Icon(
+              Icons.keyboard_arrow_down_rounded,
+              size: iconSize,
+            ),
+            color: _userVote == -1 ? AppColors.error : AppColors.textMuted,
+            onPressed: _busy ? null : () => _onVote(-1),
+            tooltip: 'Downvote',
           ),
-          color: _userVote == -1 ? theme.colorScheme.error : null,
-          visualDensity: VisualDensity.compact,
-          onPressed: _busy ? null : () => _onVote(-1),
-          tooltip: 'Downvote',
         ),
       ],
     );

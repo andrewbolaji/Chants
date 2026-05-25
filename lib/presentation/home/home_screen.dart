@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:chants/app/colors.dart';
 import 'package:chants/app/providers.dart';
 import 'package:chants/app/router.dart';
+import 'package:chants/app/spacing.dart';
 import 'package:chants/presentation/browse/discovery_section.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -9,11 +11,13 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final textTheme = Theme.of(context).textTheme;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Chants'),
         actions: [
-          // Operator-only moderation link (stays as a direct icon for fast access)
+          // Operator-only moderation link
           StreamBuilder(
             stream: ref.watch(authStateProvider).whenData((user) {
               if (user == null) return const Stream.empty();
@@ -34,7 +38,6 @@ class HomeScreen extends ConsumerWidget {
               return const SizedBox.shrink();
             },
           ),
-          // Overflow menu for low-frequency utilities
           PopupMenuButton<String>(
             onSelected: (value) {
               switch (value) {
@@ -47,29 +50,17 @@ class HomeScreen extends ConsumerWidget {
               }
             },
             itemBuilder: (context) => [
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'feedback',
-                child: ListTile(
-                  leading: Icon(Icons.message_outlined),
-                  title: Text('Send feedback'),
-                  contentPadding: EdgeInsets.zero,
-                ),
+                child: Text('Send feedback', style: textTheme.bodyMedium?.copyWith(color: AppColors.textPrimary)),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'policy',
-                child: ListTile(
-                  leading: Icon(Icons.policy_outlined),
-                  title: Text('Content policy'),
-                  contentPadding: EdgeInsets.zero,
-                ),
+                child: Text('Content policy', style: textTheme.bodyMedium?.copyWith(color: AppColors.textPrimary)),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'signout',
-                child: ListTile(
-                  leading: Icon(Icons.logout),
-                  title: Text('Sign out'),
-                  contentPadding: EdgeInsets.zero,
-                ),
+                child: Text('Sign out', style: textTheme.bodyMedium?.copyWith(color: AppColors.textPrimary)),
               ),
             ],
           ),
@@ -77,28 +68,54 @@ class HomeScreen extends ConsumerWidget {
       ),
       body: ListView(
         children: [
+          const SizedBox(height: Spacing.sm),
           // Premier League entry
           Padding(
-            padding: const EdgeInsets.all(8),
-            child: Card(
-              child: ListTile(
-                leading: const CircleAvatar(
-                  child: Icon(Icons.emoji_events_outlined),
+            padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(Radii.md),
+              onTap: () => Navigator.pushNamed(
+                context,
+                AppRouter.competition,
+                arguments: {
+                  'id': 'premier-league',
+                  'name': 'Premier League',
+                },
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: Spacing.lg,
+                  vertical: Spacing.lg,
                 ),
-                title: const Text('Premier League'),
-                subtitle: const Text('All 20 clubs'),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => Navigator.pushNamed(
-                  context,
-                  AppRouter.competition,
-                  arguments: {
-                    'id': 'premier-league',
-                    'name': 'Premier League',
-                  },
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Premier League',
+                            style: textTheme.titleMedium,
+                          ),
+                          const SizedBox(height: Spacing.xs),
+                          Text(
+                            'All 20 clubs',
+                            style: textTheme.bodySmall,
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.chevron_right,
+                      color: AppColors.textFaint,
+                    ),
+                  ],
                 ),
               ),
             ),
           ),
+          const Divider(indent: Spacing.lg, endIndent: Spacing.lg),
+          const SizedBox(height: Spacing.sm),
 
           // Discovery shuffle
           const DiscoverySection(),

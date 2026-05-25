@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:chants/app/colors.dart';
+import 'package:chants/app/spacing.dart';
 
 class EmptyState extends StatelessWidget {
   final String message;
@@ -14,18 +16,16 @@ class EmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(Spacing.xxxl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 48, color: Theme.of(context).colorScheme.outline),
-            const SizedBox(height: 16),
+            Icon(icon, size: 40, color: AppColors.textFaint),
+            const SizedBox(height: Spacing.lg),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+              style: Theme.of(context).textTheme.bodyMedium,
             ),
           ],
         ),

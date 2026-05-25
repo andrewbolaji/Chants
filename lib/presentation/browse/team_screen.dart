@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:chants/app/colors.dart';
 import 'package:chants/app/providers.dart';
 import 'package:chants/app/router.dart';
+import 'package:chants/app/spacing.dart';
 import 'package:chants/data/models/chant.dart';
 import 'package:chants/data/models/player.dart';
 import 'package:chants/data/models/team.dart';
@@ -28,8 +30,8 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
     final playersStream = ref
         .watch(playerRepositoryProvider)
         .playersForTeamStream(teamId: widget.team.id);
-
     final isSignedIn = ref.watch(authStateProvider).valueOrNull != null;
+    final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
       appBar: AppBar(title: Text(widget.team.name)),
@@ -56,9 +58,8 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
             stream: playersStream,
             builder: (context, playerSnap) {
               if (chantSnap.hasError || playerSnap.hasError) {
-                return ErrorState(
-                  message:
-                      'Could not load chants. Pull down to try again.',
+                return const ErrorState(
+                  message: 'Could not load chants. Pull down to try again.',
                 );
               }
               if (!chantSnap.hasData || !playerSnap.hasData) {
@@ -68,21 +69,19 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
               final allChants = chantSnap.data!;
               final allPlayers = playerSnap.data!;
 
-              // Partition chants
-              final clubChants = allChants
-                  .where((c) => c.playerId == null)
-                  .toList();
+              final clubChants =
+                  allChants.where((c) => c.playerId == null).toList();
               final playerChantMap = <String, List<Chant>>{};
-              for (final c in allChants.where((c) => c.playerId != null)) {
+              for (final c
+                  in allChants.where((c) => c.playerId != null)) {
                 playerChantMap
                     .putIfAbsent(c.playerId!, () => [])
                     .add(c);
               }
-
-              // Players with chants
               final playersWithChants = allPlayers
                   .where((p) => playerChantMap.containsKey(p.id))
                   .toList();
+
               if (allChants.isEmpty && allPlayers.isEmpty) {
                 return EmptyState(
                   message:
@@ -91,7 +90,10 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
               }
 
               return ListView(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.only(
+                  top: Spacing.sm,
+                  bottom: Spacing.xxxl * 2,
+                ),
                 children: [
                   // Club chants
                   if (clubChants.isNotEmpty) ...[
@@ -108,15 +110,16 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
 
                   // Players with chants
                   if (playersWithChants.isNotEmpty) ...[
-                    const SizedBox(height: 16),
+                    const SizedBox(height: Spacing.lg),
                     _SectionHeader(title: 'Player chants'),
                     ...playersWithChants.expand((player) => [
                           ListTile(
-                            leading: const CircleAvatar(
-                              child: Icon(Icons.person_outline),
+                            title: Text(player.name, style: textTheme.titleSmall),
+                            trailing: Icon(
+                              Icons.chevron_right,
+                              size: 20,
+                              color: AppColors.textFaint,
                             ),
-                            title: Text(player.name),
-                            trailing: const Icon(Icons.chevron_right),
                             onTap: () => Navigator.pushNamed(
                               context,
                               AppRouter.player,
@@ -127,24 +130,21 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
                               },
                             ),
                           ),
-                          ...playerChantMap[player.id]!.map((c) => Padding(
-                                padding: const EdgeInsets.only(left: 16),
-                                child: ChantCard(
-                                  chant: c,
-                                  onTap: () => Navigator.pushNamed(
-                                    context,
-                                    AppRouter.chantDetail,
-                                    arguments: c,
-                                  ),
-                                ),
-                              )),
+                          ...playerChantMap[player.id]!.map(
+                              (c) => ChantCard(
+                                    chant: c,
+                                    onTap: () => Navigator.pushNamed(
+                                      context,
+                                      AppRouter.chantDetail,
+                                      arguments: c,
+                                    ),
+                                  )),
                         ]),
                   ],
 
-                  // Empty chants message
                   if (allChants.isEmpty)
                     Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      padding: const EdgeInsets.symmetric(vertical: Spacing.xl),
                       child: EmptyState(
                         message:
                             'No chants for ${widget.team.name} yet. They are on the way.',
@@ -153,35 +153,42 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
 
                   // Full squad (collapsible)
                   if (allPlayers.isNotEmpty) ...[
-                    const SizedBox(height: 16),
+                    const SizedBox(height: Spacing.lg),
+                    const Divider(indent: Spacing.lg, endIndent: Spacing.lg),
                     InkWell(
                       onTap: () =>
                           setState(() => _showFullSquad = !_showFullSquad),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 8),
+                          horizontal: Spacing.lg,
+                          vertical: Spacing.md,
+                        ),
                         child: Row(
                           children: [
                             Text(
                               'Full squad (${allPlayers.length})',
-                              style:
-                                  Theme.of(context).textTheme.titleSmall,
+                              style: textTheme.labelMedium,
                             ),
                             const Spacer(),
-                            Icon(_showFullSquad
-                                ? Icons.expand_less
-                                : Icons.expand_more),
+                            Icon(
+                              _showFullSquad
+                                  ? Icons.expand_less
+                                  : Icons.expand_more,
+                              color: AppColors.textMuted,
+                              size: 20,
+                            ),
                           ],
                         ),
                       ),
                     ),
                     if (_showFullSquad)
                       ...allPlayers.map((player) => ListTile(
-                            leading: const CircleAvatar(
-                              radius: 16,
-                              child: Icon(Icons.person_outline, size: 18),
+                            title: Text(
+                              player.name,
+                              style: textTheme.bodyMedium?.copyWith(
+                                color: AppColors.textPrimary,
+                              ),
                             ),
-                            title: Text(player.name),
                             dense: true,
                             onTap: () => Navigator.pushNamed(
                               context,
@@ -211,11 +218,14 @@ class _SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.lg,
+        vertical: Spacing.sm,
+      ),
       child: Text(
-        title,
-        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
+        title.toUpperCase(),
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              letterSpacing: 1.0,
             ),
       ),
     );

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:chants/app/colors.dart';
 import 'package:chants/app/providers.dart';
+import 'package:chants/app/spacing.dart';
 
 class PasswordResetScreen extends ConsumerStatefulWidget {
   const PasswordResetScreen({super.key});
@@ -25,9 +27,7 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
   Future<void> _sendReset() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() {
-      _loading = true;
-    });
+    setState(() => _loading = true);
 
     await ref
         .read(authRepositoryProvider)
@@ -42,25 +42,34 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Reset Password')),
+      appBar: AppBar(title: const Text('Reset password')),
       body: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.symmetric(horizontal: Spacing.xl),
         child: _sent
             ? Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.check_circle_outline, size: 64),
-                  const SizedBox(height: 16),
-                  const Text(
+                  Icon(
+                    Icons.check_circle_outline,
+                    size: 48,
+                    color: AppColors.amber,
+                  ),
+                  const SizedBox(height: Spacing.lg),
+                  Text(
                     'If that email is registered, you will get a reset link. '
                     'Check your inbox and spam folder.',
                     textAlign: TextAlign.center,
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: AppColors.textPrimary,
+                    ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: Spacing.xl),
                   FilledButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('Back to Sign In'),
+                    child: const Text('Back to sign in'),
                   ),
                 ],
               )
@@ -70,11 +79,14 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Text(
+                    Text(
                       'Enter the email you signed up with. '
                       'We will send a link to reset your password.',
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: AppColors.textPrimary,
+                      ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: Spacing.lg),
                     TextFormField(
                       controller: _emailController,
                       decoration: const InputDecoration(labelText: 'Email'),
@@ -83,7 +95,7 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
                       validator: (v) =>
                           v == null || v.isEmpty ? 'Enter your email.' : null,
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: Spacing.xl),
                     FilledButton(
                       onPressed: _loading ? null : _sendReset,
                       child: _loading
@@ -93,7 +105,7 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
                               child:
                                   CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : const Text('Send Reset Link'),
+                          : const Text('Send reset link'),
                     ),
                   ],
                 ),
