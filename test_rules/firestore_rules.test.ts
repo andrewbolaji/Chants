@@ -40,6 +40,7 @@ async function seedOperator(uid: string) {
     await setDoc(doc(db, "profiles", uid), {
       displayName: "Operator",
       role: "operator",
+      banned: false,
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
     });
@@ -52,6 +53,20 @@ async function seedUserProfile(uid: string) {
     await setDoc(doc(db, "profiles", uid), {
       displayName: "TestUser",
       role: "user",
+      banned: false,
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    });
+  });
+}
+
+async function seedBannedUser(uid: string) {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    await setDoc(doc(db, "profiles", uid), {
+      displayName: "BannedUser",
+      role: "user",
+      banned: true,
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
     });
@@ -226,6 +241,7 @@ describe("profiles", () => {
     await assertSucceeds(setDoc(doc(db, "profiles", "user1"), {
       displayName: "Fan",
       role: "user",
+      banned: false,
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
     }));
@@ -236,6 +252,7 @@ describe("profiles", () => {
     await assertFails(setDoc(doc(db, "profiles", "user2"), {
       displayName: "Impersonator",
       role: "user",
+      banned: false,
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
     }));
@@ -273,6 +290,7 @@ describe("profiles", () => {
     await assertSucceeds(setDoc(doc(db, "profiles", "user2"), {
       displayName: "LegitFan",
       role: "user",
+      banned: false,
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
     }));
@@ -549,9 +567,10 @@ describe("votes", () => {
 // ===================== REPORTS =====================
 
 describe("reports", () => {
-  it("allows auth user to create report", async () => {
+  it("allows auth user to create report with correct doc ID", async () => {
+    await seedUserProfile("user1");
     const db = testEnv.authenticatedContext("user1").firestore();
-    await assertSucceeds(addDoc(collection(db, "reports"), {
+    await assertSucceeds(setDoc(doc(db, "reports", "user1_ch1"), {
       chantId: "ch1",
       reportedBy: "user1",
       reason: "Offensive content",
@@ -593,8 +612,9 @@ describe("reports", () => {
   });
 
   it("denies create with status other than 'pending'", async () => {
+    await seedUserProfile("user1");
     const db = testEnv.authenticatedContext("user1").firestore();
-    await assertFails(addDoc(collection(db, "reports"), {
+    await assertFails(setDoc(doc(db, "reports", "user1_ch1"), {
       chantId: "ch1",
       reportedBy: "user1",
       reason: "Offensive content",
@@ -767,9 +787,10 @@ describe("feedback", () => {
 // ===================== REPORT WRITE CORRECTNESS (Fix D) =====================
 
 describe("report write correctness", () => {
-  it("allows well-formed report create with status pending", async () => {
+  it("allows well-formed report create with status pending and correct doc ID", async () => {
+    await seedUserProfile("user1");
     const db = testEnv.authenticatedContext("user1").firestore();
-    await assertSucceeds(addDoc(collection(db, "reports"), {
+    await assertSucceeds(setDoc(doc(db, "reports", "user1_ch1"), {
       chantId: "ch1",
       reportedBy: "user1",
       reason: "Hate speech or slurs: offensive language",
@@ -780,9 +801,9 @@ describe("report write correctness", () => {
 
   it("denies report create by unauthenticated user", async () => {
     const db = testEnv.unauthenticatedContext().firestore();
-    await assertFails(addDoc(collection(db, "reports"), {
+    await assertFails(setDoc(doc(db, "reports", "anon_ch1"), {
       chantId: "ch1",
-      reportedBy: "user1",
+      reportedBy: "anon",
       reason: "Test",
       createdAt: Timestamp.now(),
       status: "pending",
@@ -790,8 +811,9 @@ describe("report write correctness", () => {
   });
 
   it("denies report create with reportedBy != auth uid", async () => {
+    await seedUserProfile("user1");
     const db = testEnv.authenticatedContext("user1").firestore();
-    await assertFails(addDoc(collection(db, "reports"), {
+    await assertFails(setDoc(doc(db, "reports", "user1_ch1"), {
       chantId: "ch1",
       reportedBy: "someone_else",
       reason: "Test",
@@ -833,5 +855,260 @@ describe("chant list query boundary", () => {
       where("hidden", "==", false)
     );
     await assertFails(getDocs(q));
+  });
+});
+
+// ===================== BLOCK 3: BAN ENFORCEMENT =====================
+
+describe("ban enforcement", () => {
+  const validChantData = {
+    title: "Test",
+    sportId: "s1",
+    competitionId: "c1",
+    teamId: "t1",
+    playerId: null,
+    subjectTag: "club",
+    lyrics: "La la la",
+    tuneName: "Original",
+    contextNotes: null,
+    coverImageUrl: null,
+    mediaUrl: null,
+    mediaType: "none",
+    status: "community",
+    realOrParody: "real",
+    upvotes: 0,
+    downvotes: 0,
+    score: 0,
+    commentCount: 0,
+    createdBy: "banned1",
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
+    flagCount: 0,
+    hidden: false,
+    removed: false,
+  };
+
+  it("denies chant create by banned user", async () => {
+    await seedBannedUser("banned1");
+    const db = testEnv.authenticatedContext("banned1").firestore();
+    await assertFails(setDoc(doc(db, "chants", "test-chant"), validChantData));
+  });
+
+  it("allows chant create by non-banned user", async () => {
+    await seedUserProfile("user1");
+    const db = testEnv.authenticatedContext("user1").firestore();
+    await assertSucceeds(setDoc(doc(db, "chants", "test-chant"), {
+      ...validChantData,
+      createdBy: "user1",
+    }));
+  });
+
+  it("denies vote create by banned user", async () => {
+    await seedBannedUser("banned1");
+    const db = testEnv.authenticatedContext("banned1").firestore();
+    await assertFails(setDoc(doc(db, "votes", "banned1_ch1"), {
+      chantId: "ch1",
+      userId: "banned1",
+      value: 1,
+      createdAt: Timestamp.now(),
+    }));
+  });
+
+  it("denies report create by banned user", async () => {
+    await seedBannedUser("banned1");
+    const db = testEnv.authenticatedContext("banned1").firestore();
+    await assertFails(setDoc(doc(db, "reports", "banned1_ch1"), {
+      chantId: "ch1",
+      reportedBy: "banned1",
+      reason: "test",
+      createdAt: Timestamp.now(),
+      status: "pending",
+    }));
+  });
+
+  it("denies banned user setting own banned to false (Fix 1)", async () => {
+    await seedBannedUser("banned1");
+    const db = testEnv.authenticatedContext("banned1").firestore();
+    await assertFails(updateDoc(doc(db, "profiles", "banned1"), {
+      banned: false,
+    }));
+  });
+
+  it("denies user changing own role (re-confirmed with banned field)", async () => {
+    await seedUserProfile("user1");
+    const db = testEnv.authenticatedContext("user1").firestore();
+    await assertFails(updateDoc(doc(db, "profiles", "user1"), {
+      role: "operator",
+    }));
+  });
+});
+
+// ===================== BLOCK 3: PROFILE CREATE PINS BANNED =====================
+
+describe("profile create pins banned", () => {
+  it("allows create with banned == false", async () => {
+    const db = testEnv.authenticatedContext("newuser").firestore();
+    await assertSucceeds(setDoc(doc(db, "profiles", "newuser"), {
+      displayName: "NewFan",
+      role: "user",
+      banned: false,
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    }));
+  });
+
+  it("denies create with banned == true", async () => {
+    const db = testEnv.authenticatedContext("newuser2").firestore();
+    await assertFails(setDoc(doc(db, "profiles", "newuser2"), {
+      displayName: "Hacker",
+      role: "user",
+      banned: true,
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    }));
+  });
+});
+
+// ===================== BLOCK 3: REPORT DEDUP (doc ID) =====================
+
+describe("report dedup", () => {
+  it("allows report with correct doc ID convention", async () => {
+    await seedUserProfile("user1");
+    const db = testEnv.authenticatedContext("user1").firestore();
+    await assertSucceeds(setDoc(doc(db, "reports", "user1_ch1"), {
+      chantId: "ch1",
+      reportedBy: "user1",
+      reason: "Hate speech",
+      createdAt: Timestamp.now(),
+      status: "pending",
+    }));
+  });
+
+  it("denies report with wrong doc ID", async () => {
+    await seedUserProfile("user1");
+    const db = testEnv.authenticatedContext("user1").firestore();
+    await assertFails(setDoc(doc(db, "reports", "wrong-id"), {
+      chantId: "ch1",
+      reportedBy: "user1",
+      reason: "test",
+      createdAt: Timestamp.now(),
+      status: "pending",
+    }));
+  });
+});
+
+// ===================== BLOCK 3: SERVER-SIDE LENGTH LIMITS (Fix 3) =====================
+
+describe("server-side length limits", () => {
+  it("denies chant with title > 200 chars", async () => {
+    await seedUserProfile("user1");
+    const db = testEnv.authenticatedContext("user1").firestore();
+    await assertFails(setDoc(doc(db, "chants", "long-title"), {
+      title: "x".repeat(201),
+      sportId: "s1",
+      competitionId: "c1",
+      teamId: "t1",
+      playerId: null,
+      subjectTag: "club",
+      lyrics: "test",
+      tuneName: "test",
+      contextNotes: null,
+      coverImageUrl: null,
+      mediaUrl: null,
+      mediaType: "none",
+      status: "community",
+      realOrParody: "real",
+      upvotes: 0, downvotes: 0, score: 0, commentCount: 0,
+      createdBy: "user1",
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+      flagCount: 0,
+      hidden: false,
+      removed: false,
+    }));
+  });
+
+  it("denies chant with lyrics > 5000 chars", async () => {
+    await seedUserProfile("user1");
+    const db = testEnv.authenticatedContext("user1").firestore();
+    await assertFails(setDoc(doc(db, "chants", "long-lyrics"), {
+      title: "test",
+      sportId: "s1",
+      competitionId: "c1",
+      teamId: "t1",
+      playerId: null,
+      subjectTag: "club",
+      lyrics: "x".repeat(5001),
+      tuneName: "test",
+      contextNotes: null,
+      coverImageUrl: null,
+      mediaUrl: null,
+      mediaType: "none",
+      status: "community",
+      realOrParody: "real",
+      upvotes: 0, downvotes: 0, score: 0, commentCount: 0,
+      createdBy: "user1",
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+      flagCount: 0,
+      hidden: false,
+      removed: false,
+    }));
+  });
+
+  it("allows chant with fields at max length", async () => {
+    await seedUserProfile("user1");
+    const db = testEnv.authenticatedContext("user1").firestore();
+    await assertSucceeds(setDoc(doc(db, "chants", "max-len"), {
+      title: "x".repeat(200),
+      sportId: "s1",
+      competitionId: "c1",
+      teamId: "t1",
+      playerId: null,
+      subjectTag: "club",
+      lyrics: "x".repeat(5000),
+      tuneName: "x".repeat(200),
+      contextNotes: "x".repeat(500),
+      coverImageUrl: null,
+      mediaUrl: null,
+      mediaType: "none",
+      status: "community",
+      realOrParody: "real",
+      upvotes: 0, downvotes: 0, score: 0, commentCount: 0,
+      createdBy: "user1",
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+      flagCount: 0,
+      hidden: false,
+      removed: false,
+    }));
+  });
+
+  it("denies chant with contextNotes > 500 chars", async () => {
+    await seedUserProfile("user1");
+    const db = testEnv.authenticatedContext("user1").firestore();
+    await assertFails(setDoc(doc(db, "chants", "long-context"), {
+      title: "test",
+      sportId: "s1",
+      competitionId: "c1",
+      teamId: "t1",
+      playerId: null,
+      subjectTag: "club",
+      lyrics: "test",
+      tuneName: "test",
+      contextNotes: "x".repeat(501),
+      coverImageUrl: null,
+      mediaUrl: null,
+      mediaType: "none",
+      status: "community",
+      realOrParody: "real",
+      upvotes: 0, downvotes: 0, score: 0, commentCount: 0,
+      createdBy: "user1",
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+      flagCount: 0,
+      hidden: false,
+      removed: false,
+    }));
   });
 });

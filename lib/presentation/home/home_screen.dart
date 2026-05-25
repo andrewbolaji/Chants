@@ -13,6 +13,27 @@ class HomeScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Chants'),
         actions: [
+          // Operator-only moderation link
+          StreamBuilder(
+            stream: ref.watch(authStateProvider).whenData((user) {
+              if (user == null) return const Stream.empty();
+              return ref
+                  .watch(profileRepositoryProvider)
+                  .profileStream(user.uid);
+            }).value,
+            builder: (context, snap) {
+              final profile = snap.data;
+              if (profile != null && profile.isOperator) {
+                return IconButton(
+                  icon: const Icon(Icons.shield_outlined),
+                  tooltip: 'Moderation',
+                  onPressed: () =>
+                      Navigator.pushNamed(context, AppRouter.moderation),
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.policy_outlined),
             tooltip: 'Content policy',

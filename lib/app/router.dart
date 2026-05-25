@@ -11,6 +11,8 @@ import 'package:chants/presentation/browse/player_screen.dart';
 import 'package:chants/presentation/browse/team_screen.dart';
 import 'package:chants/presentation/content_policy/content_policy_screen.dart';
 import 'package:chants/presentation/home/home_screen.dart';
+import 'package:chants/presentation/moderation/moderation_screen.dart';
+import 'package:chants/presentation/submit/submit_chant_screen.dart';
 
 class AppRouter {
   static const String signIn = '/sign-in';
@@ -22,6 +24,8 @@ class AppRouter {
   static const String team = '/team';
   static const String player = '/player';
   static const String chantDetail = '/chant';
+  static const String submitChant = '/submit';
+  static const String moderation = '/moderation';
 
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -45,12 +49,31 @@ class AppRouter {
         final t = settings.arguments as Team;
         return MaterialPageRoute(builder: (_) => TeamScreen(team: t));
       case player:
-        final p = settings.arguments as Player;
-        return MaterialPageRoute(builder: (_) => PlayerScreen(player: p));
+        final args = settings.arguments as Map<String, dynamic>;
+        return MaterialPageRoute(
+          builder: (_) => PlayerScreen(
+            player: args['player'] as Player,
+            sportId: args['sportId'] as String?,
+            competitionId: args['competitionId'] as String?,
+          ),
+        );
       case chantDetail:
         final c = settings.arguments as Chant;
         return MaterialPageRoute(
             builder: (_) => ChantDetailScreen(chant: c));
+      case submitChant:
+        final args = settings.arguments as Map<String, String?>;
+        return MaterialPageRoute(
+          builder: (_) => SubmitChantScreen(
+            teamId: args['teamId']!,
+            sportId: args['sportId']!,
+            competitionId: args['competitionId']!,
+            prefilledPlayerId: args['playerId'],
+          ),
+        );
+      case moderation:
+        return MaterialPageRoute(
+            builder: (_) => const ModerationScreen());
       case home:
       default:
         return MaterialPageRoute(builder: (_) => const HomeScreen());

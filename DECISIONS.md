@@ -35,6 +35,16 @@
 | 2026-05-25 | Seed re-run safety: existing docs get content-only updates | On re-seed, only content fields (title, lyrics, tuneName, etc.) are updated. Counters, flags, createdBy, and createdAt are never overwritten. Protects vote tallies and moderation state. |
 | 2026-05-25 | No composite indexes for equality-only queries with client-side sort | At Block 2 volume, Firestore zig-zag merge handles equality-only queries (teamId + hidden + removed) without composite indexes. Composite indexes added only when orderBy is needed server-side. |
 | 2026-05-25 | Released-song anthems: attribution plus context plus optional crowd clip, never hosted lyrics | Songs like You'll Never Walk Alone, Blue Moon, Sweet Caroline are seeded as attribution and context only, unless a licence or permission is obtained. North London Forever omitted from Arsenal seed pending permission. |
+| 2026-05-25 | Privileged fields must be BOTH pinned on create AND blocked on self-update | role and banned are pinned to their defaults on create and blocked from self-update via affectedKeys. Create-pinning alone is half the protection (a user could update the field after creation). Applies to: role, banned, counters, status, hidden, removed. |
+| 2026-05-25 | Rate limiting is soft enforcement in v1 (Fix 2 option b) | Client-side throttle for friendly UX plus a Cloud Function that auto-hides (never auto-removes) abnormally high-velocity bursts. NOT hard server enforcement. Banned is hard-enforced in security rules. Hardening trigger: observed spam abuse warrants routing submission through an HTTPS callable with true server-side enforcement. |
+| 2026-05-25 | Server-side field length limits on chant create (Fix 3) | title <= 200, lyrics <= 5000, tuneName <= 200, contextNotes <= 500. Enforced in security rules, not just client-side. Mirrors the feedback message.size() pattern. |
+| 2026-05-25 | Media upload deferred from Block 3 | Text-first submission plus moderation keeps the riskiest block focused. Storage stays locked (deny all). Media upload is the next step (Block 3b or Block 6). |
+| 2026-05-25 | Ban semantics | Blocks new submissions (chant creates) and votes. Does NOT auto-hide existing content (separate moderation action). User can still read and sign in. Clear message shown. |
+| 2026-05-25 | Auto-hide at 3 distinct reporters | One report per user per chant (doc ID enforced). Three distinct reporters trigger auto-hide (pending review, not removal). Operator can unhide (resets flagCount to 0 and dismisses reports). |
+| 2026-05-25 | Report dedup via doc ID convention | reportId = userId_chantId, same pattern as votes. Structurally prevents duplicate reports. |
+| 2026-05-25 | Moderation callable derives actor UID from auth context | Never from a client-supplied parameter. Audit trail cannot be spoofed. |
+| 2026-05-25 | Moderation closes the loop (Fix 4) | hide/remove resolves associated reports to reviewed. unhide resets flagCount to 0 and dismisses reports so cleared false positives do not re-trigger. |
+| 2026-05-25 | banned check via get() adds read cost | Folded into the existing operator-role custom-claims migration trigger: when read costs justify it or operator actions extend beyond the founder. |
 
 ## Notes for Later Blocks
 | Date | Note | Relevant Block |

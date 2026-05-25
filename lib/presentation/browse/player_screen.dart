@@ -10,18 +10,43 @@ import 'package:chants/presentation/shared/error_state.dart';
 
 class PlayerScreen extends ConsumerWidget {
   final Player player;
-  const PlayerScreen({super.key, required this.player});
+  final String? sportId;
+  final String? competitionId;
+
+  const PlayerScreen({
+    super.key,
+    required this.player,
+    this.sportId,
+    this.competitionId,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final chantsStream = ref
         .watch(chantRepositoryProvider)
         .chantsForPlayerStream(playerId: player.id);
+    final isSignedIn = ref.watch(authStateProvider).valueOrNull != null;
 
     return Scaffold(
       appBar: AppBar(
         title: Text(player.name),
       ),
+      floatingActionButton: isSignedIn && sportId != null && competitionId != null
+          ? FloatingActionButton.extended(
+              onPressed: () => Navigator.pushNamed(
+                context,
+                AppRouter.submitChant,
+                arguments: {
+                  'teamId': player.teamId,
+                  'sportId': sportId,
+                  'competitionId': competitionId,
+                  'playerId': player.id,
+                },
+              ),
+              icon: const Icon(Icons.add),
+              label: const Text('Add a chant'),
+            )
+          : null,
       body: StreamBuilder<List<Chant>>(
         stream: chantsStream,
         builder: (context, snapshot) {

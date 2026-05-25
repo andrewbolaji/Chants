@@ -15,6 +15,10 @@ service cloud.firestore {
       return res.data.hidden == false && res.data.removed == false;
     }
 
+    function isNotBanned() {
+      return get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.banned == false;
+    }
+
     // sports: public read, operator write
     match /sports/{sportId} {
       allow read: if true;
@@ -39,24 +43,26 @@ service cloud.firestore {
       allow write: if isOperator();
     }
 
-    // profiles: public read, owner create (role pinned to 'user'), owner update (cannot change role)
+    // profiles: public read, owner create (role and banned pinned), owner update (cannot change role or banned)
     match /profiles/{userId} {
       allow read: if true;
       allow create: if isAuth() && request.auth.uid == userId
         && request.resource.data.role == 'user'
+        && request.resource.data.banned == false
         && request.resource.data.displayName is string
         && request.resource.data.displayName.size() > 0
         && request.resource.data.displayName.size() <= 50
         && request.resource.data.createdAt is timestamp
         && request.resource.data.updatedAt is timestamp;
       allow update: if isAuth() && request.auth.uid == userId
-        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']);
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'banned']);
     }
 
-    // chants: public read (visible only), auth create, restricted update
+    // chants: public read (visible only), auth create (not banned, server-side length limits), restricted update
     match /chants/{chantId} {
       allow read: if isVisible(resource) || isOperator();
       allow create: if isAuth()
+        && isNotBanned()
         && request.resource.data.createdBy == request.auth.uid
         && request.resource.data.status == 'community'
         && request.resource.data.upvotes == 0
@@ -65,23 +71,38 @@ service cloud.firestore {
         && request.resource.data.commentCount == 0
         && request.resource.data.flagCount == 0
         && request.resource.data.hidden == false
-        && request.resource.data.removed == false;
+        && request.resource.data.removed == false
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 200
+        && request.resource.data.lyrics is string
+        && request.resource.data.lyrics.size() > 0
+        && request.resource.data.lyrics.size() <= 5000
+        && request.resource.data.tuneName is string
+        && request.resource.data.tuneName.size() > 0
+        && request.resource.data.tuneName.size() <= 200
+        && (request.resource.data.contextNotes == null
+            || request.resource.data.contextNotes.size() <= 500);
+      // Author can update content fields only, never counters/status/hidden/removed
       allow update: if isAuth()
         && resource.data.createdBy == request.auth.uid
         && !request.resource.data.diff(resource.data).affectedKeys()
             .hasAny(['upvotes','downvotes','score','commentCount',
                      'flagCount','hidden','removed','status','createdBy','createdAt']);
+      // Operator can update anything (moderation, promote to canonical)
       allow update: if isOperator();
     }
 
-    // votes: one per user per chant, value 1 or -1
+    // votes: one per user per chant, value 1 or -1, not banned
     match /votes/{voteId} {
       allow read: if true;
       allow create: if isAuth()
+        && isNotBanned()
         && request.resource.data.userId == request.auth.uid
         && voteId == request.auth.uid + '_' + request.resource.data.chantId
         && (request.resource.data.value == 1 || request.resource.data.value == -1);
       allow update: if isAuth()
+        && isNotBanned()
         && resource.data.userId == request.auth.uid
         && (request.resource.data.value == 1 || request.resource.data.value == -1)
         && !request.resource.data.diff(resource.data).affectedKeys()
@@ -89,12 +110,14 @@ service cloud.firestore {
       allow delete: if isAuth() && resource.data.userId == request.auth.uid;
     }
 
-    // reports: insert-only by authenticated users, operator reads
+    // reports: one per user per chant (doc ID = userId_chantId), not banned, insert-only
     match /reports/{reportId} {
       allow read: if isOperator();
       allow create: if isAuth()
+        && isNotBanned()
         && request.resource.data.reportedBy == request.auth.uid
-        && request.resource.data.status == 'pending';
+        && request.resource.data.status == 'pending'
+        && reportId == request.auth.uid + '_' + request.resource.data.chantId;
     }
 
     // auditLog: no client writes (Cloud Functions use Admin SDK), operator read

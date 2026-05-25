@@ -10,6 +10,7 @@ import 'package:chants/data/repositories/chant_repository.dart';
 import 'package:chants/data/repositories/vote_repository.dart';
 import 'package:chants/data/repositories/report_repository.dart';
 import 'package:chants/data/repositories/feedback_repository.dart';
+import 'package:chants/data/repositories/moderation_repository.dart';
 
 // Repositories
 final authRepositoryProvider = Provider<AuthRepository>(
@@ -50,6 +51,10 @@ final reportRepositoryProvider = Provider<ReportRepository>(
 
 final feedbackRepositoryProvider = Provider<FeedbackRepository>(
   (ref) => FeedbackRepository(),
+);
+
+final moderationRepositoryProvider = Provider<ModerationRepository>(
+  (ref) => ModerationRepository(),
 );
 
 // Auth state stream

@@ -4,6 +4,7 @@ class UserProfile {
   final String id;
   final String displayName;
   final String role;
+  final bool banned;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -11,6 +12,7 @@ class UserProfile {
     required this.id,
     required this.displayName,
     required this.role,
+    this.banned = false,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -23,6 +25,7 @@ class UserProfile {
       id: id,
       displayName: json['displayName'] as String,
       role: json['role'] as String,
+      banned: json['banned'] as bool? ?? false,
       createdAt: (json['createdAt'] as Timestamp).toDate(),
       updatedAt: (json['updatedAt'] as Timestamp).toDate(),
     );
@@ -37,6 +40,7 @@ class UserProfile {
     return {
       'displayName': displayName,
       'role': role,
+      'banned': banned,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
     };
@@ -48,6 +52,7 @@ class UserProfile {
     String? id,
     String? displayName,
     String? role,
+    bool? banned,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -55,6 +60,7 @@ class UserProfile {
       id: id ?? this.id,
       displayName: displayName ?? this.displayName,
       role: role ?? this.role,
+      banned: banned ?? this.banned,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

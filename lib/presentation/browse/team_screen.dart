@@ -29,8 +29,26 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
         .watch(playerRepositoryProvider)
         .playersForTeamStream(teamId: widget.team.id);
 
+    final isSignedIn = ref.watch(authStateProvider).valueOrNull != null;
+
     return Scaffold(
       appBar: AppBar(title: Text(widget.team.name)),
+      floatingActionButton: isSignedIn
+          ? FloatingActionButton.extended(
+              onPressed: () => Navigator.pushNamed(
+                context,
+                AppRouter.submitChant,
+                arguments: {
+                  'teamId': widget.team.id,
+                  'sportId': widget.team.sportId,
+                  'competitionId': widget.team.competitionId,
+                  'playerId': null,
+                },
+              ),
+              icon: const Icon(Icons.add),
+              label: const Text('Add a chant'),
+            )
+          : null,
       body: StreamBuilder<List<Chant>>(
         stream: chantsStream,
         builder: (context, chantSnap) {
@@ -102,7 +120,11 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
                             onTap: () => Navigator.pushNamed(
                               context,
                               AppRouter.player,
-                              arguments: player,
+                              arguments: {
+                                'player': player,
+                                'sportId': widget.team.sportId,
+                                'competitionId': widget.team.competitionId,
+                              },
                             ),
                           ),
                           ...playerChantMap[player.id]!.map((c) => Padding(
@@ -164,7 +186,11 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
                             onTap: () => Navigator.pushNamed(
                               context,
                               AppRouter.player,
-                              arguments: player,
+                              arguments: {
+                                'player': player,
+                                'sportId': widget.team.sportId,
+                                'competitionId': widget.team.competitionId,
+                              },
                             ),
                           )),
                   ],
