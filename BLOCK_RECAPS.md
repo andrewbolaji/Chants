@@ -8,7 +8,8 @@ A Block is not closed until its commit hash is recorded here.
 
 ## Block 1: Foundation and the Agnostic Data Model
 **Status:** CLOSED
-**Commit:** `accbe3d`
+**Commit (final reviewed code):** `accbe3d`
+**Commit (recap-write, docs only):** `04718af`
 **Tests:** 80 passing (30 Dart unit tests + 50 Firestore rules emulator tests)
 **Analyze:** `flutter analyze` -- 0 issues
 **Gates verified:** All 3 gates (flutter analyze, flutter test, rules emulator) each proven to catch a deliberate break, then reverted.

@@ -200,4 +200,10 @@ Works end to end on the real seeded data; mobile-responsive; empty, loading, and
 
 ## 14. Lessons captured live
 
-(Empty. Append 1 to 3 entries at each Block close. Folded into the framework at project end via the maintenance protocol.)
+### From Block 1
+
+**All-N/A security pass is a red flag, not a green light.** The implementer's own security review returned all N/A and missed a High privilege escalation in the profiles create rule (role field not pinned, allowing self-promotion to operator via a crafted SDK write). The independent adversarial review caught it. A clean security sheet is a signal to push harder, not to close.
+
+**Recap-commit self-reference always mismatches.** Recording a hash inside the file that the commit creates means the hash is always one behind. Resolution: record the final reviewed code commit (`accbe3d`), and treat the recap-write as a noted docs-only commit on top (`04718af`). Document both explicitly so it reads as intent, not drift.
+
+**Field-pinning on CREATE is a bug class.** Every server-managed or privileged field must be pinned on create, not just blocked on update. profiles (role), reports (status), and feedback (resolved) all missed this initially, while chants and votes had it right. The pattern: if a field should never be client-set on creation, the create rule pins it. Default to pinning.
