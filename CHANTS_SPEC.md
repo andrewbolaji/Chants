@@ -176,16 +176,17 @@ Passion project first, business bet second. No billing in v1. Business-tier idea
 
 ## 12. Build order
 
-v1 (releasable):
+v1.0 (code-complete, hardened):
 - **Block 1:** Foundation and the agnostic data model.
 - **Block 2:** The archive and the seed.
 - **Block 3:** Submission and basic moderation.
 - **Block 4:** Voting.
 - **Block 5:** Suggestion box.
-- **Block 6:** Visual design and beautification. Design system in tokens, restyle every screen.
-- **Block 7:** Polish and ship v1. Mobile review, copy pass, access-control sweep, account deletion, App Check, billing kill-switch, release config, content-policy swap, production deploy.
+- **Block 6:** Visual design and beautification.
+- **Block 7:** Polish and hardening. Account deletion, App Check, Crashlytics, billing kill-switch, copy pass, audits.
 
-v1.1 (social layer, keep the gap short):
+v1.1 (social layer, the release target):
+- Release at v1.1, not v1.0. The social and self-correction layer (comments, follows, creation prompts) is core to the product feeling alive, so launching without it would feel static. v1.0 is the hardened foundation; v1.1 is when the public sees it.
 - **Block 8:** Comments, replies, and collaborative lyric suggestions.
 - **Block 9:** Follow and feeds (For You, Following).
 - **Block 10:** Creation prompts and share-out.

@@ -75,9 +75,7 @@ class ChantDetailScreen extends ConsumerWidget {
               runSpacing: Spacing.xs,
               children: [
                 if (chant.status == 'canonical')
-                  _Badge(label: 'Canonical', isAmber: true)
-                else
-                  const _Badge(label: 'Community', isAmber: false),
+                  const _Badge(label: 'Verified', isAmber: true),
                 _Badge(label: chant.subjectTag, isAmber: false),
                 if (chant.realOrParody == 'parody')
                   const _Badge(label: 'Parody', isAmber: false),

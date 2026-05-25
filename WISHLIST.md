@@ -6,6 +6,10 @@
 **The idea:** A single shared quote everyone sees on the home screen, rotating roughly every 3 days, chosen date-deterministically from a curated quotes collection (no per-user randomness, no server cron). Andrew appends entries over time, each copyright-cleared before adding. Real attributed football quotes preferred over copyrighted song lyrics. Goes on the home screen, NOT the OS launch or splash screen (platform guidance keeps that minimal, and it flashes too fast to read).
 **Why v1.1:** Home-screen polish once the core content is proven.
 
+### v1.1: Duplicate and variants model (the first v1.1 feature)
+**The idea:** One entry per chant with the crowd refining it (the Genius and Wikipedia model), not many competing uploads. Reached through three soft moves: (1) Nudge on submit: show similar existing chants ("is it one of these?") and funnel to the existing entry, creating a new one only if genuinely new. Reuses search, cheap, pull forward as the first v1.1 feature. (2) Variants live inside the entry: a primary version plus alternate versions and suggested corrections, surfaced by votes and confirmed by the operator. (3) Operator merge as the backstop for duplicates that slip through. Avoid hard automatic duplicate-blocking: it is brittle and wrongly blocks genuinely new chants.
+**Why v1.1:** Prevents the archive from fragmenting as user submissions grow. Without it, popular chants get multiple near-identical entries that dilute votes and confuse users.
+
 ### v1.1: Comments, replies, and collaborative lyric suggestions
 **The idea:** Threaded discussion on a chant, plus a lyric-suggestion mechanic where the most-upvoted tweaks surface at the top, turning comments into a refinement engine.
 **Why v1.1:** The social layer is what makes the app sticky, but v1 has to prove find-and-add first. Reporting and moderation apply.

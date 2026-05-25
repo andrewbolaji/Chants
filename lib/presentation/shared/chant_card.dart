@@ -34,9 +34,7 @@ class ChantCard extends StatelessWidget {
             Row(
               children: [
                 if (chant.status == 'canonical')
-                  _AmberBadge(label: 'Canonical')
-                else
-                  Text('Community', style: textTheme.labelSmall),
+                  _AmberBadge(label: 'Verified'),
                 const SizedBox(width: Spacing.sm),
                 Text('\u00b7', style: textTheme.labelSmall),
                 const SizedBox(width: Spacing.sm),

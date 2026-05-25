@@ -292,7 +292,7 @@ class _PromotionCard extends StatelessWidget {
                       if (!context.mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                            content: Text('Promoted to canonical.')),
+                            content: Text('Promoted to verified.')),
                       );
                     } catch (e) {
                       if (!context.mounted) return;

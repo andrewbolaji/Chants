@@ -65,6 +65,8 @@
 | 2026-05-25 | Firebase App Check: soft-enforce at launch (D6) | Debug provider for dev, DeviceCheck/PlayIntegrity for release. Soft-enforce (log, do not reject) at launch. Flip to full enforcement after 1 to 2 weeks of clean telemetry. |
 | 2026-05-25 | Billing alerts at $10/$50/$100/$250, kill-switch at $500 (C15) | Budget alerts for escalating early warning. $500 kill-switch disables billing as last-resort circuit breaker. Tripping takes the app offline by design. Retune with real cost-per-user data after launch. |
 | 2026-05-25 | firebase_storage removed from pubspec (C10) | Not used until media ships. Re-add when needed. |
+| 2026-05-25 | Release at v1.1, not v1.0 | The social and self-correction layer (comments, follows, creation prompts, duplicate handling) is core to the product feeling alive. Launching without it would feel static. v1.0 is the hardened foundation; v1.1 is when the public sees it. |
+| 2026-05-25 | "Canonical" renamed to "Verified" in the UI | Users see "Verified" badge (amber). Community chants show no badge. Internal status field stays "canonical" in Firestore. |
 
 ## Notes for Later Blocks
 | Date | Note | Relevant Block |

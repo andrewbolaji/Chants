@@ -48,7 +48,7 @@ void main() {
       await tester.pumpWidget(wrap(
         ChantCard(chant: testChant, onTap: () {}),
       ));
-      expect(find.text('Canonical'), findsOneWidget);
+      expect(find.text('Verified'), findsOneWidget);
     });
 
     testWidgets('shows parody tag when applicable', (tester) async {
