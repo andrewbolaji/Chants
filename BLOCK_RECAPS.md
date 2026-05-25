@@ -522,3 +522,65 @@ No new PII. Vote docs contain userId (already in the system).
 
 ### Commit
 `6e1000c`
+
+---
+
+## Block 5: Suggestion Box
+**Status:** CLOSED
+**Commit (final reviewed code):** `07ca809`
+**Tests:** 142 passing (50 Dart + 73 rules emulator + 19 seed/counter)
+**Analyze:** `flutter analyze` -- 0 issues
+
+### What was built
+- **Feedback form:** Category selector (suggestion/bug/question/other), 1000-char message with counter, follow-up checkbox, fan-voice confirmation.
+- **Overflow menu:** Moved feedback, content policy, and sign-out into a three-dot menu on the home screen. Moderation icon stays direct.
+- **Operator feedback tab:** 4th tab on the moderation screen. Newest first, read-only.
+- **Reuse:** Existing feedback collection, model, repository, and rules (Block 1) used unchanged. No schema or rules changes.
+
+### Disposition table
+
+**Security frame**
+
+| Finding | Severity | Disposition |
+|---------|----------|-------------|
+| Feedback write is auth-only with message cap | N/A | Verified: Block 1 rules enforce userId == caller, message.size() <= 1000, resolved == false pinned. No changes made. |
+| Banned users can submit feedback | N/A | Intentional: appeal channel. Documented in DECISIONS. |
+| User content stored as given | N/A | Verified: no transformation of message text. |
+| Operator reads all, user reads own, no update/delete | N/A | Verified: Block 1 rules. |
+
+**Taste frame**
+
+| Finding | Severity | Disposition |
+|---------|----------|-------------|
+| Fan-voice confirmation | N/A | "Got it. We read every one." |
+| Submit disabled when message empty | N/A | Verified: widget test. |
+| Character count visible | N/A | Verified: "0 / 1000" shown. |
+| Overflow menu is one tap to feedback | N/A | Verified: three-dot menu > Send feedback. |
+| No em dashes | N/A | Verified. |
+
+### New DECISIONS entries
+5 entries: resolved field deferral, email notification deferral, banned users can submit, overflow menu, feedback volume trigger.
+
+### Files created
+| File | Lines |
+|------|-------|
+| lib/presentation/feedback/feedback_screen.dart | 152 |
+| test/presentation/feedback/feedback_screen_test.dart | 50 |
+
+### Files modified
+| File | Change |
+|------|--------|
+| lib/presentation/home/home_screen.dart | Replaced 3 app-bar icons with overflow menu |
+| lib/presentation/moderation/moderation_screen.dart | Added Feedback tab (4th tab) |
+| lib/app/router.dart | Added feedback route |
+| DECISIONS.md | 5 new entries |
+| HANDBOOK.md | Suggestion box section |
+
+### Deferred (with triggers)
+| Item | Trigger |
+|------|---------|
+| Feedback resolved/filtering | v1.1 moderation console, feedback volume outgrows plain list |
+| Email notification on feedback | Operator wants alerts or volume grows |
+
+### Commit
+`07ca809`
