@@ -167,3 +167,139 @@ All collections created from scratch (new project). See the plan for exact field
 
 ### Commit
 `e4ed772`
+
+---
+
+## Block 2: The Archive and the Seed
+**Status:** CLOSED
+**Commit (final reviewed code):** `9aa3c81`
+**Tests:** 111 passing (41 Dart + 56 rules emulator + 14 seed validation)
+**Analyze:** `flutter analyze` -- 0 issues
+**Gates verified:** Deliberate break on chants read rule (removed isVisible check), 3 tests failed (hidden chant read, unfiltered list query, partial filter query). Reverted.
+
+### What was built
+- **Seed mechanism:** Idempotent Admin SDK script (Node/TS) with re-run safety (Fix A), slug dedup and orphan reporting (Fix C), and validation before writes
+- **Seed content:** Arsenal seeded (1 sport, 1 competition, 1 team, 21 players, 5 canonical chants). All verified: status canonical, counters 0, hidden false, removed false, createdBy system. Re-run verified idempotent (all "updated", no duplicates).
+- **Browse and navigation:** Competition > Club > Player > Chant drill-down. Club page: club chants first, players-with-chants second, full squad collapsible third.
+- **Discovery shuffle:** All visible chants fetched (no orderBy, no limit), shuffled client-side (Fix B). Shuffle button refreshes.
+- **Chant detail:** Lyrics front and center, tune name, context notes (only when non-empty), status badge, real/parody tag, cover image placeholder, media placeholder. Report button on every chant.
+- **Report flow:** Bottom sheet with 4 categories (Hate speech or slurs, Tragedy chanting, Threats or targeting, Something else) plus optional 200-char note. Auth required. Status pinned to pending (Fix D).
+- **Empty/loading/error states:** On every screen. No "add" or "submit" prompts (Block 3). Player empty state reads naturally ("No chants for [player] yet.").
+- **Shared widgets:** EmptyState, ErrorState, ChantCard (reusable across screens).
+- **Position removal:** Player model is name-only. Position noted in DECISIONS as requiring an array if reintroduced.
+- **Index hygiene:** No composite indexes (Fix E). Equality-only queries with client-side sort.
+
+### Disposition table
+
+**Security frame**
+
+| Finding | Severity | Disposition |
+|---------|----------|-------------|
+| Hidden/removed chants never returned to non-operators through any query or discovery | N/A | Verified: all repository queries use _visibleChants() base query (hidden == false, removed == false). Rules emulator test confirms unfiltered list query is DENIED. |
+| Report write sets status 'pending' and createdAt | N/A | Verified: ReportRepository.submitReport sets both. Rules emulator test confirms well-formed create succeeds. |
+| Report write requires auth and reportedBy == caller | N/A | Verified: rules emulator tests confirm unauthenticated create DENIED and mismatched reportedBy DENIED. |
+| Service account key excluded from git | N/A | Verified: .gitignore blocks serviceAccountKey.json and *-firebase-adminsdk-*.json. git status shows no key files staged. |
+| Seed script bypasses client rules intentionally via Admin SDK | N/A | Correct: canonical seed requires Admin SDK because client create rule forces status == 'community'. |
+| Re-seed does not clobber counters or moderation state (Fix A) | N/A | Verified: re-run shows all "updated", read-back confirms counters remain 0 and flags remain false. Content-only update list excludes upvotes, downvotes, score, commentCount, flagCount, hidden, removed, createdBy, createdAt. |
+
+**Taste frame**
+
+| Finding | Severity | Disposition |
+|---------|----------|-------------|
+| Club page surfaces chants first, not a flat 21-player roster | N/A | Verified: club chants section first, players-with-chants second, full squad collapsed third. |
+| Empty state copy is natural, not error-like | N/A | Verified: "No chants for [player] yet." reads as expected state, not broken. No "add" prompt. |
+| 9th-grade copy on all screens | N/A | Verified: "Something off about this one? Tell us why." / "Got it. We will take a look." / "Could not load chants. Pull down to try again." |
+| No em dashes in any file | N/A | Verified: grep returns 0 hits. |
+| contextNotes renders only when non-empty | N/A | Verified: `if (chant.contextNotes != null && chant.contextNotes!.isNotEmpty)` guards the section. |
+| No position field on player model or UI | N/A | Verified: Player model, seed, validation, and UI all name-only. |
+
+**Operational frame**
+
+| Finding | Severity | Disposition |
+|---------|----------|-------------|
+| Discovery shuffle biased toward last-seeded club | N/A | Fixed (Fix B): fetch all visible, no orderBy, shuffle client-side. Verified by running seed and inspecting query. |
+| Slug collision silently overwrites | N/A | Fixed (Fix C): validation deduplicates on computed slug, not raw title. Test confirms duplicate slug is caught. |
+| Orphaned docs on rename | Low | Defended: orphan report prints after each run. Deletion is manual (operator's call). |
+| No composite indexes (equality-only queries) | N/A | Correct at this volume. Firestore zig-zag merge handles it. DECISIONS note: add composite indexes when orderBy needed server-side. |
+| Seed re-run tested idempotent | N/A | Verified: second run produces all "updated", read-back confirms same counts and canonical defaults. |
+
+### New DECISIONS entries
+1. Player position field removed (array if reintroduced)
+2. Discovery shuffle: all visible chants, client-side shuffle, v2 trigger for pagination
+3. Seed re-run safety: content-only updates on existing docs
+4. No composite indexes for equality-only queries with client-side sort
+5. Released-song anthems: attribution plus context only, never hosted lyrics unless licensed
+
+### Schema changes
+- Player model: `position` field removed. Existing player docs in Firestore will have an orphaned position field from the rules test seed data; production players (seeded via Admin SDK) were written without position.
+
+### Sensitive-data analysis
+- **New PII:** None. The seed writes no user PII (createdBy is "system").
+- **Service account key:** A secret file (serviceAccountKey.json) required locally for the seed. Blocked by .gitignore. Never committed.
+
+### Final checks (measured)
+- `flutter analyze`: 0 issues
+- `flutter test`: 41 passing, 0 failing
+- Firestore rules emulator: 56 passing, 0 failing
+- Seed validation: 14 passing, 0 failing
+- **Total: 111 tests**
+- Verify-the-verification: deliberate break on chants read rule caught 3 failures, reverted
+
+### Files created (measured line counts)
+| File | Lines |
+|------|-------|
+| lib/presentation/browse/competition_screen.dart | 71 |
+| lib/presentation/browse/team_screen.dart | 197 |
+| lib/presentation/browse/player_screen.dart | 61 |
+| lib/presentation/browse/chant_detail_screen.dart | 208 |
+| lib/presentation/browse/discovery_section.dart | 84 |
+| lib/presentation/report/report_sheet.dart | 152 |
+| lib/presentation/shared/chant_card.dart | 110 |
+| lib/presentation/shared/empty_state.dart | 35 |
+| lib/presentation/shared/error_state.dart | 44 |
+| seed/seed.ts | 254 |
+| seed/validate.ts | 190 |
+| seed/slugify.ts | 22 |
+| seed/validate.test.ts | 168 |
+| seed/package.json | 18 |
+| seed/tsconfig.json | 10 |
+| seed_data/sport.json | 4 |
+| seed_data/competition.json | 5 |
+| seed_data/clubs/arsenal.json | 81 |
+| test/presentation/shared/chant_card_test.dart | 100 |
+| test/presentation/shared/empty_state_test.dart | 30 |
+| test/presentation/shared/error_state_test.dart | 46 |
+
+### Files modified
+| File | Change |
+|------|--------|
+| lib/data/models/player.dart | Removed position field (44 lines) |
+| lib/data/repositories/chant_repository.dart | Added _visibleChants(), chantsForPlayerStream(), discoveryChants() (74 lines) |
+| lib/presentation/home/home_screen.dart | Replaced placeholder with discovery shuffle and PL entry (60 lines) |
+| lib/app/router.dart | Added 4 browse routes (50 lines) |
+| test/data/models/player_test.dart | Updated for position removal (31 lines) |
+| test_rules/firestore_rules.test.ts | Added 6 tests: report correctness, list query boundary (56 total) |
+| .gitignore | Added serviceAccountKey.json and seed ignores |
+| DECISIONS.md | 6 new entries |
+| WISHLIST.md | 5 new v2 candidate entries |
+| HANDBOOK.md | Browse, reporting, and seed sections added |
+
+### Deferred (with triggers)
+| Item | Trigger |
+|------|---------|
+| Composite indexes with server-side orderBy | When client-side sort is too slow (volume outgrows ~100 chants per club) |
+| Discovery pagination or random-seed field | When total visible chants outgrow a single fetch |
+| Free-text lyric search | v2, first user request or browse becomes insufficient |
+| Remaining 19 PL club seed files | Andrew fills them using the arsenal.json template |
+
+### Seed verification (measured from Firestore read-back)
+| Collection | Count | Canonical defaults verified |
+|------------|-------|-----------------------------|
+| sports | 1 | enabled: true |
+| competitions | 1 | enabled: true |
+| teams | 1 | |
+| players | 21 | |
+| chants | 5 | status: canonical, upvotes: 0, downvotes: 0, score: 0, hidden: false, removed: false, createdBy: system |
+
+### Commit
+`9aa3c81`
