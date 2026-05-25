@@ -172,7 +172,7 @@ All collections created from scratch (new project). See the plan for exact field
 
 ## Block 2: The Archive and the Seed
 **Status:** CLOSED
-**Commit (final reviewed code):** (updated below)
+**Commit (final reviewed code):** `e722895`
 **Tests:** 112 passing (41 Dart + 56 rules emulator + 14 seed validation + 1 Fix A live test)
 **Analyze:** `flutter analyze` -- 0 issues
 **Gates verified:** Deliberate break on chants read rule (removed isVisible check), 3 tests failed (hidden chant read, unfiltered list query, partial filter query). Reverted. Fix A counter-and-flag preservation test passed on live Firestore: 9 protected fields survived re-seed, content field updated.
@@ -309,4 +309,4 @@ All collections created from scratch (new project). See the plan for exact field
 Seeded chant, set upvotes=42, downvotes=3, score=39, commentCount=7, flagCount=2, hidden=true via Admin SDK. Re-seeded. Result: all 9 protected fields unchanged, edited lyrics field updated. PASSED.
 
 ### Commit
-(updated below)
+`e722895`
