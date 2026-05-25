@@ -1,0 +1,109 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    function isOperator() {
+      return isAuth() &&
+        get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.role == 'operator';
+    }
+
+    function isVisible(res) {
+      return res.data.hidden == false && res.data.removed == false;
+    }
+
+    // sports: public read, operator write
+    match /sports/{sportId} {
+      allow read: if true;
+      allow write: if isOperator();
+    }
+
+    // competitions: public read, operator write
+    match /competitions/{compId} {
+      allow read: if true;
+      allow write: if isOperator();
+    }
+
+    // teams: public read, operator write
+    match /teams/{teamId} {
+      allow read: if true;
+      allow write: if isOperator();
+    }
+
+    // players: public read, operator write
+    match /players/{playerId} {
+      allow read: if true;
+      allow write: if isOperator();
+    }
+
+    // profiles: public read, owner create, owner update (cannot change role)
+    match /profiles/{userId} {
+      allow read: if true;
+      allow create: if isAuth() && request.auth.uid == userId;
+      allow update: if isAuth() && request.auth.uid == userId
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']);
+    }
+
+    // chants: public read (visible only), auth create, restricted update
+    match /chants/{chantId} {
+      allow read: if isVisible(resource) || isOperator();
+      allow create: if isAuth()
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.status == 'community'
+        && request.resource.data.upvotes == 0
+        && request.resource.data.downvotes == 0
+        && request.resource.data.score == 0
+        && request.resource.data.commentCount == 0
+        && request.resource.data.flagCount == 0
+        && request.resource.data.hidden == false
+        && request.resource.data.removed == false;
+      allow update: if isAuth()
+        && resource.data.createdBy == request.auth.uid
+        && !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['upvotes','downvotes','score','commentCount',
+                     'flagCount','hidden','removed','status','createdBy','createdAt']);
+      allow update: if isOperator();
+    }
+
+    // votes: one per user per chant, value 1 or -1
+    match /votes/{voteId} {
+      allow read: if true;
+      allow create: if isAuth()
+        && request.resource.data.userId == request.auth.uid
+        && voteId == request.auth.uid + '_' + request.resource.data.chantId
+        && (request.resource.data.value == 1 || request.resource.data.value == -1);
+      allow update: if isAuth()
+        && resource.data.userId == request.auth.uid
+        && (request.resource.data.value == 1 || request.resource.data.value == -1)
+        && !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['userId','chantId']);
+      allow delete: if isAuth() && resource.data.userId == request.auth.uid;
+    }
+
+    // reports: insert-only by authenticated users, operator reads
+    match /reports/{reportId} {
+      allow read: if isOperator();
+      allow create: if isAuth()
+        && request.resource.data.reportedBy == request.auth.uid;
+    }
+
+    // auditLog: no client writes (Cloud Functions use Admin SDK), operator read
+    match /auditLog/{logId} {
+      allow read: if isOperator();
+      allow write: if false;
+    }
+
+    // feedback: auth create, user reads own, operator reads all
+    match /feedback/{feedbackId} {
+      allow read: if isOperator()
+        || (isAuth() && resource.data.userId == request.auth.uid);
+      allow create: if isAuth()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.message.size() <= 1000;
+      allow update, delete: if false;
+    }
+  }
+}

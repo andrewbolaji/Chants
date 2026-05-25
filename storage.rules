@@ -1,0 +1,10 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Deny all reads and writes by default.
+    // Media upload rules will be added in Block 3.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
