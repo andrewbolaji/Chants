@@ -207,3 +207,9 @@ Works end to end on the real seeded data; mobile-responsive; empty, loading, and
 **Recap-commit self-reference always mismatches.** Recording a hash inside the file that the commit creates means the hash is always one behind. Resolution: record the final reviewed code commit (`accbe3d`), and treat the recap-write as a noted docs-only commit on top (`04718af`). Document both explicitly so it reads as intent, not drift.
 
 **Field-pinning on CREATE is a bug class.** Every server-managed or privileged field must be pinned on create, not just blocked on update. profiles (role), reports (status), and feedback (resolved) all missed this initially, while chants and votes had it right. The pattern: if a field should never be client-set on creation, the create rule pins it. Default to pinning.
+
+### From Block 2
+
+**Never generate seed content from AI knowledge.** When asked to strip a field from a seed file, the implementer rewrote arsenal.json from memory instead of editing the existing entries in place. The result was a stale, incorrect squad (players who left the club years ago) seeded as real data. The fix: all seed content (squads, players, chants, lyrics) is supplied by Andrew. The implementer may only transform supplied data (remove a field, rename a key). Never rewrite content from memory. This is now the highest-integrity standing rule.
+
+**An AI implementer will confidently regenerate domain content from its own memory, and that content is unverified by definition.** The stale squad was caught by independent review; the AI-drafted lyrics were flagged by the implementer itself after the rule was established. Both were presented as real data with no caveat until challenged. Seed credibility depends on human-verified content, supplied by Andrew, never authored by an AI. Every seed file entry is Andrew's content, and any AI-drafted content in an existing file must be visibly flagged as unverified.

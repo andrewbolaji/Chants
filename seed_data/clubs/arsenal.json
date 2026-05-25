@@ -4,27 +4,87 @@
     "crestImageUrl": null
   },
   "squad": [
-    { "name": "David Raya" },
-    { "name": "William Saliba" },
-    { "name": "Gabriel Magalhaes" },
-    { "name": "Ben White" },
-    { "name": "Jurrien Timber" },
-    { "name": "Riccardo Calafiori" },
-    { "name": "Takehiro Tomiyasu" },
-    { "name": "Jakub Kiwior" },
-    { "name": "Kieran Tierney" },
-    { "name": "Thomas Partey" },
-    { "name": "Declan Rice" },
-    { "name": "Martin Odegaard" },
-    { "name": "Jorginho" },
-    { "name": "Mikel Merino" },
-    { "name": "Ethan Nwaneri" },
-    { "name": "Bukayo Saka" },
-    { "name": "Gabriel Martinelli" },
-    { "name": "Leandro Trossard" },
-    { "name": "Raheem Sterling" },
-    { "name": "Gabriel Jesus" },
-    { "name": "Kai Havertz" }
+    {
+      "name": "David Raya"
+    },
+    {
+      "name": "Kepa Arrizabalaga"
+    },
+    {
+      "name": "Tommy Setford"
+    },
+    {
+      "name": "William Saliba"
+    },
+    {
+      "name": "Cristhian Mosquera"
+    },
+    {
+      "name": "Ben White"
+    },
+    {
+      "name": "Piero Hincapie"
+    },
+    {
+      "name": "Gabriel Magalhaes"
+    },
+    {
+      "name": "Jurrien Timber"
+    },
+    {
+      "name": "Riccardo Calafiori"
+    },
+    {
+      "name": "Myles Lewis-Skelly"
+    },
+    {
+      "name": "Marli Salmon"
+    },
+    {
+      "name": "Martin Odegaard"
+    },
+    {
+      "name": "Eberechi Eze"
+    },
+    {
+      "name": "Christian Norgaard"
+    },
+    {
+      "name": "Mikel Merino"
+    },
+    {
+      "name": "Martin Zubimendi"
+    },
+    {
+      "name": "Declan Rice"
+    },
+    {
+      "name": "Max Dowman"
+    },
+    {
+      "name": "Ethan Nwaneri"
+    },
+    {
+      "name": "Bukayo Saka"
+    },
+    {
+      "name": "Gabriel Jesus"
+    },
+    {
+      "name": "Gabriel Martinelli"
+    },
+    {
+      "name": "Victor Gyokeres"
+    },
+    {
+      "name": "Leandro Trossard"
+    },
+    {
+      "name": "Noni Madueke"
+    },
+    {
+      "name": "Kai Havertz"
+    }
   ],
   "chants": [
     {
@@ -33,17 +93,7 @@
       "playerName": null,
       "lyrics": "One nil to the Arsenal\nOne nil to the Arsenal\nOne nil to the Arsenal\nOne nil to the Arsenal",
       "tuneName": "Go West (Pet Shop Boys / Village People)",
-      "contextNotes": "Sung when leading 1-0. One of the most recognisable Arsenal chants.",
-      "realOrParody": "parody",
-      "mediaType": "none"
-    },
-    {
-      "title": "We All Follow the Arsenal",
-      "subjectTag": "club",
-      "playerName": null,
-      "lyrics": "We all follow the Arsenal\nOver land and sea (and Leicester!)\nWe all follow the Arsenal\nOn to victory",
-      "tuneName": "Land of Hope and Glory",
-      "contextNotes": "A terrace staple since the 1970s. The Leicester line was added as a joke and stuck.",
+      "contextNotes": "[UNVERIFIED: AI-drafted lyrics, pending Andrew's verification] Sung when leading 1-0. One of the most recognisable Arsenal chants.",
       "realOrParody": "parody",
       "mediaType": "none"
     },
@@ -53,7 +103,7 @@
       "playerName": null,
       "lyrics": "Forty-nine, forty-nine undefeated\nForty-nine, forty-nine I say\nForty-nine, forty-nine undefeated\nPlaying football the Arsenal way",
       "tuneName": "Original terrace chant",
-      "contextNotes": "Celebrates the Invincibles' 49-match unbeaten run (2003-2004).",
+      "contextNotes": "[UNVERIFIED: AI-drafted lyrics, pending Andrew's verification] Celebrates the Invincibles' 49-match unbeaten run (2003-2004).",
       "realOrParody": "real",
       "mediaType": "none"
     },
@@ -61,19 +111,9 @@
       "title": "Saka and Emile Smith Rowe",
       "subjectTag": "player",
       "playerName": "Bukayo Saka",
-      "lyrics": "Saka and Emile Smith Rowe\nSaka and Emile Smith Rowe\nSaka and Emile Smith Rowe\nNa na na na na na na",
+      "lyrics": "And I like it,\nI like it,\nI like it,\nI like it,\nI la-la-like it,\nLa-la, like it,\nHere we go, oh!\nSaka and Emile Smith Rowe!",
       "tuneName": "Original terrace chant",
-      "contextNotes": "Started when Saka and Smith Rowe broke through together. Still sung for Saka.",
-      "realOrParody": "real",
-      "mediaType": "none"
-    },
-    {
-      "title": "He's Declan Rice",
-      "subjectTag": "player",
-      "playerName": "Declan Rice",
-      "lyrics": "He's Declan Rice\nHe's Declan Rice\nHe left the Hammers cos they're shite\nHe's Declan Rice",
-      "tuneName": "Original terrace chant",
-      "contextNotes": "Adopted after Rice's transfer from West Ham in 2023.",
+      "contextNotes": "[AI-drafted context, pending Andrew's verification] Started when Saka and Smith Rowe broke through together. Still sung for Saka.",
       "realOrParody": "real",
       "mediaType": "none"
     }

@@ -172,14 +172,15 @@ All collections created from scratch (new project). See the plan for exact field
 
 ## Block 2: The Archive and the Seed
 **Status:** CLOSED
-**Commit (final reviewed code):** `9aa3c81`
-**Tests:** 111 passing (41 Dart + 56 rules emulator + 14 seed validation)
+**Commit (final reviewed code):** (updated below)
+**Tests:** 112 passing (41 Dart + 56 rules emulator + 14 seed validation + 1 Fix A live test)
 **Analyze:** `flutter analyze` -- 0 issues
-**Gates verified:** Deliberate break on chants read rule (removed isVisible check), 3 tests failed (hidden chant read, unfiltered list query, partial filter query). Reverted.
+**Gates verified:** Deliberate break on chants read rule (removed isVisible check), 3 tests failed (hidden chant read, unfiltered list query, partial filter query). Reverted. Fix A counter-and-flag preservation test passed on live Firestore: 9 protected fields survived re-seed, content field updated.
 
 ### What was built
 - **Seed mechanism:** Idempotent Admin SDK script (Node/TS) with re-run safety (Fix A), slug dedup and orphan reporting (Fix C), and validation before writes
-- **Seed content:** Arsenal seeded (1 sport, 1 competition, 1 team, 21 players, 5 canonical chants). All verified: status canonical, counters 0, hidden false, removed false, createdBy system. Re-run verified idempotent (all "updated", no duplicates).
+- **Seed content:** Arsenal seeded (1 sport, 1 competition, 1 team, 27 players, 3 canonical chants). All verified: status canonical, counters 0, hidden false, removed false, createdBy system. Re-run verified idempotent. Fix A proven non-trivially: counters set to non-zero and hidden set to true survived re-seed while edited lyrics updated.
+- **Content-integrity incident:** The implementer rewrote arsenal.json from AI memory instead of editing in place, seeding a stale squad (7 wrong players). Caught by independent review. 7 orphan player docs and 2 orphan chant docs deleted with Andrew's explicit confirmation. Standing rule added: never generate or regenerate seed content from AI knowledge. 2 AI-drafted chants removed, 2 flagged as unverified in contextNotes, 1 chant's lyrics replaced with Andrew's supplied version.
 - **Browse and navigation:** Competition > Club > Player > Chant drill-down. Club page: club chants first, players-with-chants second, full squad collapsible third.
 - **Discovery shuffle:** All visible chants fetched (no orderBy, no limit), shuffled client-side (Fix B). Shuffle button refreshes.
 - **Chant detail:** Lyrics front and center, tune name, context notes (only when non-empty), status badge, real/parody tag, cover image placeholder, media placeholder. Report button on every chant.
@@ -292,14 +293,20 @@ All collections created from scratch (new project). See the plan for exact field
 | Free-text lyric search | v2, first user request or browse becomes insufficient |
 | Remaining 19 PL club seed files | Andrew fills them using the arsenal.json template |
 
-### Seed verification (measured from Firestore read-back)
+### Seed verification (measured from Firestore read-back, final)
 | Collection | Count | Canonical defaults verified |
 |------------|-------|-----------------------------|
 | sports | 1 | enabled: true |
 | competitions | 1 | enabled: true |
 | teams | 1 | |
-| players | 21 | |
-| chants | 5 | status: canonical, upvotes: 0, downvotes: 0, score: 0, hidden: false, removed: false, createdBy: system |
+| players | 27 | Andrew's 26 plus Nwaneri, no Arteta, no orphans |
+| chants | 3 | status: canonical, upvotes: 0, downvotes: 0, score: 0, hidden: false, removed: false, createdBy: system. 2 AI-drafted lyrics flagged as unverified in contextNotes. 1 chant has Andrew-supplied lyrics. |
+
+### Orphans deleted (Andrew-confirmed)
+7 player docs (arsenal-jakub-kiwior, arsenal-jorginho, arsenal-kieran-tierney, arsenal-mikel-arteta, arsenal-raheem-sterling, arsenal-takehiro-tomiyasu, arsenal-thomas-partey) and 2 chant docs (arsenal-we-all-follow-the-arsenal, arsenal-he-s-declan-rice).
+
+### Fix A counter-and-flag preservation test (live Firestore)
+Seeded chant, set upvotes=42, downvotes=3, score=39, commentCount=7, flagCount=2, hidden=true via Admin SDK. Re-seeded. Result: all 9 protected fields unchanged, edited lyrics field updated. PASSED.
 
 ### Commit
-`9aa3c81`
+(updated below)

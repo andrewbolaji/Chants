@@ -18,5 +18,6 @@ Hard rules (from DECISIONS standing rules):
 - Stack is Flutter plus Firebase. App name is Chants.
 - Data access lives behind repositories; presentation never imports the Firebase SDK directly.
 - A Block is closed only when its commit hash is recorded in BLOCK_RECAPS.md.
+- NEVER generate or regenerate seed content (squads, players, chants, lyrics, any roster or cultural content) from your own knowledge. All seed content is supplied by Andrew in the seed files. You may only transform supplied data in place. Never rewrite a file's content from memory.
 
 Work in Blocks using the kickoff and recap templates in TEMPLATES_AND_PROTOCOLS.md. State: Day 1 done, Block 1 (Foundation) in planning.
