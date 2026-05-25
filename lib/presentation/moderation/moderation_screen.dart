@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chants/app/providers.dart';
 import 'package:chants/data/models/chant.dart';
+import 'package:chants/data/models/feedback_entry.dart';
 import 'package:chants/presentation/shared/error_state.dart';
 
 class ModerationScreen extends ConsumerWidget {
@@ -20,15 +21,22 @@ class ModerationScreen extends ConsumerWidget {
         .watch(chantRepositoryProvider)
         .promotionCandidatesStream();
 
+    final feedbackStream = FirebaseFirestore.instance
+        .collection('feedback')
+        .orderBy('createdAt', descending: true)
+        .snapshots();
+
     return DefaultTabController(
-      length: 3,
+      length: 4,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Moderation'),
           bottom: const TabBar(
+            isScrollable: true,
             tabs: [
               Tab(text: 'Flagged'),
               Tab(text: 'Promote'),
+              Tab(text: 'Feedback'),
               Tab(text: 'Ban'),
             ],
           ),
@@ -96,7 +104,61 @@ class ModerationScreen extends ConsumerWidget {
                 );
               },
             ),
-            // Tab 3: ban user
+            // Tab 3: feedback
+            StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              stream: feedbackStream,
+              builder: (context, snap) {
+                if (snap.hasError) {
+                  return const ErrorState(
+                      message: 'Could not load feedback.');
+                }
+                if (!snap.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                final docs = snap.data!.docs;
+                if (docs.isEmpty) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(32),
+                      child: Text('No feedback yet.'),
+                    ),
+                  );
+                }
+                return ListView.builder(
+                  padding: const EdgeInsets.all(8),
+                  itemCount: docs.length,
+                  itemBuilder: (context, index) {
+                    final fb = FeedbackEntry.fromFirestore(docs[index]);
+                    return Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Chip(label: Text(fb.category)),
+                                const Spacer(),
+                                if (fb.followUpOk)
+                                  const Chip(label: Text('Follow-up OK')),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(fb.message),
+                            const SizedBox(height: 4),
+                            Text(
+                              'User: ${fb.userId}',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+            // Tab 4: ban user
             const _BanUserTab(),
           ],
         ),

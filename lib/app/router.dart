@@ -12,6 +12,7 @@ import 'package:chants/presentation/browse/team_screen.dart';
 import 'package:chants/presentation/content_policy/content_policy_screen.dart';
 import 'package:chants/presentation/home/home_screen.dart';
 import 'package:chants/presentation/moderation/moderation_screen.dart';
+import 'package:chants/presentation/feedback/feedback_screen.dart';
 import 'package:chants/presentation/submit/submit_chant_screen.dart';
 
 class AppRouter {
@@ -26,6 +27,7 @@ class AppRouter {
   static const String chantDetail = '/chant';
   static const String submitChant = '/submit';
   static const String moderation = '/moderation';
+  static const String feedback = '/feedback';
 
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -74,6 +76,9 @@ class AppRouter {
       case moderation:
         return MaterialPageRoute(
             builder: (_) => const ModerationScreen());
+      case feedback:
+        return MaterialPageRoute(
+            builder: (_) => const FeedbackScreen());
       case home:
       default:
         return MaterialPageRoute(builder: (_) => const HomeScreen());

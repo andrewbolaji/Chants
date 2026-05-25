@@ -51,6 +51,10 @@
 | 2026-05-25 | Vote display: net score with highlighted user vote | No separate up/down counts for regular users. Operators see full counts in moderation screen. |
 | 2026-05-25 | Vote counter Function is NOT idempotent (at-least-once risk) | Firestore triggers are at-least-once. The before/after diff with FieldValue.increment is correct under contention but a duplicate delivery double-applies the delta. Reconciliation script (seed/reconcile.ts) recomputes counters from ground truth. Trigger to add event.id dedup: observed drift or volume growth. |
 | 2026-05-25 | Composite indexes: teamId+hidden+removed+score desc, status+hidden+removed+score desc | Two indexes for score-sort queries (club page ranking and promotion candidates). No discovery score index (stays client-side shuffle). |
+| 2026-05-25 | Feedback resolved field has no write path in v1 | Operator reads feedback but cannot mark it resolved (rules allow no updates). Resolving and filtering feedback belongs to the v1.1 moderation console (Block 10). Trigger: feedback volume outgrows a plain newest-first list. |
+| 2026-05-25 | Feedback email notification deferred | Database-only for v1. Operator reads in-app. Email delivery needs an email provider plus an API key secret. Trigger: feedback volume or operator wants alerts. |
+| 2026-05-25 | Banned users can submit feedback | Intentional: feedback is the appeal channel. The Block 3 ban message directs users to the suggestion box. isNotBanned() is NOT added to the feedback create rule. |
+| 2026-05-25 | Home screen overflow menu for low-frequency utilities | Feedback, content policy, and sign-out live in a three-dot overflow menu. Moderation (operator-only) stays as a direct icon for fast access. Scales as more settings appear. |
 
 ## Notes for Later Blocks
 | Date | Note | Relevant Block |

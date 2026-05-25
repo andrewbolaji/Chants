@@ -107,3 +107,30 @@ Chants is the home for football chants. Fans use it to find the songs, learn the
 - Slug collisions (two different titles that slugify identically) are caught by validation before any writes.
 
 > [screenshot: seed terminal output]
+
+---
+
+## Suggestion Box (Block 5)
+
+**What it does.** Lets you send feedback, report a bug, ask a question, or make a suggestion directly from the app.
+
+**How to use it.**
+1. Tap the three-dot menu in the top right of the home screen.
+2. Tap "Send feedback."
+3. Pick a category: Suggestion, Bug report, Question, or Other.
+4. Write your message (up to 1000 characters).
+5. Optionally check "OK to follow up by email" if you want a response.
+6. Tap "Send." You will see "Got it. We read every one."
+
+**Behind the scenes.** A feedback document is created in Firestore with your user ID, the category, the message, the follow-up preference, and a timestamp. It is stored exactly as you typed it. You can read your own feedback; the operator can read all feedback. No one can edit or delete a feedback entry.
+
+**Limits and gotchas.**
+- Messages are capped at 1000 characters (enforced both in the app and by Firestore rules).
+- The operator cannot mark feedback as resolved in v1. That comes with the moderation console in v1.1.
+- Banned users can still send feedback. This is intentional: it is the appeal channel.
+- No email notification in v1. The operator reads feedback in the moderation screen.
+
+**Where it shows up.** The three-dot overflow menu on the home screen. The operator sees a "Feedback" tab in the moderation screen.
+
+> [screenshot: Feedback form]
+> [screenshot: Feedback confirmation]
