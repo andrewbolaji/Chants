@@ -635,3 +635,103 @@ No new PII. Vote docs contain userId (already in the system).
 
 ### Commit
 `a00c5cb`
+
+---
+
+## Block 7: Polish and Ship v1
+**Status:** CLOSED (code-complete gate, not launch itself)
+**Commit (final reviewed code):** `e66f6a0`
+**Tests:** 142 passing (50 Dart + 73 rules emulator + 19 seed/counter)
+**Analyze:** `flutter analyze` -- 0 issues
+**Functions deployed:** 5 (deleteAccount new, 4 updated)
+
+### What was built
+- **C9:** displayName 1-50 char validation on sign-up (already present from Block 6 restyle).
+- **C10:** firebase_storage removed from pubspec.yaml (unused until media ships).
+- **C11:** In-app account deletion. New deleteAccount callable Cloud Function: removes auth account, profile, votes, reports, feedback; reconciles counters on affected chants; anonymizes createdBy to "deleted-user" on submitted chants. Confirmation dialog with clear warning. Apple 5.1.1(v) and Google Play compliant.
+- **C12:** Accessibility fix. textFaint bumped to textMuted (5.5:1 AA) on readable text in chant cards (subject tag and parody labels). Faint (#56565B, 3.0:1) stays for decorative elements only.
+- **C13:** Token cleanup. Raw EdgeInsets in Tier 4 screens (moderation, feedback) converted to Spacing constants.
+- **C14:** Firebase App Check initialized. Debug provider for dev/emulator, PlayIntegrity for release Android. Soft-enforce at launch.
+- **C15:** Billing kill-switch documented. Budget alerts at $10/$50/$100/$250 (email), kill-switch at $500 (disables billing). GCP console setup (not code).
+- **D4:** Firebase Crashlytics added. Flutter error handler wired in main.dart.
+- **SPEC build order updated:** design is Block 6, ship is Block 7, v1.1 Blocks 8-11.
+
+### Disposition table
+
+**Security frame (primary)**
+
+| Finding | Severity | Disposition |
+|---------|----------|-------------|
+| Account deletion: user can only delete own account | N/A | Verified: callable derives UID from request.auth.uid. No targetId parameter. |
+| Account deletion: votes reconciled after removal | N/A | Verified: reconcileChantCounters called for each affected chant after votes deleted. |
+| Account deletion: chants anonymized, not deleted | N/A | Verified: createdBy set to "deleted-user". Community content preserved. |
+| Account deletion: auth account deleted last | N/A | Verified: admin.auth().deleteUser(uid) is the final step after all data cleanup. |
+| App Check: debug provider only in kDebugMode | N/A | Verified: conditional initialization. Release builds use PlayIntegrity/DeviceCheck. |
+| App Check: soft-enforce at launch | N/A | Correct: log violations, do not reject. Full enforcement after clean telemetry. |
+
+**Taste frame**
+
+| Finding | Severity | Disposition |
+|---------|----------|-------------|
+| Delete account copy: clear, direct, not corporate | N/A | "This will permanently delete your account, your votes, your reports, and your feedback. Your submitted chants will stay as community content with your name removed. This cannot be undone." |
+| No em dashes in any new copy | N/A | Verified. |
+| Accessibility: no readable text at 3.0:1 contrast | N/A | Verified: subject tag and parody labels bumped from textFaint to textMuted (5.5:1 AA). |
+
+**Operational frame**
+
+| Finding | Severity | Disposition |
+|---------|----------|-------------|
+| Account deletion under load (50+ votes) | Low | Defended: at v1 volume, sequential reconciliation is under 10 seconds. At scale, batch or async. Trigger: observed timeout on deletion. |
+| Billing kill-switch is destructive | N/A | By design: takes app offline to prevent unbounded cost. $500 threshold is 50x expected free-tier usage. Recovery: re-enable billing in GCP console, redeploy. |
+| Budget alerts provide early warning | N/A | $10/$50/$100/$250 escalating emails before the $500 kill. |
+| App Check false rejections | Low | Defended: soft-enforce at launch. No users blocked. Full enforcement after 1-2 weeks of clean telemetry. |
+
+### New DECISIONS entries
+8 entries: account deletion, soft launch, age rating, Crashlytics, App Check soft-enforce, billing alerts/kill-switch, firebase_storage removed, SPEC build order.
+
+### Files created
+None (deleteAccount added to existing functions/src/index.ts).
+
+### Files modified
+| File | Change |
+|------|--------|
+| functions/src/index.ts | Added deleteAccount callable, reconcileChantCounters helper |
+| lib/main.dart | App Check init, Crashlytics error handlers |
+| lib/presentation/home/home_screen.dart | Delete account menu item and confirmation dialog |
+| lib/data/repositories/moderation_repository.dart | deleteAccount method |
+| lib/presentation/shared/chant_card.dart | textFaint bumped to textMuted on labels |
+| lib/presentation/feedback/feedback_screen.dart | Spacing tokens |
+| lib/presentation/moderation/moderation_screen.dart | Spacing tokens |
+| pubspec.yaml | firebase_storage removed, firebase_app_check and firebase_crashlytics added |
+| CHANTS_SPEC.md | Build order updated |
+| DECISIONS.md | 8 new entries |
+
+### Launch blockers (Andrew's tasks, not code)
+| # | Blocker | Status |
+|---|---------|--------|
+| A1 | Content policy text | Pending |
+| A2 | Verify Arsenal chant lyrics | Pending |
+| A3 | Seed remaining 19 PL clubs | Pending |
+| A4 | Privacy policy URL | Pending |
+| A5 | App store developer accounts | Pending |
+| A6 | Store listings | Pending |
+| A7 | App icon and branding | Pending |
+
+### Pending non-code setup (Andrew in GCP/Firebase console)
+| Item | Steps |
+|------|-------|
+| App Check providers | Register DeviceCheck (iOS) and Play Integrity (Android) attestation in Firebase Console > App Check |
+| Budget alerts | GCP Console > Billing > Budgets > Create budget at $10/$50/$100/$250 with email alerts |
+| Billing kill-switch | GCP Console > Billing > Budget at $500 linked to Pub/Sub topic, plus a Cloud Function to disable billing (documented in README) |
+| Crashlytics | Enable Crashlytics in Firebase Console (auto-enabled on first crash report) |
+
+### Deferred (with triggers)
+| Item | Trigger |
+|------|---------|
+| App Check full enforcement | 1-2 weeks of clean soft-enforce telemetry post-launch |
+| Retune $500 kill-switch threshold | Real cost-per-user data after launch |
+| Account deletion batching | Observed timeout on deletion for high-vote-count users |
+| C1-C8 remaining ship tasks | Andrew's content blockers (A1-A7) resolved |
+
+### Commit
+`e66f6a0`
