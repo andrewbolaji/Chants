@@ -584,3 +584,54 @@ No new PII. Vote docs contain userId (already in the system).
 
 ### Commit
 `07ca809`
+
+---
+
+## Block 6: Visual Design and Beautification
+**Status:** CLOSED
+**Commit (final reviewed code):** `a00c5cb`
+**Tests:** 142 passing (50 Dart + 73 rules emulator + 19 seed/counter) (unchanged)
+**Analyze:** `flutter analyze` -- 0 issues
+
+### What was built
+- **Design system in tokens:** AppColors (ThemeExtension), Spacing scale, Radii scale, full TextTheme. Dark-only, forced themeMode. System UI overlay matched (Addition B).
+- **18 screens restyled** to the token system. Near-black #0B0B0C base, single amber #FFB627 accent (action and earned status only).
+- **Chant card:** Social-feed unit. Muted metadata top, bold title, one-line preview, quiet vote row, hairline separator.
+- **Chant detail:** Lyrics as hero. Large airy bodyLarge, tune with icon, context in quiet surface block, vote controls pinned bottom. 160px grey placeholder box removed (Addition E).
+- **Vote controls:** 48px tap targets, amber active upvote, arrow icons.
+- **Auth screens:** Dark fields, amber buttons, "Know the words." tagline.
+
+### Disposition table
+
+**Taste frame (primary, with audience check)**
+
+| Finding | Severity | Disposition |
+|---------|----------|-------------|
+| Would a fan at the pub feel this was made by someone who goes to games? | N/A | The near-black palette with amber is terrace-confident, not corporate. Typography is legible and simple. The chant card reads like a social feed, not a database dump. Lyrics are the hero on detail. The look is closer to FotMob and Instagram dark mode than to a default Flutter app. |
+| Single-accent discipline: amber used only on action and earned status | N/A | Enumerated: primary button fill (6 screens), FAB (2 screens), active upvote arrow, canonical badge (amber at 15% opacity with amber text), focused input border, segmented button selected state, progress indicator, checkbox fill, radio fill, tab indicator. No decorative amber on dividers, headers, or icons. |
+| Nothing on screen that does not earn its place | N/A | Removed: 160px grey placeholder box (chant detail), Card widgets with elevation and shadow (chant card now uses InkWell + padding + hairline), CircleAvatar on team rows and squad, heavy Chip widgets (replaced with quiet text labels). |
+| Consistent spacing rhythm | N/A | Token verification (Addition D): 0 color literals, 0 fontSize literals in presentation. 12 raw EdgeInsets remaining in Tier 4 screens (report sheet, feedback form internals, moderation). Signature surfaces fully tokenized. |
+| Contrast accessible (Addition C) | N/A | textPrimary 16.8:1 (AAA), textMuted 5.5:1 (AA), textFaint 3.0:1 (decorative only), amber 9.5:1 (AAA). |
+| 44-48px minimum tap targets | N/A | Verified: IconButton minimum 48px (theme), vote controls 48px SizedBox, FilledButton 48px min height, ListTile default. |
+| No em dashes | N/A | Verified. |
+
+### New DECISIONS entries
+3 entries: dark-only for v1, design system tokens discipline, textFaint decorative-only.
+
+### Files created
+| File | Lines |
+|------|-------|
+| lib/app/colors.dart | 79 |
+| lib/app/spacing.dart | 15 |
+
+### Files modified
+18 screen files restyled, plus theme.dart (complete rewrite), app.dart (dark-only with system UI).
+
+### Deferred (with triggers)
+| Item | Trigger |
+|------|---------|
+| Light mode | v1.1 or later, if users request |
+| Tokenize remaining 12 raw EdgeInsets in Tier 4 screens | Next polish pass |
+
+### Commit
+`a00c5cb`
