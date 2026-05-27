@@ -343,6 +343,165 @@ export const deleteAccount = onCall(
   }
 );
 
+// --- mergeChants (callable) ---
+// Operator-only. Merges a duplicate chant (source) into a keeper (target).
+// Moves votes and reports, deletes the source, reconciles target counters,
+// and logs the full source payload for undo capability.
+export const mergeChants = onCall(
+  { region: "europe-west2" },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Sign in required.");
+    }
+    const actorUid = request.auth.uid;
+
+    // Operator check: read role from Firestore profile, same pattern as onModerationAction
+    const actorProfile = await db.collection("profiles").doc(actorUid).get();
+    if (!actorProfile.exists || actorProfile.data()?.role !== "operator") {
+      throw new HttpsError("permission-denied", "Operator access required.");
+    }
+
+    const { sourceId, targetId } = request.data as {
+      sourceId: string;
+      targetId: string;
+    };
+
+    if (!sourceId || !targetId) {
+      throw new HttpsError("invalid-argument", "sourceId and targetId are required.");
+    }
+    if (sourceId === targetId) {
+      throw new HttpsError("invalid-argument", "sourceId and targetId must be different.");
+    }
+
+    // Validate both chants exist and belong to the same team
+    const sourceSnap = await db.collection("chants").doc(sourceId).get();
+    const targetSnap = await db.collection("chants").doc(targetId).get();
+
+    if (!sourceSnap.exists) {
+      throw new HttpsError("not-found", `Source chant ${sourceId} not found.`);
+    }
+    if (!targetSnap.exists) {
+      throw new HttpsError("not-found", `Target chant ${targetId} not found.`);
+    }
+
+    const sourceData = sourceSnap.data()!;
+    const targetData = targetSnap.data()!;
+
+    if (sourceData.teamId !== targetData.teamId) {
+      throw new HttpsError(
+        "invalid-argument",
+        "Source and target must belong to the same team."
+      );
+    }
+
+    // Snapshot the source for audit (Addition A: full payload for undo capability)
+    const sourcePayload = {
+      title: sourceData.title,
+      lyrics: sourceData.lyrics,
+      tuneName: sourceData.tuneName,
+      subjectTag: sourceData.subjectTag,
+      teamId: sourceData.teamId,
+      playerId: sourceData.playerId || null,
+      sportId: sourceData.sportId,
+      competitionId: sourceData.competitionId,
+      status: sourceData.status,
+      contextNotes: sourceData.contextNotes || null,
+      realOrParody: sourceData.realOrParody,
+      mediaType: sourceData.mediaType,
+      createdBy: sourceData.createdBy,
+    };
+
+    // Step 1: Move votes from source to target.
+    // NOTE: onVoteWritten fires automatically as votes move, handling counter
+    // deltas on both source and target. The reconcile-target step at the end
+    // is the safety net for any drift or duplicate delivery from at-least-once
+    // trigger delivery.
+    const sourceVotes = await db.collection("votes")
+      .where("chantId", "==", sourceId).get();
+    let votesMoved = 0;
+    let votesSkipped = 0;
+
+    for (const voteDoc of sourceVotes.docs) {
+      const voteData = voteDoc.data();
+      const userId = voteData.userId as string;
+      const targetVoteId = `${userId}_${targetId}`;
+
+      // Check if user already voted on target
+      const existingTargetVote = await db.collection("votes").doc(targetVoteId).get();
+
+      if (existingTargetVote.exists) {
+        // User voted on both: keep target vote, delete source vote
+        await voteDoc.ref.delete();
+        votesSkipped++;
+      } else {
+        // Move: delete old doc, create new doc with target chantId
+        await db.collection("votes").doc(targetVoteId).set({
+          ...voteData,
+          chantId: targetId,
+        });
+        await voteDoc.ref.delete();
+        votesMoved++;
+      }
+    }
+
+    // Step 2: Move reports from source to target
+    const sourceReports = await db.collection("reports")
+      .where("chantId", "==", sourceId).get();
+    let reportsMoved = 0;
+
+    for (const reportDoc of sourceReports.docs) {
+      const reportData = reportDoc.data();
+      const reportedBy = reportData.reportedBy as string;
+      const targetReportId = `${reportedBy}_${targetId}`;
+
+      // Check if user already reported target
+      const existingTargetReport = await db.collection("reports").doc(targetReportId).get();
+
+      if (existingTargetReport.exists) {
+        // Already reported target: just delete the source report
+        await reportDoc.ref.delete();
+      } else {
+        // Move: delete old, create new
+        await db.collection("reports").doc(targetReportId).set({
+          ...reportData,
+          chantId: targetId,
+        });
+        await reportDoc.ref.delete();
+        reportsMoved++;
+      }
+    }
+
+    // Step 3: Delete the source chant
+    await db.collection("chants").doc(sourceId).delete();
+
+    // Step 4: Reconcile target counters from ground truth (safety net)
+    await reconcileChantCounters(targetId);
+
+    // Step 5: Audit log with full source payload (Addition A)
+    await writeAuditEntry({
+      actorId: actorUid,
+      action: "merge_chants",
+      targetType: "chant",
+      targetId,
+      detail: JSON.stringify({
+        sourceId,
+        targetId,
+        votesMoved,
+        votesSkipped,
+        reportsMoved,
+        sourcePayload,
+      }),
+    });
+
+    return {
+      success: true,
+      votesMoved,
+      votesSkipped,
+      reportsMoved,
+    };
+  }
+);
+
 // --- Helper: reconcile chant counters from votes collection ---
 async function reconcileChantCounters(chantId: string): Promise<void> {
   const votesSnap = await db.collection("votes").where("chantId", "==", chantId).get();

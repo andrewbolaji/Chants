@@ -51,4 +51,15 @@ class ModerationRepository {
   Future<void> deleteAccount() async {
     await _functions.httpsCallable('deleteAccount').call({});
   }
+
+  Future<Map<String, dynamic>> mergeChants({
+    required String sourceId,
+    required String targetId,
+  }) async {
+    final result = await _functions.httpsCallable('mergeChants').call({
+      'sourceId': sourceId,
+      'targetId': targetId,
+    });
+    return Map<String, dynamic>.from(result.data as Map);
+  }
 }
