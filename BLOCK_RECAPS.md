@@ -819,3 +819,73 @@ None (deleteAccount added to existing functions/src/index.ts).
 
 ### Commit
 `2a5f009`
+
+---
+
+## Block 8: v1.1 Dedup Model, Backend Foundations
+**Status:** CLOSED
+**Commit (final reviewed code):** `4c59933`
+**Tests:** 155 passing (63 Dart + 73 rules emulator + 19 seed/counter)
+**Analyze:** `flutter analyze` -- 0 issues
+**v1 impact:** Zero. No UI, no rules, no data model, no query changes.
+
+### What was built
+- **Matching engine** (lib/data/services/chant_matcher.dart): pure Dart, no Firebase. Token overlap (Jaccard) scoring with configurable tune boost. Named constants: matchThreshold 0.4, tuneBoostAmount 0.2, tuneMatchThreshold 0.3, maxResults 3.
+- **mergeChants callable** (functions/src/index.ts): operator-only, validates same-team, moves votes with dedup (target wins when same user voted on both), moves reports, deletes source, reconciles target counters, logs full source payload snapshot (Addition A) for undo capability.
+- **Moderation repository** method for mergeChants wired to callable.
+
+### Disposition table
+
+**Security frame**
+
+| Finding | Severity | Disposition |
+|---------|----------|-------------|
+| Merge callable: operator-only via Firestore profile role check | N/A | Verified: same pattern as onModerationAction. Actor from auth context. |
+| Merge callable: cross-team rejection | N/A | Verified: teamId comparison, throws INVALID_ARGUMENT. |
+| Merge callable: sourceId == targetId rejection | N/A | Verified: throws INVALID_ARGUMENT. |
+| Merge callable: non-existent chant rejection | N/A | Verified: throws NOT_FOUND. |
+| Merge callable: no client parameter for actor | N/A | Verified: actorUid = request.auth.uid. |
+
+**Operational frame**
+
+| Finding | Severity | Disposition |
+|---------|----------|-------------|
+| Partial failure safety: step ordering is idempotent | N/A | Verified: each step is safe to repeat. Votes already moved have different chantId. Source already deleted is a no-op. Reconciliation recomputes from ground truth. |
+| onVoteWritten fires during merge as votes move | N/A | Documented in code comment. Reconcile-target at end is the safety net. |
+| Large vote count on merge (500+ writes) | Low | Defended: at v1.1 volume unlikely. Individual writes within Firestore batch limits. Trigger: paginate if a merge exceeds 500 votes. |
+| Concurrent vote during merge | Low | Defended: orphaned vote (pointing to deleted source) does not count in reconciliation. Self-healing. |
+| Source payload snapshot in audit log (Addition A) | N/A | Verified: full content snapshot logged, enabling manual recovery from a swapped merge. |
+
+**Taste frame**
+
+| Finding | Severity | Disposition |
+|---------|----------|-------------|
+| Matching threshold tradeoff pinned by adversarial tests | N/A | "The Saka Song" vs "The Rice Song" = 0.5 (accepted false positive). "Up the Arsenal" vs "Pride of Arsenal" = 0.2 (no nudge). Both tests visible in the suite. |
+| No magic numbers: all config in MatcherConfig | N/A | Verified: matchThreshold, tuneBoostAmount, tuneMatchThreshold, maxResults. |
+
+### New DECISIONS entries (to add)
+- Token overlap algorithm for matching (over Levenshtein). Trigger to revisit: false positives in production.
+- mergeChants logs full source payload for undo capability.
+- Denormalized normalizedTitle deferred. Trigger: team chant count exceeds 200.
+
+### Files created
+| File | Lines |
+|------|-------|
+| lib/data/services/chant_matcher.dart | 83 |
+| test/data/services/chant_matcher_test.dart | 159 |
+
+### Files modified
+| File | Change |
+|------|--------|
+| functions/src/index.ts | mergeChants callable (~130 lines) |
+| lib/data/repositories/moderation_repository.dart | mergeChants method |
+
+### Deferred (with triggers)
+| Item | Trigger |
+|------|---------|
+| Denormalized normalizedTitle field | Team chant count exceeds 200 |
+| Merge pagination for large vote counts | A merge exceeds 500 votes |
+| Matching threshold tuning | False positives observed in production |
+
+### Commit
+`4c59933`
