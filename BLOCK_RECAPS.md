@@ -778,3 +778,44 @@ None (deleteAccount added to existing functions/src/index.ts).
 
 ### Commit
 `0e85e74`
+
+---
+
+## Beautification Audit Pass
+**Status:** CLOSED
+**Commit (final reviewed code):** `2a5f009`
+**Tests:** 142 passing (50 Dart + 73 rules emulator + 19 seed/counter)
+**Analyze:** `flutter analyze` -- 0 issues
+
+### What was done
+- **F1:** 22 raw SizedBox values in feedback_screen, report_sheet, moderation_screen converted to Spacing constants.
+- **F2:** 88px vote-controls placeholder documented as intentional layout shim.
+- **Tap target enumeration:** All interactive elements verified at 44-48px minimum.
+- **Single-accent audit:** 6 amber uses enumerated, all on action or earned status. Zero decorative.
+- **Doc updates A-D:** BEAUTIFICATION_BRIEF.md confirmed, standing rule added, lesson recorded, framework flag noted.
+
+### Disposition table (Taste frame)
+
+| Finding | Severity | Disposition |
+|---------|----------|-------------|
+| 22 raw SizedBox values (F1) | Medium | Fixed: all converted to Spacing constants |
+| 88px placeholder width (F2) | Low | Defended: documented layout shim, retune comment added |
+| Amber: 6 uses outside token files | N/A | All on action or earned status. Zero decorative. |
+| textFaint on text | N/A | Verified: only on icons (chevrons, empty state). Never on readable text. |
+| Contrast: all 4 gray ramp levels | N/A | AAA (textPrimary 16.8:1), AA (textMuted 5.5:1), decorative-only (textFaint 3.0:1), AAA (amber 9.5:1) |
+| Flat: elevation/shadow | N/A | Zero in presentation layer |
+| All states designed | N/A | 15 screens, all covered |
+| Audience check | N/A | Fan voice throughout. No corporate, sterile, or preachy copy. |
+
+### Token verification (measured)
+| Metric | Count |
+|--------|-------|
+| Hardcoded colors outside token files | 0 |
+| Inline fontSize outside token files | 0 |
+| Raw EdgeInsets in presentation | 0 |
+| Raw SizedBox in presentation | 0 (+1 documented shim) |
+| Magic BorderRadius | 0 |
+| Elevation/shadow | 0 |
+
+### Commit
+`2a5f009`
