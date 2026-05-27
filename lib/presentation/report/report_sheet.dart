@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chants/app/providers.dart';
+import 'package:chants/app/spacing.dart';
 
 const _reportCategories = [
   'Hate speech or slurs',
@@ -85,9 +86,9 @@ class _ReportSheetContentState extends State<_ReportSheetContent> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.check_circle_outline, size: 48),
-            const SizedBox(height: 16),
+            const SizedBox(height: Spacing.lg),
             const Text('Got it. We will take a look.'),
-            const SizedBox(height: 16),
+            const SizedBox(height: Spacing.lg),
             FilledButton(
               onPressed: () => Navigator.pop(context),
               child: const Text('Close'),
@@ -108,9 +109,9 @@ class _ReportSheetContentState extends State<_ReportSheetContent> {
             'Report this chant',
             style: Theme.of(context).textTheme.titleLarge,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: Spacing.sm),
           const Text('Something off about this one? Tell us why.'),
-          const SizedBox(height: 16),
+          const SizedBox(height: Spacing.lg),
           RadioGroup<String>(
             groupValue: _selectedCategory ?? '',
             onChanged: (v) => setState(() => _selectedCategory = v),
@@ -122,7 +123,7 @@ class _ReportSheetContentState extends State<_ReportSheetContent> {
               )).toList(),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: Spacing.sm),
           TextField(
             controller: _noteController,
             decoration: const InputDecoration(
@@ -133,7 +134,7 @@ class _ReportSheetContentState extends State<_ReportSheetContent> {
             maxLength: 200,
             maxLines: 2,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: Spacing.lg),
           FilledButton(
             onPressed:
                 _selectedCategory != null && !_submitting ? _submit : null,

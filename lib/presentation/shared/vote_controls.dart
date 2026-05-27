@@ -93,6 +93,8 @@ class _VoteControlsState extends ConsumerState<VoteControls> {
 
   @override
   Widget build(BuildContext context) {
+    // Width matches the rendered vote row (up + score + down). Retune or
+    // replace with IntrinsicWidth if the row design changes.
     if (!_loaded) return const SizedBox(width: 88);
 
     final score = widget.chant.score;

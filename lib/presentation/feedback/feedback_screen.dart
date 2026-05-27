@@ -73,13 +73,13 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Icon(Icons.check_circle_outline, size: 64),
-                const SizedBox(height: 16),
+                const SizedBox(height: Spacing.lg),
                 Text(
                   'Got it. We read every one.',
                   style: Theme.of(context).textTheme.titleMedium,
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: Spacing.xl),
                 FilledButton(
                   onPressed: () => Navigator.pop(context),
                   child: const Text('Done'),
@@ -97,7 +97,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
         padding: const EdgeInsets.all(Spacing.lg),
         children: [
           const Text('What is this about?'),
-          const SizedBox(height: 8),
+          const SizedBox(height: Spacing.sm),
           SegmentedButton<String>(
             segments: _categories
                 .map((c) => ButtonSegment(
@@ -108,7 +108,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
             selected: {_category},
             onSelectionChanged: (v) => setState(() => _category = v.first),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: Spacing.lg),
           TextField(
             controller: _messageController,
             decoration: const InputDecoration(
@@ -129,7 +129,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: Spacing.sm),
           CheckboxListTile(
             value: _followUpOk,
             onChanged: (v) => setState(() => _followUpOk = v ?? false),
@@ -137,7 +137,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
             controlAffinity: ListTileControlAffinity.leading,
             contentPadding: EdgeInsets.zero,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: Spacing.lg),
           FilledButton(
             onPressed: _messageController.text.trim().isNotEmpty && !_submitting
                 ? _submit

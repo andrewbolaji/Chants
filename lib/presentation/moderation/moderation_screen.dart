@@ -144,9 +144,9 @@ class ModerationScreen extends ConsumerWidget {
                                   const Chip(label: Text('Follow-up OK')),
                               ],
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: Spacing.sm),
                             Text(fb.message),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: Spacing.xs),
                             Text(
                               'User: ${fb.userId}',
                               style: Theme.of(context).textTheme.bodySmall,
@@ -184,21 +184,21 @@ class _ModerationCard extends StatelessWidget {
           children: [
             Text(chant.title,
                 style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 4),
+            const SizedBox(height: Spacing.xs),
             Text(
               'Flags: ${chant.flagCount} | '
               'Hidden: ${chant.hidden} | '
               'Removed: ${chant.removed}',
               style: Theme.of(context).textTheme.bodySmall,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: Spacing.xs),
             Text(
               chant.lyrics,
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: Spacing.sm),
             Wrap(
               spacing: 8,
               children: [
@@ -269,18 +269,18 @@ class _PromotionCard extends StatelessWidget {
           children: [
             Text(chant.title,
                 style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 4),
+            const SizedBox(height: Spacing.xs),
             Text(
               'Score: ${chant.score} | Status: ${chant.status}',
               style: Theme.of(context).textTheme.bodySmall,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: Spacing.xs),
             Text(
               chant.lyrics,
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: Spacing.sm),
             Row(
               children: [
                 FilledButton.tonal(
@@ -359,7 +359,7 @@ class _BanUserTabState extends ConsumerState<_BanUserTab> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const Text('Enter the user ID to ban.'),
-          const SizedBox(height: 16),
+          const SizedBox(height: Spacing.lg),
           TextField(
             controller: _uidController,
             decoration: const InputDecoration(
@@ -367,7 +367,7 @@ class _BanUserTabState extends ConsumerState<_BanUserTab> {
               border: OutlineInputBorder(),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: Spacing.lg),
           FilledButton(
             onPressed: _loading ? null : _ban,
             style: FilledButton.styleFrom(
