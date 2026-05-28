@@ -68,6 +68,9 @@
 | 2026-05-25 | firebase_storage removed from pubspec (C10) | Not used until media ships. Re-add when needed. |
 | 2026-05-25 | Release at v1.1, not v1.0 | The social and self-correction layer (comments, follows, creation prompts, duplicate handling) is core to the product feeling alive. Launching without it would feel static. v1.0 is the hardened foundation; v1.1 is when the public sees it. |
 | 2026-05-25 | "Canonical" renamed to "Verified" in the UI | Users see "Verified" badge (amber). Community chants show no badge. Internal status field stays "canonical" in Firestore. |
+| 2026-05-27 | Matching algorithm: token overlap (Jaccard) over Levenshtein | Chants are bags of words and word order is incidental; Levenshtein penalizes reordering. Trigger to revisit: persistent false-positive nudges observed in production. |
+| 2026-05-27 | mergeChants logs full source payload snapshot in audit log | A swapped merge (operator accidentally deletes the keeper) is recoverable by recreating the source chant from the audit payload. |
+| 2026-05-27 | Denormalized normalizedTitle field deferred | In-memory normalization is fine at v1.1 scope (at most ~30 chants per team). Trigger to add: a team's chant count exceeds 200, where in-memory normalization on every submit becomes too slow. |
 
 ## Notes for Later Blocks
 | Date | Note | Relevant Block |
