@@ -71,6 +71,7 @@
 | 2026-05-27 | Matching algorithm: token overlap (Jaccard) over Levenshtein | Chants are bags of words and word order is incidental; Levenshtein penalizes reordering. Trigger to revisit: persistent false-positive nudges observed in production. |
 | 2026-05-27 | mergeChants logs full source payload snapshot in audit log | A swapped merge (operator accidentally deletes the keeper) is recoverable by recreating the source chant from the audit payload. |
 | 2026-05-27 | Denormalized normalizedTitle field deferred | In-memory normalization is fine at v1.1 scope (at most ~30 chants per team). Trigger to add: a team's chant count exceeds 200, where in-memory normalization on every submit becomes too slow. |
+| 2026-06-01 | Variable fonts require FontVariation to pin the weight axis | pubspec weight alone does not set a variable font's wght axis; the font renders at its default (~400). Every TextStyle using a variable font must carry fontVariations with the intended weight value. Future font work must follow this pattern. |
 
 ## Notes for Later Blocks
 | Date | Note | Relevant Block |

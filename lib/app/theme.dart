@@ -3,6 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:chants/app/colors.dart';
 import 'package:chants/app/spacing.dart';
 
+// Variable font weight axis values. These pin the actual rendered weight
+// because pubspec weight alone does not set a variable font's wght axis.
+const _oswald700 = [FontVariation('wght', 700)];
+const _nunito400 = [FontVariation('wght', 400)];
+const _nunito700 = [FontVariation('wght', 700)];
+const _nunito800 = [FontVariation('wght', 800)];
+
 class ChantTheme {
   static ThemeData get dark {
     return ThemeData(
@@ -35,6 +42,7 @@ class ChantTheme {
         centerTitle: false,
         titleTextStyle: TextStyle(
           fontFamily: 'Oswald',
+          fontVariations: _oswald700,
           color: AppColors.textPrimary,
           fontSize: 22,
           fontWeight: FontWeight.w700,
@@ -85,6 +93,7 @@ class ChantTheme {
           ),
           textStyle: const TextStyle(
             fontFamily: 'Oswald',
+            fontVariations: _oswald700,
             fontSize: 16,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.5,
@@ -99,6 +108,7 @@ class ChantTheme {
           minimumSize: const Size(48, 48),
           textStyle: const TextStyle(
             fontFamily: 'Nunito',
+            fontVariations: _nunito700,
             fontSize: 14,
             fontWeight: FontWeight.w700,
           ),
@@ -138,10 +148,12 @@ class ChantTheme {
         ),
         labelStyle: const TextStyle(
           fontFamily: 'Nunito',
+          fontVariations: _nunito400,
           color: AppColors.textMuted,
         ),
         hintStyle: const TextStyle(
           fontFamily: 'Nunito',
+          fontVariations: _nunito400,
           color: AppColors.textFaint,
         ),
       ),
@@ -151,6 +163,7 @@ class ChantTheme {
         backgroundColor: AppColors.surface,
         labelStyle: const TextStyle(
           fontFamily: 'Nunito',
+          fontVariations: _nunito400,
           color: AppColors.textMuted,
           fontSize: 12,
         ),
@@ -176,6 +189,7 @@ class ChantTheme {
         backgroundColor: AppColors.surfaceRaised,
         contentTextStyle: const TextStyle(
           fontFamily: 'Nunito',
+          fontVariations: _nunito400,
           color: AppColors.textPrimary,
         ),
         shape: RoundedRectangleBorder(
@@ -216,11 +230,13 @@ class ChantTheme {
         dividerColor: AppColors.divider,
         labelStyle: TextStyle(
           fontFamily: 'Oswald',
+          fontVariations: _oswald700,
           fontWeight: FontWeight.w700,
           letterSpacing: 0.5,
         ),
         unselectedLabelStyle: TextStyle(
           fontFamily: 'Oswald',
+          fontVariations: _oswald700,
           fontWeight: FontWeight.w700,
           letterSpacing: 0.5,
         ),
@@ -242,6 +258,7 @@ class ChantTheme {
           minimumSize: WidgetStateProperty.all(const Size(0, 44)),
           textStyle: WidgetStateProperty.all(const TextStyle(
             fontFamily: 'Nunito',
+            fontVariations: _nunito700,
             fontWeight: FontWeight.w700,
           )),
         ),
@@ -276,6 +293,7 @@ class ChantTheme {
     // Hero display: Oswald condensed uppercase
     headlineLarge: TextStyle(
       fontFamily: 'Oswald',
+      fontVariations: _oswald700,
       fontSize: 28,
       fontWeight: FontWeight.w700,
       color: AppColors.textPrimary,
@@ -284,6 +302,7 @@ class ChantTheme {
     // Screen titles: Oswald
     headlineMedium: TextStyle(
       fontFamily: 'Oswald',
+      fontVariations: _oswald700,
       fontSize: 24,
       fontWeight: FontWeight.w700,
       color: AppColors.textPrimary,
@@ -292,6 +311,7 @@ class ChantTheme {
     // Card titles, section headers: Oswald condensed
     titleMedium: TextStyle(
       fontFamily: 'Oswald',
+      fontVariations: _oswald700,
       fontSize: 17,
       fontWeight: FontWeight.w700,
       color: AppColors.textPrimary,
@@ -300,6 +320,7 @@ class ChantTheme {
     // Tune name, small headers: Oswald
     titleSmall: TextStyle(
       fontFamily: 'Oswald',
+      fontVariations: _oswald700,
       fontSize: 14,
       fontWeight: FontWeight.w700,
       color: AppColors.textPrimary,
@@ -308,6 +329,7 @@ class ChantTheme {
     // LYRICS: the singable centerpiece. Nunito heavy, large, warm.
     bodyLarge: TextStyle(
       fontFamily: 'Nunito',
+      fontVariations: _nunito800,
       fontSize: 23,
       fontWeight: FontWeight.w800,
       color: AppColors.textPrimary,
@@ -316,6 +338,7 @@ class ChantTheme {
     // Body text, previews: Nunito
     bodyMedium: TextStyle(
       fontFamily: 'Nunito',
+      fontVariations: _nunito400,
       fontSize: 14,
       fontWeight: FontWeight.w400,
       color: AppColors.textMuted,
@@ -323,6 +346,7 @@ class ChantTheme {
     // Metadata: Nunito
     bodySmall: TextStyle(
       fontFamily: 'Nunito',
+      fontVariations: _nunito400,
       fontSize: 12,
       fontWeight: FontWeight.w400,
       color: AppColors.textMuted,
@@ -330,6 +354,7 @@ class ChantTheme {
     // Labels, overlines: Oswald small caps feel
     labelMedium: TextStyle(
       fontFamily: 'Oswald',
+      fontVariations: _oswald700,
       fontSize: 12,
       fontWeight: FontWeight.w700,
       color: AppColors.textMuted,
@@ -338,6 +363,7 @@ class ChantTheme {
     // Badges, chips: Nunito
     labelSmall: TextStyle(
       fontFamily: 'Nunito',
+      fontVariations: [FontVariation('wght', 600)],
       fontSize: 11,
       fontWeight: FontWeight.w600,
       color: AppColors.textMuted,

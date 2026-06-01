@@ -5,6 +5,7 @@ import 'package:chants/app/providers.dart';
 import 'package:chants/app/spacing.dart';
 import 'package:chants/data/models/chant.dart';
 import 'package:chants/presentation/report/report_sheet.dart';
+import 'package:chants/presentation/shared/gold_foil_badge.dart';
 import 'package:chants/presentation/shared/vote_controls.dart';
 
 class ChantDetailScreen extends ConsumerWidget {
@@ -88,7 +89,7 @@ class ChantDetailScreen extends ConsumerWidget {
                     runSpacing: Spacing.xs,
                     children: [
                       if (chant.status == 'canonical')
-                        const _GoldFoilBadge(),
+                        const GoldFoilBadge(),
                       _Badge(label: chant.subjectTag, isGold: false),
                       if (chant.realOrParody == 'parody')
                         const _Badge(label: 'Parody', isGold: false),
@@ -193,37 +194,6 @@ class ChantDetailScreen extends ConsumerWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _GoldFoilBadge extends StatelessWidget {
-  const _GoldFoilBadge();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: Spacing.sm,
-        vertical: 2,
-      ),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.goldFoilStart, AppColors.goldFoilEnd],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(Radii.sm),
-      ),
-      child: Text(
-        'VERIFIED',
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              fontFamily: 'Oswald',
-              color: AppColors.goldOnDark,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.5,
-            ),
       ),
     );
   }
