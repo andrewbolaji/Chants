@@ -8,20 +8,22 @@ Use this when: an app works but looks unconsidered, inconsistent, or cramped; a 
 
 ## The prompt (copy-paste)
 
-Put on a specific hat for this work: a senior product designer with 10+ years at the level of Apple, Google, Linear, and Stripe, who makes things beautiful through restraint, not ornament. I want a beautification pass on this app. Not a logic overhaul, not new features. Go through the app, establish a real design system, and find the highest-impact opportunities to make it look and feel considered.
+Put on a specific hat for this work: a senior product designer with 10+ years at the level of Apple, Google, Linear, and Stripe, who makes things beautiful through intentionality, not default. I want a beautification pass on this app. Not a logic overhaul, not new features. Go through the app, establish a real design system, and find the highest-impact opportunities to make it look and feel considered.
 
-### Design philosophy to work from
+### The one rule above all others
 
-- Simplicity is the beauty. The references for "beautiful" are Linear, Stripe, Notion, Things: calm, spacious, ruthlessly simple. Remove anything on screen that does not earn its place.  
-- One design system, tokens not magic numbers. Every color, font size, spacing step, and radius comes from a defined scale, never a hardcoded literal in a component. That single discipline is what makes an app look consistent and intentional.  
-- Restrained palette: a calm neutral base plus a tightly limited accent, used surgically on actions and key states, plus semantic colors (success, warning, danger) used only for meaning. No second decorative accent.  
-- Strong, simple type hierarchy. Two or three weights, clear sizes, legibility first, especially for the app's core data and any read-only or export views where trust matters.  
-- Generous spacing and rhythm. Hairline dividers over heavy boxes. Flat: no gradients, drop shadows, glow, or noise.  
-- Accessible by default: WCAG AA contrast, real click and tap targets, text that respects system scaling.  
-- Every state designed: empty, loading, error, and success, not just the happy path.  
-- The audience check governs everything: design for this app's actual user. Read the product's own docs and decide who that is, then let the look follow from the audience. A professional or operational tool should read clean, efficient, and trustworthy, never flashy. A consumer product can carry more warmth and personality. Either way, consistency across screens beats local cleverness.
+Build the look that fits THIS product, using the best design principles, rather than applying one house style to every app. The discipline below is universal and always applies. The aesthetic is not: it is chosen fresh for each product from its purpose and audience. A calm minimal look is one valid answer, not the default answer. Do not import a flavor (whether the calm-minimal Linear/Stripe style or any other) just because it worked elsewhere. Decide what THIS product's beauty is, commit to it boldly and coherently, and execute it with precision. Sameness across different apps is the failure to avoid; a distinctive look that genuinely fits each one is the goal.
 
-Critical adaptation: derive the app's own aesthetic from its product and audience. Do not import a look that does not fit it (a consumer or dark-mode social-app style on a professional tool, or a sterile enterprise style on a playful consumer app). Decide what this specific product's beauty is before styling anything.
+### Design discipline to work from (universal, applies to every app)
+
+- Intentionality is the beauty. Every element on screen earns its place, and every choice is deliberate rather than arbitrary or accidental. This is constant whether the result is minimal or rich, calm or bold.  
+- One design system, tokens not magic numbers. Every color, font size, spacing step, and radius comes from a defined scale, never a hardcoded literal in a component. That single discipline is what makes an app look consistent and intentional, in any aesthetic.  
+- A coherent, deliberate palette. Whether restrained or rich, the palette is a considered system, not a grab bag. Semantic colors (success, warning, danger) are reserved for meaning, never decoration. A minimal product may want a neutral base and a single surgical accent; a bolder product may justify a richer palette. The rule is purposeful, not "always restrained."  
+- Strong, clear type hierarchy. Distinctive and legible, not default system fonts by reflex. Legibility first, especially for the app's core data and any read-only or export views where trust matters. The number of weights and the personality of the type follow the product.  
+- Deliberate use of space, depth, and motion. Gradients, shadows, motion, and texture are tools, not sins: used with purpose they create atmosphere and hierarchy; used arbitrarily they create noise. A minimal tool may stay flat with hairline dividers and generous space; a richer product may use depth and motion meaningfully. Either way, every such choice is justified by the product, never reached for by habit and never piled on.  
+- Accessible by default: WCAG AA contrast, real click and tap targets, text that respects system scaling. Non-negotiable in any aesthetic.  
+- Every state designed: empty, loading, error, and success, not just the happy path. For some products (anything showing live or money-critical data) the degraded states are a safety requirement, not a nicety.  
+- The audience check governs everything: design for this app's actual user. Read the product's own docs and decide who that is, then let the look follow from the audience. A professional or operational tool often reads clean, efficient, and trustworthy; a consumer product can carry more warmth, personality, or intensity. Match the product. Consistency across screens beats local cleverness.
 
 ### Process, plugged into the usual block cadence
 
@@ -41,7 +43,7 @@ No em dashes, sentence case, and hold the same quality bar we hold everywhere. S
 
 - **Tokens are the whole game.** The difference between an app that looks intentional and one that looks improvised is almost never talent, it is whether every color, size, space, and radius traces to a defined scale. Establish the scale first; restyling then cascades instead of being fought screen by screen. An app whose theme is already tokenized in one place can often be re-skinned by editing that one file, so the first audit question is always "are components on the tokens, or did hardcoded values and stock framework classes creep in?"  
     
-- **The audience is the variable, the principles are constant.** The restraint principles above are universal. What changes per app is who it serves, and that decision drives palette warmth, type personality, and density. Derive the audience from the product's own docs before proposing a look. Never import an aesthetic from a different kind of product.  
+- **The discipline is constant, the aesthetic is the variable.** The principles above (tokens, intentionality, accessibility, every state designed, the audience check) apply to every app unchanged. What changes per app is the look, and it is chosen fresh from the product and its audience, never inherited. This is the lesson that matters most: applying one remembered house style to every project produces sameness, where each app deserves a distinctive look that fits it. Derive the audience from the product's own docs, commit to a direction that genuinely fits, and resist defaulting to whatever flavor the last project used. The constant is the rigor, not the style.  
     
 - **Trust surfaces deserve extra care.** Any read-only view, export, or screen an outside party reads (an inspector, an auditor, a customer's customer) is where legibility and calm matter most, because there beauty equals credibility. Identify these early and treat them as the highest-stakes screens.  
     
@@ -54,5 +56,6 @@ No em dashes, sentence case, and hold the same quality bar we hold everywhere. S
 ## Reference
 
 - Created May 2026, generalized from the Roster design pass brief into a stack- and product-agnostic prompt.  
+- Revised June 2026: separated the universal design discipline from the per-app aesthetic. The earlier version hard-coded a calm-minimal (Linear/Stripe) look as the default, which contradicted its own adaptation note and produced sameness across different apps. Now the rigor is constant and the look is chosen fresh to fit each product.  
 - Living document. Refine if a future design pass surfaces a principle these miss.
 

@@ -63,32 +63,54 @@ class ChantDetailScreen extends ConsumerWidget {
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: Spacing.xl),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: Spacing.lg),
+            // Floodlight glow behind the title area (hero atmosphere)
+            Container(
+              width: double.infinity,
+              decoration: const BoxDecoration(
+                gradient: RadialGradient(
+                  center: Alignment.topCenter,
+                  radius: 1.2,
+                  colors: [AppColors.glowGold, Colors.transparent],
+                ),
+              ),
+              padding: const EdgeInsets.fromLTRB(
+                Spacing.xl, Spacing.lg, Spacing.xl, Spacing.xxl,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Metadata row
+                  Wrap(
+                    spacing: Spacing.sm,
+                    runSpacing: Spacing.xs,
+                    children: [
+                      if (chant.status == 'canonical')
+                        const _GoldFoilBadge(),
+                      _Badge(label: chant.subjectTag, isGold: false),
+                      if (chant.realOrParody == 'parody')
+                        const _Badge(label: 'Parody', isGold: false),
+                    ],
+                  ),
+                  const SizedBox(height: Spacing.xl),
 
-            // Quiet metadata row: status, subject tag, real/parody
-            Wrap(
-              spacing: Spacing.sm,
-              runSpacing: Spacing.xs,
-              children: [
-                if (chant.status == 'canonical')
-                  const _Badge(label: 'Verified', isAmber: true),
-                _Badge(label: chant.subjectTag, isAmber: false),
-                if (chant.realOrParody == 'parody')
-                  const _Badge(label: 'Parody', isAmber: false),
-              ],
+                  // Title: bold condensed uppercase, the hero
+                  Text(
+                    chant.title.toUpperCase(),
+                    style: textTheme.headlineLarge,
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: Spacing.xl),
 
-            // Title: bold, large
-            Text(
-              chant.title,
-              style: textTheme.headlineMedium,
-            ),
-            const SizedBox(height: Spacing.lg),
+            // Content below the glow area
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: Spacing.xl),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
 
             // Tune: icon + name
             Row(
@@ -166,6 +188,9 @@ class ChantDetailScreen extends ConsumerWidget {
             ],
 
             const SizedBox(height: Spacing.xxxl),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -173,11 +198,8 @@ class ChantDetailScreen extends ConsumerWidget {
   }
 }
 
-class _Badge extends StatelessWidget {
-  final String label;
-  final bool isAmber;
-
-  const _Badge({required this.label, required this.isAmber});
+class _GoldFoilBadge extends StatelessWidget {
+  const _GoldFoilBadge();
 
   @override
   Widget build(BuildContext context) {
@@ -187,16 +209,50 @@ class _Badge extends StatelessWidget {
         vertical: 2,
       ),
       decoration: BoxDecoration(
-        color: isAmber
-            ? AppColors.amber.withValues(alpha: 0.15)
+        gradient: const LinearGradient(
+          colors: [AppColors.goldFoilStart, AppColors.goldFoilEnd],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(Radii.sm),
+      ),
+      child: Text(
+        'VERIFIED',
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              fontFamily: 'Oswald',
+              color: AppColors.goldOnDark,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.5,
+            ),
+      ),
+    );
+  }
+}
+
+class _Badge extends StatelessWidget {
+  final String label;
+  final bool isGold;
+
+  const _Badge({required this.label, required this.isGold});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.sm,
+        vertical: 2,
+      ),
+      decoration: BoxDecoration(
+        color: isGold
+            ? AppColors.gold.withValues(alpha: 0.15)
             : AppColors.surfaceRaised,
         borderRadius: BorderRadius.circular(Radii.sm),
       ),
       child: Text(
         label,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: isAmber ? AppColors.amber : AppColors.textMuted,
-              fontWeight: isAmber ? FontWeight.w600 : FontWeight.w500,
+              color: isGold ? AppColors.gold : AppColors.textMuted,
+              fontWeight: isGold ? FontWeight.w600 : FontWeight.w500,
             ),
       ),
     );

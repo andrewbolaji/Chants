@@ -39,3 +39,15 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  assets:
+    - assets/textures/
+
+  fonts:
+    - family: Oswald
+      fonts:
+        - asset: assets/fonts/Oswald-Bold.ttf
+          weight: 700
+    - family: Nunito
+      fonts:
+        - asset: assets/fonts/Nunito-Variable.ttf

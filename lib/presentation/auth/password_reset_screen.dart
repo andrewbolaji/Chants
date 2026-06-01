@@ -55,7 +55,7 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
                   Icon(
                     Icons.check_circle_outline,
                     size: 48,
-                    color: AppColors.amber,
+                    color: AppColors.gold,
                   ),
                   const SizedBox(height: Spacing.lg),
                   Text(

@@ -20,93 +20,77 @@ class ChantCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: Spacing.lg,
-          vertical: Spacing.md,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Top line: muted metadata (status, tune, team)
-            Row(
-              children: [
-                if (chant.status == 'canonical')
-                  _AmberBadge(label: 'Verified'),
-                const SizedBox(width: Spacing.sm),
-                Text('\u00b7', style: textTheme.labelSmall),
-                const SizedBox(width: Spacing.sm),
-                Expanded(
-                  child: Text(
-                    chant.tuneName,
-                    style: textTheme.labelSmall,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+    return Card(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(Radii.lg),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(Spacing.lg),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Top line: tune in small caps + verified foil badge
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      chant.tuneName.toUpperCase(),
+                      style: textTheme.labelMedium,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: Spacing.sm),
-
-            // Bold title
-            Text(
-              chant.title,
-              style: textTheme.titleMedium,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            if (teamName != null) ...[
-              const SizedBox(height: Spacing.xs),
-              Text(teamName!, style: textTheme.bodySmall),
-            ],
-            const SizedBox(height: Spacing.xs),
-
-            // One-line lyrics preview
-            Text(
-              chant.lyrics.replaceAll('\n', ' '),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: textTheme.bodyMedium,
-            ),
-            const SizedBox(height: Spacing.md),
-
-            // Quiet vote row
-            Row(
-              children: [
-                if (chant.subjectTag != 'club') ...[
-                  Text(
-                    chant.subjectTag,
-                    style: textTheme.labelSmall,
-                  ),
-                  const SizedBox(width: Spacing.sm),
+                  if (chant.status == 'canonical') const _GoldFoilBadge(),
                 ],
-                if (chant.realOrParody == 'parody')
-                  Text(
-                    'parody',
-                    style: textTheme.labelSmall,
-                  ),
-                const Spacer(),
-                VoteControls(chant: chant),
-              ],
-            ),
+              ),
+              const SizedBox(height: Spacing.sm),
 
-            // Hairline separator
-            const Padding(
-              padding: EdgeInsets.only(top: Spacing.md),
-              child: Divider(height: 0.5),
-            ),
-          ],
+              // Bold condensed title
+              Text(
+                chant.title.toUpperCase(),
+                style: textTheme.titleMedium,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              if (teamName != null) ...[
+                const SizedBox(height: Spacing.xs),
+                Text(teamName!, style: textTheme.bodySmall),
+              ],
+              const SizedBox(height: Spacing.sm),
+
+              // One-line lyrics preview
+              Text(
+                chant.lyrics.replaceAll('\n', ' '),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: textTheme.bodyMedium,
+              ),
+              const SizedBox(height: Spacing.md),
+
+              // Quiet vote row with bold condensed score
+              Row(
+                children: [
+                  if (chant.subjectTag != 'club') ...[
+                    Text(chant.subjectTag, style: textTheme.labelSmall),
+                    const SizedBox(width: Spacing.sm),
+                  ],
+                  if (chant.realOrParody == 'parody')
+                    Text('parody', style: textTheme.labelSmall),
+                  const Spacer(),
+                  VoteControls(chant: chant),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _AmberBadge extends StatelessWidget {
-  final String label;
-  const _AmberBadge({required this.label});
+/// Gold foil gradient badge for verified chants. Feels earned, not flat.
+class _GoldFoilBadge extends StatelessWidget {
+  const _GoldFoilBadge();
 
   @override
   Widget build(BuildContext context) {
@@ -116,14 +100,20 @@ class _AmberBadge extends StatelessWidget {
         vertical: 2,
       ),
       decoration: BoxDecoration(
-        color: AppColors.amber.withValues(alpha: 0.15),
+        gradient: const LinearGradient(
+          colors: [AppColors.goldFoilStart, AppColors.goldFoilEnd],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(Radii.sm),
       ),
       child: Text(
-        label,
+        'VERIFIED',
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: AppColors.amber,
-              fontWeight: FontWeight.w600,
+              fontFamily: 'Oswald',
+              color: AppColors.goldOnDark,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.5,
             ),
       ),
     );

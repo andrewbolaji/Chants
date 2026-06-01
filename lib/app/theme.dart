@@ -11,10 +11,10 @@ class ChantTheme {
       scaffoldBackgroundColor: AppColors.background,
       colorScheme: const ColorScheme.dark(
         surface: AppColors.background,
-        primary: AppColors.amber,
-        onPrimary: AppColors.amberOnDark,
-        secondary: AppColors.amber,
-        onSecondary: AppColors.amberOnDark,
+        primary: AppColors.gold,
+        onPrimary: AppColors.goldOnDark,
+        secondary: AppColors.gold,
+        onSecondary: AppColors.goldOnDark,
         error: AppColors.error,
         onError: AppColors.textPrimary,
         onSurface: AppColors.textPrimary,
@@ -22,10 +22,11 @@ class ChantTheme {
         outline: AppColors.outline,
         surfaceContainerHighest: AppColors.surfaceRaised,
       ),
+      fontFamily: 'Nunito',
       textTheme: _textTheme,
       extensions: const [AppColors()],
 
-      // App bar: flat, dark, no elevation
+      // App bar: warm background, Oswald title
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.background,
         foregroundColor: AppColors.textPrimary,
@@ -33,10 +34,11 @@ class ChantTheme {
         scrolledUnderElevation: 0,
         centerTitle: false,
         titleTextStyle: TextStyle(
+          fontFamily: 'Oswald',
           color: AppColors.textPrimary,
-          fontSize: 20,
+          fontSize: 22,
           fontWeight: FontWeight.w700,
-          letterSpacing: -0.3,
+          letterSpacing: 0.5,
         ),
         iconTheme: IconThemeData(
           color: AppColors.textPrimary,
@@ -50,68 +52,70 @@ class ChantTheme {
         ),
       ),
 
-      // Cards: surface color, no shadow, hairline border
+      // Cards: warm surface, no border (surface IS the boundary), rounded
       cardTheme: CardThemeData(
-        color: AppColors.surface,
+        color: AppColors.surfaceRaised,
         elevation: 0,
         margin: const EdgeInsets.symmetric(
-          horizontal: Spacing.sm,
-          vertical: Spacing.xs,
+          horizontal: Spacing.md,
+          vertical: Spacing.sm,
         ),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(Radii.md),
-          side: const BorderSide(color: AppColors.divider, width: 0.5),
+          borderRadius: BorderRadius.circular(Radii.lg),
         ),
       ),
 
-      // Dividers: hairline
+      // Dividers: warm hairline
       dividerTheme: const DividerThemeData(
         color: AppColors.divider,
         thickness: 0.5,
         space: 0,
       ),
 
-      // Primary button: amber fill, near-black text, 48px min height
+      // Primary button: gold fill, warm-dark text, rounded, 48px min
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: AppColors.amber,
-          foregroundColor: AppColors.amberOnDark,
+          backgroundColor: AppColors.gold,
+          foregroundColor: AppColors.goldOnDark,
           disabledBackgroundColor: AppColors.surfaceRaised,
           disabledForegroundColor: AppColors.textFaint,
           minimumSize: const Size(double.infinity, 48),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(Radii.md),
+            borderRadius: BorderRadius.circular(Radii.lg),
           ),
           textStyle: const TextStyle(
+            fontFamily: 'Oswald',
             fontSize: 16,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.5,
           ),
         ),
       ),
 
-      // Text button: amber text for secondary actions
+      // Text button: gold text
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: AppColors.amber,
+          foregroundColor: AppColors.gold,
           minimumSize: const Size(48, 48),
           textStyle: const TextStyle(
+            fontFamily: 'Nunito',
             fontSize: 14,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ),
 
-      // Icon buttons: minimum 48px tap target
+      // Icon buttons: 48px minimum
       iconButtonTheme: IconButtonThemeData(
         style: IconButton.styleFrom(
           minimumSize: const Size(48, 48),
         ),
       ),
 
-      // Input fields: dark fill, outline border
+      // Input fields: warm fill, warm outline
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.surfaceRaised,
+        fillColor: AppColors.surface,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: Spacing.lg,
           vertical: Spacing.md,
@@ -126,20 +130,27 @@ class ChantTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(Radii.sm),
-          borderSide: const BorderSide(color: AppColors.amber, width: 1),
+          borderSide: const BorderSide(color: AppColors.gold, width: 1),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(Radii.sm),
           borderSide: const BorderSide(color: AppColors.error, width: 1),
         ),
-        labelStyle: const TextStyle(color: AppColors.textMuted),
-        hintStyle: const TextStyle(color: AppColors.textFaint),
+        labelStyle: const TextStyle(
+          fontFamily: 'Nunito',
+          color: AppColors.textMuted,
+        ),
+        hintStyle: const TextStyle(
+          fontFamily: 'Nunito',
+          color: AppColors.textFaint,
+        ),
       ),
 
-      // Chips: quiet surface, compact
+      // Chips: warm surface
       chipTheme: ChipThemeData(
-        backgroundColor: AppColors.surfaceRaised,
+        backgroundColor: AppColors.surface,
         labelStyle: const TextStyle(
+          fontFamily: 'Nunito',
           color: AppColors.textMuted,
           fontSize: 12,
         ),
@@ -150,7 +161,7 @@ class ChantTheme {
         padding: const EdgeInsets.symmetric(horizontal: Spacing.sm),
       ),
 
-      // Bottom sheet: surface color, rounded top
+      // Bottom sheet: warm surface, rounded top
       bottomSheetTheme: const BottomSheetThemeData(
         backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(
@@ -163,7 +174,10 @@ class ChantTheme {
       // Snack bar
       snackBarTheme: SnackBarThemeData(
         backgroundColor: AppColors.surfaceRaised,
-        contentTextStyle: const TextStyle(color: AppColors.textPrimary),
+        contentTextStyle: const TextStyle(
+          fontFamily: 'Nunito',
+          color: AppColors.textPrimary,
+        ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(Radii.sm),
         ),
@@ -177,16 +191,16 @@ class ChantTheme {
         iconColor: AppColors.textMuted,
       ),
 
-      // FAB: amber
+      // FAB: gold, rounded
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: AppColors.amber,
-        foregroundColor: AppColors.amberOnDark,
+        backgroundColor: AppColors.gold,
+        foregroundColor: AppColors.goldOnDark,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(Radii.md),
+          borderRadius: BorderRadius.circular(Radii.lg),
         ),
       ),
 
-      // Popup menu
+      // Popup menu: warm
       popupMenuTheme: PopupMenuThemeData(
         color: AppColors.surface,
         shape: RoundedRectangleBorder(
@@ -194,114 +208,138 @@ class ChantTheme {
         ),
       ),
 
-      // Tab bar
+      // Tab bar: gold active
       tabBarTheme: const TabBarThemeData(
-        labelColor: AppColors.amber,
+        labelColor: AppColors.gold,
         unselectedLabelColor: AppColors.textMuted,
-        indicatorColor: AppColors.amber,
+        indicatorColor: AppColors.gold,
         dividerColor: AppColors.divider,
+        labelStyle: TextStyle(
+          fontFamily: 'Oswald',
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.5,
+        ),
+        unselectedLabelStyle: TextStyle(
+          fontFamily: 'Oswald',
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.5,
+        ),
       ),
 
-      // Segmented button
+      // Segmented button: gold selected
       segmentedButtonTheme: SegmentedButtonThemeData(
         style: ButtonStyle(
           backgroundColor: WidgetStateProperty.resolveWith((states) {
-            if (states.contains(WidgetState.selected)) {
-              return AppColors.amber;
-            }
-            return AppColors.surfaceRaised;
+            if (states.contains(WidgetState.selected)) return AppColors.gold;
+            return AppColors.surface;
           }),
           foregroundColor: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.selected)) {
-              return AppColors.amberOnDark;
+              return AppColors.goldOnDark;
             }
             return AppColors.textMuted;
           }),
           minimumSize: WidgetStateProperty.all(const Size(0, 44)),
+          textStyle: WidgetStateProperty.all(const TextStyle(
+            fontFamily: 'Nunito',
+            fontWeight: FontWeight.w700,
+          )),
         ),
       ),
 
-      // Progress indicator
+      // Progress indicator: gold
       progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: AppColors.amber,
+        color: AppColors.gold,
       ),
 
-      // Checkbox
+      // Checkbox: gold
       checkboxTheme: CheckboxThemeData(
         fillColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) return AppColors.amber;
-          return AppColors.surfaceRaised;
+          if (states.contains(WidgetState.selected)) return AppColors.gold;
+          return AppColors.surface;
         }),
-        checkColor: WidgetStateProperty.all(AppColors.amberOnDark),
+        checkColor: WidgetStateProperty.all(AppColors.goldOnDark),
       ),
 
-      // Radio
+      // Radio: gold
       radioTheme: RadioThemeData(
         fillColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) return AppColors.amber;
+          if (states.contains(WidgetState.selected)) return AppColors.gold;
           return AppColors.textMuted;
         }),
       ),
     );
   }
 
+  // Two-face type hierarchy: Oswald (display) + Nunito (body)
   static const _textTheme = TextTheme(
-    // App title, big hero text
+    // Hero display: Oswald condensed uppercase
     headlineLarge: TextStyle(
+      fontFamily: 'Oswald',
       fontSize: 28,
       fontWeight: FontWeight.w700,
       color: AppColors.textPrimary,
-      letterSpacing: -0.5,
+      letterSpacing: 1.0,
     ),
-    // Screen titles
+    // Screen titles: Oswald
     headlineMedium: TextStyle(
+      fontFamily: 'Oswald',
       fontSize: 24,
       fontWeight: FontWeight.w700,
       color: AppColors.textPrimary,
-      letterSpacing: -0.3,
-    ),
-    // Card titles, section headers
-    titleMedium: TextStyle(
-      fontSize: 16,
-      fontWeight: FontWeight.w600,
-      color: AppColors.textPrimary,
-    ),
-    // Tune name, secondary titles
-    titleSmall: TextStyle(
-      fontSize: 14,
-      fontWeight: FontWeight.w600,
-      color: AppColors.textPrimary,
-    ),
-    // Lyrics (the sacred style: large, airy, high contrast)
-    bodyLarge: TextStyle(
-      fontSize: 17,
-      fontWeight: FontWeight.w400,
-      color: AppColors.textPrimary,
-      height: 1.7,
-    ),
-    // Previews, secondary text
-    bodyMedium: TextStyle(
-      fontSize: 14,
-      fontWeight: FontWeight.w400,
-      color: AppColors.textMuted,
-    ),
-    // Metadata, timestamps
-    bodySmall: TextStyle(
-      fontSize: 12,
-      fontWeight: FontWeight.w400,
-      color: AppColors.textMuted,
-    ),
-    // Labels, overlines
-    labelMedium: TextStyle(
-      fontSize: 12,
-      fontWeight: FontWeight.w500,
-      color: AppColors.textMuted,
       letterSpacing: 0.5,
     ),
-    // Badges, chips, tags
+    // Card titles, section headers: Oswald condensed
+    titleMedium: TextStyle(
+      fontFamily: 'Oswald',
+      fontSize: 17,
+      fontWeight: FontWeight.w700,
+      color: AppColors.textPrimary,
+      letterSpacing: 0.3,
+    ),
+    // Tune name, small headers: Oswald
+    titleSmall: TextStyle(
+      fontFamily: 'Oswald',
+      fontSize: 14,
+      fontWeight: FontWeight.w700,
+      color: AppColors.textPrimary,
+      letterSpacing: 0.5,
+    ),
+    // LYRICS: the singable centerpiece. Nunito heavy, large, warm.
+    bodyLarge: TextStyle(
+      fontFamily: 'Nunito',
+      fontSize: 23,
+      fontWeight: FontWeight.w800,
+      color: AppColors.textPrimary,
+      height: 1.55,
+    ),
+    // Body text, previews: Nunito
+    bodyMedium: TextStyle(
+      fontFamily: 'Nunito',
+      fontSize: 14,
+      fontWeight: FontWeight.w400,
+      color: AppColors.textMuted,
+    ),
+    // Metadata: Nunito
+    bodySmall: TextStyle(
+      fontFamily: 'Nunito',
+      fontSize: 12,
+      fontWeight: FontWeight.w400,
+      color: AppColors.textMuted,
+    ),
+    // Labels, overlines: Oswald small caps feel
+    labelMedium: TextStyle(
+      fontFamily: 'Oswald',
+      fontSize: 12,
+      fontWeight: FontWeight.w700,
+      color: AppColors.textMuted,
+      letterSpacing: 1.0,
+    ),
+    // Badges, chips: Nunito
     labelSmall: TextStyle(
+      fontFamily: 'Nunito',
       fontSize: 11,
-      fontWeight: FontWeight.w500,
+      fontWeight: FontWeight.w600,
       color: AppColors.textMuted,
       letterSpacing: 0.3,
     ),

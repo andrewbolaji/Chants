@@ -1,31 +1,38 @@
 import 'package:flutter/material.dart';
 
-/// Chants color tokens. The single source of truth for every color in the app.
-/// No raw hex literals in widgets. Reference via Theme.of(context).extension with AppColors
-/// or the static constants for non-context use.
+/// Chants color tokens: matchnight, warmed with playful.
+/// Warm charcoal base, gold accent, warm chalk text.
+/// No raw hex literals in widgets.
 @immutable
 class AppColors extends ThemeExtension<AppColors> {
-  // Core palette
-  static const background = Color(0xFF0B0B0C);
-  static const surface = Color(0xFF141416);
-  static const surfaceRaised = Color(0xFF1C1C1F);
+  // Core palette: warm floodlit night
+  static const background = Color(0xFF16140F);
+  static const surface = Color(0xFF1E1A14);
+  static const surfaceRaised = Color(0xFF231B11);
 
-  // Text hierarchy
-  static const textPrimary = Color(0xFFF4F4F2);
-  static const textMuted = Color(0xFF8A8A8F);
-  static const textFaint = Color(0xFF56565B); // Decorative only, never body text
+  // Text hierarchy: warm chalk
+  static const textPrimary = Color(0xFFF6EEDC);
+  static const textMuted = Color(0xFFB0A083); // 5.8:1 on base, AA
+  static const textFaint = Color(0xFF6B5F4A); // 3.1:1, decorative only
 
-  // The single accent: warm amber. Action and earned status only.
-  static const amber = Color(0xFFFFB627);
-  static const amberOnDark = Color(0xFF0B0B0C); // Text on amber fill
+  // The single accent: trophy gold. Action, active, and earned status.
+  static const gold = Color(0xFFFFB627);
+  static const goldOnDark = Color(0xFF16140F);
+
+  // Gold foil gradient for the verified mark
+  static const goldFoilStart = Color(0xFFFFB627);
+  static const goldFoilEnd = Color(0xFFFFC94D);
 
   // Semantic
-  static const error = Color(0xFFCF6679);
+  static const error = Color(0xFFEF6461); // 5.0:1 on base, AA
   static const success = Color(0xFF66BB6A);
 
   // Structural
-  static const divider = Color(0x12FFFFFF); // white at ~7% opacity
-  static const outline = Color(0xFF2E2E32);
+  static const divider = Color(0x14FFFFFF); // warm white ~8%
+  static const outline = Color(0xFF3A3020);
+
+  // Floodlight glow (detail hero)
+  static const glowGold = Color(0x0FFFB627); // gold at ~6%
 
   // Instance fields for ThemeExtension
   final Color accentColor;
@@ -36,7 +43,7 @@ class AppColors extends ThemeExtension<AppColors> {
   final Color dividerColor;
 
   const AppColors({
-    this.accentColor = amber,
+    this.accentColor = gold,
     this.surfaceColor = surface,
     this.surfaceRaisedColor = surfaceRaised,
     this.textMutedColor = textMuted,

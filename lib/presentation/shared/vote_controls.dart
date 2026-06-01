@@ -117,7 +117,7 @@ class _VoteControlsState extends ConsumerState<VoteControls> {
                   : Icons.keyboard_arrow_up_rounded,
               size: iconSize,
             ),
-            color: _userVote == 1 ? AppColors.amber : AppColors.textMuted,
+            color: _userVote == 1 ? AppColors.gold : AppColors.textMuted,
             onPressed: _busy ? null : () => _onVote(1),
             tooltip: 'Upvote',
           ),

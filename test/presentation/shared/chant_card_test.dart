@@ -33,7 +33,7 @@ void main() {
       await tester.pumpWidget(wrap(
         ChantCard(chant: testChant, onTap: () {}),
       ));
-      expect(find.text('Glory Glory'), findsOneWidget);
+      expect(find.text('GLORY GLORY'), findsOneWidget);
       expect(find.textContaining('Glory glory Man United'), findsOneWidget);
     });
 
@@ -48,7 +48,7 @@ void main() {
       await tester.pumpWidget(wrap(
         ChantCard(chant: testChant, onTap: () {}),
       ));
-      expect(find.text('Verified'), findsOneWidget);
+      expect(find.text('VERIFIED'), findsOneWidget);
     });
 
     testWidgets('shows parody tag when applicable', (tester) async {

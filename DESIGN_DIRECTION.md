@@ -1,54 +1,50 @@
-# Chants Visual Design Direction
+# Chants Visual Design Direction (locked: matchnight, warmed with playful)
 
-First pass for Andrew to steer. This is the missing branding brief from the spec. Edit freely. It feeds the design block, where Claude Code builds the system and applies it across every screen. A visual mockup of this direction (a club browse screen and a chant detail screen) was shown alongside this doc.
+This replaces all earlier versions. The first direction applied a restrained, productivity-grade dark look (cold near-black, a single surgical accent, hairlines, flat surfaces, a neutral sans). It was disciplined but generic, and would sit just as comfortably on a fintech or notes app. That sameness was the problem. This version derives the look from football chant culture itself. The discipline carries over unchanged. The aesthetic does not.
+
+Chosen spirit: matchnight, warmed with playful.
 
 ---
 
-## The aesthetic: simplicity is the beauty
+## The spirit
 
-The references are Instagram, Twitter, TikTok, and FotMob. None of them are beautiful because they are ornate. They are beautiful because they are ruthlessly simple: dark, spacious, one accent used sparingly, a clean type hierarchy, and nothing on screen that does not earn its place. That is the bar for v1, and it is achievable. We are not matching their polish, built by huge teams, we are borrowing their restraint.
+Friday night under the floodlights, scarves up, the stand in full voice, plus the warmth and joy of football's collectible culture (Panini stickers, matchday programmes, fanzines). Loud, communal, witty, proud, and human. Football soul with a smile. Not austere, not corporate, not childish.
 
-Not loud, not maximalist, not ornate, not corporate. Calm, confident, fast, legible.
+## The aesthetic
 
-## The one non-negotiable principle: club-neutral
+A warm, floodlit-night base carrying bold condensed programme typography, with chant cards that feel collectible and lyrics rendered large and warm, sized to sing. Gold used with conviction as the single accent. Purposeful glow and subtle grain for atmosphere, never flat sterility, never piled-on noise.
 
-The app hosts all 20 clubs, so the brand palette must NOT be any single club's colors. It is a neutral backdrop that lets each club's crest and colors pop. No red-leaning theme (Arsenal, Liverpool, United), no blue-leaning theme (Chelsea, City, Spurs). The app is Switzerland; the clubs bring the color.
+## Palette (locked direction, dials noted)
 
-## Palette
+- Base: a warm charcoal, floodlit-night, NOT brown and NOT cold near-black. Target around #15130F to #181510. The key correction from the first blend mockup: keep it a warm charcoal, not a sepia brown, so it reads "night under the lights" and so the gold pops cleanly instead of blending into a brown field.
+- Surface (cards): a slightly lifted warm tone off the base, around #231B11, with a barely-there grain.
+- Text: warm chalk off-white primary (around #F6EEDC), warm muted grey secondary (around #B0A083), faint warm grey for decorative-only elements (icons, dividers), never readable text.
+- Accent: gold, #FFB627, used boldly (not a surgical dab): the primary action button, the FAB, the active vote, and the earned verified mark. Reads as floodlight and trophy gold. Club-neutral stays a hard constraint. Dial: can shift slightly brighter if it needs more pop against the final base.
+- Earned status (verified): a gold foil treatment (subtle gradient) so it feels won, not a quiet chip.
 
-Near-black, mostly monochrome, one accent used surgically.
+## Typography (locked direction)
 
-- Base background: near-black, around \#0B0B0C.  
-- Surfaces (cards, context blocks): a hair lighter, around \#141416 to \#161618, or simply hairline dividers (rgba white 6 to 8 percent) on the same black. Prefer dividers over boxes.  
-- Text: primary off-white around \#F4F4F2, muted gray around \#8A8A8F, faint gray around \#56565B for the quietest labels.  
-- One accent: a warm amber, \#FFB627. Used ONLY on interactive or earned elements: the active vote, the canonical badge, the primary add button. Never decoratively. This single-accent discipline is the core of the look. Note: amber is close to Wolves' old gold and Hull's amber-and-black, so it is not perfectly club-neutral, but as a single bright UI accent on an all-black, all-clubs app it reads as a design choice rather than an allegiance. Accepted with eyes open. The hue can be nudged brighter or more yellow later if the association ever grates.
+- Display: a bold, condensed, characterful face for chant titles and section headers, often uppercase. Stadium-signage and programme-headline energy. The loudest lever in the design. (Oswald used in the mockup as a stand-in; final face to be chosen in the build, same character.)
+- Body and lyrics: a warm, rounded, highly legible companion sans (Nunito in the mockup). Lyrics large and bold, the singable centerpiece of the detail screen. The warm rounded body is what adds the playful human warmth on top of the matchnight bones.
+- Two faces maximum, strong clear hierarchy.
 
-## Typography
+## Texture and depth
 
-- A clean, modern sans throughout (system sans is fine for v1: SF on iOS, Roboto on Android, or one tasteful loaded face).  
-- Strong, simple hierarchy: bold titles, muted secondary lines, generous size on lyrics.  
-- Lyric legibility is sacred. Large, airy line height, high contrast. Learning the words is the whole job.  
-- Two practical weights: regular and bold. Avoid a zoo of weights.
-
-## Spacing and buttons
-
-- A consistent spacing scale (4 and 8 point steps). Generous whitespace. Hairline dividers, not heavy borders.  
-- Flat. No gradients, no drop shadows, no glow.  
-- Buttons: rounded, clearly primary (accent fill) versus secondary (quiet surface). Generous, accessible tap targets, minimum 44 to 48px. Vote controls and the add button sized for one thumb on the move. This is the "button sizes" point: err large and tactile.
+Subtle print grain over surfaces, a floodlight glow behind the hero on the detail screen, soft rounding and a gentle lift on cards. Purposeful atmosphere and hierarchy, restrained. A loud cultural product earns this where a compliance tool would not.
 
 ## Signature surfaces
 
-- The chant card is the repeated feed unit. Small muted status and tune on top, bold title, one-line preview, a quiet vote row, separated from the next card by a hairline. Clean like a social feed item.  
-- The chant detail page is the hero. Large legible lyrics front and center, tune named clearly with a small music icon, a short context note in a quiet surface block, and the vote controls pinned at the bottom as large tap targets. Canonical or community status and the real or parody tag shown clearly but quietly.
+- Chant card: a collectible warm card (rounded, lifted surface), NOT a flat hairline-separated row. A bold condensed title, the tune named in small caps, a gold foil verified mark, and the score as a bold condensed numeral. Feels like something you collect.
+- Chant detail: the hero. A floodlight glow, a big bold condensed title, lyrics large and warm as the centerpiece, the tune named, bold tactile gold vote controls, and the foil verified mark.
 
-## Mode
+## What stays (the discipline, unchanged)
 
-Dark-first, and dark-only for v1. A light mode can come later if wanted.
+- Tokens, not magic numbers. Every color, size, space, and radius from a defined scale.
+- WCAG AA contrast. Legible lyrics are sacred.
+- Club-neutral. No single club's colors or crest.
+- Mobile-first, dark-first (a warm floodlit dark).
+- Every state designed: empty, loading, error, success.
 
-## Accessibility
+## Dials for Andrew
 
-WCAG AA contrast, text that scales with the system setting, and the large tap targets above. Simple and accessible are the same direction.
-
----
-
-Note: the app icon and logo are separate graphic assets you commission or make (ship-block item A7). This brief covers the in-app visual system, which the design block builds.  
+Within this locked spirit, the easy dials are: base warmth (warmer or more neutral charcoal), how much foil and rounding the cards carry, how big the lyrics run, and whether the gold shifts slightly brighter for pop. The spirit itself (matchnight warmed with playful) is locked.
