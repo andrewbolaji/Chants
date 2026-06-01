@@ -18,6 +18,11 @@
 **The idea:** Follow other users, plus a For You feed and a Following feed.
 **Why v1.1:** Needs a base of users and content to be worth anything. Build on the seeded-plus-submitted archive.
 
+### v1.1: Subtle surface grain
+**The idea:** A faint print grain on card and scaffold surfaces, part of the locked "matchnight, warmed with playful" design direction, to add tactile programme-paper texture.
+**Why deferred:** The grain asset was generated during the redesign but never wired to any surface, so it was removed rather than shipped as a dead asset. The design reads well without it.
+**Trigger to promote:** If, on device review, the warm surfaces feel flat or too clean and want more texture. Implement as a cheap static tiled low-opacity PNG overlay (3 to 5%) on card and scaffold surfaces, not a runtime ShaderMask on scrolling lists, and confirm scroll stays smooth.
+
 ### v1.1: New-signing creation prompts
 **The idea:** A focused creation flow tied to the squad, "make a chant for [new signing]," self-refreshing every transfer window.
 **Why v1.1:** Sits on top of v1 submission. A centerpiece for retention once the base exists.
