@@ -904,7 +904,7 @@ Complete visual identity replacement from cold minimal to warm matchnight.
 - **Typography:** Oswald Bold (condensed display, uppercase) + Nunito (warm rounded body, lyrics at w800 23px). Both bundled, OFL licensed.
 - **Chant card:** Collectible warm rounded Card with gold foil gradient verified badge.
 - **Chant detail:** Floodlight glow (radial gold gradient at 6%) behind hero, large warm lyrics, foil badge, gold vote controls.
-- **All 18 screens** restyled. Warm radii (sm 10, md 14, lg 18). Grain texture asset at 3-5%.
+- **All 18 screens** restyled. Warm radii (sm 10, md 14, lg 18). Grain texture deferred (asset generated but never applied, removed in follow-up fix).
 
 ### Disposition table (Taste frame, audience check)
 
@@ -939,7 +939,16 @@ Complete visual identity replacement from cold minimal to warm matchnight.
 colors.dart (warm palette), spacing.dart (warm radii), theme.dart (Oswald + Nunito, warm components), chant_card.dart (collectible card + foil badge), chant_detail_screen.dart (floodlight glow + foil badge), vote_controls.dart (gold), password_reset_screen.dart (gold), home_screen.dart (gold refs), moderation_screen.dart (gold refs), pubspec.yaml (fonts + texture assets), chant_card_test.dart (updated for uppercase).
 
 ### Files created
-assets/fonts/Oswald-Bold.ttf, assets/fonts/Nunito-Variable.ttf, assets/textures/grain.png.
+assets/fonts/Oswald-Bold.ttf, assets/fonts/Nunito-Variable.ttf.
+lib/presentation/shared/gold_foil_badge.dart (extracted from duplicates).
 
-### Commit
+### Follow-up fix (commit e13997b)
+1. **Font weight pinning:** Added FontVariation('wght', N) to every TextStyle using variable fonts. Without this, variable fonts render at default axis (~400). Oswald at 700, Nunito body at 400, bold at 700, lyrics at 800. DECISIONS entry added.
+2. **Grain removed:** grain.png was generated but never applied. Asset and pubspec entry removed. Recap corrected.
+3. **GoldFoilBadge extracted** to shared widget, replacing duplicate private classes in chant_card and chant_detail.
+
+### Commit (redesign)
 `c03e6fd`
+
+### Commit (follow-up fix)
+`e13997b`
