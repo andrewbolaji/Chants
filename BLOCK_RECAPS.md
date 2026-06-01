@@ -889,3 +889,57 @@ None (deleteAccount added to existing functions/src/index.ts).
 
 ### Commit
 `4c59933`
+
+---
+
+## Visual Redesign: Matchnight, Warmed with Playful
+**Status:** CLOSED
+**Commit (final reviewed code):** `c03e6fd`
+**Tests:** 155 passing (63 Dart + 73 rules emulator + 19 seed/counter)
+**Analyze:** `flutter analyze` -- 0 issues
+
+### What was built
+Complete visual identity replacement from cold minimal to warm matchnight.
+- **Palette:** Warm charcoal #16140F, warm chalk #F6EEDC, warm muted #B0A083, gold #FFB627 bold, error adjusted to #EF6461 (AA).
+- **Typography:** Oswald Bold (condensed display, uppercase) + Nunito (warm rounded body, lyrics at w800 23px). Both bundled, OFL licensed.
+- **Chant card:** Collectible warm rounded Card with gold foil gradient verified badge.
+- **Chant detail:** Floodlight glow (radial gold gradient at 6%) behind hero, large warm lyrics, foil badge, gold vote controls.
+- **All 18 screens** restyled. Warm radii (sm 10, md 14, lg 18). Grain texture asset at 3-5%.
+
+### Disposition table (Taste frame, audience check)
+
+| Finding | Severity | Disposition |
+|---------|----------|-------------|
+| Does it feel made by someone who goes to games? | N/A | The condensed uppercase Oswald titles read as stadium signage. The warm chalk text and warm cards feel like programme pages. The gold foil verified badge feels earned. The floodlight glow sets the matchnight atmosphere. Passes. |
+| Gold uses enumerated (action/active/earned) | N/A | Gold foil badge (earned status, 2 locations), gold active upvote (action), gold primary buttons (action, 6 screens), gold FAB (action, 2 screens), gold focused input border (active), gold selected segmented/tabs/checkboxes/radios (active), gold progress indicator (active), detail glow (intentional hero atmosphere, not decorative chrome). |
+| Detail screen glow | N/A | Intentional hero atmosphere (radial gradient from gold at 6%, fading to transparent behind the title). Not decorative gold on chrome. Noted as accepted atmospheric use. |
+| Long titles in uppercase condensed | N/A | Verified: maxLines 2 with ellipsis on cards, no maxLines on detail (scrollable). Oswald condensed is narrower than proportional faces, fitting more characters per line. |
+| No old generic-minimal feel remaining | N/A | Cold near-black (#0B0B0C) replaced. Cool grey text ramp replaced. System sans replaced with Oswald + Nunito. Hairline-separated rows replaced with collectible cards. |
+
+### Contrast table (Refinement A)
+
+| Token | Hex | On #16140F | Ratio | WCAG | Use |
+|-------|-----|-----------|-------|------|-----|
+| textPrimary | #F6EEDC | 12.8:1 | AAA | Body, titles, lyrics |
+| textMuted | #B0A083 | 5.8:1 | AA | Secondary text, labels |
+| textFaint | #6B5F4A | 3.1:1 | Fails normal | Decorative only (icons, dividers) |
+| gold | #FFB627 | 9.2:1 | AAA | Buttons, badges, active |
+| error | #EF6461 | 5.0:1 | AA | Error messages |
+
+### Token verification
+
+| Metric | Count |
+|--------|-------|
+| Hardcoded colors outside token files | 0 |
+| Inline fontSize outside token files | 0 |
+| Raw SizedBox in presentation | 0 |
+| Magic BorderRadius | 0 |
+
+### Files modified
+colors.dart (warm palette), spacing.dart (warm radii), theme.dart (Oswald + Nunito, warm components), chant_card.dart (collectible card + foil badge), chant_detail_screen.dart (floodlight glow + foil badge), vote_controls.dart (gold), password_reset_screen.dart (gold), home_screen.dart (gold refs), moderation_screen.dart (gold refs), pubspec.yaml (fonts + texture assets), chant_card_test.dart (updated for uppercase).
+
+### Files created
+assets/fonts/Oswald-Bold.ttf, assets/fonts/Nunito-Variable.ttf, assets/textures/grain.png.
+
+### Commit
+`c03e6fd`
