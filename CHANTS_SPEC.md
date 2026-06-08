@@ -14,7 +14,7 @@ A football supporter, casual to die-hard, who follows a Premier League club clos
 
 ## 1. Product summary
 
-Chants is a centralized home for football chants: find them, learn them, create them, and push the good ones toward adoption. It is part archive and part social network. The one differentiating feature is that it lets fans ADD chants (new ones and the existing classics), so the archive completes itself through contribution rather than through the operator hand-building a songbook. Today chant culture is scattered across Twitter/X, YouTube, and the terraces. Chants is the workshop where a chant is made, refined, voted on, and learned, and the existing platforms stay the stage.
+Chants is the definitive home for finding and learning real football chants: a verified archive with user creativity (parody chants, new-signing prompts) as a layer on top. The one differentiating feature is that it lets fans ADD chants (new ones and the existing classics), so the archive completes itself through contribution rather than through the operator hand-building a songbook. Today chant culture is scattered across Twitter/X, YouTube, and the terraces. Chants is the workshop where a chant is made, refined, voted on, and learned; X, YouTube, and TikTok are the stage.
 
 ---
 
