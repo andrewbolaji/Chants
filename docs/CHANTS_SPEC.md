@@ -1,7 +1,6 @@
 # Chants: Product Specification
 
 **Build pace:** Build at the pace each feature deserves. Ship when ready. No corner-cutting for dates.
-**Build agent:** Claude Code, with Andrew Bolaji approving outputs and answering preference questions. Strategic review held by the chat AI across Blocks.
 **Status:** Day 1 setup complete. Planning Block 1. No code until the Block 1 plan is approved.
 
 ---
@@ -204,7 +203,7 @@ Works end to end on the real seeded data; mobile-responsive; empty, loading, and
 
 ### From Block 1
 
-**All-N/A security pass is a red flag, not a green light.** The implementer's own security review returned all N/A and missed a High privilege escalation in the profiles create rule (role field not pinned, allowing self-promotion to operator via a crafted SDK write). The independent adversarial review caught it. A clean security sheet is a signal to push harder, not to close.
+**All-N/A security pass is a red flag, not a green light.** An initial security review returned all N/A and missed a High privilege escalation in the profiles create rule (role field not pinned, allowing self-promotion to operator via a crafted SDK write). The independent adversarial review caught it. A clean security sheet is a signal to push harder, not to close.
 
 **Recap-commit self-reference always mismatches.** Recording a hash inside the file that the commit creates means the hash is always one behind. Resolution: record the final reviewed code commit (`accbe3d`), and treat the recap-write as a noted docs-only commit on top (`04718af`). Document both explicitly so it reads as intent, not drift.
 
@@ -212,9 +211,9 @@ Works end to end on the real seeded data; mobile-responsive; empty, loading, and
 
 ### From Block 2
 
-**Never generate seed content from AI knowledge.** When asked to strip a field from a seed file, the implementer rewrote arsenal.json from memory instead of editing the existing entries in place. The result was a stale, incorrect squad (players who left the club years ago) seeded as real data. The fix: all seed content (squads, players, chants, lyrics) is supplied by Andrew. The implementer may only transform supplied data (remove a field, rename a key). Never rewrite content from memory. This is now the highest-integrity standing rule.
+**Never regenerate seed content from non-authoritative sources.** An early seed script regenerated arsenal.json from non-authoritative content instead of editing the source data in place. The result was a stale, incorrect squad (players who had left the club years ago) seeded as real data. Caught in review and replaced with verified data. The fix: all seed content (squads, players, chants, lyrics) comes from the authoritative source files. The build may only transform supplied data (remove a field, rename a key). Never rewrite content from memory. This is the highest-integrity standing rule.
 
-**An AI implementer will confidently regenerate domain content from its own memory, and that content is unverified by definition.** The stale squad was caught by independent review; the AI-drafted lyrics were flagged by the implementer itself after the rule was established. Both were presented as real data with no caveat until challenged. Seed credibility depends on human-verified content, supplied by Andrew, never authored by an AI. Every seed file entry is Andrew's content, and any AI-drafted content in an existing file must be visibly flagged as unverified.
+**Unverified content presented as real data is a bug class.** The stale squad was caught by independent review; two unverified lyrics were flagged on a second pass. Both were presented as authoritative with no caveat until challenged. Seed credibility depends on human-verified content, supplied by Andrew. Every seed file entry is Andrew's content, and any unverified content must be visibly flagged.
 
 ### From beautification audit pass
 

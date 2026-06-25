@@ -144,7 +144,6 @@ All collections created from scratch (new project). See the plan for exact field
 | test_rules/firestore_rules.test.ts | 702 |
 | test_rules/package.json | 13 |
 | test_rules/tsconfig.json | 10 |
-| CLAUDE.md | 22 |
 | README.md | 26 |
 | HANDBOOK.md | 40 |
 
@@ -180,7 +179,7 @@ All collections created from scratch (new project). See the plan for exact field
 ### What was built
 - **Seed mechanism:** Idempotent Admin SDK script (Node/TS) with re-run safety (Fix A), slug dedup and orphan reporting (Fix C), and validation before writes
 - **Seed content:** Arsenal seeded (1 sport, 1 competition, 1 team, 27 players, 3 canonical chants). All verified: status canonical, counters 0, hidden false, removed false, createdBy system. Re-run verified idempotent. Fix A proven non-trivially: counters set to non-zero and hidden set to true survived re-seed while edited lyrics updated.
-- **Content-integrity incident:** The implementer rewrote arsenal.json from AI memory instead of editing in place, seeding a stale squad (7 wrong players). Caught by independent review. 7 orphan player docs and 2 orphan chant docs deleted with Andrew's explicit confirmation. Standing rule added: never generate or regenerate seed content from AI knowledge. 2 AI-drafted chants removed, 2 flagged as unverified in contextNotes, 1 chant's lyrics replaced with Andrew's supplied version.
+- **Content-integrity incident:** An early seed script regenerated arsenal.json from non-authoritative content instead of editing the source data in place, seeding a stale squad (7 wrong players). Caught in review. 7 orphan player docs and 2 orphan chant docs deleted with Andrew's explicit confirmation. Standing rule added: never regenerate seed content from non-authoritative sources. 2 unverified chants removed, 2 flagged as unverified in contextNotes, 1 chant's lyrics replaced with Andrew's supplied version.
 - **Browse and navigation:** Competition > Club > Player > Chant drill-down. Club page: club chants first, players-with-chants second, full squad collapsible third.
 - **Discovery shuffle:** All visible chants fetched (no orderBy, no limit), shuffled client-side (Fix B). Shuffle button refreshes.
 - **Chant detail:** Lyrics front and center, tune name, context notes (only when non-empty), status badge, real/parody tag, cover image placeholder, media placeholder. Report button on every chant.
@@ -300,7 +299,7 @@ All collections created from scratch (new project). See the plan for exact field
 | competitions | 1 | enabled: true |
 | teams | 1 | |
 | players | 27 | Andrew's 26 plus Nwaneri, no Arteta, no orphans |
-| chants | 3 | status: canonical, upvotes: 0, downvotes: 0, score: 0, hidden: false, removed: false, createdBy: system. 2 AI-drafted lyrics flagged as unverified in contextNotes. 1 chant has Andrew-supplied lyrics. |
+| chants | 3 | status: canonical, upvotes: 0, downvotes: 0, score: 0, hidden: false, removed: false, createdBy: system. 2 unverified lyrics flagged in contextNotes. 1 chant has Andrew-supplied lyrics. |
 
 ### Orphans deleted (Andrew-confirmed)
 7 player docs (arsenal-jakub-kiwior, arsenal-jorginho, arsenal-kieran-tierney, arsenal-mikel-arteta, arsenal-raheem-sterling, arsenal-takehiro-tomiyasu, arsenal-thomas-partey) and 2 chant docs (arsenal-we-all-follow-the-arsenal, arsenal-he-s-declan-rice).
@@ -436,7 +435,7 @@ Seeded chant, set upvotes=42, downvotes=3, score=39, commentCount=7, flagCount=2
 - **Reconciliation script (Fix A):** seed/reconcile.ts recomputes chant counters from votes collection ground truth. Runnable for one chant or all. Idempotency limitation documented with trigger for event.id dedup.
 - **Cross-implementation invariant test:** 6-step vote sequence matrix asserts counters match ground truth after each step. Plus reconciliation-of-drift test.
 - **Composite indexes (Fix B):** teamId+hidden+removed+score desc (club ranking), status+hidden+removed+score desc (promotion candidates). No unused indexes.
-- **Canonical promotion:** Operator-confirms at score >= 10. promote/demote actions in onModerationAction callable. Promotion candidates tab in moderation screen. Canonical is sticky.
+- **Canonical promotion:** Operator-confirms above a score threshold. promote/demote actions in onModerationAction callable. Promotion candidates tab in moderation screen. Canonical is sticky.
 - **Fix C:** Rules test proves non-operator cannot set status to canonical.
 - **Score sort live:** Club page chantsForTeamStream now uses server-side orderBy score desc.
 
