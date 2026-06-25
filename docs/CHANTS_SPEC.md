@@ -14,7 +14,7 @@ A football supporter, casual to die-hard, who follows a Premier League club clos
 
 ## 1. Product summary
 
-Chants is the definitive home for finding and learning real football chants: a verified archive with user creativity (parody chants, new-signing prompts) as a layer on top. The one differentiating feature is that it lets fans ADD chants (new ones and the existing classics), so the archive completes itself through contribution rather than through the operator hand-building a songbook. Today chant culture is scattered across Twitter/X, YouTube, and the terraces. Chants is the workshop where a chant is made, refined, voted on, and learned; X, YouTube, and TikTok are the stage.
+Chants is the home for finding and learning real football chants: a verified archive with user creativity (parody chants, new-signing prompts) as a layer on top. Fans can add chants (new ones and the existing classics), so the archive grows through contribution. The app is where a chant is found, refined, voted on, and learned.
 
 ---
 
@@ -33,7 +33,7 @@ Chants is the definitive home for finding and learning real football chants: a v
 9. No mock data in production. Seed with real, verified, policy-compliant chants only.
 10. Audit-log everything that matters, moderation actions especially.
 11. Content safety is a build principle, not a feature. Every user-content surface ships with reporting and a moderation path.
-12. Media is optional and flexible, never required to show a face. A chant can be lyrics only, lyrics plus a tune recording, a lyric video, a screen recording, or a crowd clip. Serves privacy and reduces IP exposure at once.
+12. Media is optional and flexible, never required to show a face. A chant can be lyrics only, lyrics plus a tune recording, a lyric video, a screen recording, or a crowd clip.
 13. Differentiation flows through data, never through forks. Sport, league, and team are data. No hardcoded league checks. Enabling a new league or sport is a data change, not a code change.
 14. Simplest sensible placement. Every chant has a name and lives under its natural parent: a player's chant under that player, a club anthem under the club, a manager's chant under the manager. Users drill down the obvious way (club, then its players and club-level chants, then the chant). Show only what makes sense at each level, never dump everything at once. If a fan cannot find or place something in one obvious tap, the layout is wrong, not the fan.
 
@@ -41,7 +41,7 @@ Chants is the definitive home for finding and learning real football chants: a v
 
 ## 3. Tech stack (locked, no "or")
 
-**Flutter plus Firebase.** Decided deliberately on Day 1. Reasoning: genuinely mobile first for a phone-in-hand product, reuses the team's Flutter and Firebase experience from Vouch, and Firebase covers auth, database, storage, functions, and push without standing up infrastructure.
+**Flutter plus Firebase.** Decided deliberately on Day 1. Reasoning: genuinely mobile first for a phone-in-hand product, and Firebase covers auth, database, storage, functions, and push without standing up infrastructure.
 
 - **Client:** Flutter (mobile first).
 - **Auth:** Firebase Auth (email plus password for v1; sign up, sign in, password reset).
@@ -158,7 +158,7 @@ Show only what makes sense at each level. Never dump everything at once. One obv
 
 ## 10. Pricing
 
-Passion project first, business bet second. No billing in v1. Business-tier ideas are parked in WISHLIST.
+No billing in v1. Business-tier ideas are parked in WISHLIST.
 
 ---
 
@@ -186,7 +186,7 @@ v1.0 (code-complete, hardened):
 - **Block 7:** Polish and hardening. Account deletion, App Check, Crashlytics, billing kill-switch, copy pass, audits.
 
 v1.1 (social layer, the release target):
-- Release at v1.1, not v1.0. The social and self-correction layer (comments, follows, creation prompts) is core to the product feeling alive, so launching without it would feel static. v1.0 is the hardened foundation; v1.1 is when the public sees it.
+- v1.0 is the hardened foundation; v1.1 adds the social layer.
 - **Block 8:** Comments, replies, and collaborative lyric suggestions.
 - **Block 9:** Follow and feeds (For You, Following).
 - **Block 10:** Creation prompts and share-out.
@@ -218,4 +218,4 @@ Works end to end on the real seeded data; mobile-responsive; empty, loading, and
 
 ### From beautification audit pass
 
-**Point a brief at the work explicitly, even when it is already in the repo.** In Block 6, BEAUTIFICATION_BRIEF.md was in the project root but the kickoff did not cite it as the process spec. The right outcome was reached by parallel construction (the kickoff restated the same principles), but the brief was not consulted as the canonical reference. Mitigation: a standing rule now requires every design block to start by reading both BEAUTIFICATION_BRIEF.md and DESIGN_DIRECTION.md. Candidate for promotion into the universal framework at the next maintenance run, since the brief is portable.
+**Point a brief at the work explicitly, even when it is already in the repo.** In Block 6, the design brief was in the project root but the kickoff did not cite it as the process spec. The right outcome was reached by parallel construction (the kickoff restated the same principles), but the brief was not consulted as the canonical reference. Mitigation: a standing rule now requires every design block to start by reading DESIGN_DIRECTION.md.

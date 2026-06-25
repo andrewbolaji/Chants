@@ -46,7 +46,6 @@
 **The idea:** Two shareable, fun surfaces built on the verified archive. A chant quiz (guess the club or player from the lyrics or tune, share your score) and a greatest-chant bracket (real chants head to head, crowd votes through rounds, crown a champion). Both make the app fun and shareable and reinforce the real-chants-board identity.
 **Why v1.1:** Part of the engagement and feels-alive layer that gates the public launch. The bracket reuses the existing voting mechanic, so it is the cheaper build and the v1.1 anchor; the quiz is the fast follow right behind it.
 **Sequencing within v1.1:** Both need the seeded archive to be good, so they come after seeding. Real chants only, club-neutral, same content policy.
-**Web amplifies later:** The in-app versions deliver fun, retention, and basic share-a-result. The fully viral version (tweet a link, play in browser, no install) is a Path B web build and stays a later growth play.
 **Trigger:** Build alongside or right after the comments and lyric-suggestions block, bracket first.
 
 ---
@@ -119,19 +118,18 @@
 **Trigger to promote:** Block 3 submission ships and users ask to scope their chant to a player page.
 
 ### v2 / growth: Shareable and engagement ideas (backlog)
-A pool of share-driven features to draw from post-launch. Each pulls a known football share trigger: nostalgia, tribalism, identity, or a daily streak. Build cheap, treat as high-upside experiments, not core bets.
-- **The daily chant (a Wordle for chants):** one daily puzzle, guess the chant from the tune or progressively revealed lyrics, share a spoiler-free result grid. The most proven viral and habit-forming format here. Pull earlier only if it does not delay the v1.1 launch.
-- **This day in chant history:** a daily throwback card (a chant or player's chant from years back) in the branded look. Cheap, self-refreshing, targets the nostalgia trigger directly.
-- **Chant of the Season plus year-in-chants recap:** an end-of-season community award (doable with a base) plus a personalized Wrapped-style recap (data-gated, needs a season of user activity, so later). Big seasonal share spike.
-- **Lyrics card generator:** any chant becomes a branded shareable card for X or Instagram. Lowest-effort, always-on share tool, every card links back to the app.
-- **Derby and rivalry angle on the weekly top-chant board:** rivalry head-to-heads (your club versus theirs) layered onto the existing top-chart idea. Add this as the derby and rivalry angle and cross-reference the existing top-chart entry (v2: Top chart leaderboard) rather than creating a duplicate. Keep banter within the content policy.
-**Trigger to promote any of these:** after launch, when building the Path B web layer, since shareables convert best as web links.
+- Daily chant puzzle (guess the chant from progressively revealed lyrics)
+- This day in chant history (daily throwback card)
+- Chant of the Season community award and year-in-chants recap
+- Lyrics card generator (branded shareable card for X or Instagram)
+- Derby and rivalry angle on the weekly top-chant board
+**Trigger to promote:** after launch, based on engagement data.
 
 ## v3+ candidates (need scale or customer pull)
 (Empty.)
 
 ## Business tier candidates (pricing, packaging, model)
-(Empty. Passion project first, business bet second.)
+(Empty.)
 
 ## Skipped (deliberately not building, with reason)
 

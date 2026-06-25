@@ -64,3 +64,8 @@ seed/lib/
 seed/node_modules/
 serviceAccountKey.json
 *-firebase-adminsdk-*.json
+
+# Firebase config files (contain API keys)
+lib/firebase_options.dart
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist

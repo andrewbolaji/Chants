@@ -652,7 +652,7 @@ No new PII. Vote docs contain userId (already in the system).
 - **C12:** Accessibility fix. textFaint bumped to textMuted (5.5:1 AA) on readable text in chant cards (subject tag and parody labels). Faint (#56565B, 3.0:1) stays for decorative elements only.
 - **C13:** Token cleanup. Raw EdgeInsets in Tier 4 screens (moderation, feedback) converted to Spacing constants.
 - **C14:** Firebase App Check initialized. Debug provider for dev/emulator, PlayIntegrity for release Android. Soft-enforce at launch.
-- **C15:** Billing kill-switch documented. Budget alerts at $10/$50/$100/$250 (email), kill-switch at $500 (disables billing). GCP console setup (not code).
+- **C15:** Billing kill-switch documented. Escalating budget alerts (email) with a kill-switch that disables billing. GCP console setup (not code).
 - **D4:** Firebase Crashlytics added. Flutter error handler wired in main.dart.
 - **SPEC build order updated:** design is Block 6, ship is Block 7, v1.1 Blocks 8-11.
 
@@ -682,8 +682,8 @@ No new PII. Vote docs contain userId (already in the system).
 | Finding | Severity | Disposition |
 |---------|----------|-------------|
 | Account deletion under load (50+ votes) | Low | Defended: at v1 volume, sequential reconciliation is under 10 seconds. At scale, batch or async. Trigger: observed timeout on deletion. |
-| Billing kill-switch is destructive | N/A | By design: takes app offline to prevent unbounded cost. $500 threshold is 50x expected free-tier usage. Recovery: re-enable billing in GCP console, redeploy. |
-| Budget alerts provide early warning | N/A | $10/$50/$100/$250 escalating emails before the $500 kill. |
+| Billing kill-switch is destructive | N/A | By design: takes app offline to prevent unbounded cost. Recovery: re-enable billing in GCP console, redeploy. |
+| Budget alerts provide early warning | N/A | Escalating email alerts before the kill-switch threshold. |
 | App Check false rejections | Low | Defended: soft-enforce at launch. No users blocked. Full enforcement after 1-2 weeks of clean telemetry. |
 
 ### New DECISIONS entries
@@ -721,15 +721,15 @@ None (deleteAccount added to existing functions/src/index.ts).
 | Item | Steps |
 |------|-------|
 | App Check providers | Register DeviceCheck (iOS) and Play Integrity (Android) attestation in Firebase Console > App Check |
-| Budget alerts | GCP Console > Billing > Budgets > Create budget at $10/$50/$100/$250 with email alerts |
-| Billing kill-switch | GCP Console > Billing > Budget at $500 linked to Pub/Sub topic, plus a Cloud Function to disable billing (documented in README) |
+| Budget alerts | GCP Console > Billing > Budgets > Create escalating budget alerts with email notifications |
+| Billing kill-switch | GCP Console > Billing > Budget linked to Pub/Sub topic, plus a Cloud Function to disable billing (documented in README) |
 | Crashlytics | Enable Crashlytics in Firebase Console (auto-enabled on first crash report) |
 
 ### Deferred (with triggers)
 | Item | Trigger |
 |------|---------|
 | App Check full enforcement | 1-2 weeks of clean soft-enforce telemetry post-launch |
-| Retune $500 kill-switch threshold | Real cost-per-user data after launch |
+| Retune kill-switch threshold | Real cost-per-user data after launch |
 | Account deletion batching | Observed timeout on deletion for high-vote-count users |
 | C1-C8 remaining ship tasks | Andrew's content blockers (A1-A7) resolved |
 

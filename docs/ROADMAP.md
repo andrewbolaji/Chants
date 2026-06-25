@@ -8,7 +8,7 @@ The path from code-complete to public launch, with concrete triggers on every ga
 
 **Built and verified by static checks:**
 - v1 feature set: auth, agnostic Sport/Competition/Team/Chant data model, browse and search, chant detail, user submission, moderation (report, remove, ban, rate limits, audit log), voting with counter reconciliation, suggestion box.
-- v1 hardening: account deletion, App Check (soft enforce), Crashlytics, billing alerts with $500 kill-switch.
+- v1 hardening: account deletion, App Check (soft enforce), Crashlytics, billing alerts with kill-switch.
 - v1.1 dedup matching engine (backend only): token-overlap matcher, operator mergeChants function with source-payload snapshot.
 - Visual identity: complete "matchnight, warmed with playful" redesign, tokenized, AA contrast proven.
 
@@ -60,7 +60,7 @@ The reason public launch is gated to v1.1: the social and self-correction layer 
 ## Cross-cutting risks (unchanged, tracked with triggers)
 
 ### Moderation and content safety (existential, addressed from v1)
-Shipped: content policy stub, report/flag flow, remove/ban, rate limits, fail-safe auto-hide at 3 flags, audit log. Open: Andrew writes the real content policy text. Trigger for the fuller moderation console: submission volume outgrows basic remove-and-ban.
+Shipped: content policy stub, report/flag flow, remove/ban, rate limits, fail-safe auto-hide, audit log. Open: Andrew writes the real content policy text. Trigger for the fuller moderation console: submission volume outgrows basic remove-and-ban.
 
 ### Music and IP licensing (designed around, not a blocker)
 v1 posture: lyrics plus tune-name text is the core. Media is optional and flexible. Never stream licensed master recordings. Trigger to revisit: engagement on light media formats proves demand and the licensing exposure is understood first.
@@ -68,5 +68,5 @@ v1 posture: lyrics plus tune-name text is the core. Media is optional and flexib
 ### Cold-start and retention (addressed by design)
 Solved by the operator-seeded primer, user submission, cross-club discovery, and the v1.1 social layer.
 
-### Expansion (the anti-outflank plan)
-Architecture is sport-agnostic and league-agnostic from Block 1. Expansion is data, not code. v1 is Football and the Premier League. v2 adds leagues or sports on trigger (proven PL traction or a concrete market reason).
+### Expansion
+Architecture is sport-agnostic and league-agnostic from Block 1. Expansion is data, not code. v1 is Football and the Premier League. v2 adds leagues or sports based on usage data.
