@@ -41,10 +41,21 @@ flutter:
   uses-material-design: true
 
   fonts:
+    - family: Anton
+      fonts:
+        - asset: assets/fonts/Anton-Regular.ttf
+    - family: SpaceMono
+      fonts:
+        - asset: assets/fonts/SpaceMono-Regular.ttf
+        - asset: assets/fonts/SpaceMono-Bold.ttf
+          weight: 700
+    - family: Fraunces
+      fonts:
+        - asset: assets/fonts/Fraunces-Variable.ttf
+    - family: Nunito
+      fonts:
+        - asset: assets/fonts/Nunito-Variable.ttf
     - family: Oswald
       fonts:
         - asset: assets/fonts/Oswald-Bold.ttf
           weight: 700
-    - family: Nunito
-      fonts:
-        - asset: assets/fonts/Nunito-Variable.ttf

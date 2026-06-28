@@ -27,8 +27,8 @@ void main() {
           ),
         ),
       );
-      expect(find.text('Try again'), findsOneWidget);
-      await tester.tap(find.text('Try again'));
+      expect(find.text('TRY AGAIN'), findsOneWidget);
+      await tester.tap(find.text('TRY AGAIN'));
       expect(retried, true);
     });
 
@@ -40,7 +40,7 @@ void main() {
           ),
         ),
       );
-      expect(find.text('Try again'), findsNothing);
+      expect(find.text('TRY AGAIN'), findsNothing);
     });
   });
 }

@@ -6,7 +6,17 @@ import 'package:chants/app/spacing.dart';
 import 'package:chants/data/models/chant.dart';
 import 'package:chants/presentation/report/report_sheet.dart';
 import 'package:chants/presentation/shared/gold_foil_badge.dart';
+import 'package:chants/presentation/shared/halftone_painter.dart';
 import 'package:chants/presentation/shared/vote_controls.dart';
+
+/// Whether lyrics should be centered (anthem feel) or left-aligned.
+/// Fall back to left if any line > 45 chars or > 10 lines total.
+TextAlign _lyricsAlignment(String lyrics) {
+  final lines = lyrics.split('\n');
+  if (lines.length > 10) return TextAlign.left;
+  if (lines.any((l) => l.length > 45)) return TextAlign.left;
+  return TextAlign.center;
+}
 
 class ChantDetailScreen extends ConsumerWidget {
   final Chant chant;
@@ -17,6 +27,7 @@ class ChantDetailScreen extends ConsumerWidget {
     final authState = ref.watch(authStateProvider);
     final isSignedIn = authState.valueOrNull != null;
     final textTheme = Theme.of(context).textTheme;
+    final lyricAlign = _lyricsAlignment(chant.lyrics);
 
     return Scaffold(
       appBar: AppBar(
@@ -43,7 +54,7 @@ class ChantDetailScreen extends ConsumerWidget {
           ),
         ],
       ),
-      // Vote controls pinned at bottom as large tap targets
+      // Stamped vote control pinned at bottom
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           border: Border(
@@ -67,128 +78,141 @@ class ChantDetailScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Floodlight glow behind the title area (hero atmosphere)
-            Container(
-              width: double.infinity,
-              decoration: const BoxDecoration(
-                gradient: RadialGradient(
-                  center: Alignment.topCenter,
-                  radius: 1.2,
-                  colors: [AppColors.glowGold, Colors.transparent],
-                ),
-              ),
-              padding: const EdgeInsets.fromLTRB(
-                Spacing.xl, Spacing.lg, Spacing.xl, Spacing.xxl,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Metadata row
-                  Wrap(
-                    spacing: Spacing.sm,
-                    runSpacing: Spacing.xs,
-                    children: [
-                      if (chant.status == 'canonical')
-                        const GoldFoilBadge(),
-                      _Badge(label: chant.subjectTag, isGold: false),
-                      if (chant.realOrParody == 'parody')
-                        const _Badge(label: 'Parody', isGold: false),
-                    ],
-                  ),
-                  const SizedBox(height: Spacing.xl),
-
-                  // Title: bold condensed uppercase, the hero
-                  Text(
-                    chant.title.toUpperCase(),
-                    style: textTheme.headlineLarge,
-                  ),
-                ],
-              ),
-            ),
-
-            // Content below the glow area
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: Spacing.xl),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-
-            // Tune: icon + name
-            Row(
-              children: [
-                Icon(
-                  Icons.music_note_outlined,
-                  size: 16,
-                  color: AppColors.textMuted,
-                ),
-                const SizedBox(width: Spacing.sm),
-                Expanded(
-                  child: Text(
-                    chant.tuneName,
-                    style: textTheme.bodyMedium,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: Spacing.xxl),
-
-            // Lyrics: the hero. Large, airy, high contrast.
-            Text(
-              chant.lyrics,
-              style: textTheme.bodyLarge,
-            ),
-            const SizedBox(height: Spacing.xxl),
-
-            // Context notes (only when non-empty)
-            if (chant.contextNotes != null &&
-                chant.contextNotes!.isNotEmpty) ...[
-              Container(
+            // LOUD HEADER ZONE: halftone wash, Anton title with print-echo
+            // shadow, sticker badge, mono tune line
+            CustomPaint(
+              painter: const HalftonePainter(opacity: 0.04),
+              child: Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(Spacing.lg),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(Radii.sm),
+                decoration: const BoxDecoration(
+                  gradient: RadialGradient(
+                    center: Alignment.topCenter,
+                    radius: 1.2,
+                    colors: [AppColors.glowGold, Colors.transparent],
+                  ),
+                ),
+                padding: const EdgeInsets.fromLTRB(
+                  Spacing.xl, Spacing.lg, Spacing.xl, Spacing.xxl,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Context',
-                      style: textTheme.labelMedium,
+                    // Metadata row: badge + parody flag
+                    Wrap(
+                      spacing: Spacing.sm,
+                      runSpacing: Spacing.xs,
+                      children: [
+                        if (chant.status == 'canonical') const GoldFoilBadge(),
+                        if (chant.realOrParody == 'parody')
+                          _ParodyFlag(),
+                      ],
                     ),
-                    const SizedBox(height: Spacing.xs),
+                    const SizedBox(height: Spacing.xl),
+
+                    // Title: Anton with 1.5px print-echo gold shadow
                     Text(
-                      chant.contextNotes!,
-                      style: textTheme.bodyMedium?.copyWith(
-                        color: AppColors.textPrimary,
+                      chant.title.toUpperCase(),
+                      style: textTheme.headlineLarge?.copyWith(
+                        shadows: const [
+                          Shadow(
+                            color: AppColors.gold,
+                            offset: Offset(1.5, 1.5),
+                            blurRadius: 0,
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: Spacing.xl),
-            ],
+            ),
 
-            // Media: only if present, no empty placeholder (Addition E)
-            if (chant.mediaType != 'none') ...[
-              Row(
+            // Content below the loud header
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: Spacing.xl),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
-                    Icons.play_circle_outline,
-                    size: 16,
-                    color: AppColors.textMuted,
+                  // Tune line: Space Mono
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.music_note_outlined,
+                        size: 14,
+                        color: AppColors.textMuted,
+                      ),
+                      const SizedBox(width: Spacing.sm),
+                      Expanded(
+                        child: Text(
+                          chant.tuneName.toUpperCase(),
+                          style: textTheme.labelMedium,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: Spacing.sm),
-                  Text(
-                    'Audio will be available soon.',
-                    style: textTheme.bodyMedium,
-                  ),
-                ],
-              ),
-              const SizedBox(height: Spacing.xl),
-            ],
+                  const SizedBox(height: Spacing.xxl),
 
-            const SizedBox(height: Spacing.xxxl),
+                  // LYRICS: Fraunces, large, centered or left-aligned
+                  SizedBox(
+                    width: double.infinity,
+                    child: Text(
+                      chant.lyrics,
+                      textAlign: lyricAlign,
+                      style: textTheme.bodyLarge,
+                    ),
+                  ),
+                  const SizedBox(height: Spacing.xxl),
+
+                  // Context notes
+                  if (chant.contextNotes != null &&
+                      chant.contextNotes!.isNotEmpty) ...[
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(Spacing.lg),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(Radii.sm),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'CONTEXT',
+                            style: textTheme.labelMedium,
+                          ),
+                          const SizedBox(height: Spacing.xs),
+                          Text(
+                            chant.contextNotes!,
+                            style: textTheme.bodyMedium?.copyWith(
+                              color: AppColors.textBody,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: Spacing.xl),
+                  ],
+
+                  // Media placeholder
+                  if (chant.mediaType != 'none') ...[
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.play_circle_outline,
+                          size: 16,
+                          color: AppColors.textMuted,
+                        ),
+                        const SizedBox(width: Spacing.sm),
+                        Text(
+                          'Audio will be available soon.',
+                          style: textTheme.bodyMedium,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: Spacing.xl),
+                  ],
+
+                  const SizedBox(height: Spacing.xxxl),
                 ],
               ),
             ),
@@ -199,12 +223,7 @@ class ChantDetailScreen extends ConsumerWidget {
   }
 }
 
-class _Badge extends StatelessWidget {
-  final String label;
-  final bool isGold;
-
-  const _Badge({required this.label, required this.isGold});
-
+class _ParodyFlag extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -213,17 +232,18 @@ class _Badge extends StatelessWidget {
         vertical: 2,
       ),
       decoration: BoxDecoration(
-        color: isGold
-            ? AppColors.gold.withValues(alpha: 0.15)
-            : AppColors.surfaceRaised,
-        borderRadius: BorderRadius.circular(Radii.sm),
+        color: AppColors.gold.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(4),
       ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: isGold ? AppColors.gold : AppColors.textMuted,
-              fontWeight: isGold ? FontWeight.w600 : FontWeight.w500,
-            ),
+      child: const Text(
+        'PARODY',
+        style: TextStyle(
+          fontFamily: 'SpaceMono',
+          fontSize: 9,
+          color: AppColors.gold,
+          letterSpacing: 0.8,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }

@@ -136,6 +136,9 @@
 ### Skipped: streaming licensed master recordings
 **Reason:** Chants ride existing copyrighted melodies. TikTok and Instagram have licensing deals, a small app will not. Streaming masters is direct copyright exposure. The flexible-media approach (lyrics plus tune name as the low-risk core, optional light recordings) sidesteps it deliberately.
 
+### Future: Real club crests on chant cards
+**The idea:** Show the actual club crest next to the gold who-it-is-for line on chant cards. Adds instant visual recognition. Requires licensing or sourcing crest assets for every supported club. No placeholder icon (stock shields read as template). Wait until real assets are available.
+
 ---
 
 ## Promotion rule

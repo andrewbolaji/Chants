@@ -26,7 +26,7 @@ class CompetitionScreen extends ConsumerWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      appBar: AppBar(title: Text(competitionName)),
+      appBar: AppBar(title: Text(competitionName.toUpperCase())),
       body: StreamBuilder<List<Team>>(
         stream: teamsStream,
         builder: (context, snapshot) {

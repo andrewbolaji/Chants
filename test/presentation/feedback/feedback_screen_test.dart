@@ -34,7 +34,7 @@ void main() {
     testWidgets('submit button disabled when message empty', (tester) async {
       await tester.pumpWidget(wrap(const FeedbackScreen()));
       final sendButton = tester.widget<FilledButton>(
-        find.widgetWithText(FilledButton, 'Send'),
+        find.widgetWithText(FilledButton, 'SEND'),
       );
       expect(sendButton.onPressed, isNull);
     });

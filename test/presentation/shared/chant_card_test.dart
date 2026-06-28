@@ -56,7 +56,7 @@ void main() {
       await tester.pumpWidget(wrap(
         ChantCard(chant: parodyChant, onTap: () {}),
       ));
-      expect(find.text('parody'), findsOneWidget);
+      expect(find.text('PARODY'), findsOneWidget);
     });
 
     testWidgets('calls onTap when tapped', (tester) async {

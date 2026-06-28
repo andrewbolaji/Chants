@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart' show FirebaseAuthException;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chants/app/colors.dart';
@@ -17,6 +18,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _loading = false;
+  bool _obscurePassword = true;
   String? _error;
 
   @override
@@ -40,6 +42,10 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
             password: _passwordController.text,
           );
     } catch (e) {
+      debugPrint('[SignIn] Error: $e');
+      if (e is FirebaseAuthException) {
+        debugPrint('[SignIn] code=${e.code} message=${e.message}');
+      }
       if (!mounted) return;
       setState(() {
         _error = 'Wrong email or password. Check both and try again.';
@@ -50,8 +56,6 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -62,15 +66,23 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  'Chants',
-                  style: textTheme.headlineLarge,
+                // Anton hero title
+                const Text(
+                  'CHANTS',
+                  style: TextStyle(
+                    fontFamily: 'Anton',
+                    fontSize: 40,
+                    color: AppColors.textHeadline,
+                    letterSpacing: 2.0,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: Spacing.xs),
                 Text(
                   'Know the words.',
-                  style: textTheme.bodyMedium,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.textBody,
+                      ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: Spacing.xxxl),
@@ -85,8 +97,21 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                 const SizedBox(height: Spacing.md),
                 TextFormField(
                   controller: _passwordController,
-                  decoration: const InputDecoration(labelText: 'Password'),
-                  obscureText: true,
+                  decoration: InputDecoration(
+                    labelText: 'Password',
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                        size: 20,
+                        color: AppColors.textMuted,
+                      ),
+                      onPressed: () =>
+                          setState(() => _obscurePassword = !_obscurePassword),
+                    ),
+                  ),
+                  obscureText: _obscurePassword,
                   autofillHints: const [AutofillHints.password],
                   validator: (v) =>
                       v == null || v.isEmpty ? 'Enter your password.' : null,
@@ -95,9 +120,9 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                   const SizedBox(height: Spacing.md),
                   Text(
                     _error!,
-                    style: textTheme.bodySmall?.copyWith(
-                      color: AppColors.error,
-                    ),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.error,
+                        ),
                   ),
                 ],
                 const SizedBox(height: Spacing.xl),
@@ -109,7 +134,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                           width: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('Sign in'),
+                      : const Text('SIGN IN'),
                 ),
                 const SizedBox(height: Spacing.md),
                 TextButton(

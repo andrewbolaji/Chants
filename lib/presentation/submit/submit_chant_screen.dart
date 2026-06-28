@@ -128,7 +128,7 @@ class _SubmitChantScreenState extends ConsumerState<SubmitChantScreen> {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Add a chant')),
+      appBar: AppBar(title: const Text('ADD A CHANT')),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -255,7 +255,7 @@ class _SubmitChantScreenState extends ConsumerState<SubmitChantScreen> {
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('Submit'),
+                  : const Text('SUBMIT'),
             ),
             const SizedBox(height: Spacing.xxxl),
           ],

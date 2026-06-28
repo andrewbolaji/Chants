@@ -5,17 +5,32 @@ import 'package:chants/app/providers.dart';
 import 'package:chants/app/router.dart';
 import 'package:chants/app/spacing.dart';
 import 'package:chants/presentation/browse/discovery_section.dart';
+import 'package:chants/presentation/shared/section_eyebrow.dart';
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  final _searchController = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Chants'),
+        title: const Text('CHANTS'),
         actions: [
           // Operator-only moderation link
           StreamBuilder(
@@ -54,19 +69,27 @@ class HomeScreen extends ConsumerWidget {
             itemBuilder: (context) => [
               PopupMenuItem(
                 value: 'feedback',
-                child: Text('Send feedback', style: textTheme.bodyMedium?.copyWith(color: AppColors.textPrimary)),
+                child: Text('Send feedback',
+                    style: textTheme.bodyMedium
+                        ?.copyWith(color: AppColors.textHeadline)),
               ),
               PopupMenuItem(
                 value: 'policy',
-                child: Text('Content policy', style: textTheme.bodyMedium?.copyWith(color: AppColors.textPrimary)),
+                child: Text('Content policy',
+                    style: textTheme.bodyMedium
+                        ?.copyWith(color: AppColors.textHeadline)),
               ),
               PopupMenuItem(
                 value: 'signout',
-                child: Text('Sign out', style: textTheme.bodyMedium?.copyWith(color: AppColors.textPrimary)),
+                child: Text('Sign out',
+                    style: textTheme.bodyMedium
+                        ?.copyWith(color: AppColors.textHeadline)),
               ),
               PopupMenuItem(
                 value: 'delete',
-                child: Text('Delete account', style: textTheme.bodyMedium?.copyWith(color: AppColors.error)),
+                child: Text('Delete account',
+                    style: textTheme.bodyMedium
+                        ?.copyWith(color: AppColors.error)),
               ),
             ],
           ),
@@ -74,64 +97,89 @@ class HomeScreen extends ConsumerWidget {
       ),
       body: ListView(
         children: [
-          const SizedBox(height: Spacing.sm),
-          // Premier League entry
+          // Search bar
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(Radii.md),
-              onTap: () => Navigator.pushNamed(
-                context,
-                AppRouter.competition,
-                arguments: {
-                  'id': 'premier-league',
-                  'name': 'Premier League',
-                },
+            padding: const EdgeInsets.symmetric(
+              horizontal: Spacing.lg,
+              vertical: Spacing.sm,
+            ),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Search chants...',
+                prefixIcon: const Icon(Icons.search, size: 20),
+                suffixIcon: _query.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.close, size: 20),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() => _query = '');
+                        },
+                      )
+                    : null,
               ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: Spacing.lg,
-                  vertical: Spacing.lg,
+              onChanged: (v) => setState(() => _query = v.trim()),
+            ),
+          ),
+          const SizedBox(height: Spacing.sm),
+
+          // Premier League entry
+          if (_query.isEmpty) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(Radii.md),
+                onTap: () => Navigator.pushNamed(
+                  context,
+                  AppRouter.competition,
+                  arguments: {
+                    'id': 'premier-league',
+                    'name': 'Premier League',
+                  },
                 ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Premier League',
-                            style: textTheme.titleMedium,
-                          ),
-                          const SizedBox(height: Spacing.xs),
-                          Text(
-                            'All 20 clubs',
-                            style: textTheme.bodySmall,
-                          ),
-                        ],
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: Spacing.lg,
+                    vertical: Spacing.lg,
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'PREMIER LEAGUE',
+                              style: textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: Spacing.xs),
+                            const SectionEyebrow(text: 'All 20 clubs'),
+                          ],
+                        ),
                       ),
-                    ),
-                    Icon(
-                      Icons.chevron_right,
-                      color: AppColors.textFaint,
-                    ),
-                  ],
+                      Icon(
+                        Icons.chevron_right,
+                        color: AppColors.textFaint,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-          const Divider(indent: Spacing.lg, endIndent: Spacing.lg),
-          const SizedBox(height: Spacing.sm),
+            const Divider(indent: Spacing.lg, endIndent: Spacing.lg),
+            const SizedBox(height: Spacing.sm),
+          ],
 
-          // Discovery shuffle
-          const DiscoverySection(),
+          // Discovery shuffle (or search results)
+          DiscoverySection(searchQuery: _query),
         ],
       ),
     );
   }
 }
 
-Future<void> _showDeleteAccountDialog(BuildContext context, WidgetRef ref) async {
+Future<void> _showDeleteAccountDialog(
+    BuildContext context, WidgetRef ref) async {
   final confirmed = await showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
@@ -151,7 +199,7 @@ Future<void> _showDeleteAccountDialog(BuildContext context, WidgetRef ref) async
             backgroundColor: AppColors.error,
           ),
           onPressed: () => Navigator.pop(ctx, true),
-          child: const Text('Delete my account'),
+          child: const Text('DELETE MY ACCOUNT'),
         ),
       ],
     ),
@@ -161,12 +209,12 @@ Future<void> _showDeleteAccountDialog(BuildContext context, WidgetRef ref) async
 
   try {
     await ref.read(moderationRepositoryProvider).deleteAccount();
-    // Auth state change will redirect to sign-in
   } catch (e) {
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Could not delete your account. Try again or contact us via feedback.'),
+        content: Text(
+            'Could not delete your account. Try again or contact us via feedback.'),
       ),
     );
   }

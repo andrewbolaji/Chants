@@ -45,7 +45,7 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Reset password')),
+      appBar: AppBar(title: const Text('RESET PASSWORD')),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: Spacing.xl),
         child: _sent
@@ -63,13 +63,13 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
                     'Check your inbox and spam folder.',
                     textAlign: TextAlign.center,
                     style: textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textPrimary,
+                      color: AppColors.textBody,
                     ),
                   ),
                   const SizedBox(height: Spacing.xl),
                   FilledButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('Back to sign in'),
+                    child: const Text('BACK TO SIGN IN'),
                   ),
                 ],
               )
@@ -83,7 +83,7 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
                       'Enter the email you signed up with. '
                       'We will send a link to reset your password.',
                       style: textTheme.bodyMedium?.copyWith(
-                        color: AppColors.textPrimary,
+                        color: AppColors.textBody,
                       ),
                     ),
                     const SizedBox(height: Spacing.lg),
@@ -105,7 +105,7 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
                               child:
                                   CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : const Text('Send reset link'),
+                          : const Text('SEND RESET LINK'),
                     ),
                   ],
                 ),

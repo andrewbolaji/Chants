@@ -13,43 +13,37 @@ states, moderation gating, rate limit) are pending the next walk.
 ### HIGH
 
 #### Upvote does not increment
-- **Symptom:** Tapping the up arrow on a chant detail leaves the count at 0;
-  no visible change.
-- **Where:** Chant detail vote bar and list vote chips.
-- **Suspected cause:** Either the optimistic UI update is not wired (counters
-  are written by the vote Cloud Function and the screen only reflects after
-  the function runs plus a stream refresh), or the vote write is failing
-  silently. Needs investigation during the redesign vote-bar rebuild: confirm
-  a vote doc is actually written to the votes collection on tap, confirm the
-  counter function runs, and add optimistic UI so the number moves
-  immediately.
-- **Priority:** High — core interaction.
+- **Status:** Addressed in Fanzine redesign block (June 27).
+- **Fix:** Vote control now tracks an optimistic delta locally. Score
+  updates on tap before the Firestore write completes. On error the delta
+  reverts. On the next stream emission the server score reconciles. Toggle
+  (vote then un-vote) and direction switch (up then down) are handled
+  correctly. Unit tests cover all cases including rapid repeated taps.
 
 #### Search is missing from the UI
-- **Symptom:** No search entry point on the Chants home or club screens; only
-  the discovery shuffle is present.
-- **Where:** Home / discover screen.
-- **Note:** Spec lists browse-and-search for v1; the shuffle works but search
-  is not surfaced.
-- **Priority:** High.
+- **Status:** Addressed in Fanzine redesign block (June 27).
+- **Fix:** Search text field added to the home screen. Filters the
+  discovery chant list by title, lyrics, tune name, and team name. Empty
+  results show a fanzine-styled empty state ("Nothing matches that").
 
 #### Account / password email link not tappable
 - **Symptom:** The link in the Chants email (password reset / verification)
   is not clickable.
 - **Where:** Transactional email template.
 - **Suspected cause:** Email link / template formatting.
-- **Priority:** High — blocks the reset flow.
+- **Priority:** High. Blocks the reset flow. This is a Firebase Console
+  template issue, not an app code fix.
 
 ---
 
 ### MEDIUM
 
 #### Password reset UX
-- **Requests:** Require the new password to be entered twice (confirm field)
-  and add a show-password toggle on the entry fields.
-- **Where:** Password reset screen (and consider the same show-password
-  toggle on sign-up / sign-in).
-- **Priority:** Medium.
+- **Status:** Addressed in Fanzine redesign block (June 27).
+- **Fix:** Confirm-password field added to sign-up. Show-password toggle
+  added to sign-up, sign-in, and password reset screens.
+- **Remaining:** The password-reset screen sends a reset link by email. The
+  email template clickability issue (see above) is separate and still open.
 
 ---
 

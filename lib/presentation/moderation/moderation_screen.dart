@@ -31,7 +31,7 @@ class ModerationScreen extends ConsumerWidget {
       length: 4,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Moderation'),
+          title: const Text('MODERATION'),
           bottom: const TabBar(
             isScrollable: true,
             tabs: [

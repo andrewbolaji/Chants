@@ -29,7 +29,7 @@ class PlayerScreen extends ConsumerWidget {
     final isSignedIn = ref.watch(authStateProvider).valueOrNull != null;
 
     return Scaffold(
-      appBar: AppBar(title: Text(player.name)),
+      appBar: AppBar(title: Text(player.name.toUpperCase())),
       floatingActionButton:
           isSignedIn && sportId != null && competitionId != null
               ? FloatingActionButton.extended(

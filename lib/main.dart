@@ -17,15 +17,24 @@ Future<void> main() async {
   );
 
   // App Check: debug provider for dev, real providers for release (C14)
-  // ignore: deprecated_member_use - providerAndroid uses a different type not yet stable
-  if (kDebugMode) {
-    await FirebaseAppCheck.instance.activate(
-      androidProvider: AndroidProvider.debug, // ignore: deprecated_member_use
-    );
-  } else {
-    await FirebaseAppCheck.instance.activate(
-      androidProvider: AndroidProvider.playIntegrity, // ignore: deprecated_member_use
-    );
+  // Non-blocking so a token failure never prevents startup or auth.
+  try {
+    debugPrint('[AppCheck] Activating — kDebugMode=$kDebugMode');
+    if (kDebugMode) {
+      await FirebaseAppCheck.instance.activate(
+        appleProvider: AppleProvider.debug,
+        androidProvider: AndroidProvider.debug,
+      );
+    } else {
+      await FirebaseAppCheck.instance.activate(
+        appleProvider: AppleProvider.appAttestWithDeviceCheckFallback,
+        androidProvider: AndroidProvider.playIntegrity,
+      );
+    }
+    debugPrint('[AppCheck] Activated successfully');
+  } catch (e, st) {
+    debugPrint('[AppCheck] Activation failed (non-blocking): $e');
+    debugPrint('[AppCheck] $st');
   }
 
   // Crashlytics (D4): capture Flutter errors

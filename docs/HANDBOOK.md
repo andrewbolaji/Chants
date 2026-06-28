@@ -14,18 +14,20 @@ Chants is the home for football chants. Fans use it to find the songs, learn the
 
 **How to use it.**
 1. Open the app. You land on the Sign In screen.
-2. To create an account, tap "No account yet? Sign up." Enter a display name, email, and password (at least 6 characters). Tap "Create Account."
+2. To create an account, tap "No account yet? Sign up." Enter a display name, email, password (at least 6 characters), and confirm the password. Tap "Create Account."
 3. To sign in, enter your email and password, then tap "Sign In."
 4. To reset your password, tap "Forgot password?" on the Sign In screen. Enter your email and tap "Send Reset Link." Check your inbox (and spam folder) for the link.
-5. To sign out, tap the sign-out icon in the top bar of the home screen.
+5. To sign out, use the overflow menu on the home screen.
+6. All password fields have a show/hide toggle (eye icon) so you can check what you typed.
 
-**Behind the scenes.** Auth uses Firebase Authentication (email and password). When you sign up, the app creates a profile in Firestore with your display name, a "user" role, and timestamps. Your email is never exposed to other users; only your display name is public. The password reset flow always shows the same message ("If that email is registered, you will get a reset link") whether the email exists or not, so it never leaks account information.
+**Behind the scenes.** Auth uses Firebase Authentication (email and password). When you sign up, the app creates a profile in Firestore with your display name, a "user" role, and timestamps. Your email is never exposed to other users; only your display name is public. The password reset flow always shows the same message ("If that email is registered, you will get a reset link") whether the email exists or not, so it never leaks account information. The confirm-password field is validated client-side before the sign-up request is sent.
 
 **Limits and gotchas.**
 - Email and password only for now. Apple and Google sign-in are noted for later.
 - You cannot change your own role. Only the system can set a user to "operator."
 - If you enter a wrong email or password, the error message says "Wrong email or password. Check both and try again." It does not say which one was wrong, for security.
 - Passwords must be at least 6 characters (Firebase minimum).
+- The confirm-password field catches typos before sign-up; mismatched passwords show "Passwords do not match."
 
 **Where it shows up.** Sign In, Sign Up, and Password Reset are standalone screens. The home screen shows a sign-out button. Auth state drives the entire app: signed out shows the sign-in screen, signed in shows the home screen.
 
@@ -40,20 +42,20 @@ Chants is the home for football chants. Fans use it to find the songs, learn the
 **What it does.** Lets you explore chants by drilling down from the Premier League to a club, then to a player, then to a specific chant. A discovery shuffle on the home screen mixes chants across all clubs so you can stumble on something new.
 
 **How to use it.**
-1. Open the app. The home screen shows a "Premier League" card and a shuffled mix of chants from all clubs.
-2. Tap "Premier League" to see all 20 clubs listed alphabetically.
-3. Tap a club to see its chants. Club anthems appear first, then players who have chants, then the full squad (tap to expand).
-4. Tap a player to see their chants. Most players have none yet, and that is normal.
-5. Tap any chant to see the full detail: lyrics, tune name, context, and badges (Canonical/Community, subject tag, real/parody).
-6. On the home screen, tap the shuffle icon to get a fresh mix.
+1. Open the app. The home screen shows a search bar, a "Premier League" entry, and a shuffled mix of chants from all clubs.
+2. Type in the search bar to filter chants by title, lyrics, tune name, or club name. Results update as you type. If nothing matches, a fanzine-style empty state tells you.
+3. Tap "Premier League" to see all 20 clubs listed alphabetically.
+4. Tap a club to see its chants. Club anthems appear first, then players who have chants, then the full squad (tap to expand).
+5. Tap a player to see their chants. Most players have none yet, and that is normal.
+6. Tap any chant to see the full detail: lyrics, tune name, context, and badges (verified/community, parody flag).
+7. On the home screen, tap the shuffle icon to get a fresh mix.
 
 **Behind the scenes.** All chants live in one flat Firestore collection with denormalized team and player IDs. Every query filters out hidden and removed chants at the database level (Firestore security rules reject queries without those filters). The discovery shuffle fetches all visible chants and shuffles client-side. The seed script writes canonical chants via the Admin SDK, bypassing the client create rule that forces community status.
 
 **Limits and gotchas.**
 - Most players have no chants yet. The empty state says "No chants for [player] yet." This is expected, not an error.
-- "Most popular" sorting exists but is inert until voting ships in Block 4 (all scores are 0).
-- Cover images and media are placeholders until Storage goes live in Block 3.
-- Search is structured filter and sort, not free-text lyric search (deferred to v2).
+- Cover images and media are placeholders until Storage goes live.
+- Voting is live. The score updates immediately when you tap (optimistic update). If the network write fails, it reverts. Tapping the same vote again removes it. Switching from up to down (or vice versa) swings the score by 2.
 
 **Where it shows up.** Home screen (discovery shuffle and PL entry), Competition screen, Club screen, Player screen, Chant detail screen.
 

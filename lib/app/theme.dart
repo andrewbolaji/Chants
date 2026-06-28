@@ -3,12 +3,16 @@ import 'package:flutter/services.dart';
 import 'package:chants/app/colors.dart';
 import 'package:chants/app/spacing.dart';
 
-// Variable font weight axis values. These pin the actual rendered weight
+// Variable font weight axis values. Pin the actual rendered weight
 // because pubspec weight alone does not set a variable font's wght axis.
-const _oswald700 = [FontVariation('wght', 700)];
+//
+// Anton: static single-weight font, no FontVariation needed.
+// Space Mono: static Regular + Bold, no FontVariation needed.
+// Fraunces: variable font, pin wght axis.
+// Nunito: variable font, pin wght axis.
+const _fraunces400 = [FontVariation('wght', 400)];
 const _nunito400 = [FontVariation('wght', 400)];
 const _nunito700 = [FontVariation('wght', 700)];
-const _nunito800 = [FontVariation('wght', 800)];
 
 class ChantTheme {
   static ThemeData get dark {
@@ -23,8 +27,8 @@ class ChantTheme {
         secondary: AppColors.gold,
         onSecondary: AppColors.goldOnDark,
         error: AppColors.error,
-        onError: AppColors.textPrimary,
-        onSurface: AppColors.textPrimary,
+        onError: AppColors.textHeadline,
+        onSurface: AppColors.textHeadline,
         onSurfaceVariant: AppColors.textMuted,
         outline: AppColors.outline,
         surfaceContainerHighest: AppColors.surfaceRaised,
@@ -33,23 +37,21 @@ class ChantTheme {
       textTheme: _textTheme,
       extensions: const [AppColors()],
 
-      // App bar: warm background, Oswald title
+      // App bar: warm background, Anton title
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.background,
-        foregroundColor: AppColors.textPrimary,
+        foregroundColor: AppColors.textHeadline,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
         titleTextStyle: TextStyle(
-          fontFamily: 'Oswald',
-          fontVariations: _oswald700,
-          color: AppColors.textPrimary,
+          fontFamily: 'Anton',
+          color: AppColors.textHeadline,
           fontSize: 22,
-          fontWeight: FontWeight.w700,
           letterSpacing: 0.5,
         ),
         iconTheme: IconThemeData(
-          color: AppColors.textPrimary,
+          color: AppColors.textHeadline,
           size: 24,
         ),
         systemOverlayStyle: SystemUiOverlayStyle(
@@ -60,7 +62,7 @@ class ChantTheme {
         ),
       ),
 
-      // Cards: warm surface, no border (surface IS the boundary), rounded
+      // Cards: warm surface, rounded
       cardTheme: CardThemeData(
         color: AppColors.surfaceRaised,
         elevation: 0,
@@ -92,10 +94,8 @@ class ChantTheme {
             borderRadius: BorderRadius.circular(Radii.lg),
           ),
           textStyle: const TextStyle(
-            fontFamily: 'Oswald',
-            fontVariations: _oswald700,
+            fontFamily: 'Anton',
             fontSize: 16,
-            fontWeight: FontWeight.w700,
             letterSpacing: 0.5,
           ),
         ),
@@ -158,12 +158,11 @@ class ChantTheme {
         ),
       ),
 
-      // Chips: warm surface
+      // Chips: warm surface, Space Mono
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.surface,
         labelStyle: const TextStyle(
-          fontFamily: 'Nunito',
-          fontVariations: _nunito400,
+          fontFamily: 'SpaceMono',
           color: AppColors.textMuted,
           fontSize: 12,
         ),
@@ -190,7 +189,7 @@ class ChantTheme {
         contentTextStyle: const TextStyle(
           fontFamily: 'Nunito',
           fontVariations: _nunito400,
-          color: AppColors.textPrimary,
+          color: AppColors.textHeadline,
         ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(Radii.sm),
@@ -222,22 +221,20 @@ class ChantTheme {
         ),
       ),
 
-      // Tab bar: gold active
+      // Tab bar: gold active, Anton labels
       tabBarTheme: const TabBarThemeData(
         labelColor: AppColors.gold,
         unselectedLabelColor: AppColors.textMuted,
         indicatorColor: AppColors.gold,
         dividerColor: AppColors.divider,
         labelStyle: TextStyle(
-          fontFamily: 'Oswald',
-          fontVariations: _oswald700,
-          fontWeight: FontWeight.w700,
+          fontFamily: 'Anton',
+          fontSize: 14,
           letterSpacing: 0.5,
         ),
         unselectedLabelStyle: TextStyle(
-          fontFamily: 'Oswald',
-          fontVariations: _oswald700,
-          fontWeight: FontWeight.w700,
+          fontFamily: 'Anton',
+          fontSize: 14,
           letterSpacing: 0.5,
         ),
       ),
@@ -288,52 +285,44 @@ class ChantTheme {
     );
   }
 
-  // Two-face type hierarchy: Oswald (display) + Nunito (body)
+  // Three-voice type system: Anton (shout) + SpaceMono (zine) + Fraunces (reading) + Nunito (UI body)
   static const _textTheme = TextTheme(
-    // Hero display: Oswald condensed uppercase
+    // Hero display: Anton condensed uppercase
     headlineLarge: TextStyle(
-      fontFamily: 'Oswald',
-      fontVariations: _oswald700,
+      fontFamily: 'Anton',
       fontSize: 28,
-      fontWeight: FontWeight.w700,
-      color: AppColors.textPrimary,
+      color: AppColors.textHeadline,
       letterSpacing: 1.0,
     ),
-    // Screen titles: Oswald
+    // Screen titles: Anton
     headlineMedium: TextStyle(
-      fontFamily: 'Oswald',
-      fontVariations: _oswald700,
+      fontFamily: 'Anton',
       fontSize: 24,
-      fontWeight: FontWeight.w700,
-      color: AppColors.textPrimary,
+      color: AppColors.textHeadline,
       letterSpacing: 0.5,
     ),
-    // Card titles, section headers: Oswald condensed
+    // Card titles: Anton condensed (smaller than screen titles)
     titleMedium: TextStyle(
-      fontFamily: 'Oswald',
-      fontVariations: _oswald700,
+      fontFamily: 'Anton',
       fontSize: 17,
-      fontWeight: FontWeight.w700,
-      color: AppColors.textPrimary,
+      color: AppColors.textHeadline,
       letterSpacing: 0.3,
     ),
-    // Tune name, small headers: Oswald
+    // Small headers: Anton
     titleSmall: TextStyle(
-      fontFamily: 'Oswald',
-      fontVariations: _oswald700,
+      fontFamily: 'Anton',
       fontSize: 14,
-      fontWeight: FontWeight.w700,
-      color: AppColors.textPrimary,
+      color: AppColors.textHeadline,
       letterSpacing: 0.5,
     ),
-    // LYRICS: the singable centerpiece. Nunito heavy, large, warm.
+    // LYRICS: the singable centerpiece. Fraunces, large, warm.
     bodyLarge: TextStyle(
-      fontFamily: 'Nunito',
-      fontVariations: _nunito800,
-      fontSize: 23,
-      fontWeight: FontWeight.w800,
-      color: AppColors.textPrimary,
-      height: 1.55,
+      fontFamily: 'Fraunces',
+      fontVariations: _fraunces400,
+      fontSize: 22,
+      fontWeight: FontWeight.w400,
+      color: AppColors.textBody,
+      height: 1.6,
     ),
     // Body text, previews: Nunito
     bodyMedium: TextStyle(
@@ -351,21 +340,17 @@ class ChantTheme {
       fontWeight: FontWeight.w400,
       color: AppColors.textMuted,
     ),
-    // Labels, overlines: Oswald small caps feel
+    // Eyebrows, labels: Space Mono uppercase
     labelMedium: TextStyle(
-      fontFamily: 'Oswald',
-      fontVariations: _oswald700,
-      fontSize: 12,
-      fontWeight: FontWeight.w700,
-      color: AppColors.textMuted,
-      letterSpacing: 1.0,
-    ),
-    // Badges, chips: Nunito
-    labelSmall: TextStyle(
-      fontFamily: 'Nunito',
-      fontVariations: [FontVariation('wght', 600)],
+      fontFamily: 'SpaceMono',
       fontSize: 11,
-      fontWeight: FontWeight.w600,
+      color: AppColors.textMuted,
+      letterSpacing: 1.2,
+    ),
+    // Badges, chips, vote numbers: Space Mono
+    labelSmall: TextStyle(
+      fontFamily: 'SpaceMono',
+      fontSize: 11,
       color: AppColors.textMuted,
       letterSpacing: 0.3,
     ),

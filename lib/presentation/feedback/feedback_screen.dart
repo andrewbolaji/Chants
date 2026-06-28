@@ -65,7 +65,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
   Widget build(BuildContext context) {
     if (_submitted) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Feedback')),
+        appBar: AppBar(title: const Text('FEEDBACK')),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(Spacing.xxl),
@@ -92,7 +92,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Send feedback')),
+      appBar: AppBar(title: const Text('SEND FEEDBACK')),
       body: ListView(
         padding: const EdgeInsets.all(Spacing.lg),
         children: [
@@ -148,7 +148,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                     width: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text('Send'),
+                : const Text('SEND'),
           ),
         ],
       ),

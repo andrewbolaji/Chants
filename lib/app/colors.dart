@@ -1,30 +1,35 @@
 import 'package:flutter/material.dart';
 
-/// Chants color tokens: matchnight, warmed with playful.
-/// Warm charcoal base, gold accent, warm chalk text.
+/// Chants color tokens v2: Fanzine direction.
+/// Warm charcoal base, softened text range, gold accent.
 /// No raw hex literals in widgets.
 @immutable
 class AppColors extends ThemeExtension<AppColors> {
-  // Core palette: warm floodlit night
+  // Core palette: warm floodlit night (unchanged)
   static const background = Color(0xFF16140F);
   static const surface = Color(0xFF1E1A14);
   static const surfaceRaised = Color(0xFF231B11);
 
-  // Text hierarchy: warm chalk
-  static const textPrimary = Color(0xFFF6EEDC);
-  static const textMuted = Color(0xFFB0A083); // 5.8:1 on base, AA
-  static const textFaint = Color(0xFF6B5F4A); // 3.1:1, decorative only
+  // Text hierarchy: softened off pure white for comfort
+  static const textHeadline = Color(0xFFE9E0CE); // titles, headlines
+  static const textBody = Color(0xFFD9CFBD); // reading, body text
+  static const textMuted = Color(0xFFA1937D); // secondary, metadata
+  static const textFaint = Color(0xFF6B5F4A); // decorative only
 
-  // The single accent: trophy gold. Action, active, and earned status.
-  static const gold = Color(0xFFFFB627);
+  // Legacy alias so existing code compiles during migration
+  static const textPrimary = textHeadline;
+
+  // The single accent: trophy gold.
+  static const gold = Color(0xFFF2AE2E);
+  static const goldBright = Color(0xFFFFC94D);
   static const goldOnDark = Color(0xFF16140F);
 
-  // Gold foil gradient for the verified mark
-  static const goldFoilStart = Color(0xFFFFB627);
+  // Gold foil gradient for the verified sticker
+  static const goldFoilStart = Color(0xFFF2AE2E);
   static const goldFoilEnd = Color(0xFFFFC94D);
 
   // Semantic
-  static const error = Color(0xFFEF6461); // 5.0:1 on base, AA
+  static const error = Color(0xFFEF6461);
   static const success = Color(0xFF66BB6A);
 
   // Structural
@@ -32,7 +37,7 @@ class AppColors extends ThemeExtension<AppColors> {
   static const outline = Color(0xFF3A3020);
 
   // Floodlight glow (detail hero)
-  static const glowGold = Color(0x0FFFB627); // gold at ~6%
+  static const glowGold = Color(0x0FF2AE2E); // gold at ~6%
 
   // Instance fields for ThemeExtension
   final Color accentColor;

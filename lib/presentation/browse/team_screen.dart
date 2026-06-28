@@ -10,6 +10,7 @@ import 'package:chants/data/models/team.dart';
 import 'package:chants/presentation/shared/chant_card.dart';
 import 'package:chants/presentation/shared/empty_state.dart';
 import 'package:chants/presentation/shared/error_state.dart';
+import 'package:chants/presentation/shared/section_eyebrow.dart';
 
 class TeamScreen extends ConsumerStatefulWidget {
   final Team team;
@@ -34,7 +35,7 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      appBar: AppBar(title: Text(widget.team.name)),
+      appBar: AppBar(title: Text(widget.team.name.toUpperCase())),
       floatingActionButton: isSignedIn
           ? FloatingActionButton.extended(
               onPressed: () => Navigator.pushNamed(
@@ -186,7 +187,7 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
                             title: Text(
                               player.name,
                               style: textTheme.bodyMedium?.copyWith(
-                                color: AppColors.textPrimary,
+                                color: AppColors.textHeadline,
                               ),
                             ),
                             dense: true,
@@ -222,12 +223,7 @@ class _SectionHeader extends StatelessWidget {
         horizontal: Spacing.lg,
         vertical: Spacing.sm,
       ),
-      child: Text(
-        title.toUpperCase(),
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              letterSpacing: 1.0,
-            ),
-      ),
+      child: SectionEyebrow(text: title),
     );
   }
 }
