@@ -166,6 +166,36 @@
       "contextNotes": "Adapted from the '49 Undefeated' chant; here the 49 is Myles Lewis-Skelly's shirt number.",
       "realOrParody": "parody",
       "mediaType": "none"
+    },
+    {
+      "title": "Eze Scores Again",
+      "subjectTag": "player",
+      "playerName": "Eberechi Eze",
+      "lyrics": "We can hear them crying at the Lane,\nEberechi scores again!\nOne chat with Mik Arteta he said 'wow',\nF**k off Tottenham, I'm a Gooner now!\nNa na na na na na na naaa na naaaa",
+      "tuneName": "Original terrace chant",
+      "contextNotes": "Debuted in August 2025 after Arsenal signed Eze ahead of Tottenham. The crying at the Lane line mocks Spurs fans.",
+      "realOrParody": "real",
+      "mediaType": "none"
+    },
+    {
+      "title": "Our Number 8",
+      "subjectTag": "player",
+      "playerName": "Martin Odegaard",
+      "lyrics": "Been dreaming all day\nOf our number 8\nMartin Odegaard, oi oi oi!\nWhen he's on the ball\nHe's f**king magical\nMartin Odegaard, oi oi oi!",
+      "tuneName": "Chase the Sun (Planet Funk)",
+      "contextNotes": "For club captain Martin Odegaard, Arsenal's number 8.",
+      "realOrParody": "parody",
+      "mediaType": "none"
+    },
+    {
+      "title": "Last Christmas (Zubimendi)",
+      "subjectTag": "player",
+      "playerName": "Martin Zubimendi",
+      "lyrics": "Last Christmas, I gave you my heart,\nBut the very next day, you gave it away.\nThis year, to save me from tears,\nI'll give it to Zubimendi.",
+      "tuneName": "Last Christmas (Wham!)",
+      "contextNotes": "A festive chant for midfielder Martin Zubimendi, sung to Wham!'s Last Christmas. Only the closing words change.",
+      "realOrParody": "parody",
+      "mediaType": "none"
     }
   ]
 }
