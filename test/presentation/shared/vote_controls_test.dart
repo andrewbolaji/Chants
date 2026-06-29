@@ -1,121 +1,179 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:chants/presentation/shared/vote_controls.dart';
 
-/// Tests for the optimistic vote delta logic extracted from VoteControls.
-/// The widget itself requires Firebase mocks; here we test the pure delta
-/// calculation that prevents double-counting and drift.
+/// Tests for OptimisticVoteState — the real reconciliation logic used by
+/// VoteControls. Not a copy; exercises the same class the widget delegates to.
 void main() {
-  group('Optimistic vote delta', () {
-    // Simulate the delta logic from VoteControls._onVote
-    int calculateDelta({required int? currentVote, required int tapValue}) {
-      if (currentVote == tapValue) {
-        // Toggle off: undo
-        return -tapValue;
-      } else if (currentVote != null) {
-        // Switch direction: remove old + add new
-        return -currentVote + tapValue;
-      } else {
-        // Fresh vote
-        return tapValue;
-      }
-    }
+  late OptimisticVoteState state;
 
-    int? newVoteAfterTap({required int? currentVote, required int tapValue}) {
-      if (currentVote == tapValue) return null;
-      return tapValue;
-    }
+  setUp(() {
+    state = OptimisticVoteState(serverScore: 10);
+  });
 
-    test('fresh upvote adds +1', () {
-      expect(calculateDelta(currentVote: null, tapValue: 1), 1);
-      expect(newVoteAfterTap(currentVote: null, tapValue: 1), 1);
+  group('OptimisticVoteState', () {
+    test('initial display score equals server score', () {
+      expect(state.displayScore, 10);
     });
 
-    test('fresh downvote adds -1', () {
-      expect(calculateDelta(currentVote: null, tapValue: -1), -1);
-      expect(newVoteAfterTap(currentVote: null, tapValue: -1), -1);
+    test('upvote shows +1 immediately', () {
+      state.applyVote(1);
+      expect(state.displayScore, 11);
+      expect(state.userVote, 1);
     });
 
-    test('upvote then upvote again removes vote (toggle off)', () {
-      // First tap: fresh upvote
-      final d1 = calculateDelta(currentVote: null, tapValue: 1);
-      final v1 = newVoteAfterTap(currentVote: null, tapValue: 1);
-      expect(d1, 1);
-      expect(v1, 1);
-
-      // Second tap: toggle off
-      final d2 = calculateDelta(currentVote: v1, tapValue: 1);
-      final v2 = newVoteAfterTap(currentVote: v1, tapValue: 1);
-      expect(d2, -1); // undoes the +1
-      expect(v2, null);
-
-      // Net delta should be 0 (back to baseline)
-      expect(d1 + d2, 0);
+    test('downvote shows -1 immediately', () {
+      state.applyVote(-1);
+      expect(state.displayScore, 9);
+      expect(state.userVote, -1);
     });
 
-    test('upvote then downvote swings by -2', () {
-      final d1 = calculateDelta(currentVote: null, tapValue: 1);
-      final v1 = newVoteAfterTap(currentVote: null, tapValue: 1);
+    test('tap up then tap up again returns to baseline (toggle off)', () {
+      state.applyVote(1);
+      expect(state.displayScore, 11);
 
-      final d2 = calculateDelta(currentVote: v1, tapValue: -1);
-      final v2 = newVoteAfterTap(currentVote: v1, tapValue: -1);
-      expect(d2, -2); // remove +1, add -1
-      expect(v2, -1);
-
-      // Net delta: +1 + (-2) = -1
-      expect(d1 + d2, -1);
+      state.applyVote(1); // toggle off
+      expect(state.displayScore, 10);
+      expect(state.userVote, null);
     });
 
-    test('downvote then upvote swings by +2', () {
-      final d1 = calculateDelta(currentVote: null, tapValue: -1);
-      final v1 = newVoteAfterTap(currentVote: null, tapValue: -1);
+    test('tap up then tap down gives net -1 from baseline', () {
+      state.applyVote(1);
+      expect(state.displayScore, 11);
 
-      final d2 = calculateDelta(currentVote: v1, tapValue: 1);
-      expect(d2, 2); // remove -1, add +1
-
-      expect(d1 + d2, 1);
+      state.applyVote(-1); // switch direction
+      expect(state.displayScore, 9);
+      expect(state.userVote, -1);
     });
 
-    test('rapid repeated upvotes net to zero (tap-tap)', () {
-      // Tap 1: upvote
-      var delta = 0;
-      int? vote;
+    test('tap down then tap up gives net +1 from baseline', () {
+      state.applyVote(-1);
+      expect(state.displayScore, 9);
 
-      final d1 = calculateDelta(currentVote: vote, tapValue: 1);
-      vote = newVoteAfterTap(currentVote: vote, tapValue: 1);
-      delta += d1;
-
-      // Tap 2: toggle off
-      final d2 = calculateDelta(currentVote: vote, tapValue: 1);
-      vote = newVoteAfterTap(currentVote: vote, tapValue: 1);
-      delta += d2;
-
-      // Tap 3: upvote again
-      final d3 = calculateDelta(currentVote: vote, tapValue: 1);
-      vote = newVoteAfterTap(currentVote: vote, tapValue: 1);
-      delta += d3;
-
-      // Tap 4: toggle off again
-      final d4 = calculateDelta(currentVote: vote, tapValue: 1);
-      vote = newVoteAfterTap(currentVote: vote, tapValue: 1);
-      delta += d4;
-
-      expect(delta, 0);
-      expect(vote, null);
+      state.applyVote(1);
+      expect(state.displayScore, 11);
+      expect(state.userVote, 1);
     });
 
-    test('score display uses server score plus optimistic delta', () {
-      const serverScore = 5;
-      var optimisticDelta = 0;
-      int? userVote;
+    test('rapid repeated taps converge on correct value with no drift', () {
+      // up, off, up, off, up, off, down, off
+      state.applyVote(1);
+      expect(state.displayScore, 11);
+      state.applyVote(1);
+      expect(state.displayScore, 10);
+      state.applyVote(1);
+      expect(state.displayScore, 11);
+      state.applyVote(1);
+      expect(state.displayScore, 10);
+      state.applyVote(1);
+      expect(state.displayScore, 11);
+      state.applyVote(1);
+      expect(state.displayScore, 10);
+      state.applyVote(-1);
+      expect(state.displayScore, 9);
+      state.applyVote(-1);
+      expect(state.displayScore, 10);
+    });
 
-      // Upvote
-      optimisticDelta += calculateDelta(currentVote: userVote, tapValue: 1);
-      userVote = newVoteAfterTap(currentVote: userVote, tapValue: 1);
-      expect(serverScore + optimisticDelta, 6);
+    test('confirmWrite clears delta and updates confirmed state', () {
+      state.applyVote(1);
+      expect(state.displayScore, 11);
 
-      // Toggle off
-      optimisticDelta += calculateDelta(currentVote: userVote, tapValue: 1);
-      userVote = newVoteAfterTap(currentVote: userVote, tapValue: 1);
-      expect(serverScore + optimisticDelta, 5); // back to baseline
+      state.confirmWrite();
+      expect(state.displayScore, 10); // delta cleared, server hasn't updated
+      expect(state.confirmedVote, 1);
+      expect(state.busy, false);
+    });
+
+    test('server score arrival after confirmed write shows correct value', () {
+      state.applyVote(1);
+      state.confirmWrite();
+      // Server now emits score=11 (reflects the upvote)
+      state.reconcileServerScore(11);
+      expect(state.displayScore, 11);
+      expect(state.optimisticDelta, 0);
+    });
+
+    test('server score arrival does not double-count (the core bug)', () {
+      // User upvotes: display=11, delta=1
+      state.applyVote(1);
+      expect(state.displayScore, 11);
+
+      // Write completes: confirmed=1, delta=0
+      state.confirmWrite();
+
+      // Server emits 11 (already includes the vote)
+      state.reconcileServerScore(11);
+      // Must show 11, not 12
+      expect(state.displayScore, 11);
+      expect(state.optimisticDelta, 0);
+    });
+
+    test('server score during in-flight write preserves pending delta', () {
+      // User upvotes: busy=true
+      state.applyVote(1);
+      expect(state.busy, true);
+      expect(state.displayScore, 11);
+
+      // Server emits a different score (e.g. another user voted, score=11)
+      // but our write hasn't completed yet
+      state.reconcileServerScore(11);
+      // busy is still true, so delta is recomputed from confirmed(null)->user(1)=+1
+      expect(state.displayScore, 12); // 11 (new server) + 1 (our pending)
+      expect(state.optimisticDelta, 1);
+    });
+
+    test('revertWrite restores previous state', () {
+      state.applyVote(1);
+      expect(state.displayScore, 11);
+
+      state.revertWrite(null, null); // revert to no vote
+      expect(state.displayScore, 10);
+      expect(state.userVote, null);
+      expect(state.busy, false);
+    });
+
+    test('score can go negative', () {
+      state = OptimisticVoteState(serverScore: 0);
+      state.applyVote(-1);
+      expect(state.displayScore, -1);
+    });
+
+    test('rapid up-down-up-down with no writes settles correctly', () {
+      // Simulates rapid taps before any write completes
+      state.applyVote(1);   // up: 11
+      state.applyVote(-1);  // switch to down: 9
+      state.applyVote(1);   // switch to up: 11
+      state.applyVote(-1);  // switch to down: 9
+      state.applyVote(-1);  // toggle off: 10
+
+      expect(state.displayScore, 10);
+      expect(state.userVote, null);
+    });
+
+    test('deltaForTransition covers all transitions', () {
+      // none->up: +1
+      expect(OptimisticVoteState.deltaForTransition(null, 1), 1);
+      // none->down: -1
+      expect(OptimisticVoteState.deltaForTransition(null, -1), -1);
+      // up->none: -1
+      expect(OptimisticVoteState.deltaForTransition(1, null), -1);
+      // down->none: +1
+      expect(OptimisticVoteState.deltaForTransition(-1, null), 1);
+      // up->down: -2
+      expect(OptimisticVoteState.deltaForTransition(1, -1), -2);
+      // down->up: +2
+      expect(OptimisticVoteState.deltaForTransition(-1, 1), 2);
+    });
+
+    test('pre-existing vote: user had upvote, taps down swings -2', () {
+      state = OptimisticVoteState(
+        serverScore: 10,
+        userVote: 1,
+        confirmedVote: 1,
+      );
+      state.applyVote(-1);
+      expect(state.displayScore, 8); // 10 + ((-1) - 1) = 8
+      expect(state.userVote, -1);
     });
   });
 }

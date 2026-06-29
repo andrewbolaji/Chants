@@ -33,12 +33,21 @@ class ChantCard extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final who = _whoLine;
 
+    final subjectLabel = chant.subjectTag.toUpperCase();
+
     return Card(
+      margin: const EdgeInsets.symmetric(
+        horizontal: Spacing.sm,
+        vertical: Spacing.xs,
+      ),
       child: InkWell(
         borderRadius: BorderRadius.circular(Radii.lg),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(Spacing.lg),
+          padding: const EdgeInsets.symmetric(
+            horizontal: Spacing.md,
+            vertical: Spacing.sm,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -54,12 +63,12 @@ class ChantCard extends StatelessWidget {
                     ),
                   ),
                   if (chant.status == 'canonical') ...[
-                    const SizedBox(width: Spacing.sm),
+                    const SizedBox(width: Spacing.xs),
                     const GoldFoilBadge(),
                   ],
                 ],
               ),
-              const SizedBox(height: Spacing.sm),
+              const SizedBox(height: Spacing.xs),
 
               // Title: Anton, smaller than screen titles
               Text(
@@ -70,8 +79,7 @@ class ChantCard extends StatelessWidget {
               ),
 
               // Gold who-it-is-for line
-              if (who.isNotEmpty) ...[
-                const SizedBox(height: Spacing.xs),
+              if (who.isNotEmpty)
                 Text(
                   who,
                   style: const TextStyle(
@@ -83,8 +91,7 @@ class ChantCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-              ],
-              const SizedBox(height: Spacing.sm),
+              const SizedBox(height: Spacing.xs),
 
               // One-line lyric preview in Fraunces
               Text(
@@ -98,12 +105,23 @@ class ChantCard extends StatelessWidget {
                   fontSize: 14,
                 ),
               ),
-              const SizedBox(height: Spacing.md),
+              const SizedBox(height: Spacing.sm),
 
-              // Footer: parody flag (no redundant subject tag) + vote
+              // Footer: subject tag + parody pill (left) | vote chip (right)
               Row(
                 children: [
-                  if (chant.realOrParody == 'parody')
+                  Text(
+                    subjectLabel,
+                    style: const TextStyle(
+                      fontFamily: 'SpaceMono',
+                      fontSize: 9,
+                      color: AppColors.textMuted,
+                      letterSpacing: 0.8,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  if (chant.realOrParody == 'parody') ...[
+                    const SizedBox(width: Spacing.sm),
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: Spacing.sm,
@@ -111,7 +129,7 @@ class ChantCard extends StatelessWidget {
                       ),
                       decoration: BoxDecoration(
                         color: AppColors.gold.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(4),
+                        borderRadius: BorderRadius.circular(Radii.sm),
                       ),
                       child: const Text(
                         'PARODY',
@@ -124,8 +142,9 @@ class ChantCard extends StatelessWidget {
                         ),
                       ),
                     ),
+                  ],
                   const Spacer(),
-                  VoteControls(chant: chant),
+                  VoteControls(chant: chant, compact: true),
                 ],
               ),
             ],

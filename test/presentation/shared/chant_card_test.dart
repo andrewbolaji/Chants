@@ -51,6 +51,13 @@ void main() {
       expect(find.text('VERIFIED'), findsOneWidget);
     });
 
+    testWidgets('shows subject tag label', (tester) async {
+      await tester.pumpWidget(wrap(
+        ChantCard(chant: testChant, onTap: () {}),
+      ));
+      expect(find.text('CLUB'), findsOneWidget);
+    });
+
     testWidgets('shows parody tag when applicable', (tester) async {
       final parodyChant = testChant.copyWith(realOrParody: 'parody');
       await tester.pumpWidget(wrap(

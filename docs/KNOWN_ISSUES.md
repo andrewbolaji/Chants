@@ -12,13 +12,17 @@ states, moderation gating, rate limit) are pending the next walk.
 
 ### HIGH
 
-#### Upvote does not increment
-- **Status:** Addressed in Fanzine redesign block (June 27).
-- **Fix:** Vote control now tracks an optimistic delta locally. Score
-  updates on tap before the Firestore write completes. On error the delta
-  reverts. On the next stream emission the server score reconciles. Toggle
-  (vote then un-vote) and direction switch (up then down) are handled
-  correctly. Unit tests cover all cases including rapid repeated taps.
+#### Upvote does not increment / rapid-tap drift
+- **Status:** Fully addressed (June 29).
+- **Fix:** Vote control uses an extracted OptimisticVoteState that computes
+  the display delta as (intended vote - last confirmed vote), never a
+  running sum. On server score arrival, the delta reconciles so the number
+  does not double-count. Rapid taps converge on the final intended state.
+  The prior fix (June 27) addressed basic optimistic display but left the
+  rapid-tap reconciliation bug: the delta accumulated across taps and was
+  blindly zeroed on stream arrival, causing drift when a write was in
+  flight. This is now corrected with 15 unit tests covering all
+  transitions, rapid taps, server reconciliation, and revert-on-error.
 
 #### Search is missing from the UI
 - **Status:** Addressed in Fanzine redesign block (June 27).
