@@ -218,3 +218,9 @@ Works end to end on the real seeded data; mobile-responsive; empty, loading, and
 ### From beautification audit pass
 
 **Point a brief at the work explicitly, even when it is already in the repo.** In Block 6, the design brief was in the project root but the kickoff did not cite it as the process spec. The right outcome was reached by parallel construction (the kickoff restated the same principles), but the brief was not consulted as the canonical reference. Mitigation: a standing rule now requires every design block to start by reading DESIGN_DIRECTION.md.
+
+### From the vote-fix and rename work
+
+**A unit test can certify a bug.** The OptimisticVoteState unit test asserted the snap-back behaviour as the expected result, so it passed while voting was visibly broken on device. The protection that mattered was a widget test on the real control, proven by reverting the fix and watching it go red. For timing or stream-reconciled UI, the regression guard must exercise the real widget, and we confirm the guard by breaking the code on purpose.
+
+**Title-derived document IDs turn every rename into a new document plus an orphan of the old one.** It was safe to clean up pre-launch only because the renamed chants had no real votes yet. Stable IDs are parked on the wishlist before this bites at scale.

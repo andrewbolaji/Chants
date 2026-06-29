@@ -48,6 +48,11 @@
 **Sequencing within v1.1:** Both need the seeded archive to be good, so they come after seeding. Real chants only, club-neutral, same content policy.
 **Trigger:** Build alongside or right after the comments and lyric-suggestions block, bracket first.
 
+### v1.1: Community-submitted, votable chant variations
+**The idea:** The full version of the seed-only variations shipping in v1. Users suggest an alternate line, others vote, and the most-sung variation surfaces on the chant detail.
+**Why v1.1:** It is the natural evolution of the v1 display-only variations and reuses the voting that already exists.
+**Trigger:** v1 seed-only variations are live and users start asking for or proposing alternates. Build it as a user-content surface with the same reporting and content-policy path as chant submission.
+
 ---
 
 ## v2 candidates (pin, do not build, need real usage data)
@@ -116,6 +121,16 @@
 **The idea:** Submitting a chant scoped to the player you are viewing, pre-filling that player.
 **Why pin, not build:** Small UX on top of Block 3 submission. Relates to the v1.1 new-signing creation prompts.
 **Trigger to promote:** Block 3 submission ships and users ask to scope their chant to a player page.
+
+### v2: Stable, non-title-derived chant document IDs
+**The idea:** Give each chant a stable ID that does not change when its title is edited, so renames stop creating new documents and orphaning the old ones.
+**Why pin, not build:** Current title-slug IDs work and renames are cleanable by hand pre-launch; this only earns its cost once content volume or real engagement makes orphan cleanup risky.
+**Trigger:** Before public launch, or the next time more than two chants need renaming at once.
+
+### v2: Proper diacritic display for player names
+**The idea:** Store an ASCII form of a player name for squad matching and render the correct characters in the UI, for example showing Odegaard with its proper diacritic.
+**Why pin, not build:** The ASCII spelling matches the squad data and reads fine for now; correct diacritics are a polish detail, not a launch blocker.
+**Trigger:** A player-display or profile polish pass.
 
 ### v2 / growth: Shareable and engagement ideas (backlog)
 - Daily chant puzzle (guess the chant from progressively revealed lyrics)
