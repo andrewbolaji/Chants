@@ -107,7 +107,7 @@ class ChantCard extends StatelessWidget {
               ),
               const SizedBox(height: Spacing.sm),
 
-              // Footer: subject tag + parody pill (left) | vote chip (right)
+              // Footer: subject tag (left) | vote chip (right)
               Row(
                 children: [
                   Text(
@@ -120,29 +120,6 @@ class ChantCard extends StatelessWidget {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  if (chant.realOrParody == 'parody') ...[
-                    const SizedBox(width: Spacing.sm),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: Spacing.sm,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.gold.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(Radii.sm),
-                      ),
-                      child: const Text(
-                        'PARODY',
-                        style: TextStyle(
-                          fontFamily: 'SpaceMono',
-                          fontSize: 9,
-                          color: AppColors.gold,
-                          letterSpacing: 0.8,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ],
                   const Spacer(),
                   VoteControls(chant: chant, compact: true),
                 ],

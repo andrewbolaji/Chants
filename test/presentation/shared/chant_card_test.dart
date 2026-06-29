@@ -58,12 +58,12 @@ void main() {
       expect(find.text('CLUB'), findsOneWidget);
     });
 
-    testWidgets('shows parody tag when applicable', (tester) async {
+    testWidgets('parody pill is not shown on card', (tester) async {
       final parodyChant = testChant.copyWith(realOrParody: 'parody');
       await tester.pumpWidget(wrap(
         ChantCard(chant: parodyChant, onTap: () {}),
       ));
-      expect(find.text('PARODY'), findsOneWidget);
+      expect(find.text('PARODY'), findsNothing);
     });
 
     testWidgets('calls onTap when tapped', (tester) async {
