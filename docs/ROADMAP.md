@@ -70,3 +70,36 @@ Solved by the operator-seeded primer, user submission, cross-club discovery, and
 
 ### Expansion
 Architecture is sport-agnostic and league-agnostic from Block 1. Expansion is data, not code. v1 is Football and the Premier League. v2 adds leagues or sports based on usage data.
+
+---
+
+## v1 Launch Readiness
+
+Parallel track (not a v1 launch blocker): flip the GitHub repo public for job applications; delete the two local backup folders once a fresh clone builds clean; Firebase client-key rotation remains optional since security rules and App Check are the primary protection.
+
+### Build status
+
+- **DONE** Blocks 1-5 built and working: auth, agnostic data model (Sport > Competition > Team > Chant), browse/search/detail, user submission, basic moderation (report/remove/ban/rate-limit/audit log), voting with optimistic UI, feedback channel.
+- **DONE** Fanzine visual redesign across all surfaces (commit 4f9f8ae).
+- **DONE** Vote rapid-tap reconciliation fixed (commit 9912adf).
+
+### Content (owner: Andrew, critical path)
+
+- **IN PROGRESS** Arsenal seeded and verified. Lyrics confirmed, three context notes confirmed factual and unflagged, plus several more verified chants added (player, club, and manager subjects). Arsenal is the showcase club and is effectively complete.
+- **TODO** Seed the other 19 Premier League clubs. Target about 5 chants per club, roughly 100 total. Floor: no club below 3 genuinely iconic chants. All externally sourced and verified against a real version, never generated. Ship trigger: every club clears the floor and the marquee clubs sit at about 5.
+- **TODO** Write the real content policy to replace the placeholder in content_policy_screen.dart. Required for app store review since submission is live. Andrew owns the wording.
+
+### Polish and ship
+
+- **TODO** Access-control verification with a second non-operator account. Confirm a normal user cannot open moderation, cannot edit or remove others' content, and cannot query hidden or removed chants.
+- **TODO** Device walk of degraded states and enforcement: empty, loading, and error states on every screen; flagged content actually hidden at threshold; rate limits firing on rapid submission; fail-safe defaults for new accounts.
+- **TODO** Final copy and em-dash sweep across the redesigned screens.
+
+### Legal, store, and launch mechanics
+
+- **TODO** Host a privacy policy and terms of service, link both in-app.
+- **TODO** Apple Developer account ($99) and Google Play Developer account ($25).
+- **TODO** Wire final app icon; set 17+ age rating.
+- **TODO** Store listings, screenshots, and data-safety / app-privacy forms.
+- **TODO** App Check production: register the DeviceCheck key, then flip soft to full enforcement after about one clean telemetry week.
+- **TODO** Production build, signing, and deploy.
