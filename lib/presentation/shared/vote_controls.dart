@@ -34,9 +34,10 @@ class OptimisticVoteState {
   }
 
   /// Called when the async write succeeds.
+  /// Only clears busy. The delta and confirmedVote stay until the server
+  /// score stream arrives, because the Cloud Function that updates score
+  /// runs after the local write completes.
   void confirmWrite() {
-    confirmedVote = userVote;
-    optimisticDelta = 0;
     busy = false;
   }
 

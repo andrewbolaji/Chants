@@ -74,13 +74,13 @@ void main() {
       expect(state.displayScore, 10);
     });
 
-    test('confirmWrite clears delta and updates confirmed state', () {
+    test('confirmWrite keeps delta until server score arrives', () {
       state.applyVote(1);
       expect(state.displayScore, 11);
 
       state.confirmWrite();
-      expect(state.displayScore, 10); // delta cleared, server hasn't updated
-      expect(state.confirmedVote, 1);
+      // Delta stays: server score has not updated yet (CF lag)
+      expect(state.displayScore, 11);
       expect(state.busy, false);
     });
 
@@ -98,7 +98,7 @@ void main() {
       state.applyVote(1);
       expect(state.displayScore, 11);
 
-      // Write completes: confirmed=1, delta=0
+      // Write completes: delta stays +1, confirmed still null
       state.confirmWrite();
 
       // Server emits 11 (already includes the vote)
@@ -163,6 +163,80 @@ void main() {
       expect(OptimisticVoteState.deltaForTransition(1, -1), -2);
       // down->up: +2
       expect(OptimisticVoteState.deltaForTransition(-1, 1), 2);
+    });
+
+    // ---- B2: reproduce the reported bug ----
+    // Simulates the real flow: tap UP, write completes (local), server score
+    // has NOT arrived yet (Cloud Function lag), tap UP again. The bug causes
+    // the display to go negative because confirmWrite prematurely collapses
+    // the optimistic state while serverScore is still stale.
+    test('BUG: up-tap after confirmed write with stale server score must not go negative', () {
+      state = OptimisticVoteState(serverScore: 0);
+
+      // 1. Tap UP
+      state.applyVote(1);
+      expect(state.displayScore, 1, reason: 'optimistic +1');
+
+      // 2. Write completes locally (CF has not run yet, server score still 0)
+      state.confirmWrite();
+      // After confirmWrite, display must still show 1, not snap back to 0
+      expect(state.displayScore, 1,
+          reason: 'must not snap back before server score arrives');
+
+      // 3. Tap UP again (toggle off) while server score is still stale
+      state.applyVote(1);
+      // Should be 0 (toggled off, back to baseline), never negative
+      expect(state.displayScore, 0,
+          reason: 'toggle off must return to baseline, not go negative');
+      expect(state.displayScore >= 0, true,
+          reason: 'up-tap must never produce a negative score');
+    });
+
+    test('BUG: three up-taps with confirmWrite between each must not drift', () {
+      state = OptimisticVoteState(serverScore: 0);
+
+      // Tap 1: UP
+      state.applyVote(1);
+      expect(state.displayScore, 1);
+      state.confirmWrite();
+      // Must hold at 1 until server score arrives
+      expect(state.displayScore, 1, reason: 'hold after first confirm');
+
+      // Tap 2: UP (toggle off)
+      state.applyVote(1);
+      expect(state.displayScore, 0, reason: 'toggle off');
+      state.confirmWrite();
+      expect(state.displayScore, 0, reason: 'hold after second confirm');
+
+      // Tap 3: UP (toggle on)
+      state.applyVote(1);
+      expect(state.displayScore, 1, reason: 'toggle on again');
+    });
+
+    test('BUG: up then down after confirmWrite stays correct', () {
+      state = OptimisticVoteState(serverScore: 0);
+
+      // Tap UP
+      state.applyVote(1);
+      expect(state.displayScore, 1);
+      state.confirmWrite();
+      expect(state.displayScore, 1, reason: 'hold at 1');
+
+      // Tap DOWN (should go to -1 from baseline 0, not -2)
+      state.applyVote(-1);
+      expect(state.displayScore, -1,
+          reason: 'net -1 from baseline, not compounded');
+    });
+
+    test('BUG: after stream confirms, delta is exactly 0', () {
+      state = OptimisticVoteState(serverScore: 0);
+
+      state.applyVote(1);
+      state.confirmWrite();
+      // Server score arrives
+      state.reconcileServerScore(1);
+      expect(state.displayScore, 1);
+      expect(state.optimisticDelta, 0, reason: 'delta must collapse to 0');
     });
 
     test('pre-existing vote: user had upvote, taps down swings -2', () {
