@@ -136,3 +136,31 @@ Chants is the home for football chants. Fans use it to find the songs, learn the
 
 > [screenshot: Feedback form]
 > [screenshot: Feedback confirmation]
+
+---
+
+## Chant Variations (Variations Block, v1: seed only, display only)
+
+**What it does.** Shows alternate lyrics for a chant when they exist. Some chants have lines that changed over the years (a player left, a new signing arrived, fans started singing it differently). This feature shows those alternate versions on the chant detail screen under a section called "Also sung as."
+
+**How it works for fans.**
+1. Open a chant that has a variation (for example, "Super Mik Arteta").
+2. Below the main lyrics and context, you will see the heading "ALSO SUNG AS."
+3. Each variation shows a small label (like "Current version"), the alternate lyric in the same reading face as the main lyrics, and optionally a short note explaining when or why the lyric changed.
+4. If a chant has no variations, nothing extra appears. The screen looks exactly as before.
+
+**How it works for seeding.**
+1. In the seed JSON file, add a `variations` array to any chant entry. Each item has `label` (required), `lyric` (required), and `contextNote` (optional).
+2. Run the seed script. The `variations` field is in the content-fields allow-list, so it writes on both create and update without touching vote data.
+3. Chants without a `variations` key are unaffected. The model defaults to an empty list.
+
+**Behind the scenes.** Variations are stored as an optional array on the chant document in Firestore. The Dart model's `fromJson` defaults the field to an empty list when the key is absent, null, or an empty array, so every existing doc works without a migration. The detail screen conditionally renders the "Also sung as" section only when the list is non-empty.
+
+**Limits and gotchas.**
+- Seed only in v1. Users cannot submit or vote on variations yet. That is the v1.1 community-submitted variations feature.
+- There is no per-variation voting. The vote chip on the chant detail is for the chant as a whole.
+- The variation does not highlight which line of the main lyrics it replaces. The data does not track that, so the section stands on its own.
+
+**Where it shows up.** The chant detail screen, below the main lyrics and context notes, above the media placeholder.
+
+> [screenshot: Chant detail with "Also sung as" section]

@@ -1,5 +1,33 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+class ChantVariation {
+  final String label;
+  final String lyric;
+  final String? contextNote;
+
+  const ChantVariation({
+    required this.label,
+    required this.lyric,
+    this.contextNote,
+  });
+
+  factory ChantVariation.fromJson(Map<String, dynamic> json) {
+    return ChantVariation(
+      label: json['label'] as String,
+      lyric: json['lyric'] as String,
+      contextNote: json['contextNote'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'label': label,
+      'lyric': lyric,
+      'contextNote': contextNote,
+    };
+  }
+}
+
 class Chant {
   final String id;
   final String title;
@@ -26,6 +54,7 @@ class Chant {
   final int flagCount;
   final bool hidden;
   final bool removed;
+  final List<ChantVariation> variations;
 
   const Chant({
     required this.id,
@@ -53,6 +82,7 @@ class Chant {
     this.flagCount = 0,
     this.hidden = false,
     this.removed = false,
+    this.variations = const [],
   });
 
   static const validSubjectTags = ['player', 'coach', 'club', 'rival'];
@@ -94,6 +124,10 @@ class Chant {
       flagCount: json['flagCount'] as int? ?? 0,
       hidden: json['hidden'] as bool? ?? false,
       removed: json['removed'] as bool? ?? false,
+      variations: (json['variations'] as List<dynamic>?)
+              ?.map((v) => ChantVariation.fromJson(v as Map<String, dynamic>))
+              .toList() ??
+          const [],
     );
   }
 
@@ -127,6 +161,7 @@ class Chant {
       'flagCount': flagCount,
       'hidden': hidden,
       'removed': removed,
+      'variations': variations.map((v) => v.toJson()).toList(),
     };
   }
 
@@ -156,6 +191,7 @@ class Chant {
     int? flagCount,
     bool? hidden,
     bool? removed,
+    List<ChantVariation>? variations,
   }) {
     return Chant(
       id: id ?? this.id,
@@ -183,6 +219,7 @@ class Chant {
       flagCount: flagCount ?? this.flagCount,
       hidden: hidden ?? this.hidden,
       removed: removed ?? this.removed,
+      variations: variations ?? this.variations,
     );
   }
 }

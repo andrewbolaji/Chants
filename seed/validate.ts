@@ -13,6 +13,12 @@ export interface SquadMember {
   name: string;
 }
 
+export interface ChantVariationData {
+  label: string;
+  lyric: string;
+  contextNote?: string;
+}
+
 export interface ChantData {
   title: string;
   subjectTag: string;
@@ -22,6 +28,7 @@ export interface ChantData {
   contextNotes: string | null;
   realOrParody: string;
   mediaType: string;
+  variations?: ChantVariationData[];
 }
 
 export interface ClubData {
@@ -182,6 +189,32 @@ export function validateClub(
           });
         }
         chantSlugs.add(cSlug);
+      }
+
+      // Variations (optional)
+      if (c.variations !== undefined && c.variations !== null) {
+        if (!Array.isArray(c.variations)) {
+          errors.push({
+            field: `chants[${i}].variations`,
+            message: "variations must be an array.",
+          });
+        } else {
+          for (let j = 0; j < c.variations.length; j++) {
+            const v = c.variations[j];
+            if (typeof v.label !== "string" || v.label.length === 0) {
+              errors.push({
+                field: `chants[${i}].variations[${j}].label`,
+                message: "Variation label is required.",
+              });
+            }
+            if (typeof v.lyric !== "string" || v.lyric.length === 0) {
+              errors.push({
+                field: `chants[${i}].variations[${j}].lyric`,
+                message: "Variation lyric is required.",
+              });
+            }
+          }
+        }
       }
     }
   }

@@ -125,7 +125,14 @@
       "tuneName": "Traditional terrace tune",
       "contextNotes": "A tribute to manager Mikel Arteta.",
       "realOrParody": "real",
-      "mediaType": "none"
+      "mediaType": "none",
+      "variations": [
+        {
+          "label": "Current version",
+          "lyric": "Gabi at the back, Gabi in attack",
+          "contextNote": "Kieran Tierney left, so fans swapped his name out. Arsenal have had three Brazilian Gabriels, which makes the line land."
+        }
+      ]
     },
     {
       "title": "Gabriel, King of Brazil",

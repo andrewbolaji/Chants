@@ -100,5 +100,48 @@ void main() {
       final chant2 = Chant.fromJson(json2, id: 'ch6');
       expect(chant2.contextNotes, isNull);
     });
+
+    test('variations defaults to empty list when key absent', () {
+      // validJson() has no 'variations' key
+      final chant = Chant.fromJson(validJson(), id: 'ch7');
+      expect(chant.variations, isEmpty);
+      expect(chant.variations, isA<List<ChantVariation>>());
+    });
+
+    test('variations defaults to empty list when key is null', () {
+      final json = validJson()..['variations'] = null;
+      final chant = Chant.fromJson(json, id: 'ch8');
+      expect(chant.variations, isEmpty);
+    });
+
+    test('variations round-trips with entries', () {
+      final json = validJson()
+        ..['variations'] = [
+          {'label': 'Alt', 'lyric': 'Alt lyric', 'contextNote': 'A note'},
+          {'label': 'Original', 'lyric': 'Old lyric', 'contextNote': null},
+        ];
+      final chant = Chant.fromJson(json, id: 'ch9');
+      expect(chant.variations.length, 2);
+      expect(chant.variations[0].label, 'Alt');
+      expect(chant.variations[0].lyric, 'Alt lyric');
+      expect(chant.variations[0].contextNote, 'A note');
+      expect(chant.variations[1].contextNote, isNull);
+
+      final output = chant.toJson();
+      final outVars = output['variations'] as List;
+      expect(outVars.length, 2);
+      expect((outVars[0] as Map)['label'], 'Alt');
+    });
+
+    test('copyWith preserves variations when not overridden', () {
+      final json = validJson()
+        ..['variations'] = [
+          {'label': 'V1', 'lyric': 'Lyric 1'},
+        ];
+      final chant = Chant.fromJson(json, id: 'ch10');
+      final updated = chant.copyWith(title: 'New');
+      expect(updated.variations.length, 1);
+      expect(updated.variations[0].label, 'V1');
+    });
   });
 }

@@ -165,4 +165,52 @@ describe("validateClub", () => {
     const errors = validateClub(bad, "arsenal");
     assert.ok(errors.some((e) => e.message.includes("Duplicate player slug")));
   });
+
+  it("passes for chant with no variations key", () => {
+    assert.deepEqual(validateClub(validClub, "arsenal"), []);
+  });
+
+  it("passes for chant with valid variations", () => {
+    const good = {
+      ...validClub,
+      chants: [
+        {
+          ...validClub.chants[0],
+          variations: [
+            { label: "Current version", lyric: "Gabi at the back", contextNote: "Updated line" },
+            { label: "Original", lyric: "Kieran at the back" },
+          ],
+        },
+      ],
+    };
+    assert.deepEqual(validateClub(good, "arsenal"), []);
+  });
+
+  it("fails for variation missing label", () => {
+    const bad = {
+      ...validClub,
+      chants: [
+        {
+          ...validClub.chants[0],
+          variations: [{ label: "", lyric: "Some lyric" }],
+        },
+      ],
+    };
+    const errors = validateClub(bad, "arsenal");
+    assert.ok(errors.some((e) => e.message.includes("Variation label is required")));
+  });
+
+  it("fails for variation missing lyric", () => {
+    const bad = {
+      ...validClub,
+      chants: [
+        {
+          ...validClub.chants[0],
+          variations: [{ label: "Alt", lyric: "" }],
+        },
+      ],
+    };
+    const errors = validateClub(bad, "arsenal");
+    assert.ok(errors.some((e) => e.message.includes("Variation lyric is required")));
+  });
 });

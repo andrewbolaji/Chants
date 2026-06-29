@@ -193,6 +193,74 @@ class ChantDetailScreen extends ConsumerWidget {
                     const SizedBox(height: Spacing.xl),
                   ],
 
+                  // Variations: "Also sung as"
+                  if (chant.variations.isNotEmpty) ...[
+                    Text(
+                      'ALSO SUNG AS',
+                      style: textTheme.labelMedium,
+                    ),
+                    const SizedBox(height: Spacing.md),
+                    ...chant.variations.map((v) {
+                      final varAlign = _lyricsAlignment(v.lyric);
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: Spacing.md),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(Spacing.lg),
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            borderRadius: BorderRadius.circular(Radii.sm),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: Spacing.sm,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.textMuted.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  v.label.toUpperCase(),
+                                  style: const TextStyle(
+                                    fontFamily: 'SpaceMono',
+                                    fontSize: 9,
+                                    color: AppColors.textMuted,
+                                    letterSpacing: 0.8,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: Spacing.md),
+                              SizedBox(
+                                width: double.infinity,
+                                child: Text(
+                                  v.lyric,
+                                  textAlign: varAlign,
+                                  style: textTheme.bodyLarge,
+                                ),
+                              ),
+                              if (v.contextNote != null &&
+                                  v.contextNote!.isNotEmpty) ...[
+                                const SizedBox(height: Spacing.sm),
+                                Text(
+                                  v.contextNote!,
+                                  style: textTheme.bodyMedium?.copyWith(
+                                    color: AppColors.textBody,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      );
+                    }),
+                    const SizedBox(height: Spacing.md),
+                  ],
+
                   // Media placeholder
                   if (chant.mediaType != 'none') ...[
                     Row(

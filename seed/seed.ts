@@ -20,6 +20,7 @@ const db = admin.firestore();
 const CONTENT_FIELDS_CHANT = [
   "title", "lyrics", "tuneName", "contextNotes", "subjectTag",
   "playerId", "realOrParody", "mediaType", "coverImageUrl", "mediaUrl",
+  "variations",
 ];
 
 const CONTENT_FIELDS_PLAYER = ["name"];
@@ -157,6 +158,7 @@ async function seedClub(
       mediaType: chant.mediaType,
       status: "canonical",
       realOrParody: chant.realOrParody,
+      variations: chant.variations ?? [],
       upvotes: 0,
       downvotes: 0,
       score: 0,
