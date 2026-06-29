@@ -184,18 +184,22 @@ class _VoteControlsState extends ConsumerState<VoteControls> {
         mainAxisSize: MainAxisSize.min,
         children: [
           // Upvote
-          SizedBox(
-            width: buttonSize,
-            height: buttonSize,
-            child: IconButton(
-              icon: Icon(
-                Icons.keyboard_arrow_up_rounded,
-                size: iconSize,
+          Semantics(
+            label: 'Upvote',
+            button: true,
+            child: SizedBox(
+              width: buttonSize,
+              height: buttonSize,
+              child: IconButton(
+                icon: Icon(
+                  Icons.arrow_drop_up,
+                  size: iconSize + 6,
+                ),
+                color: _vote.userVote == 1 ? AppColors.gold : AppColors.textMuted,
+                onPressed: () => _onVote(1),
+                tooltip: 'Upvote',
+                padding: EdgeInsets.zero,
               ),
-              color: _vote.userVote == 1 ? AppColors.gold : AppColors.textMuted,
-              onPressed: () => _onVote(1),
-              tooltip: 'Upvote',
-              padding: EdgeInsets.zero,
             ),
           ),
 
@@ -217,18 +221,22 @@ class _VoteControlsState extends ConsumerState<VoteControls> {
           ),
 
           // Downvote
-          SizedBox(
-            width: buttonSize,
-            height: buttonSize,
-            child: IconButton(
-              icon: Icon(
-                Icons.keyboard_arrow_down_rounded,
-                size: iconSize,
+          Semantics(
+            label: 'Downvote',
+            button: true,
+            child: SizedBox(
+              width: buttonSize,
+              height: buttonSize,
+              child: IconButton(
+                icon: Icon(
+                  Icons.arrow_drop_down,
+                  size: iconSize + 6,
+                ),
+                color: _vote.userVote == -1 ? AppColors.error : AppColors.textMuted,
+                onPressed: () => _onVote(-1),
+                tooltip: 'Downvote',
+                padding: EdgeInsets.zero,
               ),
-              color: _vote.userVote == -1 ? AppColors.error : AppColors.textMuted,
-              onPressed: () => _onVote(-1),
-              tooltip: 'Downvote',
-              padding: EdgeInsets.zero,
             ),
           ),
         ],
