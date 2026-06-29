@@ -167,8 +167,8 @@ class _VoteControlsState extends ConsumerState<VoteControls> {
     final score = _vote.displayScore;
     final iconSize = widget.large ? 28.0 : (widget.compact ? 18.0 : 22.0);
     final buttonSize = 44.0; // minimum tap target, always 44px
-    final scoreWidth = widget.large ? 48.0 : (widget.compact ? 28.0 : 36.0);
-    final fontSize = widget.large ? 16.0 : (widget.compact ? 11.0 : 13.0);
+    final scoreWidth = widget.large ? 48.0 : (widget.compact ? 34.0 : 36.0);
+    final fontSize = widget.large ? 16.0 : (widget.compact ? 12.0 : 13.0);
 
     return Container(
       decoration: BoxDecoration(

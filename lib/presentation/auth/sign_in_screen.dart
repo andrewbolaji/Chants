@@ -145,7 +145,13 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                 TextButton(
                   onPressed: () =>
                       Navigator.pushNamed(context, AppRouter.passwordReset),
-                  child: const Text('Forgot password?'),
+                  child: const Text(
+                    'Forgot password?',
+                    style: TextStyle(
+                      color: AppColors.textMuted,
+                      fontWeight: FontWeight.normal,
+                    ),
+                  ),
                 ),
               ],
             ),
