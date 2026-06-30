@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:chants/data/models/chant.dart';
+import 'package:chants/data/services/chant_ranking.dart';
 
 class ChantRepository {
   final FirebaseFirestore _firestore;
@@ -19,26 +20,23 @@ class ChantRepository {
         .where('removed', isEqualTo: false);
   }
 
-  /// All visible chants for a team, ordered by score (most popular first).
+  /// All visible chants for a team, ranked by the four-key total order
+  /// (score desc, canonical first, createdAt asc, id asc).
   /// Uses composite index: teamId + hidden + removed + score desc.
   Stream<List<Chant>> chantsForTeamStream({required String teamId}) {
     return _visibleChants()
         .where('teamId', isEqualTo: teamId)
         .orderBy('score', descending: true)
         .snapshots()
-        .map((snap) => snap.docs.map(Chant.fromFirestore).toList());
+        .map((snap) => rankChants(snap.docs.map(Chant.fromFirestore).toList()));
   }
 
-  /// All visible chants for a player. Sorted client-side.
+  /// All visible chants for a player, ranked by the four-key total order.
   Stream<List<Chant>> chantsForPlayerStream({required String playerId}) {
     return _visibleChants()
         .where('playerId', isEqualTo: playerId)
         .snapshots()
-        .map((snap) {
-      final chants = snap.docs.map(Chant.fromFirestore).toList();
-      chants.sort((a, b) => b.score.compareTo(a.score));
-      return chants;
-    });
+        .map((snap) => rankChants(snap.docs.map(Chant.fromFirestore).toList()));
   }
 
   /// All visible chants for the discovery shuffle (Fix B).

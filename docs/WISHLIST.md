@@ -48,6 +48,11 @@
 **Sequencing within v1.1:** Both need the seeded archive to be good, so they come after seeding. Real chants only, club-neutral, same content policy.
 **Trigger:** Build alongside or right after the comments and lyric-suggestions block, bracket first.
 
+### v1.1: Top and New tabs on the club screen
+**The idea:** Split each club's chants into a default Top tab ranked by score and a New tab in time order, the Reddit Hot/New pattern, so a flood of new submissions lives in New while the proven chants stay in Top. A score floor can drop heavily downvoted chants out of the Top tab entirely.
+**Why v1.1:** At launch clubs hold a handful of chants and all seed scores are 0, so a tab bar over a near-empty flat list looks worse and solves a saturation problem that does not exist yet. The score ranking shipping now is the foundation these tabs sit on.
+**Trigger:** A club's visible chant list passes about 25 chants, or submissions start producing regular low-value entries that bury the good ones. Build it then, together with the score floor.
+
 ### v1.1: Community-submitted, votable chant variations
 **The idea:** The full version of the seed-only variations shipping in v1. Users suggest an alternate line, others vote, and the most-sung variation surfaces on the chant detail.
 **Why v1.1:** It is the natural evolution of the v1 display-only variations and reuses the voting that already exists.
