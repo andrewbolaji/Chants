@@ -53,6 +53,7 @@ ui-debug.log
 
 # Cloud Functions build output
 functions/lib/
+functions/lib-test/
 functions/node_modules/
 
 # Rules test build output and deps

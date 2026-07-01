@@ -7,12 +7,18 @@ class Vote {
   final int value;
   final DateTime createdAt;
 
+  /// Set by the Cloud Function after tallying. The client reads this to know
+  /// whether chant.score already includes this vote (appliedValue == value)
+  /// or not (appliedValue absent or differs). Never written by the client.
+  final int? appliedValue;
+
   const Vote({
     required this.id,
     required this.chantId,
     required this.userId,
     required this.value,
     required this.createdAt,
+    this.appliedValue,
   });
 
   factory Vote.fromJson(Map<String, dynamic> json, {required String id}) {
@@ -22,6 +28,7 @@ class Vote {
       userId: json['userId'] as String,
       value: json['value'] as int,
       createdAt: (json['createdAt'] as Timestamp).toDate(),
+      appliedValue: json['appliedValue'] as int?,
     );
   }
 

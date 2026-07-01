@@ -57,6 +57,15 @@ class ChantRepository {
     return Chant.fromFirestore(doc);
   }
 
+  /// Live single-doc stream for the chant detail screen.
+  /// Emits the current chant and re-emits on any field change (score,
+  /// hidden, etc.), so VoteControls.didUpdateWidget can reconcile.
+  Stream<Chant?> chantStream(String id) {
+    return _collection.doc(id).snapshots().map(
+          (doc) => doc.exists ? Chant.fromFirestore(doc) : null,
+        );
+  }
+
   Future<DocumentReference> createChant(Chant chant) async {
     return _collection.add(chant.toJson());
   }

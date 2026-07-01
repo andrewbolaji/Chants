@@ -3,7 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:chants/app/providers.dart';
 import 'package:chants/data/models/chant.dart';
+import 'package:chants/data/repositories/chant_repository.dart';
 import 'package:chants/presentation/browse/chant_detail_screen.dart';
+import 'package:mockito/mockito.dart';
+
+class _MockChantRepository extends Mock implements ChantRepository {
+  @override
+  Stream<Chant?> chantStream(String id) => Stream.value(null);
+}
 
 Chant _makeChant({List<ChantVariation> variations = const []}) {
   return Chant(
@@ -30,6 +37,7 @@ Widget _wrap(Widget child) {
   return ProviderScope(
     overrides: [
       authStateProvider.overrideWith((ref) => Stream.value(null)),
+      chantRepositoryProvider.overrideWithValue(_MockChantRepository()),
     ],
     child: MaterialApp(home: child),
   );

@@ -27,7 +27,32 @@ class ChantDetailScreen extends ConsumerWidget {
     final authState = ref.watch(authStateProvider);
     final isSignedIn = authState.valueOrNull != null;
     final textTheme = Theme.of(context).textTheme;
-    final lyricAlign = _lyricsAlignment(chant.lyrics);
+
+    // Live single-doc stream so VoteControls.didUpdateWidget fires when
+    // the CF updates score, and the delete window self-corrects.
+    final chantStream = ref
+        .watch(chantRepositoryProvider)
+        .chantStream(chant.id);
+
+    return StreamBuilder<Chant?>(
+      stream: chantStream,
+      initialData: chant,
+      builder: (context, snap) {
+        final live = snap.data ?? chant;
+        return _buildScaffold(
+          context, ref, live, isSignedIn, textTheme);
+      },
+    );
+  }
+
+  Widget _buildScaffold(
+    BuildContext context,
+    WidgetRef ref,
+    Chant live,
+    bool isSignedIn,
+    TextTheme textTheme,
+  ) {
+    final lyricAlign = _lyricsAlignment(live.lyrics);
 
     return Scaffold(
       appBar: AppBar(
@@ -47,7 +72,7 @@ class ChantDetailScreen extends ConsumerWidget {
               }
               showReportSheet(
                 context: context,
-                chantId: chant.id,
+                chantId: live.id,
                 ref: ref,
               );
             },
@@ -69,7 +94,7 @@ class ChantDetailScreen extends ConsumerWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              VoteControls(chant: chant, large: true),
+              VoteControls(chant: live, large: true),
             ],
           ),
         ),
@@ -102,8 +127,8 @@ class ChantDetailScreen extends ConsumerWidget {
                       spacing: Spacing.sm,
                       runSpacing: Spacing.xs,
                       children: [
-                        if (chant.status == 'canonical') const GoldFoilBadge(),
-                        if (chant.realOrParody == 'parody')
+                        if (live.status == 'canonical') const GoldFoilBadge(),
+                        if (live.realOrParody == 'parody')
                           _ParodyFlag(),
                       ],
                     ),
@@ -111,7 +136,7 @@ class ChantDetailScreen extends ConsumerWidget {
 
                     // Title: Anton with 1.5px print-echo gold shadow
                     Text(
-                      chant.title.toUpperCase(),
+                      live.title.toUpperCase(),
                       style: textTheme.headlineLarge?.copyWith(
                         shadows: const [
                           Shadow(
@@ -144,7 +169,7 @@ class ChantDetailScreen extends ConsumerWidget {
                       const SizedBox(width: Spacing.sm),
                       Expanded(
                         child: Text(
-                          chant.tuneName.toUpperCase(),
+                          live.tuneName.toUpperCase(),
                           style: textTheme.labelMedium,
                         ),
                       ),
@@ -156,7 +181,7 @@ class ChantDetailScreen extends ConsumerWidget {
                   SizedBox(
                     width: double.infinity,
                     child: Text(
-                      chant.lyrics,
+                      live.lyrics,
                       textAlign: lyricAlign,
                       style: textTheme.bodyLarge,
                     ),
@@ -164,8 +189,8 @@ class ChantDetailScreen extends ConsumerWidget {
                   const SizedBox(height: Spacing.xxl),
 
                   // Context notes
-                  if (chant.contextNotes != null &&
-                      chant.contextNotes!.isNotEmpty) ...[
+                  if (live.contextNotes != null &&
+                      live.contextNotes!.isNotEmpty) ...[
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(Spacing.lg),
@@ -182,7 +207,7 @@ class ChantDetailScreen extends ConsumerWidget {
                           ),
                           const SizedBox(height: Spacing.xs),
                           Text(
-                            chant.contextNotes!,
+                            live.contextNotes!,
                             style: textTheme.bodyMedium?.copyWith(
                               color: AppColors.textBody,
                             ),
@@ -194,13 +219,13 @@ class ChantDetailScreen extends ConsumerWidget {
                   ],
 
                   // Variations: "Also sung as"
-                  if (chant.variations.isNotEmpty) ...[
+                  if (live.variations.isNotEmpty) ...[
                     Text(
                       'ALSO SUNG AS',
                       style: textTheme.labelMedium,
                     ),
                     const SizedBox(height: Spacing.md),
-                    ...chant.variations.map((v) {
+                    ...live.variations.map((v) {
                       final varAlign = _lyricsAlignment(v.lyric);
                       return Padding(
                         padding: const EdgeInsets.only(bottom: Spacing.md),
@@ -262,7 +287,7 @@ class ChantDetailScreen extends ConsumerWidget {
                   ],
 
                   // Media placeholder
-                  if (chant.mediaType != 'none') ...[
+                  if (live.mediaType != 'none') ...[
                     Row(
                       children: [
                         Icon(

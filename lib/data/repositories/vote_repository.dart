@@ -33,7 +33,7 @@ class VoteRepository {
       value: value,
       createdAt: DateTime.now(),
     );
-    await _collection.doc(docId).set(vote.toJson());
+    await _collection.doc(docId).set(vote.toJson(), SetOptions(merge: true));
   }
 
   Future<void> removeVote({

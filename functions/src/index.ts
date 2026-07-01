@@ -245,39 +245,60 @@ export const onChantCreated = onDocumentCreated(
 // A duplicate delivery would double-apply the delta. The reconciliation script
 // (reconcile.ts) recomputes counters from ground truth as the remedy.
 // Trigger to add event.id dedup: observed drift or volume growth.
+/// Core handler logic, extracted so it can be unit-tested with a fake db.
+export async function handleVoteWritten(
+  beforeData: admin.firestore.DocumentData | undefined,
+  afterData: admin.firestore.DocumentData | undefined,
+  voteId: string,
+  firestore: admin.firestore.Firestore
+): Promise<void> {
+  const chantId = (afterData?.chantId || beforeData?.chantId) as string;
+  if (!chantId) return;
+
+  let upDelta = 0;
+  let downDelta = 0;
+
+  // Remove old vote effect
+  if (beforeData) {
+    if (beforeData.value === 1) upDelta -= 1;
+    else if (beforeData.value === -1) downDelta -= 1;
+  }
+
+  // Add new vote effect
+  if (afterData) {
+    if (afterData.value === 1) upDelta += 1;
+    else if (afterData.value === -1) downDelta += 1;
+  }
+
+  if (upDelta === 0 && downDelta === 0) return;
+
+  const scoreDelta = upDelta - downDelta;
+
+  await firestore.collection("chants").doc(chantId).update({
+    upvotes: admin.firestore.FieldValue.increment(upDelta),
+    downvotes: admin.firestore.FieldValue.increment(downDelta),
+    score: admin.firestore.FieldValue.increment(scoreDelta),
+  });
+
+  // Write appliedValue back to the vote doc so the client can tell whether
+  // the chant score already includes this vote on a cold load.
+  // Skip on delete (afterData is undefined, doc is gone).
+  // The write triggers onVoteWritten again, but that re-trigger is a no-op:
+  // value is unchanged, so upDelta and downDelta are both 0, hitting the
+  // early return above.
+  if (afterData) {
+    await firestore.collection("votes").doc(voteId).update({
+      appliedValue: afterData.value,
+    });
+  }
+}
+
 export const onVoteWritten = onDocumentWritten(
   { document: "votes/{voteId}", region: "europe-west2" },
   async (event) => {
     const beforeData = event.data?.before?.data();
     const afterData = event.data?.after?.data();
-
-    const chantId = (afterData?.chantId || beforeData?.chantId) as string;
-    if (!chantId) return;
-
-    let upDelta = 0;
-    let downDelta = 0;
-
-    // Remove old vote effect
-    if (beforeData) {
-      if (beforeData.value === 1) upDelta -= 1;
-      else if (beforeData.value === -1) downDelta -= 1;
-    }
-
-    // Add new vote effect
-    if (afterData) {
-      if (afterData.value === 1) upDelta += 1;
-      else if (afterData.value === -1) downDelta += 1;
-    }
-
-    if (upDelta === 0 && downDelta === 0) return;
-
-    const scoreDelta = upDelta - downDelta;
-
-    await db.collection("chants").doc(chantId).update({
-      upvotes: admin.firestore.FieldValue.increment(upDelta),
-      downvotes: admin.firestore.FieldValue.increment(downDelta),
-      score: admin.firestore.FieldValue.increment(scoreDelta),
-    });
+    await handleVoteWritten(beforeData, afterData, event.params.voteId, db);
   }
 );
 

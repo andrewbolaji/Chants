@@ -109,8 +109,21 @@ class _VoteControlsState extends ConsumerState<VoteControls> {
         );
     if (!mounted) return;
     setState(() {
-      _vote.userVote = vote?.value;
-      _vote.confirmedVote = vote?.value;
+      if (vote != null) {
+        _vote.userVote = vote.value;
+        if (vote.appliedValue == vote.value) {
+          // Case A: CF has processed this exact vote. Score includes it.
+          _vote.confirmedVote = vote.value;
+        } else {
+          // Case B: CF has not processed this vote yet, or processed an
+          // older value (flip). confirmedVote = what the server already
+          // reflects (null for a new vote, old value for a flip).
+          _vote.confirmedVote = vote.appliedValue;
+          _vote.optimisticDelta = OptimisticVoteState.deltaForTransition(
+            vote.appliedValue, vote.value,
+          );
+        }
+      }
       _loaded = true;
     });
   }
