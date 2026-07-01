@@ -41,7 +41,7 @@ Around five verified, externally sourced, policy-checked chants per PL club for 
 The reason public launch is gated to v1.1: the social and self-correction layer is core to the product feeling alive. Launching without it would feel static.
 
 - Dedup nudge UI: wire the Block 8 matching engine into the submit flow as a soft "is it one of these?" nudge, not a hard block.
-- Comments and replies, including collaborative lyric suggestions (propose a correction, crowd upvotes, most-upvoted surfaces), with reporting and moderation applied.
+- Nested/threaded comment replies, the collaborative lyric-suggestion mechanic (propose a correction, crowd upvotes, most-upvoted tweak surfaces), and comment downvotes. (Flat comments with single likes are now v1; see v1 Launch Readiness below.)
 
 **Trigger to exit:** The social and self-correction surfaces work end to end on the seeded archive.
 
@@ -82,6 +82,17 @@ Parallel track (not a v1 launch blocker): flip the GitHub repo public for job ap
 - **DONE** Blocks 1-5 built and working: auth, agnostic data model (Sport > Competition > Team > Chant), browse/search/detail, user submission, basic moderation (report/remove/ban/rate-limit/audit log), voting with optimistic UI, feedback channel.
 - **DONE** Fanzine visual redesign across all surfaces (commit 4f9f8ae).
 - **DONE** Vote rapid-tap reconciliation fixed (commit 9912adf).
+- **DONE** Vote stale-load mismatch fixed via appliedValue reconciliation; detail screen now subscribes to a live chant stream (commit 38f559a).
+
+### Comments on chants (v1, flat, with likes)
+
+Build after the vote-fix device walk passes, as the last feature block before the remaining launch-prep (seed the other clubs, real content policy, store setup). Plan-first: it introduces a new collection and a new content-safety surface, so it gets a plan Andrew approves before any code.
+
+**Scope in:** a comments collection; post a comment; delete your own comment; a flat comment list on the chant detail screen (single level); a single like per comment per user (upvote only, no downvote) with a denormalized like count; sort by likes descending then newest first; a comment count on the chant card; and the FULL moderation path reused from chant submissions (report a comment, operator remove, ban, rate-limit new or unproven accounts, audit-log every moderation action). Comment likes reuse the appliedValue reconciliation pattern from chant votes so cold loads show the correct count and do not reintroduce the stale-count bug.
+
+**Scope out (stays v1.1):** nested or threaded replies; the collaborative lyric-suggestion mechanic where the most-upvoted tweak surfaces; comment downvotes.
+
+**Note:** confirm at plan time that the chant card can carry a comment-count element without crowding the existing minimal card (tune line, title, who-it-is-for, one lyric line, vote chip, subject label); the like affordance itself lives on the comment, not the card. This is a deliberate density decision.
 
 ### Content (owner: Andrew, critical path)
 
