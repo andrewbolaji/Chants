@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 
-/// Chants color tokens v2: Fanzine direction.
-/// Warm charcoal base, softened text range, gold accent.
+/// Chants color tokens v3: Ink and Gold direction.
+/// Neutral deep-charcoal surfaces, near-black base, gold accent.
 /// No raw hex literals in widgets.
 @immutable
 class AppColors extends ThemeExtension<AppColors> {
-  // Core palette: warm floodlit night (unchanged)
-  static const background = Color(0xFF16140F);
-  static const surface = Color(0xFF1E1A14);
-  static const surfaceRaised = Color(0xFF231B11);
+  // Core palette: ink-dark neutral base
+  static const background = Color(0xFF060606);
+  static const surface = Color(0xFF161616);
+  static const surfaceRaised = Color(0xFF1C1C1C);
 
   // Text hierarchy: softened off pure white for comfort
   static const textHeadline = Color(0xFFE9E0CE); // titles, headlines
@@ -19,25 +19,25 @@ class AppColors extends ThemeExtension<AppColors> {
   // Legacy alias so existing code compiles during migration
   static const textPrimary = textHeadline;
 
-  // The single accent: trophy gold.
-  static const gold = Color(0xFFF2AE2E);
-  static const goldBright = Color(0xFFFFC94D);
-  static const goldOnDark = Color(0xFF16140F);
+  // The single accent: trophy gold (Ink and Gold, punchier).
+  static const gold = Color(0xFFFFC02E);
+  static const goldBright = Color(0xFFFFD04D);
+  static const goldOnDark = Color(0xFF060606);
 
   // Gold foil gradient for the verified sticker
-  static const goldFoilStart = Color(0xFFF2AE2E);
-  static const goldFoilEnd = Color(0xFFFFC94D);
+  static const goldFoilStart = Color(0xFFFFC02E);
+  static const goldFoilEnd = Color(0xFFFFD04D);
 
   // Semantic
   static const error = Color(0xFFEF6461);
   static const success = Color(0xFF66BB6A);
 
   // Structural
-  static const divider = Color(0x14FFFFFF); // warm white ~8%
-  static const outline = Color(0xFF3A3020);
+  static const divider = Color(0x14FFFFFF); // neutral white ~8%
+  static const outline = Color(0xFF2B2B28);
 
   // Floodlight glow (detail hero)
-  static const glowGold = Color(0x0FF2AE2E); // gold at ~6%
+  static const glowGold = Color(0x0FFFC02E); // gold at ~6%
 
   // Instance fields for ThemeExtension
   final Color accentColor;

@@ -97,20 +97,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
       body: ListView(
         children: [
-          // Search bar
+          // Search bar (compact, ~78% of original footprint)
           Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: Spacing.lg,
-              vertical: Spacing.sm,
+              vertical: Spacing.xs,
             ),
             child: TextField(
               controller: _searchController,
+              style: const TextStyle(fontSize: 12),
               decoration: InputDecoration(
                 hintText: 'Search chants...',
-                prefixIcon: const Icon(Icons.search, size: 20),
+                hintStyle: const TextStyle(
+                  fontFamily: 'Nunito',
+                  color: AppColors.textFaint,
+                  fontSize: 12,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: Spacing.md,
+                  vertical: Spacing.smMd,
+                ),
+                prefixIcon: const Icon(Icons.search, size: 16),
+                prefixIconConstraints: const BoxConstraints(
+                  minWidth: 36,
+                  minHeight: 36,
+                ),
                 suffixIcon: _query.isNotEmpty
                     ? IconButton(
-                        icon: const Icon(Icons.close, size: 20),
+                        icon: const Icon(Icons.close, size: 16),
                         onPressed: () {
                           _searchController.clear();
                           setState(() => _query = '');

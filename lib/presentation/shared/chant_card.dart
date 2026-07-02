@@ -70,10 +70,18 @@ class ChantCard extends StatelessWidget {
               ),
               const SizedBox(height: Spacing.xs),
 
-              // Title: Anton, smaller than screen titles
+              // Title: Anton, smaller than screen titles, subtle gold echo
               Text(
                 chant.title.toUpperCase(),
-                style: textTheme.titleMedium,
+                style: textTheme.titleMedium?.copyWith(
+                  shadows: [
+                    Shadow(
+                      color: AppColors.gold.withValues(alpha: 0.30),
+                      offset: const Offset(1, 1),
+                      blurRadius: 0,
+                    ),
+                  ],
+                ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
