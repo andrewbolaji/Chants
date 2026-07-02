@@ -73,10 +73,11 @@
 **Why pin, not build:** Browse-and-filter covers v1. The add is purely additive (it reads existing chant docs and runs alongside, no schema or screen rewrite), so there is zero penalty for waiting.
 **Trigger to promote:** the first time a real user asks to search by a lyric fragment, OR when any club's chant count grows past what scan-the-list browsing handles comfortably.
 
-### v2: Other leagues and other sports
-**The idea:** La Liga, then beyond, then other sports. Architecture already supports it.
-**Why pin, not build:** Launching broad-but-shallow is how you lose to a focused competitor. Depth in PL first.
-**Trigger to promote:** proven PL traction, or a concrete market reason. Each new area is data entry plus a content-policy pass.
+### v2: Expansion beyond the Premier League (the ladder)
+**The idea:** The data model is already Sport > Competition > Team > Chant, so widening coverage is data and configuration, never a rewrite or a rebrand. Three rungs, in order. Rung 1, wider English clubs (Championship and below): do not operator-seed these, instead open the submittable club list so fans add and grow their own club sections, with new entries arriving as community and earning Verified over time. This is user-driven seeding, not operator legwork. Rung 2, other football leagues and languages (La Liga, Serie A, and so on): football is the global center of chant culture (Madrid, Boca, the ultras scenes), so this is the strongest expansion, and each new region is a data load plus a content-policy pass. Rung 3, other sports (US basketball, NFL, and the like): a different motion, because those crowds have little to archive, so here the app is a creation tool trying to help start a singing culture rather than catalogue an existing one. Highest risk, furthest out.
+**Why pin, not build:** Launching narrow and deep in the Premier League is what buys credibility and a sharp story. Empty or thin sections on day one read as unfinished and undo the seed's whole purpose. Every rung above costs almost nothing to switch on later precisely because the architecture already absorbs it, so deferring is free.
+**The real gate is moderation, not tech:** Each new language or region needs people who know its chants, rivalries, and where the line sits (sectarian, political, tragedy chanting). Do not open a region until that content-policy capability exists for it.
+**Trigger to promote each rung:** Rung 1 when the Premier League core is populated and actively used, with submissions and votes flowing. Rung 2 when rung 1 shows real cross-club demand and a per-region moderation path is ready. Rung 3 only if football is clearly won and a specific market reason appears.
 
 ### v2: Top chart leaderboard
 **The idea:** A most-liked / most-viewed ordered leaderboard, per club and overall.
