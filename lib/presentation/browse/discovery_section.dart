@@ -100,16 +100,42 @@ class DiscoverySection extends ConsumerWidget {
                 ],
               ),
             ),
-            ...filtered.take(20).map((chant) => ChantCard(
-                  chant: chant,
+            ...filtered.take(20).map((chant) => _LiveChantCard(
+                  initialChant: chant,
                   teamName: teamNames[chant.teamId],
-                  onTap: () => Navigator.pushNamed(
-                    context,
-                    AppRouter.chantDetail,
-                    arguments: chant,
-                  ),
                 )),
           ],
+        );
+      },
+    );
+  }
+}
+
+/// Wraps a ChantCard with a live single-doc stream so scores update
+/// without reshuffling the Discover order.
+class _LiveChantCard extends ConsumerWidget {
+  final Chant initialChant;
+  final String? teamName;
+
+  const _LiveChantCard({required this.initialChant, this.teamName});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final stream = ref.watch(chantRepositoryProvider).chantStream(initialChant.id);
+
+    return StreamBuilder<Chant?>(
+      stream: stream,
+      initialData: initialChant,
+      builder: (context, snap) {
+        final live = snap.data ?? initialChant;
+        return ChantCard(
+          chant: live,
+          teamName: teamName,
+          onTap: () => Navigator.pushNamed(
+            context,
+            AppRouter.chantDetail,
+            arguments: live,
+          ),
         );
       },
     );

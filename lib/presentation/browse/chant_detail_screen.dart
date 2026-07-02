@@ -122,17 +122,10 @@ class ChantDetailScreen extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Metadata row: badge + parody flag
-                    Wrap(
-                      spacing: Spacing.sm,
-                      runSpacing: Spacing.xs,
-                      children: [
-                        if (live.status == 'canonical') const GoldFoilBadge(),
-                        if (live.realOrParody == 'parody')
-                          _ParodyFlag(),
-                      ],
-                    ),
-                    const SizedBox(height: Spacing.xl),
+                    if (live.status == 'canonical') ...[
+                      const GoldFoilBadge(),
+                      const SizedBox(height: Spacing.xl),
+                    ],
 
                     // Title: Anton with 1.5px print-echo gold shadow
                     Text(
@@ -316,28 +309,3 @@ class ChantDetailScreen extends ConsumerWidget {
   }
 }
 
-class _ParodyFlag extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: Spacing.sm,
-        vertical: 2,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.gold.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: const Text(
-        'PARODY',
-        style: TextStyle(
-          fontFamily: 'SpaceMono',
-          fontSize: 9,
-          color: AppColors.gold,
-          letterSpacing: 0.8,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
-}

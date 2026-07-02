@@ -145,6 +145,11 @@
 - Derby and rivalry angle on the weekly top-chant board
 **Trigger to promote:** after launch, based on engagement data.
 
+### v2: Order player sections by popularity on the club screen
+**The idea:** On the club screen, sort the player sections by how loved their chants are (for example total or top chant score) so the most-supported players rise, instead of the current alphabetical order.
+**Why pin, not build:** Alphabetical is predictable and keeps the club screen usable as a directory (a fan scans straight to a player). Popularity ordering makes players move between visits, hurts findability, needs an ambiguous aggregation rule, and does nothing while scores are near 0 pre-launch. The "surface the best" need is already served by score-ranking within each player's chants and by the planned Top tab.
+**Trigger:** If, after real clubs are seeded and votes accumulate, users say the alphabetical squad list feels flat or hard to prioritize. If pursued, consider a stable axis like squad number or position rather than live vote counts.
+
 ## v3+ candidates (need scale or customer pull)
 (Empty.)
 
