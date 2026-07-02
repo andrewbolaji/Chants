@@ -81,6 +81,7 @@ class VoteControls extends ConsumerStatefulWidget {
 class _VoteControlsState extends ConsumerState<VoteControls> {
   bool _loaded = false;
   late final OptimisticVoteState _vote;
+  int? _pendingValue;
 
   @override
   void initState() {
@@ -137,6 +138,18 @@ class _VoteControlsState extends ConsumerState<VoteControls> {
       return;
     }
 
+    // In-flight guard: if a write is pending, record the latest tap as a
+    // pending intent. The optimistic display still updates immediately so the
+    // UI never looks frozen, but only one Firestore write is in flight at a
+    // time. The pending intent fires as a follow-up after the current write
+    // completes, collapsing any mid-flight burst into at most two writes.
+    if (_vote.busy) {
+      _pendingValue = value;
+      _vote.applyVote(value);
+      setState(() {});
+      return;
+    }
+
     final previousVote = _vote.userVote;
     final previousConfirmed = _vote.confirmedVote;
 
@@ -171,6 +184,14 @@ class _VoteControlsState extends ConsumerState<VoteControls> {
           ),
         );
       }
+    }
+
+    // Process any pending change-of-mind tap that arrived while this write
+    // was in flight. Pop the value first so a recursive call starts clean.
+    if (_pendingValue != null) {
+      final pending = _pendingValue!;
+      _pendingValue = null;
+      _onVote(pending);
     }
   }
 

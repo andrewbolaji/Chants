@@ -249,5 +249,40 @@ void main() {
       expect(state.displayScore, 8); // 10 + ((-1) - 1) = 8
       expect(state.userVote, -1);
     });
+
+    test('busy guard: applyVote while busy keeps busy true and updates intent', () {
+      // First tap sets busy
+      state.applyVote(1);
+      expect(state.busy, true);
+      expect(state.userVote, 1);
+      expect(state.displayScore, 11);
+
+      // Second tap while busy: busy stays true, intent updates
+      state.applyVote(-1);
+      expect(state.busy, true, reason: 'busy must stay true');
+      expect(state.userVote, -1, reason: 'intent must reflect latest tap');
+      expect(state.displayScore, 9,
+          reason: 'display must reflect latest intent');
+    });
+
+    test('busy guard: rapid burst while busy always settles within one-vote range', () {
+      // Simulate a burst of 10 rapid taps alternating up/down while busy
+      state.applyVote(1);   // busy=true
+      state.applyVote(-1);
+      state.applyVote(1);
+      state.applyVote(-1);
+      state.applyVote(1);
+      state.applyVote(-1);
+      state.applyVote(1);
+      state.applyVote(-1);
+      state.applyVote(1);
+      state.applyVote(-1);
+
+      expect(state.busy, true);
+      expect(state.userVote, -1);
+      // optimisticDelta must be within one vote of confirmedVote (null)
+      expect(state.optimisticDelta, -1);
+      expect(state.displayScore, 9);
+    });
   });
 }

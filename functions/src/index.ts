@@ -239,12 +239,12 @@ export const onChantCreated = onDocumentCreated(
 );
 
 // --- onVoteWritten ---
-// Maintains upvotes, downvotes, and score on the chant via atomic increments.
-// Handles create, flip (update), and delete in one function using before/after diff.
-// NOTE: Firestore triggers are at-least-once. This function is NOT idempotent.
-// A duplicate delivery would double-apply the delta. The reconciliation script
-// (reconcile.ts) recomputes counters from ground truth as the remedy.
-// Trigger to add event.id dedup: observed drift or volume growth.
+// Maintains upvotes, downvotes, and score on the chant by recomputing from
+// the actual vote docs (ground truth). This makes the function fully
+// idempotent: duplicate deliveries, bursts of rapid writes, and out-of-order
+// events all converge to the correct count.
+// The chant counter set and the appliedValue stamp are committed in one
+// WriteBatch so they land atomically (preserving the -2 flash fix).
 /// Core handler logic, extracted so it can be unit-tested with a fake db.
 export async function handleVoteWritten(
   beforeData: admin.firestore.DocumentData | undefined,
@@ -255,16 +255,16 @@ export async function handleVoteWritten(
   const chantId = (afterData?.chantId || beforeData?.chantId) as string;
   if (!chantId) return;
 
+  // No-op early return: if the value field did not change (e.g. appliedValue
+  // write-back re-trigger), skip the recompute entirely.
   let upDelta = 0;
   let downDelta = 0;
 
-  // Remove old vote effect
   if (beforeData) {
     if (beforeData.value === 1) upDelta -= 1;
     else if (beforeData.value === -1) downDelta -= 1;
   }
 
-  // Add new vote effect
   if (afterData) {
     if (afterData.value === 1) upDelta += 1;
     else if (afterData.value === -1) downDelta += 1;
@@ -272,17 +272,27 @@ export async function handleVoteWritten(
 
   if (upDelta === 0 && downDelta === 0) return;
 
-  const scoreDelta = upDelta - downDelta;
+  // Recompute counters from the actual vote docs (ground truth).
+  const votesSnap = await firestore
+    .collection("votes")
+    .where("chantId", "==", chantId)
+    .get();
+  let upvotes = 0;
+  let downvotes = 0;
+  for (const doc of votesSnap.docs) {
+    if (doc.data().value === 1) upvotes++;
+    else if (doc.data().value === -1) downvotes++;
+  }
 
-  // Batch the chant counter update and the appliedValue stamp so they become
+  // Batch the chant counter set and the appliedValue stamp so they become
   // visible atomically. Without this, a reader can see the updated score
   // before appliedValue is written and double-count the delta (-2 flash).
   const batch = firestore.batch();
 
   batch.update(firestore.collection("chants").doc(chantId), {
-    upvotes: admin.firestore.FieldValue.increment(upDelta),
-    downvotes: admin.firestore.FieldValue.increment(downDelta),
-    score: admin.firestore.FieldValue.increment(scoreDelta),
+    upvotes,
+    downvotes,
+    score: upvotes - downvotes,
   });
 
   // Write appliedValue back to the vote doc so the client can tell whether
@@ -531,15 +541,18 @@ export const mergeChants = onCall(
 );
 
 // --- Helper: reconcile chant counters from votes collection ---
-async function reconcileChantCounters(chantId: string): Promise<void> {
-  const votesSnap = await db.collection("votes").where("chantId", "==", chantId).get();
+async function reconcileChantCounters(
+  chantId: string,
+  firestore: admin.firestore.Firestore = db
+): Promise<void> {
+  const votesSnap = await firestore.collection("votes").where("chantId", "==", chantId).get();
   let upvotes = 0;
   let downvotes = 0;
   for (const doc of votesSnap.docs) {
     if (doc.data().value === 1) upvotes++;
     else if (doc.data().value === -1) downvotes++;
   }
-  await db.collection("chants").doc(chantId).update({
+  await firestore.collection("chants").doc(chantId).update({
     upvotes,
     downvotes,
     score: upvotes - downvotes,
