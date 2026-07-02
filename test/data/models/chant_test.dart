@@ -20,7 +20,7 @@ void main() {
           'mediaUrl': null,
           'mediaType': 'none',
           'status': 'community',
-          'realOrParody': 'real',
+          'chantType': 'sincere',
           'upvotes': 0,
           'downvotes': 0,
           'score': 0,

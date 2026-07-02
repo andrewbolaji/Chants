@@ -16,7 +16,7 @@ void main() {
     tuneName: 'Battle Hymn',
     mediaType: 'none',
     status: 'canonical',
-    realOrParody: 'real',
+    chantType: 'sincere',
     createdBy: 'system',
     createdAt: DateTime(2026, 5, 24),
     updatedAt: DateTime(2026, 5, 24),
@@ -59,9 +59,9 @@ void main() {
     });
 
     testWidgets('parody pill is not shown on card', (tester) async {
-      final parodyChant = testChant.copyWith(realOrParody: 'parody');
+      final noveltyChant = testChant.copyWith(chantType: 'novelty');
       await tester.pumpWidget(wrap(
-        ChantCard(chant: parodyChant, onTap: () {}),
+        ChantCard(chant: noveltyChant, onTap: () {}),
       ));
       expect(find.text('PARODY'), findsNothing);
     });

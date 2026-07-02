@@ -94,7 +94,7 @@
       "lyrics": "One nil to the Arsenal\nOne nil to the Arsenal\nOne nil to the Arsenal\nOne nil to the Arsenal",
       "tuneName": "Go West (Pet Shop Boys / Village People)",
       "contextNotes": "Sung when leading 1-0. One of the most recognisable Arsenal chants.",
-      "realOrParody": "parody",
+      "chantType": "sincere",
       "mediaType": "none"
     },
     {
@@ -104,7 +104,7 @@
       "lyrics": "Forty-nine, forty-nine undefeated\nForty-nine, forty-nine I say\nForty-nine, forty-nine undefeated\nPlaying football the Arsenal way",
       "tuneName": "Original terrace chant",
       "contextNotes": "Celebrates the Invincibles' 49-match unbeaten run (2003-2004).",
-      "realOrParody": "real",
+      "chantType": "sincere",
       "mediaType": "none"
     },
     {
@@ -114,7 +114,7 @@
       "lyrics": "And I like it,\nI like it,\nI like it,\nI like it,\nI la-la-like it,\nLa-la, like it,\nHere we go, oh!\nSaka and Emile Smith Rowe!",
       "tuneName": "Original terrace chant",
       "contextNotes": "Started when Saka and Smith Rowe broke through together. Still sung for Saka.",
-      "realOrParody": "real",
+      "chantType": "sincere",
       "mediaType": "none"
     },
     {
@@ -124,7 +124,7 @@
       "lyrics": "We've got Super Mik Arteta,\nHe knows exactly what we need;\nKieran at the back, Gabi in attack,\nArsenal on the way to Champions League!",
       "tuneName": "Traditional terrace tune",
       "contextNotes": "A tribute to manager Mikel Arteta.",
-      "realOrParody": "real",
+      "chantType": "sincere",
       "mediaType": "none",
       "variations": [
         {
@@ -141,7 +141,7 @@
       "lyrics": "You'll fall in love, I know you will,\nOur number 6 is the King of Brazil!\nOur centre half, he'll give you hell,\nOur wall at the back is Gabriel.\nOle, ole, ole, ola!",
       "tuneName": "You'll Fall in Love, I Know You Will",
       "contextNotes": "For Brazilian centre-back Gabriel Magalhaes, who wears number 6.",
-      "realOrParody": "real",
+      "chantType": "sincere",
       "mediaType": "none"
     },
     {
@@ -151,7 +151,7 @@
       "lyrics": "Do do do do do do do do,\nDo do do do do do,\nOwowohhooo, SALIBA!\nDo do do do do do do do,\nDo do do do do do,\nOwowohhooo, SALIBA!",
       "tuneName": "Tequila (The Champs)",
       "contextNotes": "For defender William Saliba, sung to the riff from 'Tequila'.",
-      "realOrParody": "real",
+      "chantType": "sincere",
       "mediaType": "none"
     },
     {
@@ -161,7 +161,7 @@
       "lyrics": "Tsamina mina, eh eh,\nWaka waka, eh eh,\n60 million down the drain,\nKai Havertz scores again!",
       "tuneName": "Waka Waka (Shakira)",
       "contextNotes": "Set to Shakira's 'Waka Waka'. The 60 million line pokes fun at his transfer fee.",
-      "realOrParody": "real",
+      "chantType": "sincere",
       "mediaType": "none"
     },
     {
@@ -171,7 +171,7 @@
       "lyrics": "49, 49, Lewis-Skelly,\n49, 49, I say,\n49, 49, Lewis-Skelly,\nPlaying football the Arsenal way!",
       "tuneName": "Give Me Oil in My Lamp",
       "contextNotes": "Adapted from the '49 Undefeated' chant; here the 49 is Myles Lewis-Skelly's shirt number.",
-      "realOrParody": "real",
+      "chantType": "sincere",
       "mediaType": "none"
     },
     {
@@ -181,7 +181,7 @@
       "lyrics": "We can hear them crying at the Lane,\nEberechi scores again!\nOne chat with Mik Arteta he said 'wow',\nF**k off Tottenham, I'm a Gooner now!\nNa na na na na na na naaa na naaaa",
       "tuneName": "Original terrace chant",
       "contextNotes": "Debuted in August 2025 after Arsenal signed Eze ahead of Tottenham. The crying at the Lane line mocks Spurs fans.",
-      "realOrParody": "real",
+      "chantType": "sincere",
       "mediaType": "none"
     },
     {
@@ -191,7 +191,7 @@
       "lyrics": "Been dreaming all day\nOf our number 8\nMartin Odegaard, oi oi oi!\nWhen he's on the ball\nHe's f**king magical\nMartin Odegaard, oi oi oi!",
       "tuneName": "Chase the Sun (Planet Funk)",
       "contextNotes": "For club captain Martin Odegaard, Arsenal's number 8.",
-      "realOrParody": "real",
+      "chantType": "sincere",
       "mediaType": "none"
     },
     {
@@ -201,7 +201,7 @@
       "lyrics": "Last Christmas, I gave you my heart,\nBut the very next day, you gave it away.\nThis year, to save me from tears,\nI'll give it to Zubimendi.",
       "tuneName": "Last Christmas (Wham!)",
       "contextNotes": "A festive chant for midfielder Martin Zubimendi, sung to Wham!'s Last Christmas. Only the closing words change.",
-      "realOrParody": "real",
+      "chantType": "sincere",
       "mediaType": "none"
     },
     {
@@ -211,7 +211,7 @@
       "lyrics": "We won the league at Anfield,\nWe won it at the lane,\nStamford Bridge, Old Trafford,\nNo one can say the same,\nMikel Arteta's army,\nWe're Arsenal through and through,\nWe'll sing it in the North Bank,\nAnd in the Clock End too.\nAllez Allez Allez,\nAllez Allez Allez,\nAllez Allez Allez,\nAllez Allez Allez...",
       "tuneName": "Allez Allez Allez (L'Estate Sta Finendo)",
       "contextNotes": null,
-      "realOrParody": "real",
+      "chantType": "sincere",
       "mediaType": "none"
     }
   ]

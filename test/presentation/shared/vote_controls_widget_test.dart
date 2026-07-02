@@ -63,7 +63,7 @@ Chant _makeChant({int score = 5}) {
     tuneName: 'Traditional',
     mediaType: 'none',
     status: 'canonical',
-    realOrParody: 'real',
+    chantType: 'sincere',
     createdBy: 'system',
     createdAt: DateTime(2026, 1, 1),
     updatedAt: DateTime(2026, 1, 1),

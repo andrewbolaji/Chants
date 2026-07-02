@@ -18,7 +18,7 @@ Chant _makeChant({
     tuneName: tuneName,
     mediaType: 'none',
     status: 'community',
-    realOrParody: 'real',
+    chantType: 'sincere',
     createdBy: 'user1',
     createdAt: DateTime(2026, 5, 27),
     updatedAt: DateTime(2026, 5, 27),

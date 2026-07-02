@@ -26,7 +26,7 @@ export interface ChantData {
   lyrics: string;
   tuneName: string;
   contextNotes: string | null;
-  realOrParody: string;
+  chantType: string;
   mediaType: string;
   variations?: ChantVariationData[];
 }
@@ -44,7 +44,7 @@ const VALID_SUBJECT_TAGS = ["player", "coach", "club", "rival"];
 const VALID_MEDIA_TYPES = [
   "none", "audio", "tuneRecording", "lyricVideo", "screenRecording", "crowdClip",
 ];
-const VALID_REAL_OR_PARODY = ["real", "parody"];
+const VALID_CHANT_TYPE = ["sincere", "novelty"];
 
 export interface ValidationError {
   field: string;
@@ -144,10 +144,10 @@ export function validateClub(
       if (typeof c.tuneName !== "string" || c.tuneName.length === 0) {
         errors.push({ field: `chants[${i}].tuneName`, message: "Tune name is required." });
       }
-      if (!VALID_REAL_OR_PARODY.includes(c.realOrParody)) {
+      if (!VALID_CHANT_TYPE.includes(c.chantType)) {
         errors.push({
-          field: `chants[${i}].realOrParody`,
-          message: `Invalid realOrParody "${c.realOrParody}". Must be "real" or "parody".`,
+          field: `chants[${i}].chantType`,
+          message: `Invalid chantType "${c.chantType}". Must be "sincere" or "novelty".`,
         });
       }
       if (!VALID_MEDIA_TYPES.includes(c.mediaType)) {

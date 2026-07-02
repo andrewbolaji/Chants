@@ -21,7 +21,7 @@ Chant _chant({
     tuneName: 'original',
     mediaType: 'none',
     status: status,
-    realOrParody: 'real',
+    chantType: 'sincere',
     score: score,
     createdBy: 'seed',
     createdAt: ts,

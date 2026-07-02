@@ -43,7 +43,7 @@ class Chant {
   final String? mediaUrl;
   final String mediaType;
   final String status;
-  final String realOrParody;
+  final String chantType;
   final int upvotes;
   final int downvotes;
   final int score;
@@ -71,7 +71,7 @@ class Chant {
     this.mediaUrl,
     required this.mediaType,
     required this.status,
-    required this.realOrParody,
+    required this.chantType,
     this.upvotes = 0,
     this.downvotes = 0,
     this.score = 0,
@@ -113,7 +113,7 @@ class Chant {
       mediaUrl: json['mediaUrl'] as String?,
       mediaType: json['mediaType'] as String,
       status: json['status'] as String,
-      realOrParody: json['realOrParody'] as String,
+      chantType: json['chantType'] as String,
       upvotes: json['upvotes'] as int? ?? 0,
       downvotes: json['downvotes'] as int? ?? 0,
       score: json['score'] as int? ?? 0,
@@ -150,7 +150,7 @@ class Chant {
       'mediaUrl': mediaUrl,
       'mediaType': mediaType,
       'status': status,
-      'realOrParody': realOrParody,
+      'chantType': chantType,
       'upvotes': upvotes,
       'downvotes': downvotes,
       'score': score,
@@ -180,7 +180,7 @@ class Chant {
     String? mediaUrl,
     String? mediaType,
     String? status,
-    String? realOrParody,
+    String? chantType,
     int? upvotes,
     int? downvotes,
     int? score,
@@ -208,7 +208,7 @@ class Chant {
       mediaUrl: mediaUrl ?? this.mediaUrl,
       mediaType: mediaType ?? this.mediaType,
       status: status ?? this.status,
-      realOrParody: realOrParody ?? this.realOrParody,
+      chantType: chantType ?? this.chantType,
       upvotes: upvotes ?? this.upvotes,
       downvotes: downvotes ?? this.downvotes,
       score: score ?? this.score,

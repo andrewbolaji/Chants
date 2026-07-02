@@ -46,7 +46,7 @@ Chant _makeChant({List<ChantVariation> variations = const []}) {
     contextNotes: 'A tribute to manager Mikel Arteta.',
     mediaType: 'none',
     status: 'canonical',
-    realOrParody: 'real',
+    chantType: 'sincere',
     createdBy: 'system',
     createdAt: DateTime(2026, 1, 1),
     updatedAt: DateTime(2026, 1, 1),

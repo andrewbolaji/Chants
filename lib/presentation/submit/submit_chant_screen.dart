@@ -32,7 +32,7 @@ class _SubmitChantScreenState extends ConsumerState<SubmitChantScreen> {
   final _contextController = TextEditingController();
 
   String _subjectTag = 'club';
-  String _realOrParody = 'real';
+  String _chantType = 'sincere';
   String? _selectedPlayerId;
   bool _submitting = false;
   String? _error;
@@ -87,7 +87,7 @@ class _SubmitChantScreenState extends ConsumerState<SubmitChantScreen> {
           : _contextController.text.trim(),
       mediaType: 'none',
       status: 'community',
-      realOrParody: _realOrParody,
+      chantType: _chantType,
       createdBy: user.uid,
       createdAt: now,
       updatedAt: now,
@@ -230,12 +230,12 @@ class _SubmitChantScreenState extends ConsumerState<SubmitChantScreen> {
             const SizedBox(height: Spacing.sm),
             SegmentedButton<String>(
               segments: const [
-                ButtonSegment(value: 'real', label: Text('Original')),
-                ButtonSegment(value: 'parody', label: Text('Parody')),
+                ButtonSegment(value: 'sincere', label: Text('Original')),
+                ButtonSegment(value: 'novelty', label: Text('Novelty')),
               ],
-              selected: {_realOrParody},
+              selected: {_chantType},
               onSelectionChanged: (v) =>
-                  setState(() => _realOrParody = v.first),
+                  setState(() => _chantType = v.first),
             ),
 
             if (_error != null) ...[

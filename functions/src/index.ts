@@ -529,7 +529,7 @@ export const mergeChants = onCall(
       competitionId: sourceData.competitionId,
       status: sourceData.status,
       contextNotes: sourceData.contextNotes || null,
-      realOrParody: sourceData.realOrParody,
+      chantType: sourceData.chantType,
       mediaType: sourceData.mediaType,
       createdBy: sourceData.createdBy,
     };
