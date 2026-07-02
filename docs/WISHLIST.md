@@ -58,6 +58,12 @@
 **Why v1.1:** It is the natural evolution of the v1 display-only variations and reuses the voting that already exists.
 **Trigger:** v1 seed-only variations are live and users start asking for or proposing alternates. Build it as a user-content surface with the same reporting and content-policy path as chant submission.
 
+### v1.1: Light and dark theme toggle
+**The idea:** A user-facing theme toggle in settings, defaulting to the current dark "Ink and Gold" theme, with a new light theme as the alternative. It respects the device system setting on first launch and persists the user's explicit choice after that.
+**Why v1.1:** v1 ships in one polished dark theme. A light option is a comfort and accessibility win (bright environments, personal preference) but it is not a launch blocker, and it should wait until the core surfaces are stable so we theme a fixed set of screens once rather than chasing a moving target.
+**Design direction:** The light theme is derived from the marketing site palette (cream and paper surfaces, ink text, the same gold, a blue accent), so the website and the app light mode share one identity. Both themes run entirely through the existing tokens in colors.dart, theme.dart, and spacing.dart, so the switch is a token-map swap with zero hardcoded hex in any screen. Every surface, including the Fraunces lyric view and the Verified elements, is checked for WCAG AA contrast in both themes.
+**Trigger to build:** After v1 is live with 30 days of real use, and once no core screen is still changing shape.
+
 ---
 
 ## v2 candidates (pin, do not build, need real usage data)
