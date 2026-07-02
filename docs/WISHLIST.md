@@ -58,6 +58,11 @@
 **Why v1.1:** It is the natural evolution of the v1 display-only variations and reuses the voting that already exists.
 **Trigger:** v1 seed-only variations are live and users start asking for or proposing alternates. Build it as a user-content surface with the same reporting and content-policy path as chant submission.
 
+### v1.1: Terrace Classics (general cross-club chants)
+**The idea:** A browse section for the generic chants every club sings with only the name swapped: "you're going down", "you're not singing any more", "is this a library", "can you hear the [X] sing? No no", "who are ya", "you're shit and you know you are", and the "Allez Allez Allez" template. These are not tied to one club, so they do not belong under any single club. Store each once, tagged by the tune it uses, and surface them in their own section instead of duplicating them under all 20 clubs.
+**Why v1.1:** The per-club archive is the v1 job and lands first. General chants are a separate sourcing pass and a separate piece of navigation. Adding them now would clutter every club page.
+**Trigger to promote:** v1 shipped with the per-club Premier League archive live, plus either users asking for the generics or the generics starting to clutter club sections. Same sourced-and-verified, no-generated-lyrics rule as all other content.
+
 ### v1.1: Light and dark theme toggle
 **The idea:** A user-facing theme toggle in settings, defaulting to the current dark "Ink and Gold" theme, with a new light theme as the alternative. It respects the device system setting on first launch and persists the user's explicit choice after that.
 **Why v1.1:** v1 ships in one polished dark theme. A light option is a comfort and accessibility win (bright environments, personal preference) but it is not a launch blocker, and it should wait until the core surfaces are stable so we theme a fixed set of screens once rather than chasing a moving target.

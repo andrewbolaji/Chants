@@ -203,6 +203,16 @@
       "contextNotes": "A festive chant for midfielder Martin Zubimendi, sung to Wham!'s Last Christmas. Only the closing words change.",
       "realOrParody": "parody",
       "mediaType": "none"
+    },
+    {
+      "title": "Allez Allez Allez",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "We won the league at Anfield,\nWe won it at the lane,\nStamford Bridge, Old Trafford,\nNo one can say the same,\nMikel Arteta's army,\nWe're Arsenal through and through,\nWe'll sing it in the North Bank,\nAnd in the Clock End too.\nAllez Allez Allez,\nAllez Allez Allez,\nAllez Allez Allez,\nAllez Allez Allez...",
+      "tuneName": "Allez Allez Allez (L'Estate Sta Finendo)",
+      "contextNotes": null,
+      "realOrParody": "real",
+      "mediaType": "none"
     }
   ]
 }
