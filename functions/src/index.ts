@@ -274,7 +274,12 @@ export async function handleVoteWritten(
 
   const scoreDelta = upDelta - downDelta;
 
-  await firestore.collection("chants").doc(chantId).update({
+  // Batch the chant counter update and the appliedValue stamp so they become
+  // visible atomically. Without this, a reader can see the updated score
+  // before appliedValue is written and double-count the delta (-2 flash).
+  const batch = firestore.batch();
+
+  batch.update(firestore.collection("chants").doc(chantId), {
     upvotes: admin.firestore.FieldValue.increment(upDelta),
     downvotes: admin.firestore.FieldValue.increment(downDelta),
     score: admin.firestore.FieldValue.increment(scoreDelta),
@@ -287,10 +292,12 @@ export async function handleVoteWritten(
   // value is unchanged, so upDelta and downDelta are both 0, hitting the
   // early return above.
   if (afterData) {
-    await firestore.collection("votes").doc(voteId).update({
+    batch.update(firestore.collection("votes").doc(voteId), {
       appliedValue: afterData.value,
     });
   }
+
+  await batch.commit();
 }
 
 export const onVoteWritten = onDocumentWritten(
