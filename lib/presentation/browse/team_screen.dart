@@ -7,6 +7,7 @@ import 'package:chants/app/spacing.dart';
 import 'package:chants/data/models/chant.dart';
 import 'package:chants/data/models/player.dart';
 import 'package:chants/data/models/team.dart';
+import 'package:chants/data/services/chant_ranking.dart';
 import 'package:chants/presentation/shared/chant_card.dart';
 import 'package:chants/presentation/shared/empty_state.dart';
 import 'package:chants/presentation/shared/error_state.dart';
@@ -22,6 +23,39 @@ class TeamScreen extends ConsumerStatefulWidget {
 
 class _TeamScreenState extends ConsumerState<TeamScreen> {
   bool _showFullSquad = false;
+
+  /// Frozen order: list of chant IDs for club chants, captured once.
+  List<String>? _frozenClubOrder;
+
+  /// Frozen order: map of player ID to list of chant IDs, captured once.
+  Map<String, List<String>>? _frozenPlayerOrder;
+
+  /// Frozen player display order (players with chants), captured once.
+  List<String>? _frozenPlayerListOrder;
+
+  void _captureOrder(List<Chant> allChants, List<Player> allPlayers) {
+    if (_frozenClubOrder != null) return; // already captured
+
+    final clubChants = allChants.where((c) => c.playerId == null).toList();
+    final playerChantMap = <String, List<Chant>>{};
+    for (final c in allChants.where((c) => c.playerId != null)) {
+      playerChantMap.putIfAbsent(c.playerId!, () => []).add(c);
+    }
+
+    _frozenClubOrder = rankChants(clubChants).map((c) => c.id).toList();
+
+    final frozenPlayerOrder = <String, List<String>>{};
+    for (final entry in playerChantMap.entries) {
+      frozenPlayerOrder[entry.key] =
+          rankChants(entry.value).map((c) => c.id).toList();
+    }
+    _frozenPlayerOrder = frozenPlayerOrder;
+
+    _frozenPlayerListOrder = allPlayers
+        .where((p) => playerChantMap.containsKey(p.id))
+        .map((p) => p.id)
+        .toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -70,17 +104,25 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
               final allChants = chantSnap.data!;
               final allPlayers = playerSnap.data!;
 
-              final clubChants =
-                  allChants.where((c) => c.playerId == null).toList();
-              final playerChantMap = <String, List<Chant>>{};
-              for (final c
-                  in allChants.where((c) => c.playerId != null)) {
-                playerChantMap
-                    .putIfAbsent(c.playerId!, () => [])
-                    .add(c);
-              }
-              final playersWithChants = allPlayers
-                  .where((p) => playerChantMap.containsKey(p.id))
+              // Capture order once per visit; subsequent stream emissions
+              // update card content but not position.
+              _captureOrder(allChants, allPlayers);
+
+              // Build a lookup for live chant data by ID.
+              final chantById = <String, Chant>{
+                for (final c in allChants) c.id: c,
+              };
+              final playerById = <String, Player>{
+                for (final p in allPlayers) p.id: p,
+              };
+
+              // Filter frozen order to only IDs still present in the
+              // live data (handles removals/hides mid-visit).
+              final clubIds = _frozenClubOrder!
+                  .where((id) => chantById.containsKey(id))
+                  .toList();
+              final playerListIds = _frozenPlayerListOrder!
+                  .where((id) => playerById.containsKey(id))
                   .toList();
 
               if (allChants.isEmpty && allPlayers.isEmpty) {
@@ -97,55 +139,62 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
                 ),
                 children: [
                   // Club chants
-                  if (clubChants.isNotEmpty) ...[
+                  if (clubIds.isNotEmpty) ...[
                     _SectionHeader(title: 'Club chants'),
-                    ...clubChants.map((c) => ChantCard(
-                          chant: c,
+                    ...clubIds.map((id) => ChantCard(
+                          chant: chantById[id]!,
                           onTap: () => Navigator.pushNamed(
                             context,
                             AppRouter.chantDetail,
-                            arguments: c,
+                            arguments: chantById[id]!,
                           ),
                         )),
                   ],
 
                   // Players with chants
-                  if (playersWithChants.isNotEmpty) ...[
+                  if (playerListIds.isNotEmpty) ...[
                     const SizedBox(height: Spacing.lg),
                     _SectionHeader(title: 'Player chants'),
-                    ...playersWithChants.expand((player) => [
-                          ListTile(
-                            title: Text(player.name, style: textTheme.titleSmall),
-                            trailing: Icon(
-                              Icons.chevron_right,
-                              size: 20,
-                              color: AppColors.textFaint,
-                            ),
-                            onTap: () => Navigator.pushNamed(
-                              context,
-                              AppRouter.player,
-                              arguments: {
-                                'player': player,
-                                'sportId': widget.team.sportId,
-                                'competitionId': widget.team.competitionId,
-                              },
-                            ),
+                    ...playerListIds.expand((playerId) {
+                      final player = playerById[playerId]!;
+                      final chantIds = (_frozenPlayerOrder![playerId] ?? [])
+                          .where((id) => chantById.containsKey(id))
+                          .toList();
+                      return [
+                        ListTile(
+                          title:
+                              Text(player.name, style: textTheme.titleSmall),
+                          trailing: Icon(
+                            Icons.chevron_right,
+                            size: 20,
+                            color: AppColors.textFaint,
                           ),
-                          ...playerChantMap[player.id]!.map(
-                              (c) => ChantCard(
-                                    chant: c,
-                                    onTap: () => Navigator.pushNamed(
-                                      context,
-                                      AppRouter.chantDetail,
-                                      arguments: c,
-                                    ),
-                                  )),
-                        ]),
+                          onTap: () => Navigator.pushNamed(
+                            context,
+                            AppRouter.player,
+                            arguments: {
+                              'player': player,
+                              'sportId': widget.team.sportId,
+                              'competitionId': widget.team.competitionId,
+                            },
+                          ),
+                        ),
+                        ...chantIds.map((id) => ChantCard(
+                              chant: chantById[id]!,
+                              onTap: () => Navigator.pushNamed(
+                                context,
+                                AppRouter.chantDetail,
+                                arguments: chantById[id]!,
+                              ),
+                            )),
+                      ];
+                    }),
                   ],
 
                   if (allChants.isEmpty)
                     Padding(
-                      padding: const EdgeInsets.symmetric(vertical: Spacing.xl),
+                      padding:
+                          const EdgeInsets.symmetric(vertical: Spacing.xl),
                       child: EmptyState(
                         message:
                             'No chants for ${widget.team.name} yet. They are on the way.',

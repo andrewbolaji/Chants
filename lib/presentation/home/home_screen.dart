@@ -105,13 +105,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
             child: TextField(
               controller: _searchController,
-              style: const TextStyle(fontSize: 12),
+              style: const TextStyle(fontSize: 14),
               decoration: InputDecoration(
                 hintText: 'Search chants...',
                 hintStyle: const TextStyle(
                   fontFamily: 'Nunito',
                   color: AppColors.textFaint,
-                  fontSize: 12,
+                  fontSize: 14,
                 ),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: Spacing.md,
