@@ -115,7 +115,7 @@ class ChantCard extends StatelessWidget {
               ),
               const SizedBox(height: Spacing.sm),
 
-              // Footer: subject tag (left) | vote chip (right)
+              // Footer: subject tag (left) | comment count + vote chip (right)
               Row(
                 children: [
                   Text(
@@ -129,6 +129,23 @@ class ChantCard extends StatelessWidget {
                     ),
                   ),
                   const Spacer(),
+                  if (chant.commentCount > 0) ...[
+                    Icon(
+                      Icons.chat_bubble_outline,
+                      size: 14,
+                      color: AppColors.textMuted,
+                    ),
+                    const SizedBox(width: Spacing.xs),
+                    Text(
+                      '${chant.commentCount}',
+                      style: const TextStyle(
+                        fontFamily: 'SpaceMono',
+                        fontSize: 11,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                    const SizedBox(width: Spacing.md),
+                  ],
                   VoteControls(chant: chant, compact: true),
                 ],
               ),

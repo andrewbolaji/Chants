@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chants/app/providers.dart';
 import 'package:chants/app/spacing.dart';
 import 'package:chants/data/models/chant.dart';
+import 'package:chants/data/models/comment.dart';
 import 'package:chants/data/models/feedback_entry.dart';
 import 'package:chants/presentation/shared/error_state.dart';
 
@@ -27,8 +28,13 @@ class ModerationScreen extends ConsumerWidget {
         .orderBy('createdAt', descending: true)
         .snapshots();
 
+    final flaggedCommentsStream = FirebaseFirestore.instance
+        .collection('comments')
+        .where('hidden', isEqualTo: true)
+        .snapshots();
+
     return DefaultTabController(
-      length: 4,
+      length: 5,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('MODERATION'),
@@ -36,6 +42,7 @@ class ModerationScreen extends ConsumerWidget {
             isScrollable: true,
             tabs: [
               Tab(text: 'Flagged'),
+              Tab(text: 'Comments'),
               Tab(text: 'Promote'),
               Tab(text: 'Feedback'),
               Tab(text: 'Ban'),
@@ -74,7 +81,37 @@ class ModerationScreen extends ConsumerWidget {
                 );
               },
             ),
-            // Tab 2: promotion candidates
+            // Tab 2: flagged/hidden comments
+            StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              stream: flaggedCommentsStream,
+              builder: (context, snap) {
+                if (snap.hasError) {
+                  return const ErrorState(
+                      message: 'Could not load flagged comments.');
+                }
+                if (!snap.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                final docs = snap.data!.docs;
+                if (docs.isEmpty) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(Spacing.xxl),
+                      child: Text('No flagged or hidden comments. All clear.'),
+                    ),
+                  );
+                }
+                return ListView.builder(
+                  padding: const EdgeInsets.all(Spacing.sm),
+                  itemCount: docs.length,
+                  itemBuilder: (context, index) {
+                    final comment = Comment.fromFirestore(docs[index]);
+                    return _CommentModerationCard(comment: comment, ref: ref);
+                  },
+                );
+              },
+            ),
+            // Tab 3: promotion candidates
             StreamBuilder<List<Chant>>(
               stream: candidatesStream,
               builder: (context, snap) {
@@ -309,6 +346,91 @@ class _PromotionCard extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _CommentModerationCard extends StatelessWidget {
+  final Comment comment;
+  final WidgetRef ref;
+
+  const _CommentModerationCard({required this.comment, required this.ref});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(Spacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(comment.displayName,
+                style: Theme.of(context).textTheme.titleSmall),
+            const SizedBox(height: Spacing.xs),
+            Text(
+              'Flags: ${comment.flagCount} | '
+              'Hidden: ${comment.hidden} | '
+              'Removed: ${comment.removed}',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: Spacing.xs),
+            Text(
+              comment.body,
+              maxLines: 5,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: Spacing.sm),
+            Wrap(
+              spacing: 8,
+              children: [
+                if (!comment.hidden && !comment.removed)
+                  FilledButton.tonal(
+                    onPressed: () => _action(context, 'hide-comment'),
+                    child: const Text('Hide'),
+                  ),
+                if (comment.hidden && !comment.removed)
+                  FilledButton.tonal(
+                    onPressed: () => _action(context, 'unhide-comment'),
+                    child: const Text('Unhide'),
+                  ),
+                if (!comment.removed)
+                  FilledButton.tonal(
+                    onPressed: () => _action(context, 'remove-comment'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor:
+                          Theme.of(context).colorScheme.errorContainer,
+                    ),
+                    child: const Text('Remove'),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _action(BuildContext context, String action) async {
+    try {
+      final modRepo = ref.read(moderationRepositoryProvider);
+      switch (action) {
+        case 'hide-comment':
+          await modRepo.hideComment(comment.id);
+        case 'unhide-comment':
+          await modRepo.unhideComment(comment.id);
+        case 'remove-comment':
+          await modRepo.removeComment(comment.id);
+      }
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Done.')),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Action failed. Try again.')),
+      );
+    }
   }
 }
 

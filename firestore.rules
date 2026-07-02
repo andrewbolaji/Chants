@@ -126,6 +126,58 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // comments: visible to all, auth create (not banned, body <= 500),
+    // author can soft-delete own (set removed: true), operator can update anything
+    match /comments/{commentId} {
+      allow read: if isVisible(resource) || isOperator();
+      allow create: if isAuth()
+        && isNotBanned()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() > 0
+        && request.resource.data.body is string
+        && request.resource.data.body.size() > 0
+        && request.resource.data.body.size() <= 500
+        && request.resource.data.likeCount == 0
+        && request.resource.data.flagCount == 0
+        && request.resource.data.hidden == false
+        && request.resource.data.removed == false;
+      // Author can only soft-delete (set removed: true on their own comment)
+      allow update: if isAuth()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.removed == true
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['removed']);
+      // Operator can update anything (moderation: hide, unhide, remove, reset flagCount)
+      allow update: if isOperator();
+    }
+
+    // commentLikes: one per user per comment (doc ID = userId_commentId), value always 1, not banned
+    match /commentLikes/{likeId} {
+      allow read: if true;
+      allow create: if isAuth()
+        && isNotBanned()
+        && request.resource.data.userId == request.auth.uid
+        && likeId == request.auth.uid + '_' + request.resource.data.commentId
+        && request.resource.data.value == 1;
+      allow update: if isAuth()
+        && isNotBanned()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.value == 1
+        && !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['userId','commentId']);
+      allow delete: if isAuth() && resource.data.userId == request.auth.uid;
+    }
+
+    // commentReports: one per user per comment (doc ID = userId_commentId), not banned, insert-only
+    match /commentReports/{reportId} {
+      allow read: if isOperator();
+      allow create: if isAuth()
+        && isNotBanned()
+        && request.resource.data.reportedBy == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && reportId == request.auth.uid + '_' + request.resource.data.commentId;
+    }
+
     // feedback: auth create, user reads own, operator reads all
     match /feedback/{feedbackId} {
       allow read: if isOperator()

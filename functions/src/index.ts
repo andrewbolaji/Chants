@@ -178,10 +178,67 @@ export const onModerationAction = onCall(
         return { success: true };
       }
 
+      case "hide-comment": {
+        const cSnap = await db.collection("comments").doc(targetId).get();
+        if (!cSnap.exists) {
+          throw new HttpsError("not-found", "Comment not found.");
+        }
+        await db.collection("comments").doc(targetId).update({ hidden: true });
+        await resolveCommentReports(targetId, "reviewed");
+        await recomputeCommentCount(cSnap.data()!.chantId as string);
+        await writeAuditEntry({
+          actorId: actorUid,
+          action: "hide",
+          targetType: "comment",
+          targetId,
+          detail: "Comment hidden by operator.",
+        });
+        return { success: true };
+      }
+
+      case "unhide-comment": {
+        const cSnap2 = await db.collection("comments").doc(targetId).get();
+        if (!cSnap2.exists) {
+          throw new HttpsError("not-found", "Comment not found.");
+        }
+        await db.collection("comments").doc(targetId).update({
+          hidden: false,
+          flagCount: 0,
+        });
+        await resolveCommentReports(targetId, "dismissed");
+        await recomputeCommentCount(cSnap2.data()!.chantId as string);
+        await writeAuditEntry({
+          actorId: actorUid,
+          action: "unhide",
+          targetType: "comment",
+          targetId,
+          detail: "Comment unhidden by operator. flagCount reset to 0, reports dismissed.",
+        });
+        return { success: true };
+      }
+
+      case "remove-comment": {
+        const cSnap3 = await db.collection("comments").doc(targetId).get();
+        if (!cSnap3.exists) {
+          throw new HttpsError("not-found", "Comment not found.");
+        }
+        await db.collection("comments").doc(targetId).update({ removed: true });
+        await resolveCommentReports(targetId, "reviewed");
+        await recomputeCommentCount(cSnap3.data()!.chantId as string);
+        await writeAuditEntry({
+          actorId: actorUid,
+          action: "remove",
+          targetType: "comment",
+          targetId,
+          detail: "Comment removed by operator.",
+        });
+        return { success: true };
+      }
+
       default:
         throw new HttpsError(
           "invalid-argument",
-          `Unknown action "${action}". Valid: hide, unhide, remove, ban, promote, demote.`
+          `Unknown action "${action}". Valid: hide, unhide, remove, ban, promote, demote, hide-comment, unhide-comment, remove-comment.`
         );
     }
   }
@@ -362,19 +419,47 @@ export const deleteAccount = onCall(
       await chantDoc.ref.update({ createdBy: "deleted-user" });
     }
 
-    // 5. Delete profile
+    // 5. Anonymize comments by this user and recompute commentCounts
+    const comments = await db.collection("comments").where("userId", "==", uid).get();
+    const commentChantIds = new Set<string>();
+    for (const commentDoc of comments.docs) {
+      commentChantIds.add(commentDoc.data().chantId);
+      await commentDoc.ref.update({
+        userId: "deleted-user",
+        displayName: "Deleted user",
+      });
+    }
+
+    // 6. Delete comment likes by this user and recompute affected likeCounts
+    const commentLikes = await db.collection("commentLikes").where("userId", "==", uid).get();
+    const affectedCommentIds = new Set<string>();
+    for (const likeDoc of commentLikes.docs) {
+      affectedCommentIds.add(likeDoc.data().commentId);
+      await likeDoc.ref.delete();
+    }
+    for (const commentId of affectedCommentIds) {
+      await recomputeCommentLikeCount(commentId);
+    }
+
+    // 7. Delete comment reports by this user
+    const commentReports = await db.collection("commentReports").where("reportedBy", "==", uid).get();
+    for (const crDoc of commentReports.docs) {
+      await crDoc.ref.delete();
+    }
+
+    // 8. Delete profile
     await db.collection("profiles").doc(uid).delete();
 
-    // 6. Audit log
+    // 9. Audit log
     await writeAuditEntry({
       actorId: uid,
       action: "delete-account",
       targetType: "user",
       targetId: uid,
-      detail: `User deleted their own account. ${votes.size} votes removed, ${chants.size} chants anonymized.`,
+      detail: `User deleted their own account. ${votes.size} votes removed, ${chants.size} chants anonymized, ${comments.size} comments anonymized, ${commentLikes.size} comment likes removed.`,
     });
 
-    // 7. Delete Firebase Auth account
+    // 10. Delete Firebase Auth account
     await admin.auth().deleteUser(uid);
 
     return { success: true };
@@ -539,6 +624,234 @@ export const mergeChants = onCall(
     };
   }
 );
+
+// --- onCommentLikeWritten ---
+// Maintains likeCount on the comment by recomputing from the actual like docs
+// (ground truth). Fully idempotent: duplicate deliveries, bursts, and
+// out-of-order events all converge. The likeCount set and appliedValue stamp
+// are committed in one WriteBatch so they land atomically.
+export async function handleCommentLikeWritten(
+  beforeData: admin.firestore.DocumentData | undefined,
+  afterData: admin.firestore.DocumentData | undefined,
+  likeId: string,
+  firestore: admin.firestore.Firestore
+): Promise<void> {
+  const commentId = (afterData?.commentId || beforeData?.commentId) as string;
+  if (!commentId) return;
+
+  // No-op early return: if the value field did not change (e.g. appliedValue
+  // write-back re-trigger), skip the recompute.
+  const beforeVal = beforeData?.value as number | undefined;
+  const afterVal = afterData?.value as number | undefined;
+  if (beforeVal === afterVal) return;
+
+  // Guard: if the comment doc no longer exists (racing with a delete), no-op.
+  const commentRef = firestore.collection("comments").doc(commentId);
+  const commentSnap = await commentRef.get();
+  if (!commentSnap.exists) return;
+
+  // Recompute likeCount from all like docs (ground truth).
+  const likesSnap = await firestore
+    .collection("commentLikes")
+    .where("commentId", "==", commentId)
+    .get();
+  let likeCount = 0;
+  for (const doc of likesSnap.docs) {
+    if (doc.data().value === 1) likeCount++;
+  }
+
+  const batch = firestore.batch();
+  batch.update(commentRef, { likeCount });
+
+  // Stamp appliedValue on the like doc so the client can reconcile on cold load.
+  // Skip on delete (afterData is undefined, doc is gone).
+  if (afterData) {
+    batch.update(firestore.collection("commentLikes").doc(likeId), {
+      appliedValue: afterData.value,
+    });
+  }
+
+  await batch.commit();
+}
+
+export const onCommentLikeWritten = onDocumentWritten(
+  { document: "commentLikes/{likeId}", region: "europe-west2" },
+  async (event) => {
+    const beforeData = event.data?.before?.data();
+    const afterData = event.data?.after?.data();
+    await handleCommentLikeWritten(
+      beforeData, afterData, event.params.likeId, db
+    );
+  }
+);
+
+// --- onCommentWritten ---
+// Fires on every comment write (create, update, delete). Recomputes
+// commentCount on the parent chant from ground truth on every invocation.
+// This covers author soft-delete, operator hide/remove, rate-limit auto-hide,
+// and regular creates in a single trigger, so there is never a path that
+// changes visibility without updating the count.
+//
+// Loop guard: this function writes to the CHANT document (commentCount), not
+// back to the comment document that triggered it, so it cannot retrigger itself.
+//
+// Rate-limiting runs only on creates (no beforeData), same as the previous
+// onCommentCreated.
+const COMMENT_NEW_ACCOUNT_LIMIT = 5;
+const COMMENT_PROVEN_ACCOUNT_LIMIT = 20;
+
+export const onCommentWritten = onDocumentWritten(
+  { document: "comments/{commentId}", region: "europe-west2" },
+  async (event) => {
+    const beforeData = event.data?.before?.data();
+    const afterData = event.data?.after?.data();
+
+    const chantId = (afterData?.chantId || beforeData?.chantId) as string;
+    if (!chantId) return;
+
+    // Always recompute commentCount from ground truth.
+    await recomputeCommentCount(chantId);
+
+    // Rate-limit check only on create (no beforeData).
+    if (beforeData) return; // update or delete, skip rate-limiting
+    if (!afterData) return;
+
+    const userId = afterData.userId as string;
+    if (userId === "system") return;
+
+    const profileSnap = await db.collection("profiles").doc(userId).get();
+    if (!profileSnap.exists) return;
+
+    const profileData = profileSnap.data()!;
+    const createdAt = profileData.createdAt?.toDate?.() || new Date();
+    const accountAge = Date.now() - createdAt.getTime();
+
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    const recentComments = await db
+      .collection("comments")
+      .where("userId", "==", userId)
+      .where("createdAt", ">=", admin.firestore.Timestamp.fromDate(oneHourAgo))
+      .get();
+
+    const totalComments = recentComments.size;
+    const isNew =
+      accountAge < NEW_ACCOUNT_AGE_MS || totalComments <= NEW_ACCOUNT_MIN_SUBMISSIONS;
+    const limit = isNew ? COMMENT_NEW_ACCOUNT_LIMIT : COMMENT_PROVEN_ACCOUNT_LIMIT;
+
+    if (totalComments > limit) {
+      // Auto-hide (pending review), never auto-remove.
+      // This update retriggers onCommentWritten, but the second invocation
+      // just recomputes commentCount again (idempotent, same result).
+      const commentRef = event.data?.after?.ref;
+      if (commentRef) {
+        await commentRef.update({ hidden: true });
+      }
+      await writeAuditEntry({
+        actorId: "system",
+        action: "rate-limit-hide",
+        targetType: "comment",
+        targetId: event.params.commentId,
+        detail: `Auto-hidden: user posted ${totalComments} comments in the last hour (limit ${limit}).`,
+      });
+    }
+  }
+);
+
+// --- onCommentReportCreated ---
+// Mirrors onReportCreated: increments flagCount on the comment,
+// auto-hides at threshold 3.
+export const onCommentReportCreated = onDocumentCreated(
+  { document: "commentReports/{reportId}", region: "europe-west2" },
+  async (event) => {
+    const reportData = event.data?.data();
+    if (!reportData) return;
+
+    const commentId = reportData.commentId as string;
+    const commentRef = db.collection("comments").doc(commentId);
+
+    await db.runTransaction(async (txn) => {
+      const commentSnap = await txn.get(commentRef);
+      if (!commentSnap.exists) return;
+
+      const commentData = commentSnap.data()!;
+      const newFlagCount = (commentData.flagCount || 0) + 1;
+
+      const update: Record<string, unknown> = {
+        flagCount: admin.firestore.FieldValue.increment(1),
+      };
+
+      if (newFlagCount >= AUTO_HIDE_THRESHOLD && commentData.hidden === false) {
+        update.hidden = true;
+        await writeAuditEntry({
+          actorId: "system",
+          action: "auto-hide",
+          targetType: "comment",
+          targetId: commentId,
+          detail: `Auto-hidden: flagCount reached ${newFlagCount} (threshold ${AUTO_HIDE_THRESHOLD}).`,
+        });
+        // Recompute commentCount on parent chant since comment is now hidden
+        await recomputeCommentCount(commentData.chantId as string);
+      }
+
+      txn.update(commentRef, update);
+    });
+
+    await writeAuditEntry({
+      actorId: reportData.reportedBy as string,
+      action: "report",
+      targetType: "comment",
+      targetId: commentId,
+      detail: `Reason: ${reportData.reason}`,
+    });
+  }
+);
+
+// --- Helper: recompute commentCount on a chant from ground truth ---
+async function recomputeCommentCount(chantId: string): Promise<void> {
+  const commentsSnap = await db
+    .collection("comments")
+    .where("chantId", "==", chantId)
+    .where("hidden", "==", false)
+    .where("removed", "==", false)
+    .get();
+  await db.collection("chants").doc(chantId).update({
+    commentCount: commentsSnap.size,
+  });
+}
+
+// --- Helper: recompute likeCount on a comment from ground truth ---
+async function recomputeCommentLikeCount(commentId: string): Promise<void> {
+  const commentSnap = await db.collection("comments").doc(commentId).get();
+  if (!commentSnap.exists) return;
+  const likesSnap = await db
+    .collection("commentLikes")
+    .where("commentId", "==", commentId)
+    .get();
+  let likeCount = 0;
+  for (const doc of likesSnap.docs) {
+    if (doc.data().value === 1) likeCount++;
+  }
+  await db.collection("comments").doc(commentId).update({ likeCount });
+}
+
+// --- Helper: resolve comment reports ---
+async function resolveCommentReports(
+  commentId: string,
+  newStatus: "reviewed" | "dismissed"
+): Promise<void> {
+  const reports = await db
+    .collection("commentReports")
+    .where("commentId", "==", commentId)
+    .where("status", "==", "pending")
+    .get();
+
+  if (reports.empty) return;
+  const batch = db.batch();
+  for (const doc of reports.docs) {
+    batch.update(doc.ref, { status: newStatus });
+  }
+  await batch.commit();
+}
 
 // --- Helper: reconcile chant counters from votes collection ---
 async function reconcileChantCounters(

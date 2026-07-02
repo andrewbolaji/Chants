@@ -14,19 +14,29 @@ void showReportSheet({
   required BuildContext context,
   required String chantId,
   required WidgetRef ref,
+  String? commentId,
 }) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
-    builder: (_) => _ReportSheetContent(chantId: chantId, ref: ref),
+    builder: (_) => _ReportSheetContent(
+      chantId: chantId,
+      commentId: commentId,
+      ref: ref,
+    ),
   );
 }
 
 class _ReportSheetContent extends StatefulWidget {
   final String chantId;
+  final String? commentId;
   final WidgetRef ref;
 
-  const _ReportSheetContent({required this.chantId, required this.ref});
+  const _ReportSheetContent({
+    required this.chantId,
+    this.commentId,
+    required this.ref,
+  });
 
   @override
   State<_ReportSheetContent> createState() => _ReportSheetContentState();
@@ -58,11 +68,19 @@ class _ReportSheetContentState extends State<_ReportSheetContent> {
     if (user == null) return;
 
     try {
-      await widget.ref.read(reportRepositoryProvider).submitReport(
-            chantId: widget.chantId,
-            reportedBy: user.uid,
-            reason: reason,
-          );
+      if (widget.commentId != null) {
+        await widget.ref.read(commentRepositoryProvider).submitCommentReport(
+              commentId: widget.commentId!,
+              reportedBy: user.uid,
+              reason: reason,
+            );
+      } else {
+        await widget.ref.read(reportRepositoryProvider).submitReport(
+              chantId: widget.chantId,
+              reportedBy: user.uid,
+              reason: reason,
+            );
+      }
       if (!mounted) return;
       setState(() => _submitted = true);
     } catch (e) {
@@ -106,7 +124,9 @@ class _ReportSheetContentState extends State<_ReportSheetContent> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Report this chant',
+            widget.commentId != null
+                ? 'Report this comment'
+                : 'Report this chant',
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: Spacing.sm),
@@ -144,7 +164,9 @@ class _ReportSheetContentState extends State<_ReportSheetContent> {
                     width: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text('Report this chant'),
+                : Text(widget.commentId != null
+                    ? 'Report this comment'
+                    : 'Report this chant'),
           ),
         ],
       ),

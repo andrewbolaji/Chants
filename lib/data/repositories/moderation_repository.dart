@@ -48,6 +48,27 @@ class ModerationRepository {
     });
   }
 
+  Future<void> hideComment(String commentId) async {
+    await _functions.httpsCallable('onModerationAction').call({
+      'action': 'hide-comment',
+      'targetId': commentId,
+    });
+  }
+
+  Future<void> unhideComment(String commentId) async {
+    await _functions.httpsCallable('onModerationAction').call({
+      'action': 'unhide-comment',
+      'targetId': commentId,
+    });
+  }
+
+  Future<void> removeComment(String commentId) async {
+    await _functions.httpsCallable('onModerationAction').call({
+      'action': 'remove-comment',
+      'targetId': commentId,
+    });
+  }
+
   Future<void> deleteAccount() async {
     await _functions.httpsCallable('deleteAccount').call({});
   }

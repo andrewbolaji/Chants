@@ -7,6 +7,7 @@ import 'package:chants/data/models/chant.dart';
 import 'package:chants/presentation/report/report_sheet.dart';
 import 'package:chants/presentation/shared/gold_foil_badge.dart';
 import 'package:chants/presentation/shared/halftone_painter.dart';
+import 'package:chants/presentation/comments/comment_section.dart';
 import 'package:chants/presentation/shared/vote_controls.dart';
 
 /// Whether lyrics should be centered (anthem feel) or left-aligned.
@@ -298,9 +299,15 @@ class ChantDetailScreen extends ConsumerWidget {
                     const SizedBox(height: Spacing.xl),
                   ],
 
-                  const SizedBox(height: Spacing.xxxl),
+                  const SizedBox(height: Spacing.xl),
                 ],
               ),
+            ),
+
+            // Comments section
+            CommentSection(
+              chantId: live.id,
+              commentCount: live.commentCount,
             ),
           ],
         ),

@@ -3,13 +3,34 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:chants/app/providers.dart';
 import 'package:chants/data/models/chant.dart';
+import 'package:chants/data/models/comment.dart';
+import 'package:chants/data/models/comment_like.dart';
+import 'package:chants/data/models/user_profile.dart';
 import 'package:chants/data/repositories/chant_repository.dart';
+import 'package:chants/data/repositories/comment_repository.dart';
+import 'package:chants/data/repositories/profile_repository.dart';
 import 'package:chants/presentation/browse/chant_detail_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:mockito/mockito.dart';
 
 class _MockChantRepository extends Mock implements ChantRepository {
   @override
   Stream<Chant?> chantStream(String id) => Stream.value(null);
+}
+
+class _MockCommentRepository extends Mock implements CommentRepository {
+  @override
+  Stream<List<Comment>> commentsForChantStream({required String chantId}) =>
+      Stream.value([]);
+  @override
+  Future<CommentLike?> getUserLike(
+          {required String userId, required String commentId}) async =>
+      null;
+}
+
+class _MockProfileRepository extends Mock implements ProfileRepository {
+  @override
+  Stream<UserProfile?> profileStream(String userId) => Stream.value(null);
 }
 
 Chant _makeChant({List<ChantVariation> variations = const []}) {
@@ -38,6 +59,8 @@ Widget _wrap(Widget child) {
     overrides: [
       authStateProvider.overrideWith((ref) => Stream.value(null)),
       chantRepositoryProvider.overrideWithValue(_MockChantRepository()),
+      commentRepositoryProvider.overrideWithValue(_MockCommentRepository()),
+      profileRepositoryProvider.overrideWithValue(_MockProfileRepository()),
     ],
     child: MaterialApp(home: child),
   );
