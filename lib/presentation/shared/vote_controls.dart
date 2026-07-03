@@ -81,7 +81,7 @@ class VoteControls extends ConsumerStatefulWidget {
 class _VoteControlsState extends ConsumerState<VoteControls> {
   bool _loaded = false;
   late final OptimisticVoteState _vote;
-  int? _pendingValue;
+  bool _hasPendingChange = false;
 
   @override
   void initState() {
@@ -138,13 +138,13 @@ class _VoteControlsState extends ConsumerState<VoteControls> {
       return;
     }
 
-    // In-flight guard: if a write is pending, record the latest tap as a
-    // pending intent. The optimistic display still updates immediately so the
-    // UI never looks frozen, but only one Firestore write is in flight at a
-    // time. The pending intent fires as a follow-up after the current write
-    // completes, collapsing any mid-flight burst into at most two writes.
+    // In-flight guard: if a write is pending, record that the user changed
+    // their mind. applyVote updates userVote and optimisticDelta immediately
+    // so the UI never looks frozen, but only one Firestore write is in flight
+    // at a time. After the current write completes, the follow-up writes the
+    // settled intent (userVote) directly, without re-calling applyVote.
     if (_vote.busy) {
-      _pendingValue = value;
+      _hasPendingChange = true;
       _vote.applyVote(value);
       setState(() {});
       return;
@@ -175,6 +175,7 @@ class _VoteControlsState extends ConsumerState<VoteControls> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _vote.revertWrite(previousVote, previousConfirmed));
+      _hasPendingChange = false;
       if (e.toString().contains('PERMISSION_DENIED')) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -184,14 +185,63 @@ class _VoteControlsState extends ConsumerState<VoteControls> {
           ),
         );
       }
+      return;
     }
 
-    // Process any pending change-of-mind tap that arrived while this write
-    // was in flight. Pop the value first so a recursive call starts clean.
-    if (_pendingValue != null) {
-      final pending = _pendingValue!;
-      _pendingValue = null;
-      _onVote(pending);
+    // Follow-up: if the user changed their mind while the write was in
+    // flight, write the settled intent (userVote) directly. This avoids the
+    // old bug where replaying the raw tap value through applyVote re-toggled
+    // the intent, causing drift.
+    if (_hasPendingChange) {
+      _hasPendingChange = false;
+      final settledVote = _vote.userVote;
+      if (settledVote != newVote) {
+        await _writeSettledIntent(user.uid, settledVote, newVote);
+      }
+    }
+  }
+
+  /// Writes the user's settled intent directly, without calling applyVote.
+  /// The optimistic state (userVote, optimisticDelta) is already correct
+  /// from the busy-guard applyVote calls. This only syncs Firestore.
+  Future<void> _writeSettledIntent(
+    String userId,
+    int? settledVote,
+    int? fallbackVote,
+  ) async {
+    _vote.busy = true;
+    setState(() {});
+
+    try {
+      final voteRepo = ref.read(voteRepositoryProvider);
+      if (settledVote == null) {
+        await voteRepo.removeVote(
+          userId: userId,
+          chantId: widget.chant.id,
+        );
+      } else {
+        await voteRepo.castVote(
+          userId: userId,
+          chantId: widget.chant.id,
+          value: settledVote,
+        );
+      }
+      if (!mounted) return;
+      setState(() => _vote.confirmWrite());
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _vote.revertWrite(fallbackVote, _vote.confirmedVote));
+      _hasPendingChange = false;
+      return;
+    }
+
+    // Handle further taps during this follow-up write
+    if (_hasPendingChange) {
+      _hasPendingChange = false;
+      final furtherSettled = _vote.userVote;
+      if (furtherSettled != settledVote) {
+        await _writeSettledIntent(userId, furtherSettled, settledVote);
+      }
     }
   }
 

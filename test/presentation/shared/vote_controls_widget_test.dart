@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -495,4 +497,288 @@ void main() {
       },
     );
   });
+
+  // ---------------------------------------------------------------
+  // RAPID-TAP DRIFT TESTS
+  // Uses a controllable fake repo where writes hang until explicitly
+  // completed, forcing the busy guard to be entered.
+  // ---------------------------------------------------------------
+
+  group('VoteControls rapid-tap drift', () {
+    late _ControllableFakeVoteRepository repo;
+
+    setUp(() {
+      repo = _ControllableFakeVoteRepository();
+    });
+
+    Widget wrapCtrl(Chant chant) {
+      return ProviderScope(
+        overrides: [
+          voteRepositoryProvider.overrideWithValue(repo),
+          authStateProvider.overrideWith(
+            (ref) => Stream.value(fakeUser as User?),
+          ),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: VoteControls(chant: chant),
+          ),
+        ),
+      );
+    }
+
+    /// Two-phase pump that warms auth, then forces a fresh State that loads
+    /// the persisted vote. Returns a ValueNotifier for server score updates.
+    Future<ValueNotifier<Chant>> pumpCtrlWithVote(
+      WidgetTester tester, {
+      required Chant chant,
+    }) async {
+      final notifier = ValueNotifier<Chant>(chant);
+      final keyNotifier = ValueNotifier<int>(0);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            voteRepositoryProvider.overrideWithValue(repo),
+            authStateProvider.overrideWith(
+              (ref) => Stream.value(fakeUser as User?),
+            ),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: ValueListenableBuilder<int>(
+                valueListenable: keyNotifier,
+                builder: (_, k, __) => ValueListenableBuilder<Chant>(
+                  valueListenable: notifier,
+                  builder: (_, c, __) =>
+                      VoteControls(key: ValueKey(k), chant: c),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      keyNotifier.value = 1;
+      await tester.pumpAndSettle();
+      return notifier;
+    }
+
+    testWidgets(
+      'a. rapid up+up (like then unlike): settles at start',
+      (tester) async {
+        await tester.pumpWidget(wrapCtrl(_makeChant(score: 0)));
+        await tester.pumpAndSettle();
+        expect(renderedScore(tester), '0');
+
+        // Tap UP -- starts write, hangs on completer
+        await tester.tap(find.bySemanticsLabel('Upvote'));
+        await tester.pump();
+        expect(renderedScore(tester), '1', reason: 'optimistic +1');
+
+        // Tap UP again while first write in-flight (busy guard)
+        await tester.tap(find.bySemanticsLabel('Upvote'));
+        await tester.pump();
+        expect(renderedScore(tester), '0', reason: 'toggle off');
+
+        // Complete first write, let follow-up logic run
+        repo.completeNextWrite();
+        await tester.pump();
+        await tester.pump();
+
+        // Must NOT drift to 1 (the pending-replay bug)
+        expect(renderedScore(tester), '0',
+            reason: 'must not re-toggle after first write settles');
+
+        // Complete any follow-up write
+        repo.completeAllWrites();
+        await tester.pump();
+        await tester.pump();
+
+        expect(renderedScore(tester), '0',
+            reason: 'fully settled: back to start');
+      },
+    );
+
+    testWidgets(
+      'b. rapid down+down (toggle off): settles at start',
+      (tester) async {
+        await tester.pumpWidget(wrapCtrl(_makeChant(score: 0)));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.bySemanticsLabel('Downvote'));
+        await tester.pump();
+        expect(renderedScore(tester), '-1');
+
+        await tester.tap(find.bySemanticsLabel('Downvote'));
+        await tester.pump();
+        expect(renderedScore(tester), '0', reason: 'toggle off');
+
+        repo.completeNextWrite();
+        await tester.pump();
+        await tester.pump();
+        expect(renderedScore(tester), '0',
+            reason: 'must not re-toggle after first write settles');
+
+        repo.completeAllWrites();
+        await tester.pump();
+        await tester.pump();
+        expect(renderedScore(tester), '0');
+      },
+    );
+
+    testWidgets(
+      'c. rapid up+down (switch): settles at -1, never -2',
+      (tester) async {
+        await tester.pumpWidget(wrapCtrl(_makeChant(score: 0)));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.bySemanticsLabel('Upvote'));
+        await tester.pump();
+        expect(renderedScore(tester), '1');
+
+        await tester.tap(find.bySemanticsLabel('Downvote'));
+        await tester.pump();
+        expect(renderedScore(tester), '-1', reason: 'switch to down');
+
+        repo.completeNextWrite();
+        await tester.pump();
+        await tester.pump();
+
+        final mid = int.parse(renderedScore(tester));
+        expect(mid, greaterThanOrEqualTo(-1),
+            reason: 'must never show -2 or lower');
+        expect(renderedScore(tester), '-1',
+            reason: 'intent is downvote, must hold');
+
+        repo.completeAllWrites();
+        await tester.pump();
+        await tester.pump();
+        expect(renderedScore(tester), '-1',
+            reason: 'settled: one downvote relative to start');
+      },
+    );
+
+    testWidgets(
+      'd. from confirmed down(-1): tap down+up quickly: never -2',
+      (tester) async {
+        repo.nextVote = _makeVote(value: -1, appliedValue: -1);
+        await pumpCtrlWithVote(tester, chant: _makeChant(score: -1));
+        expect(renderedScore(tester), '-1', reason: 'confirmed downvote');
+
+        // Tap DOWN (remove the downvote)
+        await tester.tap(find.bySemanticsLabel('Downvote'));
+        await tester.pump();
+        expect(renderedScore(tester), '0', reason: 'removed downvote');
+
+        // Tap UP while first write in-flight
+        await tester.tap(find.bySemanticsLabel('Upvote'));
+        await tester.pump();
+        expect(renderedScore(tester), '1', reason: 'switch to upvote');
+        // CRITICAL: must never be -2
+        expect(int.parse(renderedScore(tester)), greaterThanOrEqualTo(-1));
+
+        repo.completeNextWrite();
+        await tester.pump();
+        await tester.pump();
+        expect(int.parse(renderedScore(tester)), greaterThanOrEqualTo(-1),
+            reason: 'must never show -2 after first write completes');
+
+        repo.completeAllWrites();
+        await tester.pump();
+        await tester.pump();
+
+        final settled = int.parse(renderedScore(tester));
+        expect(settled, greaterThanOrEqualTo(-1),
+            reason: 'must never show -2 after settle');
+        expect(settled, 1, reason: 'settled: upvote from -1 base');
+      },
+    );
+
+    testWidgets(
+      'e. 5-tap burst on up arrow: collapses to single vote',
+      (tester) async {
+        await tester.pumpWidget(wrapCtrl(_makeChant(score: 0)));
+        await tester.pumpAndSettle();
+
+        // 5 rapid taps on UP
+        for (int i = 0; i < 5; i++) {
+          await tester.tap(find.bySemanticsLabel('Upvote'));
+          await tester.pump();
+        }
+
+        // 5 taps: on(1), off(0), on(1), off(0), on(1) -- odd = on
+        expect(renderedScore(tester), '1',
+            reason: 'odd number of taps = upvoted');
+
+        // Complete all writes + follow-ups
+        for (int i = 0; i < 5; i++) {
+          repo.completeAllWrites();
+          await tester.pump();
+          await tester.pump();
+        }
+
+        expect(renderedScore(tester), '1',
+            reason: 'collapses to single upvote');
+        expect(int.parse(renderedScore(tester)).abs(), lessThanOrEqualTo(1),
+            reason: 'single user never drifts beyond +/-1');
+      },
+    );
+  });
+}
+
+// --- Controllable fake: writes hang until explicitly completed ---
+
+class _ControllableFakeVoteRepository implements VoteRepository {
+  Vote? nextVote;
+  final List<String> writeLog = [];
+  final List<Completer<void>> _completers = [];
+
+  @override
+  Future<Vote?> getUserVote({
+    required String userId,
+    required String chantId,
+  }) async {
+    return nextVote;
+  }
+
+  @override
+  Future<void> castVote({
+    required String userId,
+    required String chantId,
+    required int value,
+  }) {
+    writeLog.add('cast:$value');
+    final c = Completer<void>();
+    _completers.add(c);
+    return c.future;
+  }
+
+  @override
+  Future<void> removeVote({
+    required String userId,
+    required String chantId,
+  }) {
+    writeLog.add('remove');
+    final c = Completer<void>();
+    _completers.add(c);
+    return c.future;
+  }
+
+  void completeNextWrite() {
+    if (_completers.isNotEmpty) {
+      _completers.removeAt(0).complete();
+    }
+  }
+
+  void completeAllWrites() {
+    while (_completers.isNotEmpty) {
+      _completers.removeAt(0).complete();
+    }
+  }
+
+  int get pendingWrites => _completers.length;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
