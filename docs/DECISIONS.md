@@ -12,7 +12,7 @@
 | 2026-05-24 | Simplicity check is part of done | A fan finds or places anything in one obvious tap. Simplest sensible layout, never dump everything at once. |
 | 2026-05-24 | Differentiation through data, never forks | No hardcoded league or sport checks anywhere. Enabling a new league or sport is a data change. |
 | 2026-05-25 | Never regenerate seed content from non-authoritative sources | All seed content (squads, players, chants, lyrics, or cultural content) is supplied by Andrew in the seed files. The build may only transform supplied data in place (for example removing a field from each existing entry). Never rewrite a file's content from memory. Anything not present in a seed file does not get invented. Highest-integrity rule in the project. |
-| 2026-05-27 | Design blocks read DESIGN_DIRECTION.md | Any future design or beautification pass starts by reading the direction doc (the project's visual target). The design block kickoff must cite it. |
+| 2026-05-27 | Design blocks read DESIGN_DIRECTION.md | Any future design or beautification pass starts by reading the direction doc (the project's visual target). The design block plan must cite it. |
 
 ## Decisions
 | Date | Decision | Reason |

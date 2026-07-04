@@ -195,7 +195,7 @@ v1.1 (social layer, the release target):
 
 ## 13. Definition of done (per feature)
 
-Works end to end on the real seeded data; mobile-responsive; empty, loading, and error states present; audit log records the action (moderation especially); access control verified with a second account; no em dashes; no console errors; adversarial review passed with disposition table (Security frame mandatory on any user-content surface); content-policy and reporting path present on any user-content surface; handbook section written; passes the simplicity check (a fan finds or places it in one obvious tap, simplest sensible layout).
+Works end to end on the real seeded data; mobile-responsive; empty, loading, and error states present; audit log records the action (moderation especially); access control verified with a second account; no em dashes; no console errors; code review passed with disposition table (Security frame mandatory on any user-content surface); content-policy and reporting path present on any user-content surface; handbook section written; passes the simplicity check (a fan finds or places it in one obvious tap, simplest sensible layout).
 
 ---
 
@@ -203,7 +203,7 @@ Works end to end on the real seeded data; mobile-responsive; empty, loading, and
 
 ### From Block 1
 
-**All-N/A security pass is a red flag, not a green light.** An initial security review returned all N/A and missed a High privilege escalation in the profiles create rule (role field not pinned, allowing self-promotion to operator via a crafted SDK write). The independent adversarial review caught it. A clean security sheet is a signal to push harder, not to close.
+**All-N/A security pass is a red flag, not a green light.** An initial security review returned all N/A and missed a High privilege escalation in the profiles create rule (role field not pinned, allowing self-promotion to operator via a crafted SDK write). The independent code review caught it. A clean security sheet is a signal to push harder, not to close.
 
 **Recap-commit self-reference always mismatches.** Recording a hash inside the file that the commit creates means the hash is always one behind. Resolution: record the final reviewed code commit (`accbe3d`), and treat the recap-write as a noted docs-only commit on top (`04718af`). Document both explicitly so it reads as intent, not drift.
 
@@ -217,7 +217,7 @@ Works end to end on the real seeded data; mobile-responsive; empty, loading, and
 
 ### From beautification audit pass
 
-**Point a brief at the work explicitly, even when it is already in the repo.** In Block 6, the design brief was in the project root but the kickoff did not cite it as the process spec. The right outcome was reached by parallel construction (the kickoff restated the same principles), but the brief was not consulted as the canonical reference. Mitigation: a standing rule now requires every design block to start by reading DESIGN_DIRECTION.md.
+**Point a brief at the work explicitly, even when it is already in the repo.** In Block 6, the design brief was in the project root but the planning step did not cite it as the process spec. The right outcome was reached by parallel construction (the plan restated the same principles), but the brief was not consulted as the canonical reference. Mitigation: a standing rule now requires every design block to start by reading DESIGN_DIRECTION.md.
 
 ### From the vote-fix and rename work
 

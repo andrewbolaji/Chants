@@ -791,7 +791,7 @@ None (deleteAccount added to existing functions/src/index.ts).
 - **F2:** 88px vote-controls placeholder documented as intentional layout shim.
 - **Tap target enumeration:** All interactive elements verified at 44-48px minimum.
 - **Single-accent audit:** 6 amber uses enumerated, all on action or earned status. Zero decorative.
-- **Doc updates A-D:** BEAUTIFICATION_BRIEF.md confirmed, standing rule added, lesson recorded, framework flag noted.
+- **Doc updates A-D:** design brief confirmed, standing rule added, lesson recorded.
 
 ### Disposition table (Taste frame)
 
@@ -859,7 +859,7 @@ None (deleteAccount added to existing functions/src/index.ts).
 
 | Finding | Severity | Disposition |
 |---------|----------|-------------|
-| Matching threshold tradeoff pinned by adversarial tests | N/A | "The Saka Song" vs "The Rice Song" = 0.5 (accepted false positive). "Up the Arsenal" vs "Pride of Arsenal" = 0.2 (no nudge). Both tests visible in the suite. |
+| Matching threshold tradeoff pinned by edge-case tests | N/A | "The Saka Song" vs "The Rice Song" = 0.5 (accepted false positive). "Up the Arsenal" vs "Pride of Arsenal" = 0.2 (no nudge). Both tests visible in the suite. |
 | No magic numbers: all config in MatcherConfig | N/A | Verified: matchThreshold, tuneBoostAmount, tuneMatchThreshold, maxResults. |
 
 ### New DECISIONS entries (to add)
