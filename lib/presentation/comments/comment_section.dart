@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chants/app/colors.dart';
@@ -32,8 +34,70 @@ class _CommentSectionState extends ConsumerState<CommentSection> {
   // Track which comments we have loaded likes for.
   final Set<String> _likeLoadedFor = {};
 
+  // Stream subscription for comments (replaces StreamBuilder).
+  StreamSubscription<List<Comment>>? _commentsSub;
+  List<Comment> _comments = [];
+  bool _commentsLoading = true;
+  bool _commentsError = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _subscribeToComments();
+  }
+
+  @override
+  void didUpdateWidget(CommentSection old) {
+    super.didUpdateWidget(old);
+    if (old.chantId != widget.chantId) {
+      _commentsSub?.cancel();
+      _likeStates.clear();
+      _likeLoadedFor.clear();
+      _commentsLoading = true;
+      _commentsError = false;
+      _subscribeToComments();
+    }
+  }
+
+  void _subscribeToComments() {
+    final stream = ref
+        .read(commentRepositoryProvider)
+        .commentsForChantStream(chantId: widget.chantId);
+
+    _commentsSub = stream.listen(
+      (comments) {
+        if (!mounted) return;
+
+        // Reconcile like states outside of build.
+        final authState = ref.read(authStateProvider);
+        final user = authState.valueOrNull;
+        for (final c in comments) {
+          _initLikeState(c);
+          _reconcileServerCount(c.id, c.likeCount);
+          if (user != null) {
+            _loadUserLike(c.id, user.uid);
+          }
+        }
+
+        setState(() {
+          _comments = comments;
+          _commentsLoading = false;
+          _commentsError = false;
+        });
+      },
+      onError: (_) {
+        if (!mounted) return;
+        setState(() {
+          _commentsError = true;
+          _commentsLoading = false;
+        });
+      },
+    );
+  }
+
   @override
   void dispose() {
+    _commentsSub?.cancel();
     _bodyController.dispose();
     super.dispose();
   }
@@ -66,13 +130,15 @@ class _CommentSectionState extends ConsumerState<CommentSection> {
     }
   }
 
+  /// Updates the cached like state from a new server count.
+  /// Does NOT call setState; the caller is responsible for that.
   void _reconcileServerCount(String commentId, int newCount) {
     final current = _likeStates[commentId];
     if (current == null) return;
     final reconciled = current.reconcileServerCount(newCount);
     if (reconciled.serverLikeCount != current.serverLikeCount ||
         reconciled.optimisticDelta != current.optimisticDelta) {
-      setState(() => _likeStates[commentId] = reconciled);
+      _likeStates[commentId] = reconciled;
     }
   }
 
@@ -193,140 +259,121 @@ class _CommentSectionState extends ConsumerState<CommentSection> {
     final isSignedIn = user != null;
     final textTheme = Theme.of(context).textTheme;
 
-    final commentsStream = ref
-        .watch(commentRepositoryProvider)
-        .commentsForChantStream(chantId: widget.chantId);
+    final comments = _comments;
+    final sorted = _sorted(comments);
 
-    return StreamBuilder<List<Comment>>(
-      stream: commentsStream,
-      builder: (context, snap) {
-        final comments = snap.data ?? [];
-        final sorted = _sorted(comments);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Divider(indent: Spacing.lg, endIndent: Spacing.lg),
+        Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: Spacing.lg,
+            vertical: Spacing.sm,
+          ),
+          child: SectionEyebrow(
+            text: comments.isEmpty
+                ? 'Comments'
+                : 'Comments (${comments.length})',
+          ),
+        ),
 
-        // Init like states for all comments and load user likes
-        for (final c in comments) {
-          _initLikeState(c);
-          _reconcileServerCount(c.id, c.likeCount);
-          if (isSignedIn) {
-            _loadUserLike(c.id, user.uid);
-          }
-        }
+        // Loading
+        if (_commentsLoading)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: Spacing.xl),
+            child: Center(child: CircularProgressIndicator()),
+          ),
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Divider(indent: Spacing.lg, endIndent: Spacing.lg),
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: Spacing.lg,
-                vertical: Spacing.sm,
-              ),
-              child: SectionEyebrow(
-                text: comments.isEmpty
-                    ? 'Comments'
-                    : 'Comments (${comments.length})',
+        // Error
+        if (_commentsError)
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: Spacing.lg,
+              vertical: Spacing.xl,
+            ),
+            child: Text(
+              'Could not load comments. Try again.',
+              style: textTheme.bodyMedium?.copyWith(
+                color: AppColors.textMuted,
               ),
             ),
+          ),
 
-            // Loading
-            if (snap.connectionState == ConnectionState.waiting &&
-                !snap.hasData)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: Spacing.xl),
-                child: Center(child: CircularProgressIndicator()),
-              ),
-
-            // Error
-            if (snap.hasError)
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: Spacing.lg,
-                  vertical: Spacing.xl,
+        // Empty
+        if (!_commentsLoading && !_commentsError && comments.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: Spacing.lg,
+              vertical: Spacing.xl,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.chat_bubble_outline,
+                  size: 16,
+                  color: AppColors.textMuted,
                 ),
-                child: Text(
-                  'Could not load comments. Try again.',
+                const SizedBox(width: Spacing.sm),
+                Text(
+                  'No comments yet. Be the first.',
                   style: textTheme.bodyMedium?.copyWith(
                     color: AppColors.textMuted,
                   ),
                 ),
+              ],
+            ),
+          ),
+
+        // Comment list
+        ...sorted.map((comment) {
+          final likeState =
+              _likeStates[comment.id] ?? CommentLikeState.initial(0);
+          final isAuthor = isSignedIn && comment.userId == user.uid;
+
+          return CommentCard(
+            comment: comment,
+            likeState: likeState,
+            isAuthor: isAuthor,
+            onToggleLike: isSignedIn
+                ? () => _toggleLike(comment.id, user.uid)
+                : null,
+            onReport: isSignedIn
+                ? () => showReportSheet(
+                      context: context,
+                      chantId: comment.chantId,
+                      commentId: comment.id,
+                      ref: ref,
+                    )
+                : null,
+            onDelete: isAuthor
+                ? () => _softDelete(comment.id)
+                : null,
+          );
+        }),
+
+        const SizedBox(height: Spacing.lg),
+
+        // Composer
+        if (!isSignedIn)
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: Spacing.lg,
+              vertical: Spacing.sm,
+            ),
+            child: Text(
+              'Sign in to comment.',
+              style: textTheme.bodyMedium?.copyWith(
+                color: AppColors.textMuted,
               ),
+            ),
+          )
+        else
+          _buildComposer(context, user.uid, textTheme),
 
-            // Empty
-            if (snap.hasData && comments.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: Spacing.lg,
-                  vertical: Spacing.xl,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.chat_bubble_outline,
-                      size: 16,
-                      color: AppColors.textMuted,
-                    ),
-                    const SizedBox(width: Spacing.sm),
-                    Text(
-                      'No comments yet. Be the first.',
-                      style: textTheme.bodyMedium?.copyWith(
-                        color: AppColors.textMuted,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-            // Comment list
-            ...sorted.map((comment) {
-              final likeState =
-                  _likeStates[comment.id] ?? CommentLikeState.initial(0);
-              final isAuthor = isSignedIn && comment.userId == user.uid;
-
-              return CommentCard(
-                comment: comment,
-                likeState: likeState,
-                isAuthor: isAuthor,
-                onToggleLike: isSignedIn
-                    ? () => _toggleLike(comment.id, user.uid)
-                    : null,
-                onReport: isSignedIn
-                    ? () => showReportSheet(
-                          context: context,
-                          chantId: comment.chantId,
-                          commentId: comment.id,
-                          ref: ref,
-                        )
-                    : null,
-                onDelete: isAuthor
-                    ? () => _softDelete(comment.id)
-                    : null,
-              );
-            }),
-
-            const SizedBox(height: Spacing.lg),
-
-            // Composer
-            if (!isSignedIn)
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: Spacing.lg,
-                  vertical: Spacing.sm,
-                ),
-                child: Text(
-                  'Sign in to comment.',
-                  style: textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textMuted,
-                  ),
-                ),
-              )
-            else
-              _buildComposer(context, user.uid, textTheme),
-
-            const SizedBox(height: Spacing.lg),
-          ],
-        );
-      },
+        const SizedBox(height: Spacing.lg),
+      ],
     );
   }
 
