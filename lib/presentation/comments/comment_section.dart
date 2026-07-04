@@ -354,8 +354,17 @@ class _CommentSectionState extends ConsumerState<CommentSection> {
           );
         }
 
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
+        return Container(
+          decoration: const BoxDecoration(
+            color: AppColors.surfaceRaised,
+            border: Border(
+              top: BorderSide(color: AppColors.outline, width: 0.5),
+            ),
+          ),
+          padding: const EdgeInsets.symmetric(
+            horizontal: Spacing.lg,
+            vertical: Spacing.md,
+          ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -365,31 +374,67 @@ class _CommentSectionState extends ConsumerState<CommentSection> {
                   maxLength: 500,
                   maxLines: 3,
                   minLines: 1,
-                  decoration: const InputDecoration(
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: AppColors.textBody,
+                  ),
+                  decoration: InputDecoration(
                     hintText: 'Add a comment...',
+                    hintStyle: textTheme.bodyMedium?.copyWith(
+                      color: AppColors.textMuted,
+                    ),
                     counterText: '',
-                    border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: Spacing.md,
-                      vertical: Spacing.sm,
+                    filled: true,
+                    fillColor: AppColors.surface,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: Spacing.lg,
+                      vertical: Spacing.md,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(Radii.sm),
+                      borderSide: const BorderSide(
+                        color: AppColors.outline,
+                        width: 0.5,
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(Radii.sm),
+                      borderSide: const BorderSide(
+                        color: AppColors.outline,
+                        width: 0.5,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(Radii.sm),
+                      borderSide: const BorderSide(
+                        color: AppColors.gold,
+                        width: 1,
+                      ),
                     ),
                   ),
                   onChanged: (_) => setState(() {}),
                 ),
               ),
               const SizedBox(width: Spacing.sm),
-              IconButton(
-                onPressed: _bodyController.text.trim().isNotEmpty && !_posting
-                    ? () => _postComment(
-                          userId,
-                          profile?.displayName ?? 'Anonymous',
-                        )
-                    : null,
-                icon: Icon(
-                  Icons.send,
-                  color: _bodyController.text.trim().isNotEmpty && !_posting
-                      ? AppColors.gold
-                      : AppColors.textMuted,
+              SizedBox(
+                width: 44,
+                height: 44,
+                child: IconButton(
+                  onPressed:
+                      _bodyController.text.trim().isNotEmpty && !_posting
+                          ? () => _postComment(
+                                userId,
+                                profile?.displayName ?? 'Anonymous',
+                              )
+                          : null,
+                  icon: Icon(
+                    Icons.send_rounded,
+                    color:
+                        _bodyController.text.trim().isNotEmpty && !_posting
+                            ? AppColors.gold
+                            : AppColors.textMuted,
+                    size: 22,
+                  ),
+                  padding: EdgeInsets.zero,
                 ),
               ),
             ],
