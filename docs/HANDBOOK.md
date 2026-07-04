@@ -164,3 +164,46 @@ Chants is the home for football chants. Fans use it to find the songs, learn the
 **Where it shows up.** The chant detail screen, below the main lyrics and context notes, above the media placeholder.
 
 > [screenshot: Chant detail with "Also sung as" section]
+
+---
+
+## Comments
+
+**What it does.** Lets people comment on a chant, like comments they enjoy, and flag ones that break the rules. Every chant has its own comment thread on the detail screen.
+
+**How to use it.**
+1. Sign in (commenting, liking, and reporting all require an account).
+2. Open any chant's detail screen and scroll down to the comments section.
+3. Type in the composer at the bottom (up to 500 characters) and tap the send icon to post.
+4. Tap the heart on any comment to like it. Tap again to remove your like.
+5. To delete your own comment, tap the trash icon on the right side of the card. A confirmation dialog appears first.
+6. To report someone else's comment, tap the flag icon on the right side of their card. Pick a reason and optionally add a note, same flow as reporting a chant.
+
+**Behind the scenes.** Comments are flat (no nested replies). Each comment stores the author's display name, body text, a like count, a flag count, and hidden/removed flags.
+
+Sorting is by most likes first, then newest first among comments with the same like count.
+
+One like per person per comment, enforced by a deterministic document ID (`userId_commentId`). Liking is optimistic: the heart fills and the count updates instantly, then the write goes to the server. If the write fails, it reverts. A Cloud Function (`onCommentLikeWritten`) recomputes the like count from the actual stored like documents every time a like is created or removed, so the count stays correct even after reinstalling the app.
+
+The comment count shown on the chant is also recomputed from ground truth. A Cloud Function (`onCommentWritten`) fires on every comment write (create, update, or delete) and counts the visible comments (not hidden, not removed) for that chant. This means the count self-corrects no matter what caused the change.
+
+Deleting your own comment is a soft delete: it sets `removed: true` on the document. The query that loads comments excludes hidden and removed comments, so the comment disappears for everyone, but the document is not hard-removed from the database.
+
+Reporting a comment creates a document in the `commentReports` collection with status "pending." A Cloud Function (`onCommentReportCreated`) increments the flag count on the comment in a transaction. If the flag count reaches 3, the comment is auto-hidden and an audit log entry is written. Operators can then review, unhide, or permanently remove the comment.
+
+Rate limits apply per user per hour. New accounts (less than 24 hours old, or 3 or fewer total submissions) can post up to 5 comments per hour. Established accounts can post up to 20 per hour. If a user exceeds the limit, the extra comment is auto-hidden (never auto-removed) and an audit entry is logged. The rate limit runs only on comment creates, not on updates or deletes.
+
+Banned users see "You cannot comment right now" in place of the composer.
+
+**Limits and gotchas.**
+- No nested replies. Comments are a flat list.
+- No comment downvotes. The only reaction is a like (heart).
+- No lyric-suggestion mechanic yet. All three are parked for v1.1.
+- You cannot report your own comment. The card shows a delete icon for your own comments and a flag icon for everyone else's.
+- A deleted comment cannot be undeleted by the user. The soft-delete confirmation dialog warns "This cannot be undone."
+- The report button is not shown to signed-out users. Neither is the like button or the composer.
+- Comment body max length is 500 characters, enforced in the text field.
+
+**Where it shows up.** The chant detail screen (comment section and composer), the comment count on the chant document, the `commentReports` collection and audit log for moderation, and the report flow shared with chant reporting.
+
+> [screenshot: comment section on a chant detail screen, showing a posted comment, the like heart, and the composer]
