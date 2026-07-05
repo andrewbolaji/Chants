@@ -10,11 +10,9 @@ Chants is a mobile app where football fans find, learn, and contribute the chant
 
 ## Screenshots and Demo
 
-<!-- screenshot: home -->
-
-<!-- screenshot: chant detail -->
-
-<!-- screenshot: club screen -->
+| Home and Discover | Chant detail: lyrics, tune, and context | Club screen: chants ranked by score | Submit a chant |
+|:-:|:-:|:-:|:-:|
+| ![Home](docs/screenshots/home.png) | ![Chant detail](docs/screenshots/chant-detail.png) | ![Club screen](docs/screenshots/club-screen.png) | ![Add a chant](docs/screenshots/add-chant.png) |
 
 **Live demo:** [Landing page](TODO: url)
 

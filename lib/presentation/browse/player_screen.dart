@@ -43,8 +43,15 @@ class PlayerScreen extends ConsumerWidget {
                       'playerId': player.id,
                     },
                   ),
-                  icon: const Icon(Icons.add),
-                  label: const Text('Add a chant'),
+                  icon: const Icon(Icons.add_rounded, size: 18),
+                  label: const Text(
+                    'ADD A CHANT',
+                    style: TextStyle(
+                      fontFamily: 'SpaceMono',
+                      fontSize: 12,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
                 )
               : null,
       body: StreamBuilder<List<Chant>>(
