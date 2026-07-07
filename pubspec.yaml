@@ -36,6 +36,25 @@ dev_dependencies:
   custom_lint: ^0.7.5
   riverpod_lint: ^2.6.3
   mockito: ^5.4.5
+  flutter_launcher_icons: ^0.14.3
+  flutter_native_splash: ^2.4.6
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/ios_icon_1024.png"
+  image_path_ios: "assets/icon/ios_icon_1024.png"
+  remove_alpha_ios: true
+  adaptive_icon_background: "#444444"
+  adaptive_icon_foreground: "assets/icon/android_foreground.png"
+  min_sdk_android: 21
+
+flutter_native_splash:
+  color: "#444444"
+  image: "assets/icon/splash.png"
+  android_12:
+    image: "assets/icon/splash.png"
+    color: "#444444"
 
 flutter:
   uses-material-design: true
