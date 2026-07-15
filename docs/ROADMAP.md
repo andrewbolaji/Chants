@@ -114,3 +114,39 @@ Build after the vote-fix device walk passes, as the last feature block before th
 - **TODO** Store listings, screenshots, and data-safety / app-privacy forms.
 - **TODO** App Check production: register the DeviceCheck key, then flip soft to full enforcement after about one clean telemetry week.
 - **TODO** Production build, signing, and deploy.
+
+---
+
+## Launch and marketing plan
+
+### Pre-launch (start now, needs weeks of runway)
+
+- **One-sentence pitch**, used everywhere (store subtitle, site headline, social bios): *Chants is the songbook of the terraces. Find the words, learn them, and add your own.*
+- **Build in public** on one platform, 2 to 3 posts a week. Primary platform is the one where football fans actually gather (X or TikTok). Claim the @chantsfc handle everywhere for consistency but only post actively on the primary.
+- **Collect waitlist emails** on chantsfc.com. Even 30 to 100 people means launch day is not silent.
+- **Join five watering holes** as a real member, weeks before launch: Arsenal and other club subreddits, football fan Twitter, terrace-culture and fan forums. Be helpful, never spam, so at launch you are a member sharing something, not a stranger advertising.
+- **Line up 5 to 10 soft-launch testers** who will try it early, give honest feedback, and leave a day-one rating.
+- **Assemble a launch kit** in one folder: logo, 3 to 5 clean screenshots, the one-sentence pitch, a 100-word description, and the founder story in three sentences (English-born Arsenal supporter building the songbook the terraces never had).
+
+### Launch day
+
+- Email the waitlist first, in the morning.
+- Post to the five watering holes, tailored to each, leading with the story and the problem, not the feature list.
+- Launch on Product Hunt (Tuesday to Thursday), and Show HN if the technical angle fits.
+- Post the LinkedIn launch piece the same day, only once the app is live with a working store link.
+- Flip the store pills on chantsfc.com from coming-soon to the real App Store and Play URLs.
+- Reply to every comment and email for the first 48 hours. Ask for ratings.
+
+### Post-launch (the grind)
+
+- Content cadence of 2 to 3 posts a week on the primary platform, tied to matchdays and the transfer window (every new signing needs a chant).
+- Make in-app sharing native (share-out to X, TikTok, YouTube is already planned for v1.1) since user sharing is the real growth engine.
+- Add an in-app prompt asking happy users to rate the app after a good moment; store ratings drive organic discovery more than anything.
+- SEO groundwork: repurpose handbook and chant content into public help and lyrics pages on chantsfc.com, which compounds over time.
+
+### Budget (hold under 500 dollars)
+
+- Domain and hosting: roughly 30 dollars a year, already committed.
+- Hold off on paid ads until the free channels prove the app resonates.
+- Best paid dollar is one football-culture micro-influencer (roughly 100 to 300 dollars) rather than scattershot ads.
+- Skip PR firms, broad untargeted ads, and anything promising download counts.
