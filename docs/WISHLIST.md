@@ -99,6 +99,17 @@
 **Why pin, not build:** Brings the serious music-licensing question and real infrastructure cost.
 **Trigger to promote:** media engagement on the light formats proves demand, with the IP exposure understood first.
 
+### v2: Auto lyric-video generator (the growth engine)
+**The idea:** From any chant, a fan taps one button and the app generates a clean vertical (9:16) video: the lyrics animating in time with the tune, over the club's colors, with a Chants watermark, ready to share to X, TikTok, and Instagram in seconds. Karaoke-style, on brand with the app's "know every word" identity.
+**Why this is the headline v2 feature:** Video is what wins on X and TikTok for football content, so this is the app's real distribution engine. Every shared video is a watermarked ad made by the user for free. It is defensible because it only works on top of the app's own verified lyric and tune archive, which is the moat, so it cannot be copied without first building the archive. Impact is higher than much of v1.1, but readiness is not: it only pays off once there are users to share it and an archive to build from, so it is sequenced as the first big v2 feature, after v1 is live and the v1.1 social layer is in.
+**The hard constraint to design around from day one:** audio. Animating the lyrics is straightforward; playing the actual licensed master under the video is the music-licensing exposure the project has deliberately avoided. The safe version uses crowd audio, an a cappella, or a generic instrumental, never the licensed recording. Decide the audio approach before building.
+**Trigger to promote:** v1 live with real users, v1.1 social layer shipped, and a decision made on the allowed audio sources.
+
+### v2: Fan-submitted chant videos (approve-then-post only)
+**The idea:** Let fans submit videos they made in other apps (CapCut and the like) to accompany a chant. More interaction and fun, but done safely.
+**Why pin, not build, and why it follows the generator:** Two hard problems ride along with user video: moderation at scale and music licensing. The moderation model is non-negotiable: it must be approve-then-post (a video sits in a queue and a moderator clears it before it is ever public), never submit-then-check-the-flagged-ones, because a single piece of illegal or hateful video sitting live even briefly is a real legal and app-store-removal risk. Even approved videos need an audio policy (a fan singing over a copyrighted backing track is still exposure). Do NOT build an in-app video editor: CapCut exists and is free, fans already use it, and it is a product unto itself.
+**Trigger to promote:** the fuller moderation console exists, a written video content and audio policy exists, and the community is active enough that a moderation queue is worth running. Sequenced after the lyric-video generator, not before.
+
 ### v2: Fixture-calendar and matchday surfacing
 **The idea:** Tie the app to the fixture calendar, spike content on matchdays.
 **Why pin, not build:** Chants spike on matchdays, but this is an enhancement, not core.
