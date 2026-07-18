@@ -153,3 +153,7 @@ Build after the vote-fix device walk passes, as the last feature block before th
 - Hold off on paid ads until the free channels prove the app resonates.
 - Best paid dollar is one football-culture micro-influencer (roughly 100 to 300 dollars) rather than scattershot ads.
 - Skip PR firms, broad untargeted ads, and anything promising download counts.
+
+### Pre-v1 launch gates
+
+- CI/CD via GitHub Actions is being added as a pre-v1 launch gate, and full observability (Crashlytics fully wired, plus Firebase Performance Monitoring and Analytics) is the next pre-v1 gate.
