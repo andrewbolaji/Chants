@@ -2,6 +2,11 @@
 
 ## v1.1 (committed, fast follow after v1 ships and gets real use)
 
+### v1.1 (FIRST): Threaded replies and rival banter
+**The idea:** Nested comment replies so fans can reply directly to a specific comment, not just add to a flat list. This is what turns the comment section into real back-and-forth: a rival fan talks crap, same-club fans respond under it, debates branch. Banter between rival supporters is core to football culture and is the point of comments here.
+**Why it is first in v1.1, not v1:** v1 already ships working comments (post, like, report, moderate), and the banter already happens fine in a flat chronological thread, so flat comments do not block the culture. Threading is a risk multiplier on the exact surface that has already caused the most bugs (the setState-during-build crash and the vote and like drift both lived here), so adding it in the final pre-launch stretch would destabilise the one thing that finally works. It ships as the very first v1.1 feature instead, with real focus and a proper test and device walk, rather than rushed into v1.
+**Scope when built:** reply-to-comment data model, recursive or one-level-deep rendering, collapse and expand, moderation of a reply tree (not just a flat list), and reply notifications. Plan the depth (full nesting vs one level) before building. Reporting and rate limits apply to replies exactly as to comments.
+
 ### v1.1: Home screen rotating quote
 **The idea:** A single shared quote everyone sees on the home screen, rotating roughly every 3 days, chosen date-deterministically from a curated quotes collection (no per-user randomness, no server cron). Andrew appends entries over time, each copyright-cleared before adding. Real attributed football quotes preferred over copyrighted song lyrics. Goes on the home screen, NOT the OS launch or splash screen (platform guidance keeps that minimal, and it flashes too fast to read).
 **Why v1.1:** Home-screen polish once the core content is proven.
