@@ -74,6 +74,11 @@
 **Design direction:** The light theme is derived from the marketing site palette (cream and paper surfaces, ink text, the same gold, a blue accent), so the website and the app light mode share one identity. Both themes run entirely through the existing tokens in colors.dart, theme.dart, and spacing.dart, so the switch is a token-map swap with zero hardcoded hex in any screen. Every surface, including the Fraunces lyric view and the Verified elements, is checked for WCAG AA contrast in both themes.
 **Trigger to build:** After v1 is live with 30 days of real use, and once no core screen is still changing shape.
 
+### v1.1: Marketing website (Astro)
+**The idea:** A standalone Astro landing site (separate repo) in the app's own design system (warm charcoal and gold, Anton, Space Mono, Fraunces, loud frame and calm words). Sections: hero, order of play, a featured interactive chant, a songbook of cards, the terrace-notes manifesto, honest club status, and a CTA with coming-soon store pills. It is the public front door and hosts the privacy policy, terms, and support pages the app stores require.
+**Why v1.1:** Built and living in its own repo. It is a launch dependency (the stores need its legal pages live and a support URL), not an app code change, so it is tracked here for planning but shipped and hosted separately.
+**Trigger to promote:** Before store submission the site must be hosted on chantsfc.com with live privacy, terms, and support pages. At launch, its store pills flip from coming-soon to the real App Store and Play URLs. Content rule holds: only original or fan-written chant lyrics on the site, no lyrics lifted from licensed songs, no crests or player images.
+
 ---
 
 ## v2 candidates (pin, do not build, need real usage data)
@@ -191,6 +196,30 @@
 
 ### Future: Real club crests on chant cards
 **The idea:** Show the actual club crest next to the gold who-it-is-for line on chant cards. Adds instant visual recognition. Requires licensing or sourcing crest assets for every supported club. No placeholder icon (stock shields read as template). Wait until real assets are available.
+
+---
+
+## Future projects (separate apps, not Chants features)
+
+_Sequence, one at a time after Chants ships: build idea 1 first (achievable solo, earns revenue, builds the audience and club relationships), then idea 3 (the highest-ceiling endgame, once there is a track record and capital), with idea 2 slotted in only after the legal path is cleared. One app at a time. Chants ships first, fully, before any of these start._
+
+### Future project: Away Days (football travel booking)
+**The idea:** The travel product for supporters following their club, home and abroad. Match found, the app bundles transport, hotel, the fan-friendly pub, ticket-collection logistics, and local safety and colours knowledge into a few taps. Revenue from affiliate and booking cuts on transport and hotels, and a fee on packages. It is a commerce play, not a content app.
+**Why it fits the founder goal:** Away-day spend is real and high, so it makes money, and it keeps the founder physically at grounds while building the exact travelling-superfan audience and supporters-trust relationships that open club doors. Existing tools are guides, not booking products, so the space is open.
+**Buildable from America:** Yes, in phases. Launch the Premier League first with knowledge gathered remotely (fan forums, supporters trusts, groundhopping communities, club guides, maps and street view) and completed by community contribution, since away-day fans will correct and fill it. Revenue then funds ground-truth trips, and existing UK contacts act as on-the-ground local editors from day one.
+**Extra hook:** a groundhopping log built in, check in at every ground and collect them like stamps, which is a real subculture and a free viral loop.
+**Status:** Build first after Chants is live. One app at a time.
+
+### Future project: Football prediction and challenge game (free-to-play, no money held)
+**The idea:** A social prediction game. Predict scorelines, first scorer, and weekend results, run private leagues with friends, climb a global table, streaks and badges. A friend-challenge feature (challenge a mate on a match, they accept or decline) and a "place a number on it" tracker that records the prediction and who was right. Makes every match already being watched more exciting. Revenue at scale through light ads, a premium tier, and sponsored prize rounds.
+**The hard legal line (non-negotiable, confirm with a gaming-law attorney per market before building):** The app never touches a wager. It does not take, hold, move, or take a cut of any stake. Any bet between friends is agreed and settled by them entirely offline; the app only tracks the prediction and the outcome, as a scorekeeping and bragging-rights tool. The danger is feature drift toward in-app settlement, which would turn a legal product into a regulated gambling one. Do not cross that line, and get legal sign-off first, since the line is legal, not technical.
+**Also note:** it needs a reliable football results feed, so factor that licensing and cost in early. Results and tables must be recomputed from real source data, never guessed or blindly incremented.
+**Status:** Build only after the legal path is confirmed. Pairs with Away Days as one drop after Chants.
+
+### Future project: Matchday experience marketplace (the endgame)
+**The idea:** The trusted marketplace for getting into the game and everything around it: verified ticket resale and hospitality, bundled with the matchday experience, aimed at the travelling and international supporter who has money and no local knowledge and will pay a premium for trust and ease.
+**Why it is the endgame:** Highest ceiling and the most direct route to real club relationships, because it means working directly with clubs' ticketing and hospitality (commercial) side. But it is the hardest and most regulated (trust, fraud, and rights holders from day one), so it is a company, not a side project.
+**Status:** Attack last, once there is a track record and ideally capital or a partner, funded and de-risked by the earlier builds. Do not start solo and cold.
 
 ---
 

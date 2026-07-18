@@ -98,6 +98,9 @@ Build after the vote-fix device walk passes, as the last feature block before th
 
 - **IN PROGRESS** Arsenal seeded and verified. Lyrics confirmed, three context notes confirmed factual and unflagged, plus several more verified chants added (player, club, and manager subjects). Arsenal is the showcase club and is effectively complete.
 - **TODO** Seed the other 19 Premier League clubs. Target about 5 chants per club, roughly 100 total. Floor: no club below 3 genuinely iconic chants. All externally sourced and verified against a real version, never generated. Ship trigger: every club clears the floor and the marquee clubs sit at about 5.
+- **IN PROGRESS** Premier League chant seed. A sourcing spreadsheet covers all 19 clubs that need seeding (every 2026-27 Premier League club except Arsenal, which is already live). Each club has roughly 5 to 6 chants: club anthems, player and manager chants, and one rivalry banter chant, all externally sourced with links, plus a cross-check second source. Lyrics are intentionally blank pending Andrew pasting the exact verified words from each source (content-integrity rule: lyrics are never generated). Content policy applied: rivalry and anti-rival banter is included, only genuine hate, tragedy-mocking, and violence excluded.
+  - Status: sourced, awaiting lyric verification by Andrew.
+  - Trigger to seed to Firestore: a club's chants have verified lyrics filled in. At that point seed that club into chants-f95b4 following the existing Arsenal seed pattern (add to the club seed data file, run the seed, confirm the round trip, no duplicates), using the current chantType values sincere and novelty.
 - **TODO** Write the real content policy to replace the placeholder in content_policy_screen.dart. Required for app store review since submission is live. Andrew owns the wording.
 
 ### Polish and ship
