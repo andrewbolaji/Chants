@@ -1,0 +1,65 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd *)",
+      "Bash(flutter test *)",
+      "Bash(flutter analyze *)",
+      "Bash(flutter pub get *)",
+      "Bash(flutter build *)",
+      "Bash(dart run build_runner *)",
+      "Bash(dart run custom_lint *)",
+      "Bash(npm test *)",
+      "Bash(npm run build *)",
+      "Bash(npm install *)",
+      "Bash(npm ci *)",
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git show *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(git checkout *)",
+      "Bash(git switch *)",
+      "Bash(git branch *)",
+      "Bash(git restore *)",
+      "Bash(git stash *)",
+      "Bash(git fetch *)",
+      "Bash(git pull *)"
+    ],
+    "deny": [
+      "Read(.env)",
+      "Read(.env.*)",
+      "Read(**/.env)",
+      "Read(**/.env.*)",
+      "Read(**/serviceAccountKey.json)",
+      "Read(**/*firebase-adminsdk*.json)",
+      "Read(**/GoogleService-Info.plist)",
+      "Read(**/google-services.json)",
+      "Read(lib/firebase_options.dart)",
+      "Bash(git push --force *)",
+      "Bash(git push * --force *)",
+      "Bash(git push -f *)",
+      "Bash(git push * -f *)",
+      "Bash(git push --force-with-lease *)",
+      "Bash(git push * --force-with-lease *)",
+      "Bash(rm -rf *)",
+      "Bash(rm -fr *)",
+      "Bash(firebase deploy *)",
+      "Bash(npm run deploy *)"
+    ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/run_tests.sh",
+            "timeout": 300
+          }
+        ]
+      }
+    ]
+  }
+}
