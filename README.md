@@ -1,5 +1,7 @@
 # Chants
 
+[![CI](https://github.com/andrewbolaji/Chants/actions/workflows/ci.yml/badge.svg)](https://github.com/andrewbolaji/Chants/actions/workflows/ci.yml)
+
 **The songbook of the terraces.**
 
 Chants is a mobile app where football fans find, learn, and contribute the chants sung on the terraces. Every chant has its lyrics, the tune it is sung to, and the story behind it. Fans vote the good ones up, comment on them, and submit the ones that are missing.
