@@ -160,3 +160,13 @@ Build after the vote-fix device walk passes, as the last feature block before th
 - Observability: Crashlytics fully wired and verified, plus Firebase Performance Monitoring and Analytics. Status: next.
 - Firestore security rules test suite using `@firebase/rules-unit-testing`, covering the deny-by-default posture and the pinning of role and other privileged fields. Recommended pre-v1, not a hard store gate.
 - Code coverage via `flutter test --coverage` uploaded to Codecov, added alongside CI. Surface the badge only once coverage is respectable.
+
+### Store compliance gates (user content), from the compliance audit
+
+- Finalize the content policy text and replace the placeholder in content_policy_screen.dart. Draft written, under review.
+- User blocking. A user must be able to block another user (stop seeing their chants and comments, stop them replying). Apple 1.2 hard requirement and the most likely rejection point. Does not exist today. Real build on the comment surface, needs a product spec.
+- Report a user. Extend reporting from content only (chant or comment) to also reporting a user account. Google user-content requirement. Does not exist today.
+- Policy acceptance before posting. Gate sign up or the first submit or comment on accepting the content policy, and record the acceptance. Google user-content requirement. Not gated today.
+- Age check at sign up. Add a 17-and-up or date-of-birth check at sign up. Google age-screening requirement. The 17+ store rating is the main lever, this is the in-app backup. Does not exist today.
+
+Priority note: these are hard store-rejection gates, so they rank ahead of the observability block, which is good practice but not a store gate.
