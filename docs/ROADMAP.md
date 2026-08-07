@@ -154,6 +154,9 @@ Build after the vote-fix device walk passes, as the last feature block before th
 - Best paid dollar is one football-culture micro-influencer (roughly 100 to 300 dollars) rather than scattershot ads.
 - Skip PR firms, broad untargeted ads, and anything promising download counts.
 
-### Pre-v1 launch gates
+### Pre-v1 engineering hardening gates
 
-- CI/CD via GitHub Actions is being added as a pre-v1 launch gate, and full observability (Crashlytics fully wired, plus Firebase Performance Monitoring and Analytics) is the next pre-v1 gate.
+- CI/CD via GitHub Actions. Status: in progress.
+- Observability: Crashlytics fully wired and verified, plus Firebase Performance Monitoring and Analytics. Status: next.
+- Firestore security rules test suite using `@firebase/rules-unit-testing`, covering the deny-by-default posture and the pinning of role and other privileged fields. Recommended pre-v1, not a hard store gate.
+- Code coverage via `flutter test --coverage` uploaded to Codecov, added alongside CI. Surface the badge only once coverage is respectable.

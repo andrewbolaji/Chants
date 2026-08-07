@@ -79,6 +79,16 @@
 **Why v1.1:** Built and living in its own repo. It is a launch dependency (the stores need its legal pages live and a support URL), not an app code change, so it is tracked here for planning but shipped and hosted separately.
 **Trigger to promote:** Before store submission the site must be hosted on chantsfc.com with live privacy, terms, and support pages. At launch, its store pills flip from coming-soon to the real App Store and Play URLs. Content rule holds: only original or fan-written chant lyrics on the site, no lyrics lifted from licensed songs, no crests or player images.
 
+### v1.1: Integration and end-to-end tests
+**The idea:** A Flutter `integration_test` suite, run on Firebase Test Lab across a device matrix, covering full user flows on real devices rather than widgets in isolation.
+**Why v1.1:** Confirms the app works end to end on real hardware and OS versions, a check the unit and widget suite cannot give on its own.
+**Trigger:** v1 shipped and stable.
+
+### v1.1: Golden and visual regression tests
+**The idea:** Golden image and visual regression tests for the key screens, catching unintended visual drift automatically.
+**Why v1.1:** Protects the locked "matchnight, warmed with playful" (Ink and Gold) visual identity once it stops changing.
+**Trigger:** The Ink and Gold UI is frozen. Do not add earlier, or intentional design changes churn the snapshots.
+
 ---
 
 ## v2 candidates (pin, do not build, need real usage data)
