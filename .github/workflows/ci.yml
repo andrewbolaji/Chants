@@ -11,6 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Provide CI Firebase options
+        run: cp lib/firebase_options.dart.example lib/firebase_options.dart
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
