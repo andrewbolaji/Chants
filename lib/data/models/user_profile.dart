@@ -8,6 +8,7 @@ class UserProfile {
   final bool ageConfirmed17Plus;
   final String? acceptedPolicyVersion;
   final DateTime? acceptedPolicyAt;
+  final int userReportCount;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -19,6 +20,7 @@ class UserProfile {
     this.ageConfirmed17Plus = false,
     this.acceptedPolicyVersion,
     this.acceptedPolicyAt,
+    this.userReportCount = 0,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -36,6 +38,7 @@ class UserProfile {
       acceptedPolicyVersion: json['acceptedPolicyVersion'] as String?,
       acceptedPolicyAt:
           (json['acceptedPolicyAt'] as Timestamp?)?.toDate(),
+      userReportCount: json['userReportCount'] as int? ?? 0,
       createdAt: (json['createdAt'] as Timestamp).toDate(),
       updatedAt: (json['updatedAt'] as Timestamp).toDate(),
     );
@@ -52,6 +55,7 @@ class UserProfile {
       'role': role,
       'banned': banned,
       'ageConfirmed17Plus': ageConfirmed17Plus,
+      'userReportCount': userReportCount,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
     };
@@ -67,6 +71,7 @@ class UserProfile {
     bool? ageConfirmed17Plus,
     String? acceptedPolicyVersion,
     DateTime? acceptedPolicyAt,
+    int? userReportCount,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -79,6 +84,7 @@ class UserProfile {
       acceptedPolicyVersion:
           acceptedPolicyVersion ?? this.acceptedPolicyVersion,
       acceptedPolicyAt: acceptedPolicyAt ?? this.acceptedPolicyAt,
+      userReportCount: userReportCount ?? this.userReportCount,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

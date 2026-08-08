@@ -863,6 +863,57 @@ export const onCommentReportCreated = onDocumentCreated(
   }
 );
 
+// --- onUserReportCreated ---
+// Recomputes userReportCount on the reported user's profile from a
+// ground-truth query over userReports (never FieldValue.increment), so
+// duplicate or out-of-order trigger delivery always converges to the
+// correct count, same pattern as onVoteWritten/onCommentLikeWritten.
+// No auto-action: a high count only surfaces the profile in moderation for
+// a human to review. banUser stays operator-only and manual.
+/// Core handler logic, extracted so it can be unit-tested with a fake db,
+/// same pattern as handleVoteWritten/handleCommentLikeWritten. Does not
+/// write the audit entry itself (writeAuditEntry uses the global
+/// admin.firestore(), see the same note on handleAcceptPolicy above).
+export async function handleUserReportCreated(
+  reportedUserId: string,
+  firestore: admin.firestore.Firestore
+): Promise<{ userReportCount: number }> {
+  const reportsSnap = await firestore
+    .collection("userReports")
+    .where("reportedUserId", "==", reportedUserId)
+    .get();
+  const userReportCount = reportsSnap.size;
+
+  // Guard: if the reported user's profile no longer exists (e.g. they
+  // deleted their account), skip the write rather than erroring.
+  const profileRef = firestore.collection("profiles").doc(reportedUserId);
+  const profileSnap = await profileRef.get();
+  if (!profileSnap.exists) return { userReportCount };
+
+  await profileRef.update({ userReportCount });
+
+  return { userReportCount };
+}
+
+export const onUserReportCreated = onDocumentCreated(
+  { document: "userReports/{reportId}", region: "europe-west2" },
+  async (event) => {
+    const reportData = event.data?.data();
+    if (!reportData) return;
+
+    const reportedUserId = reportData.reportedUserId as string;
+    await handleUserReportCreated(reportedUserId, db);
+
+    await writeAuditEntry({
+      actorId: reportData.reportedBy as string,
+      action: "report-user",
+      targetType: "user",
+      targetId: reportedUserId,
+      detail: `Reason: ${reportData.reason}`,
+    });
+  }
+);
+
 // --- Helper: recompute commentCount on a chant from ground truth ---
 async function recomputeCommentCount(chantId: string): Promise<void> {
   const commentsSnap = await db

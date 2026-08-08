@@ -42,6 +42,7 @@ async function seedOperator(uid: string) {
       role: "operator",
       banned: false,
       ageConfirmed17Plus: true,
+      userReportCount: 0,
       acceptedPolicyVersion: "v1",
       acceptedPolicyAt: Timestamp.now(),
       createdAt: Timestamp.now(),
@@ -61,6 +62,7 @@ async function seedUserProfile(uid: string) {
       role: "user",
       banned: false,
       ageConfirmed17Plus: true,
+      userReportCount: 0,
       acceptedPolicyVersion: "v1",
       acceptedPolicyAt: Timestamp.now(),
       createdAt: Timestamp.now(),
@@ -77,6 +79,7 @@ async function seedBannedUser(uid: string) {
       role: "user",
       banned: true,
       ageConfirmed17Plus: true,
+      userReportCount: 0,
       acceptedPolicyVersion: "v1",
       acceptedPolicyAt: Timestamp.now(),
       createdAt: Timestamp.now(),
@@ -95,6 +98,7 @@ async function seedUserProfileNoPolicyAcceptance(uid: string) {
       role: "user",
       banned: false,
       ageConfirmed17Plus: true,
+      userReportCount: 0,
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
     });
@@ -271,6 +275,7 @@ describe("profiles", () => {
       role: "user",
       banned: false,
       ageConfirmed17Plus: true,
+      userReportCount: 0,
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
     }));
@@ -321,6 +326,7 @@ describe("profiles", () => {
       role: "user",
       banned: false,
       ageConfirmed17Plus: true,
+      userReportCount: 0,
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
     }));
@@ -429,6 +435,46 @@ describe("profiles", () => {
     await assertSucceeds(updateDoc(doc(db, "profiles", "user12"), {
       displayName: "StillFine",
       updatedAt: Timestamp.now(),
+    }));
+  });
+
+  it("denies create without userReportCount", async () => {
+    const db = testEnv.authenticatedContext("user13").firestore();
+    await assertFails(setDoc(doc(db, "profiles", "user13"), {
+      displayName: "NoCount",
+      role: "user",
+      banned: false,
+      ageConfirmed17Plus: true,
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    }));
+  });
+
+  it("denies create with userReportCount != 0 (cannot pre-inflate your "
+      + "own count)", async () => {
+    const db = testEnv.authenticatedContext("user14").firestore();
+    await assertFails(setDoc(doc(db, "profiles", "user14"), {
+      displayName: "Inflated",
+      role: "user",
+      banned: false,
+      ageConfirmed17Plus: true,
+      userReportCount: 5,
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    }));
+  });
+
+  it("denies owner updating own userReportCount (cannot erase or inflate "
+      + "it, only onUserReportCreated via the Admin SDK may set it)",
+      async () => {
+    await seedUserProfile("user15");
+    const db = testEnv.authenticatedContext("user15").firestore();
+    // seedUserProfile sets userReportCount to 0, so the update must target a
+    // genuinely different value: diff().affectedKeys() only reports fields
+    // that actually changed, and setting a field to its current value would
+    // not exercise the block at all.
+    await assertFails(updateDoc(doc(db, "profiles", "user15"), {
+      userReportCount: 5,
     }));
   });
 });
@@ -1150,6 +1196,127 @@ describe("policy acceptance gate", () => {
   });
 });
 
+// ===================== USER REPORTS =====================
+
+describe("user reports", () => {
+  it("allows auth user to create a report with the correct doc ID", async () => {
+    await seedUserProfile("reporter1");
+    const db = testEnv.authenticatedContext("reporter1").firestore();
+    await assertSucceeds(setDoc(doc(db, "userReports", "reporter1_baduser"), {
+      reportedUserId: "baduser",
+      reportedBy: "reporter1",
+      reason: "Hate speech or slurs",
+      createdAt: Timestamp.now(),
+      status: "pending",
+    }));
+  });
+
+  it("denies reporting yourself", async () => {
+    await seedUserProfile("user1");
+    const db = testEnv.authenticatedContext("user1").firestore();
+    await assertFails(setDoc(doc(db, "userReports", "user1_user1"), {
+      reportedUserId: "user1",
+      reportedBy: "user1",
+      reason: "test",
+      createdAt: Timestamp.now(),
+      status: "pending",
+    }));
+  });
+
+  it("denies a second report from the same reporter against the same "
+      + "target (doc ID dedup, same mechanism as reports/commentReports)",
+      async () => {
+    await seedUserProfile("reporter2");
+    const db = testEnv.authenticatedContext("reporter2").firestore();
+    await assertSucceeds(setDoc(doc(db, "userReports", "reporter2_baduser2"), {
+      reportedUserId: "baduser2",
+      reportedBy: "reporter2",
+      reason: "Tragedy chanting",
+      createdAt: Timestamp.now(),
+      status: "pending",
+    }));
+    // Second create attempt on the SAME doc ID: Firestore create semantics
+    // reject a write to a path that already exists, same as reports/
+    // commentReports today.
+    await assertFails(setDoc(doc(db, "userReports", "reporter2_baduser2"), {
+      reportedUserId: "baduser2",
+      reportedBy: "reporter2",
+      reason: "Trying again",
+      createdAt: Timestamp.now(),
+      status: "pending",
+    }, { merge: false }));
+  });
+
+  it("denies create with status other than pending", async () => {
+    await seedUserProfile("reporter3");
+    const db = testEnv.authenticatedContext("reporter3").firestore();
+    await assertFails(setDoc(doc(db, "userReports", "reporter3_baduser3"), {
+      reportedUserId: "baduser3",
+      reportedBy: "reporter3",
+      reason: "test",
+      createdAt: Timestamp.now(),
+      status: "dismissed",
+    }));
+  });
+
+  it("denies report create with reportedBy != auth uid (cannot forge the "
+      + "reporter identity)", async () => {
+    await seedUserProfile("reporter4");
+    const db = testEnv.authenticatedContext("reporter4").firestore();
+    await assertFails(setDoc(doc(db, "userReports", "reporter4_baduser4"), {
+      reportedUserId: "baduser4",
+      reportedBy: "someone-else",
+      reason: "test",
+      createdAt: Timestamp.now(),
+      status: "pending",
+    }));
+  });
+
+  it("denies report create by a banned user", async () => {
+    await seedBannedUser("banned-reporter");
+    const db = testEnv.authenticatedContext("banned-reporter").firestore();
+    await assertFails(setDoc(doc(db, "userReports", "banned-reporter_baduser5"), {
+      reportedUserId: "baduser5",
+      reportedBy: "banned-reporter",
+      reason: "test",
+      createdAt: Timestamp.now(),
+      status: "pending",
+    }));
+  });
+
+  it("denies non-operator read", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await setDoc(doc(db, "userReports", "r1_baduser"), {
+        reportedUserId: "baduser",
+        reportedBy: "r1",
+        reason: "test",
+        createdAt: Timestamp.now(),
+        status: "pending",
+      });
+    });
+    await seedUserProfile("reader1");
+    const db = testEnv.authenticatedContext("reader1").firestore();
+    await assertFails(getDoc(doc(db, "userReports", "r1_baduser")));
+  });
+
+  it("allows operator read", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await setDoc(doc(db, "userReports", "r2_baduser"), {
+        reportedUserId: "baduser",
+        reportedBy: "r2",
+        reason: "test",
+        createdAt: Timestamp.now(),
+        status: "pending",
+      });
+    });
+    await seedOperator("op1");
+    const db = testEnv.authenticatedContext("op1").firestore();
+    await assertSucceeds(getDoc(doc(db, "userReports", "r2_baduser")));
+  });
+});
+
 // ===================== BLOCK 3: PROFILE CREATE PINS BANNED =====================
 
 describe("profile create pins banned", () => {
@@ -1160,6 +1327,7 @@ describe("profile create pins banned", () => {
       role: "user",
       banned: false,
       ageConfirmed17Plus: true,
+      userReportCount: 0,
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
     }));

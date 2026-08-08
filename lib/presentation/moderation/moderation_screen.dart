@@ -6,6 +6,8 @@ import 'package:chants/app/spacing.dart';
 import 'package:chants/data/models/chant.dart';
 import 'package:chants/data/models/comment.dart';
 import 'package:chants/data/models/feedback_entry.dart';
+import 'package:chants/data/models/user_profile.dart';
+import 'package:chants/data/models/user_report.dart';
 import 'package:chants/presentation/shared/error_state.dart';
 
 class ModerationScreen extends ConsumerWidget {
@@ -33,8 +35,16 @@ class ModerationScreen extends ConsumerWidget {
         .where('hidden', isEqualTo: true)
         .snapshots();
 
+    // No orderBy on a different field: equality/range-only queries avoid
+    // needing a composite index (same tradeoff as the rest of the app,
+    // see docs/DECISIONS.md). Sorted client-side in the builder instead.
+    final reportedUsersStream = FirebaseFirestore.instance
+        .collection('profiles')
+        .where('userReportCount', isGreaterThan: 0)
+        .snapshots();
+
     return DefaultTabController(
-      length: 5,
+      length: 6,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('MODERATION'),
@@ -45,6 +55,7 @@ class ModerationScreen extends ConsumerWidget {
               Tab(text: 'Comments'),
               Tab(text: 'Promote'),
               Tab(text: 'Feedback'),
+              Tab(text: 'Reported users'),
               Tab(text: 'Ban'),
             ],
           ),
@@ -196,7 +207,41 @@ class ModerationScreen extends ConsumerWidget {
                 );
               },
             ),
-            // Tab 4: ban user
+            // Tab 5: reported users
+            StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              stream: reportedUsersStream,
+              builder: (context, snap) {
+                if (snap.hasError) {
+                  return const ErrorState(
+                      message: 'Could not load reported users.');
+                }
+                if (!snap.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                final profiles = snap.data!.docs
+                    .map(UserProfile.fromFirestore)
+                    .toList()
+                  ..sort(
+                      (a, b) => b.userReportCount.compareTo(a.userReportCount));
+                if (profiles.isEmpty) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(Spacing.xxl),
+                      child: Text('No reported users. All clear.'),
+                    ),
+                  );
+                }
+                return ListView.builder(
+                  padding: const EdgeInsets.all(Spacing.sm),
+                  itemCount: profiles.length,
+                  itemBuilder: (context, index) {
+                    return _ReportedUserCard(
+                        profile: profiles[index], ref: ref);
+                  },
+                );
+              },
+            ),
+            // Tab 6: ban user
             const _BanUserTab(),
           ],
         ),
@@ -429,6 +474,98 @@ class _CommentModerationCard extends StatelessWidget {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Action failed. Try again.')),
+      );
+    }
+  }
+}
+
+class _ReportedUserCard extends StatelessWidget {
+  final UserProfile profile;
+  final WidgetRef ref;
+
+  const _ReportedUserCard({required this.profile, required this.ref});
+
+  @override
+  Widget build(BuildContext context) {
+    final reportsStream = FirebaseFirestore.instance
+        .collection('userReports')
+        .where('reportedUserId', isEqualTo: profile.id)
+        .snapshots();
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(Spacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(profile.displayName,
+                style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: Spacing.xs),
+            Text(
+              'Reports: ${profile.userReportCount} | '
+              'Banned: ${profile.banned}',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: Spacing.sm),
+            StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              stream: reportsStream,
+              builder: (context, snap) {
+                if (!snap.hasData) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: Spacing.sm),
+                    child: SizedBox(
+                      height: 16,
+                      width: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  );
+                }
+                final reports = snap.data!.docs
+                    .map(UserReport.fromFirestore)
+                    .toList()
+                  ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: reports
+                      .map((r) => Padding(
+                            padding:
+                                const EdgeInsets.only(bottom: Spacing.xs),
+                            child: Text(
+                              '${r.reason} (reported by ${r.reportedBy})',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ))
+                      .toList(),
+                );
+              },
+            ),
+            const SizedBox(height: Spacing.sm),
+            if (!profile.banned)
+              FilledButton.tonal(
+                onPressed: () => _ban(context),
+                style: FilledButton.styleFrom(
+                  backgroundColor:
+                      Theme.of(context).colorScheme.errorContainer,
+                ),
+                child: const Text('Ban'),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _ban(BuildContext context) async {
+    try {
+      await ref.read(moderationRepositoryProvider).banUser(profile.id);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User banned.')),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ban failed. Try again.')),
       );
     }
   }

@@ -49,17 +49,18 @@ service cloud.firestore {
       allow write: if isOperator();
     }
 
-    // profiles: public read, owner create (role, banned, ageConfirmed17Plus
-    // pinned; acceptedPolicyVersion/acceptedPolicyAt must be absent, only the
-    // acceptPolicy Cloud Function sets them via the Admin SDK), owner update
-    // (cannot change role, banned, ageConfirmed17Plus, acceptedPolicyVersion,
-    // or acceptedPolicyAt)
+    // profiles: public read, owner create (role, banned, ageConfirmed17Plus,
+    // userReportCount pinned; acceptedPolicyVersion/acceptedPolicyAt must be
+    // absent, only the acceptPolicy Cloud Function sets them via the Admin
+    // SDK), owner update (cannot change role, banned, ageConfirmed17Plus,
+    // acceptedPolicyVersion, acceptedPolicyAt, or userReportCount)
     match /profiles/{userId} {
       allow read: if true;
       allow create: if isAuth() && request.auth.uid == userId
         && request.resource.data.role == 'user'
         && request.resource.data.banned == false
         && request.resource.data.ageConfirmed17Plus == true
+        && request.resource.data.userReportCount == 0
         && !('acceptedPolicyVersion' in request.resource.data)
         && !('acceptedPolicyAt' in request.resource.data)
         && request.resource.data.displayName is string
@@ -69,7 +70,8 @@ service cloud.firestore {
         && request.resource.data.updatedAt is timestamp;
       allow update: if isAuth() && request.auth.uid == userId
         && !request.resource.data.diff(resource.data).affectedKeys().hasAny(
-            ['role', 'banned', 'ageConfirmed17Plus', 'acceptedPolicyVersion', 'acceptedPolicyAt']);
+            ['role', 'banned', 'ageConfirmed17Plus', 'acceptedPolicyVersion',
+             'acceptedPolicyAt', 'userReportCount']);
     }
 
     // chants: public read (visible only), auth create (not banned, server-side length limits), restricted update
@@ -192,6 +194,20 @@ service cloud.firestore {
         && request.resource.data.reportedBy == request.auth.uid
         && request.resource.data.status == 'pending'
         && reportId == request.auth.uid + '_' + request.resource.data.commentId;
+    }
+
+    // userReports: one per reporter per reported user (doc ID =
+    // reporterId_reportedUserId), not banned, cannot report yourself,
+    // insert-only. userReportCount on the target profile is recomputed by
+    // onUserReportCreated (Admin SDK), never written by the client.
+    match /userReports/{reportId} {
+      allow read: if isOperator();
+      allow create: if isAuth()
+        && isNotBanned()
+        && request.resource.data.reportedBy == request.auth.uid
+        && request.resource.data.reportedUserId != request.auth.uid
+        && request.resource.data.status == 'pending'
+        && reportId == request.auth.uid + '_' + request.resource.data.reportedUserId;
     }
 
     // feedback: auth create, user reads own, operator reads all

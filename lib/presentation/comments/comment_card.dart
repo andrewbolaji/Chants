@@ -120,12 +120,15 @@ class CommentLikeState {
   }
 }
 
+enum _ReportChoice { comment, user }
+
 class CommentCard extends StatelessWidget {
   final Comment comment;
   final CommentLikeState likeState;
   final bool isAuthor;
   final VoidCallback? onToggleLike;
-  final VoidCallback? onReport;
+  final VoidCallback? onReportComment;
+  final VoidCallback? onReportUser;
   final VoidCallback? onDelete;
 
   const CommentCard({
@@ -134,7 +137,8 @@ class CommentCard extends StatelessWidget {
     required this.likeState,
     required this.isAuthor,
     this.onToggleLike,
-    this.onReport,
+    this.onReportComment,
+    this.onReportUser,
     this.onDelete,
   });
 
@@ -242,13 +246,31 @@ class CommentCard extends StatelessWidget {
                   ),
                 )
               else
-                GestureDetector(
-                  onTap: onReport,
-                  child: Icon(
+                PopupMenuButton<_ReportChoice>(
+                  tooltip: 'Report',
+                  icon: Icon(
                     Icons.flag_outlined,
                     size: 16,
                     color: AppColors.textMuted,
                   ),
+                  onSelected: (choice) {
+                    switch (choice) {
+                      case _ReportChoice.comment:
+                        onReportComment?.call();
+                      case _ReportChoice.user:
+                        onReportUser?.call();
+                    }
+                  },
+                  itemBuilder: (context) => const [
+                    PopupMenuItem(
+                      value: _ReportChoice.comment,
+                      child: Text('Report this comment'),
+                    ),
+                    PopupMenuItem(
+                      value: _ReportChoice.user,
+                      child: Text('Report this user'),
+                    ),
+                  ],
                 ),
             ],
           ),

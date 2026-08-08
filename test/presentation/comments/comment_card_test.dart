@@ -71,6 +71,70 @@ void main() {
       expect(find.byIcon(Icons.flag_outlined), findsNothing);
     });
 
+    testWidgets(
+        'report menu offers report comment and report user for non-author',
+        (tester) async {
+      final comment = _makeComment();
+
+      await tester.pumpWidget(_wrap(CommentCard(
+        comment: comment,
+        likeState: CommentLikeState.initial(0),
+        isAuthor: false,
+      )));
+
+      await tester.tap(find.byIcon(Icons.flag_outlined));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Report this comment'), findsOneWidget);
+      expect(find.text('Report this user'), findsOneWidget);
+    });
+
+    testWidgets('selecting "Report this comment" fires onReportComment only',
+        (tester) async {
+      final comment = _makeComment();
+      var reportedComment = false;
+      var reportedUser = false;
+
+      await tester.pumpWidget(_wrap(CommentCard(
+        comment: comment,
+        likeState: CommentLikeState.initial(0),
+        isAuthor: false,
+        onReportComment: () => reportedComment = true,
+        onReportUser: () => reportedUser = true,
+      )));
+
+      await tester.tap(find.byIcon(Icons.flag_outlined));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Report this comment'));
+      await tester.pumpAndSettle();
+
+      expect(reportedComment, true);
+      expect(reportedUser, false);
+    });
+
+    testWidgets('selecting "Report this user" fires onReportUser only',
+        (tester) async {
+      final comment = _makeComment();
+      var reportedComment = false;
+      var reportedUser = false;
+
+      await tester.pumpWidget(_wrap(CommentCard(
+        comment: comment,
+        likeState: CommentLikeState.initial(0),
+        isAuthor: false,
+        onReportComment: () => reportedComment = true,
+        onReportUser: () => reportedUser = true,
+      )));
+
+      await tester.tap(find.byIcon(Icons.flag_outlined));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Report this user'));
+      await tester.pumpAndSettle();
+
+      expect(reportedUser, true);
+      expect(reportedComment, false);
+    });
+
     testWidgets('like toggle: unfilled heart when not liked, filled when liked',
         (tester) async {
       final comment = _makeComment(likeCount: 3);
