@@ -73,6 +73,13 @@ class ModerationRepository {
     await _functions.httpsCallable('deleteAccount').call({});
   }
 
+  /// Records that the caller accepted the current content policy version.
+  /// The server (not the client) decides what "current" means and stamps
+  /// the timestamp, so this cannot be forged by a raw client write.
+  Future<void> acceptPolicy() async {
+    await _functions.httpsCallable('acceptPolicy').call({});
+  }
+
   Future<Map<String, dynamic>> mergeChants({
     required String sourceId,
     required String targetId,

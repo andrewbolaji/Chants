@@ -19,6 +19,12 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.banned == false;
     }
 
+    // Must match CURRENT_POLICY_VERSION in functions/src/index.ts and
+    // kCurrentPolicyVersion in lib/app/policy.dart.
+    function hasAcceptedPolicy() {
+      return get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.acceptedPolicyVersion == 'v1';
+    }
+
     // sports: public read, operator write
     match /sports/{sportId} {
       allow read: if true;
@@ -43,19 +49,27 @@ service cloud.firestore {
       allow write: if isOperator();
     }
 
-    // profiles: public read, owner create (role and banned pinned), owner update (cannot change role or banned)
+    // profiles: public read, owner create (role, banned, ageConfirmed17Plus
+    // pinned; acceptedPolicyVersion/acceptedPolicyAt must be absent, only the
+    // acceptPolicy Cloud Function sets them via the Admin SDK), owner update
+    // (cannot change role, banned, ageConfirmed17Plus, acceptedPolicyVersion,
+    // or acceptedPolicyAt)
     match /profiles/{userId} {
       allow read: if true;
       allow create: if isAuth() && request.auth.uid == userId
         && request.resource.data.role == 'user'
         && request.resource.data.banned == false
+        && request.resource.data.ageConfirmed17Plus == true
+        && !('acceptedPolicyVersion' in request.resource.data)
+        && !('acceptedPolicyAt' in request.resource.data)
         && request.resource.data.displayName is string
         && request.resource.data.displayName.size() > 0
         && request.resource.data.displayName.size() <= 50
         && request.resource.data.createdAt is timestamp
         && request.resource.data.updatedAt is timestamp;
       allow update: if isAuth() && request.auth.uid == userId
-        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'banned']);
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(
+            ['role', 'banned', 'ageConfirmed17Plus', 'acceptedPolicyVersion', 'acceptedPolicyAt']);
     }
 
     // chants: public read (visible only), auth create (not banned, server-side length limits), restricted update
@@ -63,6 +77,7 @@ service cloud.firestore {
       allow read: if isVisible(resource) || isOperator();
       allow create: if isAuth()
         && isNotBanned()
+        && hasAcceptedPolicy()
         && request.resource.data.createdBy == request.auth.uid
         && request.resource.data.status == 'community'
         && request.resource.data.upvotes == 0
@@ -132,6 +147,7 @@ service cloud.firestore {
       allow read: if isVisible(resource) || isOperator();
       allow create: if isAuth()
         && isNotBanned()
+        && hasAcceptedPolicy()
         && request.resource.data.userId == request.auth.uid
         && request.resource.data.displayName is string
         && request.resource.data.displayName.size() > 0
