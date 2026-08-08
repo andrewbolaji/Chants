@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chants/app/colors.dart';
 import 'package:chants/app/providers.dart';
+import 'package:chants/app/router.dart';
 import 'package:chants/app/spacing.dart';
+import 'package:chants/data/services/age.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {
   const SignUpScreen({super.key});
@@ -21,6 +23,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   bool _loading = false;
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
+  DateTime? _dateOfBirth;
+  bool _policyAccepted = false;
   String? _error;
 
   @override
@@ -35,6 +39,20 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   Future<void> _signUp() async {
     if (!_formKey.currentState!.validate()) return;
 
+    if (_dateOfBirth == null) {
+      setState(() => _error = 'Add your date of birth.');
+      return;
+    }
+    if (calculateAge(_dateOfBirth!, DateTime.now()) < kMinimumAge) {
+      setState(
+          () => _error = 'You need to be $kMinimumAge or older to use Chants.');
+      return;
+    }
+    if (!_policyAccepted) {
+      setState(() => _error = 'Agree to the Content Policy to continue.');
+      return;
+    }
+
     setState(() {
       _loading = true;
       _error = null;
@@ -47,10 +65,17 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
           );
 
       if (cred.user != null) {
+        // The date of birth itself is never sent to Firestore. Only the
+        // pass/fail result of the age check above is persisted.
         await ref.read(profileRepositoryProvider).createProfile(
               userId: cred.user!.uid,
               displayName: _displayNameController.text.trim(),
+              ageConfirmed17Plus: true,
             );
+        // Record acceptance before navigating, so the app-level gate (which
+        // watches this same profile) never has a reason to bounce a
+        // brand-new user back to the acceptance screen on landing.
+        await ref.read(moderationRepositoryProvider).acceptPolicy();
       }
 
       if (!mounted) return;
@@ -67,6 +92,25 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         _loading = false;
       });
     }
+  }
+
+  Future<void> _pickDateOfBirth() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime(now.year - 18, now.month, now.day),
+      firstDate: DateTime(now.year - 120),
+      lastDate: now,
+    );
+    if (picked != null) {
+      setState(() => _dateOfBirth = picked);
+    }
+  }
+
+  String _formatDate(DateTime d) {
+    final month = d.month.toString().padLeft(2, '0');
+    final day = d.day.toString().padLeft(2, '0');
+    return '${d.year}-$month-$day';
   }
 
   @override
@@ -146,6 +190,59 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   }
                   return null;
                 },
+              ),
+              const SizedBox(height: Spacing.md),
+              InkWell(
+                onTap: _pickDateOfBirth,
+                child: InputDecorator(
+                  decoration: const InputDecoration(
+                    labelText: 'Date of birth',
+                  ),
+                  child: Text(
+                    _dateOfBirth == null
+                        ? 'Tap to choose'
+                        : _formatDate(_dateOfBirth!),
+                    style: TextStyle(
+                      color: _dateOfBirth == null ? AppColors.textMuted : null,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: Spacing.md),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Checkbox(
+                    value: _policyAccepted,
+                    onChanged: (v) =>
+                        setState(() => _policyAccepted = v ?? false),
+                  ),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => Navigator.pushNamed(
+                          context, AppRouter.contentPolicy),
+                      child: Text.rich(
+                        TextSpan(
+                          text: 'I have read and agree to the ',
+                          style: Theme.of(context).textTheme.bodySmall,
+                          children: [
+                            TextSpan(
+                              text: 'Content Policy',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(
+                                    color: AppColors.gold,
+                                    decoration: TextDecoration.underline,
+                                  ),
+                            ),
+                            const TextSpan(text: '.'),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
               if (_error != null) ...[
                 const SizedBox(height: Spacing.md),

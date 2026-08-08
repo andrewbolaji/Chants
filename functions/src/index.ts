@@ -8,6 +8,11 @@ const db = admin.firestore();
 
 const AUTO_HIDE_THRESHOLD = 3;
 
+// Must match kCurrentPolicyVersion in lib/app/policy.dart and the version
+// check in firestore.rules. Bump all three together, only for a substantive
+// policy text change (a bump re-gates every existing user on next open).
+const CURRENT_POLICY_VERSION = "v1";
+
 // --- onReportCreated ---
 // Increments flagCount on the reported chant.
 // Auto-hides the chant if flagCount reaches the threshold.
@@ -463,6 +468,58 @@ export const deleteAccount = onCall(
     await admin.auth().deleteUser(uid);
 
     return { success: true };
+  }
+);
+
+// --- acceptPolicy (callable) ---
+// Records that the calling user accepted the current content policy
+// version. Actor derived from auth context, never from a client parameter.
+// The version and timestamp are decided server-side, never trusted from the
+// client, so this write is the only source of truth for consent.
+/// Core handler logic, extracted so it can be unit-tested with a fake db,
+/// same pattern as handleVoteWritten/handleCommentLikeWritten. Does not
+/// write the audit entry itself, so the tested core has no dependency on
+/// the global admin.firestore() that writeAuditEntry uses.
+export async function handleAcceptPolicy(
+  uid: string,
+  firestore: admin.firestore.Firestore
+): Promise<{ accepted: boolean }> {
+  const profileRef = firestore.collection("profiles").doc(uid);
+  const profileSnap = await profileRef.get();
+  if (!profileSnap.exists) {
+    return { accepted: false };
+  }
+
+  await profileRef.update({
+    acceptedPolicyVersion: CURRENT_POLICY_VERSION,
+    acceptedPolicyAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  return { accepted: true };
+}
+
+export const acceptPolicy = onCall(
+  { region: "europe-west2" },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Sign in required.");
+    }
+    const uid = request.auth.uid;
+
+    const result = await handleAcceptPolicy(uid, db);
+    if (!result.accepted) {
+      throw new HttpsError("not-found", "Profile not found.");
+    }
+
+    await writeAuditEntry({
+      actorId: uid,
+      action: "accept-policy",
+      targetType: "user",
+      targetId: uid,
+      detail: `Accepted content policy version ${CURRENT_POLICY_VERSION}.`,
+    });
+
+    return { success: true, version: CURRENT_POLICY_VERSION };
   }
 );
 

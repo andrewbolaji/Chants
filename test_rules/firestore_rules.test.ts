@@ -41,12 +41,18 @@ async function seedOperator(uid: string) {
       displayName: "Operator",
       role: "operator",
       banned: false,
+      ageConfirmed17Plus: true,
+      acceptedPolicyVersion: "v1",
+      acceptedPolicyAt: Timestamp.now(),
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
     });
   });
 }
 
+// Fully onboarded: age-confirmed and policy-accepted, same as any real user
+// past sign-up. Tests that specifically exercise the age or policy gate use
+// seedUserProfileNoPolicyAcceptance or a direct setDoc instead.
 async function seedUserProfile(uid: string) {
   await testEnv.withSecurityRulesDisabled(async (context) => {
     const db = context.firestore();
@@ -54,6 +60,9 @@ async function seedUserProfile(uid: string) {
       displayName: "TestUser",
       role: "user",
       banned: false,
+      ageConfirmed17Plus: true,
+      acceptedPolicyVersion: "v1",
+      acceptedPolicyAt: Timestamp.now(),
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
     });
@@ -67,6 +76,25 @@ async function seedBannedUser(uid: string) {
       displayName: "BannedUser",
       role: "user",
       banned: true,
+      ageConfirmed17Plus: true,
+      acceptedPolicyVersion: "v1",
+      acceptedPolicyAt: Timestamp.now(),
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    });
+  });
+}
+
+// Age-confirmed but never accepted the content policy. Used to test the new
+// hasAcceptedPolicy() gate on chants/comments create.
+async function seedUserProfileNoPolicyAcceptance(uid: string) {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    await setDoc(doc(db, "profiles", uid), {
+      displayName: "NoAcceptanceUser",
+      role: "user",
+      banned: false,
+      ageConfirmed17Plus: true,
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
     });
@@ -242,6 +270,7 @@ describe("profiles", () => {
       displayName: "Fan",
       role: "user",
       banned: false,
+      ageConfirmed17Plus: true,
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
     }));
@@ -291,6 +320,7 @@ describe("profiles", () => {
       displayName: "LegitFan",
       role: "user",
       banned: false,
+      ageConfirmed17Plus: true,
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
     }));
@@ -312,6 +342,92 @@ describe("profiles", () => {
       displayName: "x".repeat(51),
       role: "user",
       createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    }));
+  });
+
+  it("denies create without ageConfirmed17Plus", async () => {
+    const db = testEnv.authenticatedContext("user5").firestore();
+    await assertFails(setDoc(doc(db, "profiles", "user5"), {
+      displayName: "NoAge",
+      role: "user",
+      banned: false,
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    }));
+  });
+
+  it("denies create with ageConfirmed17Plus == false", async () => {
+    const db = testEnv.authenticatedContext("user6").firestore();
+    await assertFails(setDoc(doc(db, "profiles", "user6"), {
+      displayName: "Underage",
+      role: "user",
+      banned: false,
+      ageConfirmed17Plus: false,
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    }));
+  });
+
+  it("denies create with acceptedPolicyVersion set directly (must be absent, "
+      + "only the acceptPolicy Cloud Function may set it)", async () => {
+    const db = testEnv.authenticatedContext("user7").firestore();
+    await assertFails(setDoc(doc(db, "profiles", "user7"), {
+      displayName: "Forger",
+      role: "user",
+      banned: false,
+      ageConfirmed17Plus: true,
+      acceptedPolicyVersion: "v1",
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    }));
+  });
+
+  it("denies create with acceptedPolicyAt set directly", async () => {
+    const db = testEnv.authenticatedContext("user8").firestore();
+    await assertFails(setDoc(doc(db, "profiles", "user8"), {
+      displayName: "Forger2",
+      role: "user",
+      banned: false,
+      ageConfirmed17Plus: true,
+      acceptedPolicyAt: Timestamp.now(),
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    }));
+  });
+
+  it("denies owner updating acceptedPolicyVersion directly (privilege "
+      + "escalation: forging consent without going through acceptPolicy)",
+      async () => {
+    await seedUserProfileNoPolicyAcceptance("user9");
+    const db = testEnv.authenticatedContext("user9").firestore();
+    await assertFails(updateDoc(doc(db, "profiles", "user9"), {
+      acceptedPolicyVersion: "v1",
+    }));
+  });
+
+  it("denies owner updating acceptedPolicyAt directly", async () => {
+    await seedUserProfileNoPolicyAcceptance("user10");
+    const db = testEnv.authenticatedContext("user10").firestore();
+    await assertFails(updateDoc(doc(db, "profiles", "user10"), {
+      acceptedPolicyAt: Timestamp.now(),
+    }));
+  });
+
+  it("denies owner updating ageConfirmed17Plus", async () => {
+    await seedUserProfile("user11");
+    const db = testEnv.authenticatedContext("user11").firestore();
+    await assertFails(updateDoc(doc(db, "profiles", "user11"), {
+      ageConfirmed17Plus: false,
+    }));
+  });
+
+  it("allows owner to update displayName without disturbing pinned fields",
+      async () => {
+    await seedUserProfile("user12");
+    const db = testEnv.authenticatedContext("user12").firestore();
+    await assertSucceeds(updateDoc(doc(db, "profiles", "user12"), {
+      displayName: "StillFine",
       updatedAt: Timestamp.now(),
     }));
   });
@@ -943,6 +1059,97 @@ describe("ban enforcement", () => {
   });
 });
 
+// ===================== POLICY ACCEPTANCE GATE =====================
+
+describe("policy acceptance gate", () => {
+  const validChantData = {
+    title: "Test",
+    sportId: "s1",
+    competitionId: "c1",
+    teamId: "t1",
+    playerId: null,
+    subjectTag: "club",
+    lyrics: "La la la",
+    tuneName: "Original",
+    contextNotes: null,
+    coverImageUrl: null,
+    mediaUrl: null,
+    mediaType: "none",
+    status: "community",
+    chantType: "sincere",
+    upvotes: 0,
+    downvotes: 0,
+    score: 0,
+    commentCount: 0,
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
+    flagCount: 0,
+    hidden: false,
+    removed: false,
+  };
+
+  const validCommentData = {
+    displayName: "TestUser",
+    body: "Great chant",
+    likeCount: 0,
+    flagCount: 0,
+    hidden: false,
+    removed: false,
+    createdAt: Timestamp.now(),
+  };
+
+  it("denies chant create when the user has never accepted the policy",
+      async () => {
+    await seedUserProfileNoPolicyAcceptance("noaccept1");
+    const db = testEnv.authenticatedContext("noaccept1").firestore();
+    await assertFails(setDoc(doc(db, "chants", "gated-chant"), {
+      ...validChantData,
+      createdBy: "noaccept1",
+    }));
+  });
+
+  it("allows chant create once the policy is accepted", async () => {
+    await seedUserProfile("accepted1");
+    const db = testEnv.authenticatedContext("accepted1").firestore();
+    await assertSucceeds(setDoc(doc(db, "chants", "gated-chant-2"), {
+      ...validChantData,
+      createdBy: "accepted1",
+    }));
+  });
+
+  it("denies comment create when the user has never accepted the policy",
+      async () => {
+    await seedUserProfileNoPolicyAcceptance("noaccept2");
+    const db = testEnv.authenticatedContext("noaccept2").firestore();
+    await assertFails(addDoc(collection(db, "comments"), {
+      ...validCommentData,
+      chantId: "ch1",
+      userId: "noaccept2",
+    }));
+  });
+
+  it("allows comment create once the policy is accepted", async () => {
+    await seedUserProfile("accepted2");
+    const db = testEnv.authenticatedContext("accepted2").firestore();
+    await assertSucceeds(addDoc(collection(db, "comments"), {
+      ...validCommentData,
+      chantId: "ch1",
+      userId: "accepted2",
+    }));
+  });
+
+  it("denies comment create by a banned user even if they accepted the "
+      + "policy (isNotBanned and hasAcceptedPolicy both apply)", async () => {
+    await seedBannedUser("banned-accepted");
+    const db = testEnv.authenticatedContext("banned-accepted").firestore();
+    await assertFails(addDoc(collection(db, "comments"), {
+      ...validCommentData,
+      chantId: "ch1",
+      userId: "banned-accepted",
+    }));
+  });
+});
+
 // ===================== BLOCK 3: PROFILE CREATE PINS BANNED =====================
 
 describe("profile create pins banned", () => {
@@ -952,6 +1159,7 @@ describe("profile create pins banned", () => {
       displayName: "NewFan",
       role: "user",
       banned: false,
+      ageConfirmed17Plus: true,
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
     }));

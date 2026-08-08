@@ -13,12 +13,14 @@ class ProfileRepository {
   Future<void> createProfile({
     required String userId,
     required String displayName,
+    required bool ageConfirmed17Plus,
   }) async {
     final now = DateTime.now();
     final profile = UserProfile(
       id: userId,
       displayName: displayName,
       role: 'user',
+      ageConfirmed17Plus: ageConfirmed17Plus,
       createdAt: now,
       updatedAt: now,
     );

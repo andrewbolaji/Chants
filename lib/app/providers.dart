@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:chants/data/models/user_profile.dart';
 import 'package:chants/data/repositories/auth_repository.dart';
 import 'package:chants/data/repositories/profile_repository.dart';
 import 'package:chants/data/repositories/sport_repository.dart';
@@ -65,4 +66,12 @@ final moderationRepositoryProvider = Provider<ModerationRepository>(
 // Auth state stream
 final authStateProvider = StreamProvider<User?>((ref) {
   return ref.watch(authRepositoryProvider).authStateChanges;
+});
+
+// Live profile stream for a given user ID. AsyncValue.loading before the
+// first snapshot, AsyncValue.data(null) if the profile doc does not exist
+// yet (e.g. briefly after sign-up, before createProfile's write lands).
+final userProfileProvider =
+    StreamProvider.family<UserProfile?, String>((ref, uid) {
+  return ref.watch(profileRepositoryProvider).profileStream(uid);
 });

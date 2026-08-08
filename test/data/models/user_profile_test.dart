@@ -105,5 +105,80 @@ void main() {
       );
       expect(profile.toJson()['banned'], true);
     });
+
+    test('ageConfirmed17Plus defaults to false and round-trips true', () {
+      final now = DateTime(2026, 5, 24);
+      final defaultJson = {
+        'displayName': 'Test',
+        'role': 'user',
+        'createdAt': Timestamp.fromDate(now),
+        'updatedAt': Timestamp.fromDate(now),
+      };
+      expect(UserProfile.fromJson(defaultJson, id: 'uid1').ageConfirmed17Plus,
+          false);
+
+      final profile = UserProfile(
+        id: 'uid1',
+        displayName: 'Test',
+        role: 'user',
+        ageConfirmed17Plus: true,
+        createdAt: now,
+        updatedAt: now,
+      );
+      expect(profile.toJson()['ageConfirmed17Plus'], true);
+    });
+
+    test('acceptedPolicyVersion and acceptedPolicyAt default to null and are '
+        'absent from toJson (server-set only, never client-written)', () {
+      final now = DateTime(2026, 5, 24);
+      final json = {
+        'displayName': 'Test',
+        'role': 'user',
+        'createdAt': Timestamp.fromDate(now),
+        'updatedAt': Timestamp.fromDate(now),
+      };
+      final profile = UserProfile.fromJson(json, id: 'uid1');
+      expect(profile.acceptedPolicyVersion, null);
+      expect(profile.acceptedPolicyAt, null);
+
+      final output = profile.toJson();
+      expect(output.containsKey('acceptedPolicyVersion'), false);
+      expect(output.containsKey('acceptedPolicyAt'), false);
+    });
+
+    test('acceptedPolicyVersion and acceptedPolicyAt read back correctly '
+        'when present', () {
+      final now = DateTime(2026, 5, 24);
+      final acceptedAt = DateTime(2026, 6, 1);
+      final json = {
+        'displayName': 'Test',
+        'role': 'user',
+        'acceptedPolicyVersion': 'v1',
+        'acceptedPolicyAt': Timestamp.fromDate(acceptedAt),
+        'createdAt': Timestamp.fromDate(now),
+        'updatedAt': Timestamp.fromDate(now),
+      };
+      final profile = UserProfile.fromJson(json, id: 'uid1');
+      expect(profile.acceptedPolicyVersion, 'v1');
+      expect(profile.acceptedPolicyAt, acceptedAt);
+    });
+
+    test('copyWith preserves new fields', () {
+      final now = DateTime(2026, 5, 24);
+      final profile = UserProfile(
+        id: 'uid1',
+        displayName: 'Old',
+        role: 'user',
+        ageConfirmed17Plus: true,
+        acceptedPolicyVersion: 'v1',
+        acceptedPolicyAt: now,
+        createdAt: now,
+        updatedAt: now,
+      );
+      final updated = profile.copyWith(displayName: 'New');
+      expect(updated.ageConfirmed17Plus, true);
+      expect(updated.acceptedPolicyVersion, 'v1');
+      expect(updated.acceptedPolicyAt, now);
+    });
   });
 }
