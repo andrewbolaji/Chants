@@ -73,7 +73,7 @@ class ChantDetailScreen extends ConsumerWidget {
               }
               showReportSheet(
                 context: context,
-                chantId: live.id,
+                target: ReportChant(live.id),
                 ref: ref,
               );
             },

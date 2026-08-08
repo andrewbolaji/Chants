@@ -10,6 +10,7 @@ import 'package:chants/data/repositories/player_repository.dart';
 import 'package:chants/data/repositories/chant_repository.dart';
 import 'package:chants/data/repositories/vote_repository.dart';
 import 'package:chants/data/repositories/report_repository.dart';
+import 'package:chants/data/repositories/user_report_repository.dart';
 import 'package:chants/data/repositories/feedback_repository.dart';
 import 'package:chants/data/repositories/comment_repository.dart';
 import 'package:chants/data/repositories/moderation_repository.dart';
@@ -49,6 +50,10 @@ final voteRepositoryProvider = Provider<VoteRepository>(
 
 final reportRepositoryProvider = Provider<ReportRepository>(
   (ref) => ReportRepository(),
+);
+
+final userReportRepositoryProvider = Provider<UserReportRepository>(
+  (ref) => UserReportRepository(),
 );
 
 final feedbackRepositoryProvider = Provider<FeedbackRepository>(

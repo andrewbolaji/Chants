@@ -339,11 +339,17 @@ class _CommentSectionState extends ConsumerState<CommentSection> {
             onToggleLike: isSignedIn
                 ? () => _toggleLike(comment.id, user.uid)
                 : null,
-            onReport: isSignedIn
+            onReportComment: isSignedIn
                 ? () => showReportSheet(
                       context: context,
-                      chantId: comment.chantId,
-                      commentId: comment.id,
+                      target: ReportComment(comment.id),
+                      ref: ref,
+                    )
+                : null,
+            onReportUser: isSignedIn
+                ? () => showReportSheet(
+                      context: context,
+                      target: ReportUser(comment.userId),
                       ref: ref,
                     )
                 : null,

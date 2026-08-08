@@ -10,31 +10,45 @@ const _reportCategories = [
   'Something else',
 ];
 
+/// What a report is about. Exactly one of these, never a loose combination
+/// of optional IDs, so a report can never be ambiguous about its target.
+sealed class ReportTarget {
+  const ReportTarget();
+}
+
+class ReportChant extends ReportTarget {
+  final String chantId;
+  const ReportChant(this.chantId);
+}
+
+class ReportComment extends ReportTarget {
+  final String commentId;
+  const ReportComment(this.commentId);
+}
+
+class ReportUser extends ReportTarget {
+  final String userId;
+  const ReportUser(this.userId);
+}
+
 void showReportSheet({
   required BuildContext context,
-  required String chantId,
+  required ReportTarget target,
   required WidgetRef ref,
-  String? commentId,
 }) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
-    builder: (_) => _ReportSheetContent(
-      chantId: chantId,
-      commentId: commentId,
-      ref: ref,
-    ),
+    builder: (_) => _ReportSheetContent(target: target, ref: ref),
   );
 }
 
 class _ReportSheetContent extends StatefulWidget {
-  final String chantId;
-  final String? commentId;
+  final ReportTarget target;
   final WidgetRef ref;
 
   const _ReportSheetContent({
-    required this.chantId,
-    this.commentId,
+    required this.target,
     required this.ref,
   });
 
@@ -54,6 +68,14 @@ class _ReportSheetContentState extends State<_ReportSheetContent> {
     super.dispose();
   }
 
+  String get _title {
+    return switch (widget.target) {
+      ReportChant() => 'Report this chant',
+      ReportComment() => 'Report this comment',
+      ReportUser() => 'Report this user',
+    };
+  }
+
   Future<void> _submit() async {
     if (_selectedCategory == null) return;
 
@@ -68,18 +90,29 @@ class _ReportSheetContentState extends State<_ReportSheetContent> {
     if (user == null) return;
 
     try {
-      if (widget.commentId != null) {
-        await widget.ref.read(commentRepositoryProvider).submitCommentReport(
-              commentId: widget.commentId!,
-              reportedBy: user.uid,
-              reason: reason,
-            );
-      } else {
-        await widget.ref.read(reportRepositoryProvider).submitReport(
-              chantId: widget.chantId,
-              reportedBy: user.uid,
-              reason: reason,
-            );
+      switch (widget.target) {
+        case ReportChant(:final chantId):
+          await widget.ref.read(reportRepositoryProvider).submitReport(
+                chantId: chantId,
+                reportedBy: user.uid,
+                reason: reason,
+              );
+        case ReportComment(:final commentId):
+          await widget.ref
+              .read(commentRepositoryProvider)
+              .submitCommentReport(
+                commentId: commentId,
+                reportedBy: user.uid,
+                reason: reason,
+              );
+        case ReportUser(:final userId):
+          await widget.ref
+              .read(userReportRepositoryProvider)
+              .submitUserReport(
+                reportedUserId: userId,
+                reportedBy: user.uid,
+                reason: reason,
+              );
       }
       if (!mounted) return;
       setState(() => _submitted = true);
@@ -124,9 +157,7 @@ class _ReportSheetContentState extends State<_ReportSheetContent> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            widget.commentId != null
-                ? 'Report this comment'
-                : 'Report this chant',
+            _title,
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: Spacing.sm),
@@ -164,9 +195,7 @@ class _ReportSheetContentState extends State<_ReportSheetContent> {
                     width: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : Text(widget.commentId != null
-                    ? 'Report this comment'
-                    : 'Report this chant'),
+                : Text(_title),
           ),
         ],
       ),
