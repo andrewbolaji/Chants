@@ -163,10 +163,10 @@ Build after the vote-fix device walk passes, as the last feature block before th
 
 ### Store compliance gates (user content), from the compliance audit
 
-- Finalize the content policy text and replace the placeholder in content_policy_screen.dart. Draft written, under review.
-- User blocking. A user must be able to block another user (stop seeing their chants and comments, stop them replying). Apple 1.2 hard requirement and the most likely rejection point. Does not exist today. Real build on the comment surface, needs a product spec.
-- Report a user. Extend reporting from content only (chant or comment) to also reporting a user account. Google user-content requirement. Does not exist today.
-- Policy acceptance before posting. Gate sign up or the first submit or comment on accepting the content policy, and record the acceptance. Google user-content requirement. Not gated today.
-- Age check at sign up. Add a 17-and-up or date-of-birth check at sign up. Google age-screening requirement. The 17+ store rating is the main lever, this is the in-app backup. Does not exist today.
+- Policy acceptance before posting. DONE. Sign up and the first submit or comment are gated on accepting the content policy, and the acceptance is recorded server side. Google user-content requirement. Merged and CI-enforced (flutter, functions, and rules jobs all green on main).
+- Age check at sign up. DONE. Date of birth entered at sign up, age computed locally, sign up blocked under 17. The date of birth itself is never stored, only the pass or fail result. Google age-screening requirement. The 17+ store rating is still the main lever, this is the in-app backup. Merged and CI-enforced.
+- Report a user. DONE. Reporting now covers a user account, not just a chant or comment. Google user-content requirement. Merged and CI-enforced. Known gaps, tracked not fixed: a user who only submits chants and never comments cannot be reported through this UI, since no screen shows a chant's author; and reports, commentReports, and userReports are not rate-limited the way chant and comment creation are.
+- User blocking. Not done. The one remaining feature gate from this audit. A user must be able to block another user (stop seeing their chants and comments, stop them replying). Apple 1.2 hard requirement and the most likely rejection point. Needs a product spec before it can be built.
+- Content policy text. Not done. The real policy wording still needs writing and wiring into content_policy_screen.dart to replace the current placeholder. Required before store submission regardless of the feature gates above.
 
-Priority note: these are hard store-rejection gates, so they rank ahead of the observability block, which is good practice but not a store gate.
+Priority note: user blocking and the content policy text are now the only things standing between this audit and a clean pre-v1 compliance pass.
