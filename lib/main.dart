@@ -22,13 +22,13 @@ Future<void> main() async {
     debugPrint('[AppCheck] Activating — kDebugMode=$kDebugMode');
     if (kDebugMode) {
       await FirebaseAppCheck.instance.activate(
-        appleProvider: AppleProvider.debug,
-        androidProvider: AndroidProvider.debug,
+        providerApple: AppleDebugProvider(),
+        providerAndroid: AndroidDebugProvider(),
       );
     } else {
       await FirebaseAppCheck.instance.activate(
-        appleProvider: AppleProvider.appAttestWithDeviceCheckFallback,
-        androidProvider: AndroidProvider.playIntegrity,
+        providerApple: AppleAppAttestWithDeviceCheckFallbackProvider(),
+        providerAndroid: AndroidPlayIntegrityProvider(),
       );
     }
     debugPrint('[AppCheck] Activated successfully');

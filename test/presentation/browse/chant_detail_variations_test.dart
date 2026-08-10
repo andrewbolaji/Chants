@@ -10,7 +10,6 @@ import 'package:chants/data/repositories/chant_repository.dart';
 import 'package:chants/data/repositories/comment_repository.dart';
 import 'package:chants/data/repositories/profile_repository.dart';
 import 'package:chants/presentation/browse/chant_detail_screen.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:mockito/mockito.dart';
 
 class _MockChantRepository extends Mock implements ChantRepository {

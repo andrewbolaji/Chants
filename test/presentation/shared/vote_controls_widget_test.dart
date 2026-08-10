@@ -234,15 +234,9 @@ void main() {
         expect(renderedScore(tester), '4',
             reason: 'up then down is net one below start');
 
-        // Down arrow should show the error/red active color
-        final downIcon = tester.widget<Icon>(
-          find.descendant(
-            of: find.bySemanticsLabel('Downvote'),
-            matching: find.byType(Icon),
-          ),
-        );
+        // Down arrow should show the error/red active color.
         // The IconButton applies color to the icon; read it from the
-        // IconButton's color property instead
+        // IconButton's color property instead of the Icon itself.
         final downButton = tester.widget<IconButton>(
           find.descendant(
             of: find.bySemanticsLabel('Downvote'),
@@ -290,9 +284,9 @@ void main() {
             home: Scaffold(
               body: ValueListenableBuilder<int>(
                 valueListenable: keyNotifier,
-                builder: (_, k, __) => ValueListenableBuilder<Chant>(
+                builder: (_, k, _) => ValueListenableBuilder<Chant>(
                   valueListenable: notifier,
-                  builder: (_, c, __) =>
+                  builder: (_, c, _) =>
                       VoteControls(key: ValueKey(k), chant: c),
                 ),
               ),
@@ -548,9 +542,9 @@ void main() {
             home: Scaffold(
               body: ValueListenableBuilder<int>(
                 valueListenable: keyNotifier,
-                builder: (_, k, __) => ValueListenableBuilder<Chant>(
+                builder: (_, k, _) => ValueListenableBuilder<Chant>(
                   valueListenable: notifier,
-                  builder: (_, c, __) =>
+                  builder: (_, c, _) =>
                       VoteControls(key: ValueKey(k), chant: c),
                 ),
               ),
