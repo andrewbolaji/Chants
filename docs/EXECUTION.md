@@ -13,6 +13,26 @@ This is the chronological evidence trail for substantial engineering work. It re
 
 ## Entries
 
+### 2026-08-22T18:05:48Z Specify V1 Saved Matchday Songbook
+
+- **Status:** planning contract proposed, runtime implementation blocked on exact approval
+- **Scope:** Prepare a stacked Lane 2 contract for UID-scoped, device-local Saved Matchday Songbook persistence, server refresh, account-deletion cleanup, and offline interface behavior. No runtime, dependency, Firebase, backend, rules, seed, deployment, merge, or release change.
+- **Reference:** `docs/CHANGE_SPEC.md`, decision 003
+- **Operator:** Codex
+
+| UTC time | Action | Target/environment | Result and evidence |
+|---|---|---|---|
+| 18:05:48 | Created `codex/v1-saved-matchday-songbook` from browse closure commit `b18c52a`; inspected accepted decision 003, current repositories, models, auth and deletion lifecycle, Home, Team, Player, chant detail, routing, tests, interface memory, learnings, roadmap, dependencies, and current user-owned worktree changes | Local repository | Completed. Confirmed there is no explicit local persistence package or saved route; Firestore cache is browse-only; offline saved detail must avoid current live vote and comment composition; account deletion currently has no local cleanup seam; and Android Gradle plus `pubspec.lock` changes remain unrelated and unstaged. |
+| 18:05:48 | Read the current Codex engineering, delivery, CI, change-spec, execution, and interface framework contracts | Local framework source | Completed. Classified the block as Lane 2 because it introduces persistent state, identity isolation, deletion lifecycle behavior, a runtime dependency, and a material offline interface. |
+| 18:05:48 | Compared maintained Flutter persistence options against the relaunch promise | Official Flutter and Dart documentation | Completed. Rejected `shared_preferences` because its documentation disclaims restart persistence and larger payload use. Selected `path_provider` plus a bounded, versioned JSON file, flushed temporary write, and same-directory replacement as the smallest supported mobile footprint. |
+| 18:05:48 | Replaced the branch-local active specification with the exact Saved Matchday Songbook technical contract | Local repository | Completed as proposed. Runtime implementation remains intentionally absent until Andrew approves the exact storage, refresh, UID, deletion, interface, and verification contract. |
+| 18:16:05 | Reviewed the complete planning diff and ran structural and writing checks | Local repository | Completed. `git diff --check`, placeholder searches, and forbidden-dash searches returned zero findings. The framework's optional `scripts/check-project-memory.sh` and `scripts/check-writing-style.sh` are not installed in this repository, so their direct checks were run instead. Only the two intended documentation files are part of the planning boundary; unrelated Android Gradle and lockfile changes remain unstaged. |
+
+- **Files/artifacts:** `docs/CHANGE_SPEC.md`, this execution entry, and existing decision 003.
+- **Skipped or blocked:** Runtime code, dependency mutation, tests, builds, Firebase access, deployment, and release are blocked on exact technical-plan approval. The optional project-memory and writing scripts are not installed; direct structural checks passed. GitHub publication remains to be completed.
+- **Final state:** Product boundary approved; exact technical contract proposed on a new local stacked branch; no application behavior changed.
+- **Follow-up:** Verify the planning diff, publish a draft PR stacked on draft PR 7, then obtain Andrew's exact approval before implementation.
+
 ### 2026-08-22T13:14:57Z Specify V1 Songbook and Chant Lab browse split
 
 - **Status:** completed in repository and CI, PR review pending
