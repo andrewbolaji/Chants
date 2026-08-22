@@ -27,11 +27,12 @@ This is the chronological evidence trail for substantial engineering work. It re
 | 18:05:48 | Compared maintained Flutter persistence options against the relaunch promise | Official Flutter and Dart documentation | Completed. Rejected `shared_preferences` because its documentation disclaims restart persistence and larger payload use. Selected `path_provider` plus a bounded, versioned JSON file, flushed temporary write, and same-directory replacement as the smallest supported mobile footprint. |
 | 18:05:48 | Replaced the branch-local active specification with the exact Saved Matchday Songbook technical contract | Local repository | Completed as proposed. Runtime implementation remains intentionally absent until Andrew approves the exact storage, refresh, UID, deletion, interface, and verification contract. |
 | 18:16:05 | Reviewed the complete planning diff and ran structural and writing checks | Local repository | Completed. `git diff --check`, placeholder searches, and forbidden-dash searches returned zero findings. The framework's optional `scripts/check-project-memory.sh` and `scripts/check-writing-style.sh` are not installed in this repository, so their direct checks were run instead. Only the two intended documentation files are part of the planning boundary; unrelated Android Gradle and lockfile changes remain unstaged. |
+| 18:17:02 | Committed and published the planning boundary | Local repository and GitHub | Completed in commit `c42ea20`. Opened stacked draft PR [#8](https://github.com/andrewbolaji/Chants/pull/8) with base `codex/v1-songbook-chant-lab` and head `codex/v1-saved-matchday-songbook`; verified it is open and draft. The five existing CI jobs started. Runtime implementation remains intentionally absent. |
 
 - **Files/artifacts:** `docs/CHANGE_SPEC.md`, this execution entry, and existing decision 003.
-- **Skipped or blocked:** Runtime code, dependency mutation, tests, builds, Firebase access, deployment, and release are blocked on exact technical-plan approval. The optional project-memory and writing scripts are not installed; direct structural checks passed. GitHub publication remains to be completed.
-- **Final state:** Product boundary approved; exact technical contract proposed on a new local stacked branch; no application behavior changed.
-- **Follow-up:** Verify the planning diff, publish a draft PR stacked on draft PR 7, then obtain Andrew's exact approval before implementation.
+- **Skipped or blocked:** Runtime code, dependency mutation, tests, builds, Firebase access, deployment, and release are blocked on exact technical-plan approval. The optional project-memory and writing scripts are not installed; direct structural checks passed. Draft-PR CI is running.
+- **Final state:** Product boundary approved; exact technical contract proposed, committed, pushed, and published as stacked draft PR 8. No application behavior changed.
+- **Follow-up:** Obtain Andrew's exact approval before implementation, then keep all work inside draft PR 8 and wait for clean-runner CI before calling the block verified.
 
 ### 2026-08-22T13:14:57Z Specify V1 Songbook and Chant Lab browse split
 
