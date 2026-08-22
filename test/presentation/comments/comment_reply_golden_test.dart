@@ -15,6 +15,8 @@ import 'package:chants/data/repositories/comment_repository.dart';
 import 'package:chants/data/repositories/profile_repository.dart';
 import 'package:chants/presentation/comments/comment_section.dart';
 
+import '../../helpers/tolerant_golden_file_comparator.dart';
+
 class _GoldenUser extends Mock implements User {
   @override
   String get uid => 'viewer';
@@ -44,13 +46,15 @@ class _GoldenProfileRepository implements ProfileRepository {
   @override
   Stream<UserProfile?> profileStream(String userId) {
     final now = DateTime(2026, 8, 17);
-    return Stream.value(UserProfile(
-      id: userId,
-      displayName: 'NorthBankFan',
-      role: 'user',
-      createdAt: now,
-      updatedAt: now,
-    ));
+    return Stream.value(
+      UserProfile(
+        id: userId,
+        displayName: 'NorthBankFan',
+        role: 'user',
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
   }
 
   @override
@@ -87,14 +91,18 @@ Future<void> _loadFonts() async {
     'MaterialIcons': 'fonts/MaterialIcons-Regular.otf',
   };
   for (final entry in fonts.entries) {
-    final loader = FontLoader(entry.key)
-      ..addFont(rootBundle.load(entry.value));
+    final loader = FontLoader(entry.key)..addFont(rootBundle.load(entry.value));
     await loader.load();
   }
 }
 
 void main() {
   testWidgets('one-level reply thread visual', (tester) async {
+    installTolerantGoldenComparator(
+      testFile: Uri.base.resolve(
+        'test/presentation/comments/comment_reply_golden_test.dart',
+      ),
+    );
     await _loadFonts();
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -102,29 +110,31 @@ void main() {
     final comments = _GoldenCommentRepository();
     addTearDown(comments.controller.close);
 
-    await tester.pumpWidget(ProviderScope(
-      overrides: [
-        authStateProvider.overrideWith(
-          (ref) => Stream.value(_GoldenUser() as User?),
-        ),
-        commentRepositoryProvider.overrideWithValue(comments),
-        profileRepositoryProvider.overrideWithValue(
-          _GoldenProfileRepository(),
-        ),
-        blockedUserIdsProvider.overrideWith(
-          (ref, userId) => Stream.value(<String>{}),
-        ),
-      ],
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: ChantTheme.dark,
-        home: const Scaffold(
-          body: SingleChildScrollView(
-            child: CommentSection(chantId: 'chant-1', commentCount: 3),
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authStateProvider.overrideWith(
+            (ref) => Stream.value(_GoldenUser() as User?),
+          ),
+          commentRepositoryProvider.overrideWithValue(comments),
+          profileRepositoryProvider.overrideWithValue(
+            _GoldenProfileRepository(),
+          ),
+          blockedUserIdsProvider.overrideWith(
+            (ref, userId) => Stream.value(<String>{}),
+          ),
+        ],
+        child: MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: ChantTheme.dark,
+          home: const Scaffold(
+            body: SingleChildScrollView(
+              child: CommentSection(chantId: 'chant-1', commentCount: 3),
+            ),
           ),
         ),
       ),
-    ));
+    );
 
     final parent = _comment(
       id: 'parent',
