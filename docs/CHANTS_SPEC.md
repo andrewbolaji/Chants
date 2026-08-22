@@ -1,11 +1,11 @@
 # Chants: Product Specification
 
 **Build pace:** Build at the pace each feature deserves. Ship when ready. No corner-cutting for dates.
-**Status:** Day 1 setup complete. Planning Block 1. No code until the Block 1 plan is approved.
+**Status:** Living product contract, reconciled August 2026. Current implementation and release state live in `docs/ROADMAP.md`; the one approved implementation boundary lives in `docs/CHANGE_SPEC.md`.
 
 ---
 
-## Primary user (v1) — pin this, check every decision against it
+## Primary user (v1), pin this and check every decision against it
 
 A football supporter, casual to die-hard, who follows a Premier League club closely and cares about matchday culture. Comfortable on Twitter/X, TikTok, and Instagram. Wants to learn the songs to join in at the ground or the pub, enjoys the humor and creativity, and would happily add a chant or vote if it is fun and low friction. Not a music professional, not a developer. Wants the app fast, funny, and obviously useful, not corporate or preachy. Every UX decision gets checked against this person: would they get it instantly, would they feel it was made by someone who actually goes to games.
 
@@ -13,7 +13,7 @@ A football supporter, casual to die-hard, who follows a Premier League club clos
 
 ## 1. Product summary
 
-Chants is the home for finding and learning real football chants: a verified archive with user creativity (parody chants, new-signing prompts) as a layer on top. Fans can add chants (new ones and the existing classics), so the archive grows through contribution. The app is where a chant is found, refined, voted on, and learned.
+Chants is the songbook of the terraces and the workshop for what gets sung next. Fans learn trusted chants in the Songbook, publish funny or sincere ideas in Chant Lab, back the best new work, and help a chant move from an idea to Rising to Terrace Proven. The product keeps archive truth and creative competition visibly distinct without treating either as secondary.
 
 ---
 
@@ -32,7 +32,7 @@ Chants is the home for finding and learning real football chants: a verified arc
 9. No mock data in production. Seed with real, verified, policy-compliant chants only.
 10. Audit-log everything that matters, moderation actions especially.
 11. Content safety is a build principle, not a feature. Every user-content surface ships with reporting and a moderation path.
-12. Media is optional and flexible, never required to show a face. A chant can be lyrics only, lyrics plus a tune recording, a lyric video, a screen recording, or a crowd clip.
+12. Media is optional and never required to show a face. V1 may link out to allowlisted external evidence, but does not upload, host, download, extract, transcode, autoplay, or provide background playback for audio or video.
 13. Differentiation flows through data, never through forks. Sport, league, and team are data. No hardcoded league checks. Enabling a new league or sport is a data change, not a code change.
 14. Simplest sensible placement. Every chant has a name and lives under its natural parent: a player's chant under that player, a club anthem under the club, a manager's chant under the manager. Users drill down the obvious way (club, then its players and club-level chants, then the chant). Show only what makes sense at each level, never dump everything at once. If a fan cannot find or place something in one obvious tap, the layout is wrong, not the fan.
 
@@ -45,7 +45,7 @@ Chants is the home for finding and learning real football chants: a verified arc
 - **Client:** Flutter (mobile first).
 - **Auth:** Firebase Auth (email plus password for v1; sign up, sign in, password reset).
 - **Database:** Cloud Firestore.
-- **Media storage:** Firebase Storage, with a CDN in front for playback. Transcoding considered when heavy video is promoted (v2).
+- **Media:** No upload or storage dependency in v1. Allowlisted evidence opens on the external platform. A future hosted-media block may evaluate Firebase Storage, CDN, and transcoding only after its legal, moderation, privacy, cost, and operating contract is approved.
 - **Server logic:** Cloud Functions (vote counter updates, moderation actions, audit logging, future email delivery for the suggestion box).
 - **Push:** Firebase Cloud Messaging (later, when matchday and social features warrant it).
 
@@ -79,33 +79,39 @@ BAD (corporate, preachy, jargon, never ship):
 
 ---
 
-## 6. Feature scope for v1 (Blocks 1 to 6)
+## 6. Feature scope for v1
 
-A credible, differentiated, launchable product. Not a static archive. It does its actual job (find chants AND add them, safely) from day one on a primed archive.
+A credible, differentiated, launchable product. It is useful before community scale because the Songbook is seeded, and worth contributing to because Chant Lab gives new work a visible route upward.
 
-1. **Auth.** Sign up, sign in, password reset.
-2. **Sport / Competition / Team / Chant data model.** Football and the Premier League enabled, schema ready for any league or sport. All 20 PL clubs and their squads.
-3. **Chant records,** each with: title; subject tag (player, coach/manager, club, or rival); lyrics; the tune it is set to (text); optional flexible media (audio, tune recording, lyric video, screen recording, crowd clip, never required to be self-video); a cover image / thumbnail; status (canonical or community); a real-versus-parody tag; context / notes.
-4. **Operator seed.** Roughly five iconic, must-be-there chants per PL club, all canonical and policy-checked. The credibility primer.
-5. **User submission.** Add a new chant, or add an existing one not yet in the app (enters as community, can earn canonical). This is the app's core purpose, so it is in v1.
-6. **Upvote and downvote.** The quality signal that ranks chants and surfaces validation.
-7. **Browse and search** by club, player, subject, status, newest, most popular, plus a simple cross-club discovery shuffle labeled by club. Navigation drills down the obvious way. Nothing buried, nothing dumped all at once.
-8. **Learn-focused chant detail page.** Lyrics front and center, tune named, media if present.
-9. **Content safety.** Content policy, report button on every chant, fast remove-and-ban, rate-limits, fail-safe defaults. Moderation ships with submission because they are inseparable.
-10. **Suggestion box.** In-app feedback channel.
+1. **Auth and account safety.** Sign up, sign in, password reset, policy acceptance, age gate, account deletion, user blocking, and operator ban and unban.
+2. **Sport / Competition / Team / Chant data model.** Football and the Premier League enabled, with an architecture ready for other leagues or sports through data rather than product forks.
+3. **Operator seed.** Roughly five iconic, must-be-there chants per Premier League club, externally sourced, human verified, and policy checked. This is the cold-start Songbook.
+4. **Songbook.** Terrace Proven chants remain the trusted, learn-focused archive. Existing `canonical` records map to this surface unless a later approved migration changes the internal contract.
+5. **Chant Lab.** Original ideas and not-yet-verified Already sung claims have a clear community surface with Top and New order. Rising highlights momentum but never implies verification.
+6. **Origin-aware submission.** Every fan chooses Already sung or I made this. An evidence link is optional at posting. A user submission requires valid retained evidence and operator review before Terrace Proven promotion. A soft duplicate nudge appears before create.
+7. **Creation from need.** Club and player journeys expose a clear Start a chant action, especially when a player has no chant yet.
+8. **Upvote and downvote.** Score ranks community work and helps identify Rising entries. Votes never prove that a chant has been sung.
+9. **Browse and discovery.** Browse by club and player, distinguish Songbook from Chant Lab, sort Lab by Top or New, and retain a labeled cross-club discovery surface.
+10. **Learn-focused chant detail.** Lyrics stay central, tune and provenance are explicit, and a valid evidence link can open externally as Watch it sung.
+11. **Comments and one reply level.** Fans can joke, debate, like, report, block, and answer a top-level comment once. Deeper nesting and notifications are deferred.
+12. **Saved Matchday Songbook.** Save one chant or a club's visible Songbook as a device-local offline snapshot with refresh, removal, stale-state disclosure, and UID isolation.
+13. **Basic share-out.** Use the platform share sheet with a stable public chant URL when available and an honest text-only fallback otherwise.
+14. **Content safety.** Policy, reporting, blocking, rate limits, fail-safe hiding, removal, ban, unban, and audit logging ship with every relevant user-content surface.
+15. **Suggestion box.** In-app feedback channel.
 
 ---
 
-## 7. Scope for v1.1 (post-MVP, fast follow, do not let v1 linger)
+## 7. Scope for v1.1 (post-launch fast follow)
 
-Cross-reference WISHLIST.
+Cross-reference `docs/WISHLIST.md` for triggers and boundaries.
 
-- Comments and inner replies, including collaborative lyric suggestions (most-upvoted tweaks surface at the top).
-- Follow accounts.
-- Personalized feeds: a For You feed and a Following feed.
-- New-signing creation prompts tied to the squad.
-- Share out to X, YouTube, TikTok as a first-class action.
-- The fuller moderation console (queue, thresholds, bulk actions).
+- Reply notifications and mentions, while keeping the accepted one-level thread unless evidence supports more depth.
+- Collaborative lyric suggestions and community-voted variants.
+- Follow accounts and personalized For You and Following feeds after user and content volume exists.
+- Scheduled new-signing challenges built on the v1 player-scoped submission path.
+- Rich branded share cards and platform-aware previews built on the v1 system share action.
+- Multiple linked renditions per chant, still opened externally and individually reportable.
+- A fuller moderation queue, thresholds, and bulk actions once volume justifies operator tooling.
 
 ---
 
@@ -115,20 +121,22 @@ Hierarchy is **Sport contains Competition contains Team contains Chant,** modele
 
 **Collections (top-level, flat, with denormalized reference fields):**
 
-- `sports` — { id, name (e.g. "Football"), enabled }
-- `competitions` — { id, sportId, name (e.g. "Premier League"), enabled }
-- `teams` — { id, sportId, competitionId, name, crestImageUrl }
-- `players` — { id, teamId, name, position }
-- `chants` — the heart of the app. Stored top-level (not as deep subcollections) so both drill-down and the cross-club shuffle are cheap.
+- `sports`: { id, name (e.g. "Football"), enabled }
+- `competitions`: { id, sportId, name (e.g. "Premier League"), enabled }
+- `teams`: { id, sportId, competitionId, name, crestImageUrl }
+- `players`: { id, teamId, name, position }
+- `chants` is the heart of the app. It is stored top-level, not as deep subcollections, so both drill-down and cross-club discovery remain straightforward.
   - Identity / placement: `id`, `title`, `sportId`, `competitionId`, `teamId`, `playerId` (nullable; null means club-level or manager-level), `subjectTag` (player | coach | club | rival)
-  - Content: `lyrics`, `tuneName` (text), `contextNotes`, `coverImageUrl`, `mediaUrl` (nullable), `mediaType` (none | audio | tuneRecording | lyricVideo | screenRecording | crowdClip)
-  - Classification: `status` (canonical | community), `realOrParody` (real | parody)
+  - Content: `lyrics`, `tuneName` (text), `contextNotes`, `coverImageUrl`, `mediaUrl` (nullable), `mediaType` (none | audio | tuneRecording | lyricVideo | screenRecording | crowdClip). The current media fields predate the narrower v1 link-out decision and must not be treated as approval for uploads.
+  - Classification: `status` (canonical | community), `chantType` (sincere | novelty). The older name `realOrParody` in this document is not the implemented field.
   - **Denormalized counters (defined from Block 1, default 0, written by Cloud Functions):** `upvotes`, `downvotes`, `score`, `commentCount`
   - Provenance / safety: `createdBy`, `createdAt`, `updatedAt`, `flagCount`, `hidden` (bool, fail-safe), `removed` (bool)
-- `votes` — { id, chantId, userId, value (1 or -1), createdAt }. One per user per chant, enforced.
-- `reports` — { id, chantId, reportedBy, reason, createdAt, status }
-- `auditLog` — { id, actorId, action, targetType, targetId, detail, createdAt }. Moderation actions especially.
-- `feedback` — the suggestion box. { id, userId, category (suggestion | bug | question | other), message (<= 1000 chars), followUpOk, resolved, createdAt }
+- `votes`: { id, chantId, userId, value (1 or -1), createdAt }. One per user per chant, enforced.
+- `reports`: { id, chantId, reportedBy, reason, createdAt, status }
+- `auditLog`: { id, actorId, action, targetType, targetId, detail, createdAt }. Moderation actions especially.
+- `feedback`: the suggestion box. { id, userId, category (suggestion | bug | question | other), message (<= 1000 chars), followUpOk, resolved, createdAt }
+
+**Approved v1 extension, field names finalized only in the Lane 2 change spec:** retain an immutable or tightly controlled submission origin (Already sung or I made this), an optional normalized evidence URL and platform, and enough operator-audited evidence state to prevent promotion without proof. Existing documents must remain readable without a destructive migration. Do not overload `chantType`, which describes sincere versus novelty, or let score act as verification.
 
 **Why this topology (DECISIONS entry):** a single top-level `chants` collection with denormalized `teamId` / `playerId` gives drill-down (query chants where `teamId` equals X) and the cross-club shuffle (query across all chants, or a collectionGroup) without expensive joins, and it makes the future search index trivial because everything searchable already lives on one document.
 
@@ -137,21 +145,22 @@ Hierarchy is **Sport contains Competition contains Team contains Chant,** modele
 - Writes to `chants`: authenticated users may create (enters as `community`). Only the author may edit their own draft fields; counters and `status` are never client-writable.
 - `votes`: one per user per chant, value constrained to 1 or -1. Counter updates happen in a Cloud Function, not the client.
 - `reports`: any authenticated user may insert their own. No edit or delete.
-- Moderation (hide, remove, ban, promote to canonical): operator-only, every action audit-logged.
+- Moderation (hide, remove, ban, unban, and promote to canonical): operator-only and audit logged. Promotion of a user submission must reject missing or invalid evidence after the provenance block ships.
 - Rate-limits and fail-safe defaults: new or unproven accounts are rate-limited; content past a flag threshold auto-hides pending review.
 
 ---
 
 ## 9. UI structure
 
-Mobile first. Drill-down navigation, simplest sensible placement.
+Mobile first. Drill-down navigation and simplest sensible placement. The current design contract and decision history live in `docs/INTERFACE.md`.
 
-- **Public / browse:** Home (cross-club discovery shuffle, newest, most popular) → Competition (Premier League) → Club (its players and its club-level chants) → Player (that player's chants) → Chant detail (lyrics front and center, tune named, media if present, vote, report).
-- **Search:** by club, player, subject, status, newest, most popular.
-- **Authed:** Submit a chant, vote, report, suggestion box, profile.
-- **Operator:** remove / ban / promote (basic in v1, fuller console in v1.1).
+- **Public / browse:** Home to Competition to Club. Club and Player expose Songbook and Chant Lab without mixing their trust meanings. Songbook favors learning. Chant Lab exposes Top and New plus clear creation actions.
+- **Chant detail:** Lyrics first, tune named, origin and verification stated in words, vote and discussion available, report always reachable, evidence opened externally when valid, and basic share available.
+- **Submission:** Select club or player context, declare Already sung or I made this, enter the chant, see a soft duplicate nudge, attach optional evidence, and recover the draft after a failed write.
+- **Saved:** A local-first Matchday Songbook states what is saved, when it was last refreshed, and whether the device is offline or the snapshot may be stale.
+- **Operator:** Review reports, remove content, ban or unban users, and promote only when the verification contract is satisfied.
 
-Show only what makes sense at each level. Never dump everything at once. One obvious tap to find or place anything.
+Show only what makes sense at each level. Never dump everything at once. One obvious tap to find, learn, save, create, or share.
 
 ---
 
@@ -163,11 +172,12 @@ No billing in v1. Business-tier ideas are parked in WISHLIST.
 
 ## 11. Out of scope for v1 (protect the ship)
 
-- Comments, replies, follow, personalized feeds (v1.1).
-- Share-out integrations and new-signing creation prompts (v1.1).
-- The fuller moderation console (v1.1; v1 ships basic remove-and-ban).
+- Replies to replies, unlimited nesting, reply notifications, mentions, follow, and personalized feeds.
+- Scheduled creation challenges, winner workflows, and push notifications. The basic player-scoped Start a chant action is in v1.
+- Rich platform-specific share cards, direct publishing integrations, and generated social video. The system share sheet is in v1.
+- Multiple linked renditions and any hosted audio or video. V1 permits one allowlisted external evidence link.
+- The fuller moderation console. V1 retains the current operator tools and adds only what evidence review requires.
 - Other leagues and other sports (v2; architecture already supports it, gated on PL traction).
-- Heavy video at scale and anything that streams licensed masters (v2, with the music-licensing question).
 - Fixture-calendar and matchday surfacing, trending / virality tracking, view counts and richer metrics (v2).
 - Full-text search index (Algolia / Typesense). Browse-and-filter covers v1; promote on trigger.
 
@@ -175,21 +185,20 @@ No billing in v1. Business-tier ideas are parked in WISHLIST.
 
 ## 12. Build order
 
-v1.0 (code-complete, hardened):
-- **Block 1:** Foundation and the agnostic data model.
-- **Block 2:** The archive and the seed.
-- **Block 3:** Submission and basic moderation.
-- **Block 4:** Voting.
-- **Block 5:** Suggestion box.
-- **Block 6:** Visual design and beautification.
-- **Block 7:** Polish and hardening. Account deletion, App Check, Crashlytics, billing kill-switch, copy pass, audits.
+Completed foundation:
 
-v1.1 (social layer, the release target):
-- v1.0 is the hardened foundation; v1.1 adds the social layer.
-- **Block 8:** Comments, replies, and collaborative lyric suggestions.
-- **Block 9:** Follow and feeds (For You, Following).
-- **Block 10:** Creation prompts and share-out.
-- **Block 11:** Moderation console.
+- Blocks 1 to 7: agnostic data model, archive, seed pipeline, submission, moderation, voting, feedback, visual system, and hardening.
+- Interaction block: comments, one reply level, blocking, lifecycle corrections, and audited unban are implemented and automated-test verified. The live-device release walk is still open.
+
+Remaining v1 blocks, each separately planned and reviewed:
+
+1. Close and archive the current interaction block.
+2. Stable identity slice: migrate title-derived seed IDs and every dependent reference before the remaining live seed and public chant URLs.
+3. Provenance slice: origin-aware submit, optional evidence, soft duplicate nudge, honest detail labels, and evidence-gated operator promotion.
+4. Discovery slice: Songbook and Chant Lab on club and player journeys, Top and New, Rising, and Start a chant.
+5. Saved Matchday Songbook.
+6. Basic share-out with a stable URL or text-only fallback.
+7. Final policy, seed, device, access-control, store, deployment, and observation gates from `docs/ROADMAP.md`.
 
 ---
 
@@ -199,28 +208,6 @@ Works end to end on the real seeded data; mobile-responsive; empty, loading, and
 
 ---
 
-## 14. Lessons captured live
+## 14. Engineering memory
 
-### From Block 1
-
-**All-N/A security pass is a red flag, not a green light.** An initial security review returned all N/A and missed a High privilege escalation in the profiles create rule (role field not pinned, allowing self-promotion to operator via a crafted SDK write). The independent code review caught it. A clean security sheet is a signal to push harder, not to close.
-
-**Recap-commit self-reference always mismatches.** Recording a hash inside the file that the commit creates means the hash is always one behind. Resolution: record the final reviewed code commit (`accbe3d`), and treat the recap-write as a noted docs-only commit on top (`04718af`). Document both explicitly so it reads as intent, not drift.
-
-**Field-pinning on CREATE is a bug class.** Every server-managed or privileged field must be pinned on create, not just blocked on update. profiles (role), reports (status), and feedback (resolved) all missed this initially, while chants and votes had it right. The pattern: if a field should never be client-set on creation, the create rule pins it. Default to pinning.
-
-### From Block 2
-
-**Never regenerate seed content from non-authoritative sources.** An early seed script regenerated arsenal.json from non-authoritative content instead of editing the source data in place. The result was a stale, incorrect squad (players who had left the club years ago) seeded as real data. Caught in review and replaced with verified data. The fix: all seed content (squads, players, chants, lyrics) comes from the authoritative source files. The build may only transform supplied data (remove a field, rename a key). Never rewrite content from memory. This is the highest-integrity standing rule.
-
-**Unverified content presented as real data is a bug class.** The stale squad was caught by independent review; two unverified lyrics were flagged on a second pass. Both were presented as authoritative with no caveat until challenged. Seed credibility depends on human-verified content, supplied by Andrew. Every seed file entry is Andrew's content, and any unverified content must be visibly flagged.
-
-### From beautification audit pass
-
-**Point a brief at the work explicitly, even when it is already in the repo.** In Block 6, the design brief was in the project root but the planning step did not cite it as the process spec. The right outcome was reached by parallel construction (the plan restated the same principles), but the brief was not consulted as the canonical reference. Mitigation: a standing rule now requires every design block to start by reading DESIGN_DIRECTION.md.
-
-### From the vote-fix and rename work
-
-**A unit test can certify a bug.** The OptimisticVoteState unit test asserted the snap-back behaviour as the expected result, so it passed while voting was visibly broken on device. The protection that mattered was a widget test on the real control, proven by reverting the fix and watching it go red. For timing or stream-reconciled UI, the regression guard must exercise the real widget, and we confirm the guard by breaking the code on purpose.
-
-**Title-derived document IDs turn every rename into a new document plus an orphan of the old one.** It was safe to clean up pre-launch only because the renamed chants had no real votes yet. Stable IDs are parked on the wishlist before this bites at scale.
+Reusable, evidence-backed lessons now live in `docs/LEARNINGS.md`. Chronological work evidence lives in `docs/EXECUTION.md`, and the current visual and interaction contract lives in `docs/INTERFACE.md`. This product specification does not duplicate those records.

@@ -1,4 +1,6 @@
-# Architectural Decisions
+# Legacy architectural decision archive
+
+This file is the historical decision archive through 2026-07-18. New durable decisions live in `docs/decisions/`. Do not add parallel entries here. See `docs/decisions/README.md` for the canonical format.
 
 ## Standing Rules
 | Date | Rule | Detail |
