@@ -1,3 +1,6 @@
+import { seededChantIdValidationError } from "./chant_identity";
+import { slugify, compositeSlug } from "./slugify";
+
 export interface SportData {
   name: string;
   enabled: boolean;
@@ -20,6 +23,7 @@ export interface ChantVariationData {
 }
 
 export interface ChantData {
+  id: string;
   title: string;
   subjectTag: string;
   playerName: string | null;
@@ -78,8 +82,6 @@ export function validateCompetition(data: unknown): ValidationError[] {
   return errors;
 }
 
-import { slugify, compositeSlug } from "./slugify";
-
 export function validateClub(
   data: unknown,
   teamSlug: string
@@ -126,9 +128,23 @@ export function validateClub(
     errors.push({ field: "chants", message: "At least one chant is required." });
   } else {
     const squadNames = new Set((d.squad || []).map((p) => p.name));
-    const chantSlugs = new Set<string>();
+    const chantIds = new Set<string>();
+    const chantTitleSlugs = new Set<string>();
     for (let i = 0; i < d.chants.length; i++) {
       const c = d.chants[i];
+      const idError = seededChantIdValidationError(c.id, teamSlug);
+      if (idError) {
+        errors.push({ field: `chants[${i}].id`, message: idError });
+      } else if (chantIds.has(c.id)) {
+        errors.push({
+          field: `chants[${i}].id`,
+          message: `Duplicate seeded chant ID: "${c.id}".`,
+        });
+      }
+      if (typeof c.id === "string" && c.id.length > 0) {
+        chantIds.add(c.id);
+      }
+
       if (typeof c.title !== "string" || c.title.length === 0) {
         errors.push({ field: `chants[${i}].title`, message: "Chant title is required." });
       }
@@ -179,16 +195,16 @@ export function validateClub(
         }
       }
 
-      // Fix C: dedup on computed slug, not raw title
-      if (c.title) {
-        const cSlug = compositeSlug(teamSlug, c.title);
-        if (chantSlugs.has(cSlug)) {
+      // Keep duplicate-content protection separate from stable document IDs.
+      if (typeof c.title === "string" && c.title.length > 0) {
+        const titleSlug = slugify(c.title);
+        if (chantTitleSlugs.has(titleSlug)) {
           errors.push({
             field: `chants[${i}].title`,
-            message: `Duplicate chant slug: "${cSlug}". Two titles slugify to the same ID.`,
+            message: `Duplicate chant title slug: "${titleSlug}". Two titles normalize to the same value.`,
           });
         }
-        chantSlugs.add(cSlug);
+        chantTitleSlugs.add(titleSlug);
       }
 
       // Variations (optional)

@@ -1,11 +1,11 @@
 # Change spec: Stable chant document identity
 
-**Status:** Proposed, awaiting Andrew's technical approval
+**Status:** Approved, repository implementation locally verified; live preflight pending
 **Updated:** 2026-08-21
 **Risk lane:** Lane 2, persistent identity and live-data compatibility
 **Stack base:** Draft PR 4, `codex/v1-interaction-safety-replies`
 
-This is the one active implementation specification on the stacked branch. It replaces the prior branch's reply specification only in this branch. No stable-identity implementation or live data action is authorized until the status is changed to Approved.
+This is the one active implementation specification on the stacked branch. It replaces the prior branch's reply specification only in this branch. Andrew approved this technical contract before implementation. Live Firebase access and a production seed remain separately gated operator actions.
 
 ## Outcome
 
@@ -36,10 +36,10 @@ Invariants:
 
 ## Design
 
-- **Approach:** Add an explicit `id` to `ChantData` and every Arsenal seed chant. Introduce one small pure identity/preflight module used by both tests and `seed.ts`. Use the explicit ID for the document reference and orphan set. Query existing chants for the team before any club write, pass only minimal identity metadata into the pure preflight, and abort on conflicts. Each chant then uses a Firestore transaction that rechecks target ownership and team membership before creating or applying the existing content-field allowlist.
+- **Approach:** Add an explicit `id` to `ChantData` and every Arsenal seed chant. Introduce one small identity/preflight module used by both tests and `seed.ts`, plus a small seed-plan module that makes read-only preflight and normal write order independently testable. Use the explicit ID for the document reference and orphan set. Query existing chants for the team before any club write, pass only minimal identity metadata into the pure preflight, and abort on conflicts. Each chant then uses a Firestore transaction that rechecks target ownership and team membership before creating or applying the existing content-field allowlist.
 - **Failure prevented by the new helper:** A later refactor must not silently reintroduce title-derived document IDs, and the seed must not overwrite a community document that happens to use a predictable ID.
 - **Existing alternative considered:** Keep calling `compositeSlug(teamSlug, chant.title)` and manually delete or merge orphans after a rename. Rejected because public links and user engagement make cleanup destructive and increasingly expensive.
-- **Expected footprint:** One small seed identity module and focused test, changes to the chant interface and validator, a narrow `seed.ts` call-site change, explicit IDs added to the one existing club file, and documentation updates. No new package or service.
+- **Expected footprint:** Small seed identity and execution-plan modules with focused tests, changes to the chant interface and validator, a narrow `seed.ts` call-site change, explicit IDs added to the one existing club file, and documentation updates. No new package or service.
 - **Interfaces/contracts:** Club seed JSON now requires `chants[].id`. Titles remain mutable display content. The Dart `Chant.id` contract is unchanged because it already reads the Firestore document ID.
 - **Data/migrations:** Freeze each Arsenal chant's current legacy ID as the new explicit ID. No default-path document move or dependent-reference rewrite. If the live preflight finds a mismatch, abort and write a separate approved migration spec based on the observed IDs and dependent counts.
 
@@ -66,7 +66,7 @@ Invariants:
 
 ## Rollout and recovery
 
-- **Deploy/migration order:** Merge code, inspect the source-only ID additions, run seed tests and typecheck, then run an explicitly authorized read-only preflight against `chants-f95b4`. Only after that passes may an operator run a normal club seed.
+- **Deploy/migration order:** Merge code, inspect the source-only ID additions, run seed tests and typecheck, then run `cd seed && npx ts-node seed.ts --preflight-only arsenal.json` with explicit authorization against `chants-f95b4`. Only after that passes may an operator run a separately authorized normal club seed.
 - **Staging/canary/flag:** First apply to Arsenal, the only club currently in `seed_data/clubs/`, and inspect the seed output. Add remaining club IDs as their files enter the repository.
 - **Healthy signals and window:** Preflight reports every existing expected Arsenal chant as same-ID and system-owned, normal seed reports updates rather than creates, and the orphan report does not gain a rename-created chant.
 - **Rollback or forward fix:** Before any live seed run, revert the code and JSON additions. After a successful same-ID run, keep explicit IDs and forward-fix defects. If any mismatch is found, stop without writes and create a migration-specific recovery plan. Never delete or rewrite dependent records ad hoc.
@@ -80,6 +80,7 @@ Invariants:
 | Types compile | `cd seed && npx tsc --noEmit` | Exit 0 |
 | ID no longer follows title | Focused identity test changes the title while preserving `id` | Test fails if resolution uses `title` |
 | Unsafe collisions stop | Known-good and known-bad preflight fixtures | Every named collision class has a focused assertion |
+| Read-only preflight stays read-only | Seed-plan fixture runs `preflightOnly` with writer spies | No sport, competition, or club writer is called, including after a preflight read failure |
 | Arsenal content is untouched except IDs | Compare base and working JSON after deleting only `chants[].id` from the new side | Structural equality |
 | Expected rollout is no-rename | Compare every explicit Arsenal ID with the legacy algorithm over the same base title | Exact equality for the full file |
 | Changed prose follows house style | `git diff --check` plus em-dash search on changed prose | Zero findings |
@@ -87,7 +88,7 @@ Invariants:
 
 ## Approval
 
-Andrew approved stacking additional review branches on 2026-08-21. Because this block changes persistent identity and protects a hard-to-reverse live-data boundary, the repository framework still requires approval of this technical contract after it is visible. Implementation begins only after Andrew explicitly approves this spec.
+Andrew approved stacking additional review branches and explicitly approved this stable-identity technical contract on 2026-08-21. Repository implementation began only after that approval. This approval does not authorize live Firebase access, a production preflight, or a seed write.
 
 ## Open decisions
 

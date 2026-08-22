@@ -96,17 +96,18 @@ Chants is the home for football chants. Fans use it to find the songs, learn the
 
 **How to use it.**
 1. Place a service account key at seed/serviceAccountKey.json (never committed).
-2. Fill seed_data/clubs/[club].json files with team, squad, and chants.
-3. Run `cd seed && npx ts-node seed.ts` (all clubs) or `npx ts-node seed.ts arsenal.json` (one club).
-4. The script validates every file before writing. If validation fails, it stops and reports errors.
-5. After writing, it prints an orphan report: any docs in Firestore for that club not present in the seed file.
+2. Fill seed_data/clubs/[club].json files with team, squad, and chants. Give every chant a permanent lowercase `id` beginning with the club slug, such as `arsenal-one-nil-to-the-arsenal`.
+3. Before the next live write, run the separately authorized read-only check: `cd seed && npx ts-node seed.ts --preflight-only arsenal.json`. It reads identity metadata and calls no seed writer.
+4. Run `npx ts-node seed.ts` (all clubs) or `npx ts-node seed.ts arsenal.json` (one club) only after the preflight is reviewed and the write is authorized.
+5. The script validates every club file before that club's first write. If validation fails, it stops and reports errors.
+6. After writing, it prints an orphan report: any docs in Firestore for that club not present in the seed file.
 
-**Behind the scenes.** Each doc gets a deterministic slug ID (team name, player name, chant title). On first run, docs are created fully. On re-run, only content fields are updated (title, lyrics, tuneName, etc.); counters, flags, createdBy, and createdAt are never touched. This protects live vote tallies and moderation state across transfer-window squad refreshes.
+**Behind the scenes.** Team and player docs get deterministic slug IDs. Seeded chant IDs are explicit immutable source data, so correcting a title still updates the same document. Before the first club write, the script rejects unsafe ID ownership, cross-team collisions, and a duplicate system chant at another ID. Each chant write repeats the ownership check inside a transaction. On re-run, only content fields are updated (title, lyrics, tuneName, etc.); counters, flags, createdBy, and createdAt are never touched. This protects live engagement and moderation state across content corrections and squad refreshes.
 
 **Limits and gotchas.**
 - The service account key is a secret. Never commit it.
-- Orphan docs (renamed chants or removed players) are reported but not auto-deleted. You review and delete manually.
-- Slug collisions (two different titles that slugify identically) are caught by validation before any writes.
+- Orphan docs are reported but not auto-deleted. Review them manually and never assume they are safe to remove.
+- Duplicate explicit IDs and duplicate normalized titles are caught by validation. An unexpected live collision stops the club before its first write and requires a separate migration plan.
 
 > [screenshot: seed terminal output]
 
