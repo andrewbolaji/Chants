@@ -1,313 +1,244 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chants/app/colors.dart';
 import 'package:chants/app/providers.dart';
+import 'package:chants/app/router.dart';
 import 'package:chants/app/spacing.dart';
 import 'package:chants/data/models/chant.dart';
-import 'package:chants/data/services/chant_evidence.dart';
+import 'package:chants/data/models/saved_songbook.dart';
+import 'package:chants/data/models/team.dart';
+import 'package:chants/presentation/comments/comment_section.dart';
 import 'package:chants/presentation/report/report_sheet.dart';
 import 'package:chants/presentation/shared/chant_provenance_label.dart';
-import 'package:chants/presentation/shared/evidence_link_action.dart';
-import 'package:chants/presentation/shared/halftone_painter.dart';
-import 'package:chants/presentation/comments/comment_section.dart';
+import 'package:chants/presentation/shared/chant_reading_content.dart';
 import 'package:chants/presentation/shared/vote_controls.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Whether lyrics should be centered (anthem feel) or left-aligned.
-/// Fall back to left if any line > 45 chars or > 10 lines total.
-TextAlign _lyricsAlignment(String lyrics) {
-  final lines = lyrics.split('\n');
-  if (lines.length > 10) return TextAlign.left;
-  if (lines.any((l) => l.length > 45)) return TextAlign.left;
-  return TextAlign.center;
-}
-
-class ChantDetailScreen extends ConsumerWidget {
+class ChantDetailScreen extends ConsumerStatefulWidget {
   final Chant chant;
-  const ChantDetailScreen({super.key, required this.chant});
+  final Team? team;
+
+  const ChantDetailScreen({super.key, required this.chant, this.team});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final authState = ref.watch(authStateProvider);
-    final isSignedIn = authState.valueOrNull != null;
-    final textTheme = Theme.of(context).textTheme;
+  ConsumerState<ChantDetailScreen> createState() => _ChantDetailScreenState();
+}
 
-    // Live single-doc stream so VoteControls.didUpdateWidget fires when
-    // the CF updates score, and the delete window self-corrects.
+class _ChantDetailScreenState extends ConsumerState<ChantDetailScreen> {
+  bool _saving = false;
+
+  Future<void> _toggleSaved({
+    required String uid,
+    required Chant chant,
+    required SavedSongbook songbook,
+  }) async {
+    if (_saving) return;
+    final isIndividual = songbook.individualSnapshots.containsKey(chant.id);
+    final club = _clubContaining(songbook, chant.id);
+
+    if (!isIndividual && club != null) {
+      await Navigator.pushNamed(
+        context,
+        AppRouter.savedClub,
+        arguments: SavedClubRouteArguments(uid: uid, teamId: club.team.id),
+      );
+      return;
+    }
+
+    if (isIndividual) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Remove saved chant?'),
+          content: Text(
+            club == null
+                ? 'This removes the chant from this device.'
+                : 'This removes the individual save. The chant will still be '
+                      'available through ${club.team.name}.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('CANCEL'),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('REMOVE FROM DEVICE'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true) return;
+    }
+
+    setState(() => _saving = true);
+    try {
+      if (isIndividual) {
+        await ref
+            .read(savedSongbookRepositoryProvider)
+            .removeIndividual(uid: uid, chantId: chant.id);
+      } else {
+        await ref
+            .read(savedSongbookServiceProvider)
+            .saveIndividual(
+              uid: uid,
+              chantId: chant.id,
+              teamId: chant.teamId,
+              knownTeam: widget.team,
+            );
+      }
+      ref.invalidate(savedSongbookProvider(uid));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            isIndividual
+                ? 'Removed the individual save from this device.'
+                : 'Saved for matchday on this device.',
+          ),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            isIndividual
+                ? 'Could not remove the saved chant. Try again.'
+                : 'Could not save a fresh copy. Check your connection and try again.',
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final user = ref.watch(authStateProvider).valueOrNull;
+    final saved = user == null
+        ? null
+        : ref.watch(savedSongbookProvider(user.uid));
     final chantStream = ref
         .watch(chantRepositoryProvider)
-        .chantStream(chant.id);
+        .chantStream(widget.chant.id);
 
     return StreamBuilder<Chant?>(
       stream: chantStream,
-      initialData: chant,
-      builder: (context, snap) {
-        final live = snap.data ?? chant;
-        return _buildScaffold(context, ref, live, isSignedIn, textTheme);
+      initialData: widget.chant,
+      builder: (context, snapshot) {
+        final live = snapshot.data ?? widget.chant;
+        final songbook = saved?.valueOrNull;
+        final isIndividual =
+            songbook?.individualSnapshots.containsKey(live.id) ?? false;
+        final club = songbook == null
+            ? null
+            : _clubContaining(songbook, live.id);
+        final isSaved = isIndividual || club != null;
+        final savedTooltip = _saving
+            ? 'Saving for matchday'
+            : club != null && !isIndividual
+            ? 'Saved with club'
+            : isIndividual
+            ? 'Saved individually'
+            : 'Save for matchday';
+
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text(''),
+            actions: [
+              if (user != null)
+                Semantics(
+                  label: savedTooltip,
+                  button: true,
+                  child: IconButton(
+                    icon: _saving
+                        ? const SizedBox.square(
+                            dimension: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Icon(
+                            isSaved ? Icons.bookmark : Icons.bookmark_border,
+                          ),
+                    tooltip: savedTooltip,
+                    onPressed: _saving || songbook == null
+                        ? null
+                        : () => _toggleSaved(
+                            uid: user.uid,
+                            chant: live,
+                            songbook: songbook,
+                          ),
+                  ),
+                ),
+              IconButton(
+                icon: const Icon(Icons.flag_outlined),
+                tooltip: 'Report this chant',
+                onPressed: () {
+                  if (user == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Sign in to report this chant.'),
+                      ),
+                    );
+                    return;
+                  }
+                  showReportSheet(
+                    context: context,
+                    target: ReportChant(live.id),
+                    ref: ref,
+                  );
+                },
+              ),
+            ],
+          ),
+          bottomNavigationBar: Container(
+            decoration: const BoxDecoration(
+              border: Border(
+                top: BorderSide(color: AppColors.divider, width: 0.5),
+              ),
+            ),
+            padding: const EdgeInsets.symmetric(
+              horizontal: Spacing.lg,
+              vertical: Spacing.sm,
+            ),
+            child: SafeArea(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [VoteControls(chant: live, large: true)],
+              ),
+            ),
+          ),
+          body: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ChantReadingContent(
+                  title: live.title,
+                  lyrics: live.lyrics,
+                  tuneName: live.tuneName,
+                  contextNotes: live.contextNotes,
+                  variations: live.variations,
+                  provenanceLabel: ChantProvenanceLabel(chant: live),
+                  evidence: live.evidence,
+                  showMediaPlaceholder: live.mediaType != 'none',
+                ),
+                CommentSection(
+                  chantId: live.id,
+                  commentCount: live.commentCount,
+                ),
+              ],
+            ),
+          ),
+        );
       },
     );
   }
 
-  Widget _buildScaffold(
-    BuildContext context,
-    WidgetRef ref,
-    Chant live,
-    bool isSignedIn,
-    TextTheme textTheme,
-  ) {
-    final lyricAlign = _lyricsAlignment(live.lyrics);
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(''),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.flag_outlined),
-            tooltip: 'Report this chant',
-            onPressed: () {
-              if (!isSignedIn) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Sign in to report this chant.'),
-                  ),
-                );
-                return;
-              }
-              showReportSheet(
-                context: context,
-                target: ReportChant(live.id),
-                ref: ref,
-              );
-            },
-          ),
-        ],
-      ),
-      // Stamped vote control pinned at bottom
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          border: Border(top: BorderSide(color: AppColors.divider, width: 0.5)),
-        ),
-        padding: const EdgeInsets.symmetric(
-          horizontal: Spacing.lg,
-          vertical: Spacing.sm,
-        ),
-        child: SafeArea(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [VoteControls(chant: live, large: true)],
-          ),
-        ),
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // LOUD HEADER ZONE: halftone wash, Anton title with print-echo
-            // shadow, sticker badge, mono tune line
-            CustomPaint(
-              painter: const HalftonePainter(opacity: 0.04),
-              child: Container(
-                width: double.infinity,
-                decoration: const BoxDecoration(
-                  gradient: RadialGradient(
-                    center: Alignment.topCenter,
-                    radius: 1.2,
-                    colors: [AppColors.glowGold, Colors.transparent],
-                  ),
-                ),
-                padding: const EdgeInsets.fromLTRB(
-                  Spacing.xl,
-                  Spacing.lg,
-                  Spacing.xl,
-                  Spacing.xxl,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ChantProvenanceLabel(chant: live),
-                    const SizedBox(height: Spacing.xl),
-
-                    // Title: Anton with 1.5px print-echo gold shadow
-                    Text(
-                      live.title.toUpperCase(),
-                      style: textTheme.headlineLarge?.copyWith(
-                        shadows: const [
-                          Shadow(
-                            color: AppColors.gold,
-                            offset: Offset(1.5, 1.5),
-                            blurRadius: 0,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // Content below the loud header
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: Spacing.xl),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Tune line: Space Mono
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.music_note_outlined,
-                        size: 14,
-                        color: AppColors.textMuted,
-                      ),
-                      const SizedBox(width: Spacing.sm),
-                      Expanded(
-                        child: Text(
-                          live.tuneName.toUpperCase(),
-                          style: textTheme.labelMedium,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: Spacing.xxl),
-
-                  // LYRICS: Fraunces, large, centered or left-aligned
-                  SizedBox(
-                    width: double.infinity,
-                    child: Text(
-                      live.lyrics,
-                      textAlign: lyricAlign,
-                      style: textTheme.bodyLarge,
-                    ),
-                  ),
-                  const SizedBox(height: Spacing.xxl),
-
-                  // Context notes
-                  if (live.contextNotes != null &&
-                      live.contextNotes!.isNotEmpty) ...[
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(Spacing.lg),
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(Radii.sm),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('CONTEXT', style: textTheme.labelMedium),
-                          const SizedBox(height: Spacing.xs),
-                          Text(
-                            live.contextNotes!,
-                            style: textTheme.bodyMedium?.copyWith(
-                              color: AppColors.textBody,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: Spacing.xl),
-                  ],
-
-                  if (ChantEvidenceParser.isCanonical(live.evidence)) ...[
-                    EvidenceLinkAction(evidence: live.evidence!),
-                    const SizedBox(height: Spacing.xl),
-                  ],
-
-                  // Variations: "Also sung as"
-                  if (live.variations.isNotEmpty) ...[
-                    Text('ALSO SUNG AS', style: textTheme.labelMedium),
-                    const SizedBox(height: Spacing.md),
-                    ...live.variations.map((v) {
-                      final varAlign = _lyricsAlignment(v.lyric);
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: Spacing.md),
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(Spacing.lg),
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(Radii.sm),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: Spacing.sm,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppColors.textMuted.withValues(
-                                    alpha: 0.15,
-                                  ),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  v.label.toUpperCase(),
-                                  style: const TextStyle(
-                                    fontFamily: 'SpaceMono',
-                                    fontSize: 9,
-                                    color: AppColors.textMuted,
-                                    letterSpacing: 0.8,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: Spacing.md),
-                              SizedBox(
-                                width: double.infinity,
-                                child: Text(
-                                  v.lyric,
-                                  textAlign: varAlign,
-                                  style: textTheme.bodyLarge,
-                                ),
-                              ),
-                              if (v.contextNote != null &&
-                                  v.contextNote!.isNotEmpty) ...[
-                                const SizedBox(height: Spacing.sm),
-                                Text(
-                                  v.contextNote!,
-                                  style: textTheme.bodyMedium?.copyWith(
-                                    color: AppColors.textBody,
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-                      );
-                    }),
-                    const SizedBox(height: Spacing.md),
-                  ],
-
-                  // Media placeholder
-                  if (live.mediaType != 'none') ...[
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.play_circle_outline,
-                          size: 16,
-                          color: AppColors.textMuted,
-                        ),
-                        const SizedBox(width: Spacing.sm),
-                        Text(
-                          'Audio will be available soon.',
-                          style: textTheme.bodyMedium,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: Spacing.xl),
-                  ],
-
-                  const SizedBox(height: Spacing.xl),
-                ],
-              ),
-            ),
-
-            // Comments section
-            CommentSection(chantId: live.id, commentCount: live.commentCount),
-          ],
-        ),
-      ),
-    );
+  SavedClubSongbook? _clubContaining(SavedSongbook songbook, String chantId) {
+    for (final club in songbook.clubSnapshots.values) {
+      if (club.chants.any((chant) => chant.id == chantId)) return club;
+    }
+    return null;
   }
 }

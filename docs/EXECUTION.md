@@ -13,9 +13,9 @@ This is the chronological evidence trail for substantial engineering work. It re
 
 ## Entries
 
-### 2026-08-22T18:05:48Z Specify V1 Saved Matchday Songbook
+### 2026-08-22T18:05:48Z Implement V1 Saved Matchday Songbook
 
-- **Status:** planning contract proposed, runtime implementation blocked on exact approval
+- **Status:** implemented and verified locally, clean-runner CI pending
 - **Scope:** Prepare a stacked Lane 2 contract for UID-scoped, device-local Saved Matchday Songbook persistence, server refresh, account-deletion cleanup, and offline interface behavior. No runtime, dependency, Firebase, backend, rules, seed, deployment, merge, or release change.
 - **Reference:** `docs/CHANGE_SPEC.md`, decision 003
 - **Operator:** Codex
@@ -29,11 +29,15 @@ This is the chronological evidence trail for substantial engineering work. It re
 | 18:16:05 | Reviewed the complete planning diff and ran structural and writing checks | Local repository | Completed. `git diff --check`, placeholder searches, and forbidden-dash searches returned zero findings. The framework's optional `scripts/check-project-memory.sh` and `scripts/check-writing-style.sh` are not installed in this repository, so their direct checks were run instead. Only the two intended documentation files are part of the planning boundary; unrelated Android Gradle and lockfile changes remain unstaged. |
 | 18:17:02 | Committed and published the planning boundary | Local repository and GitHub | Completed in commit `c42ea20`. Opened stacked draft PR [#8](https://github.com/andrewbolaji/Chants/pull/8) with base `codex/v1-songbook-chant-lab` and head `codex/v1-saved-matchday-songbook`; verified it is open and draft. The five existing CI jobs started. Runtime implementation remains intentionally absent. |
 | 18:19:52 | Watched clean-runner planning CI and inspected the final checks | GitHub Actions run `32590297068` | Completed. Flutter tests, Flutter analysis, Functions, seed, and Firestore rules all passed. This confirms the stacked planning commit preserves the existing repository gates; it is not runtime evidence for the proposed offline feature. |
+| 19:02:01 | Received Andrew's explicit approval of the exact Saved Matchday Songbook specification | Codex task and local repository | Approved for repository implementation and verification inside draft PR 8. Firebase access, moderation fixture changes, deployment, merge, and release remain unauthorized. |
+| 19:38:09 | Implemented the approved persistence, refresh, identity, lifecycle, and interface boundary | Local repository | Added schema-versioned UID files, atomic replacement, bounded validation, serialized mutations, active-account guards, complete server refresh, deduplicated club and individual ownership, account-deletion compensation, Home, Team, live detail, and read-only saved routes. Added `path_provider` through a clean-worktree dependency resolution while preserving unrelated lockfile upgrades. No backend, rules, index, seed, Firebase, deployment, or release change occurred. |
+| 19:38:09 | Generated and inspected representative interface evidence | Local Flutter test renderer, 390 by 844 | Overview and saved-detail goldens passed the bounded comparator. Visual inspection confirmed clear device-copy and refresh-age wording, readable club and individual hierarchy, no live social actions on saved detail, and no visible overflow. The overview also passed at 1.6x text. |
+| 19:38:09 | Proved the offline-relaunch guard red, restored it, and ran the local verification matrix | Local repository | Returning an empty model instead of reading the file made the reconstruction test fail; restoring the file read made it pass. After restoration, 255 Flutter tests, 35 Functions tests, 42 seed tests, rules TypeScript compilation, and `flutter analyze lib test` passed. The 500-chant codec diagnostic measured 89.342 ms during the full suite. |
 
-- **Files/artifacts:** `docs/CHANGE_SPEC.md`, this execution entry, and existing decision 003.
-- **Skipped or blocked:** Runtime code, dependency mutation, feature tests and builds, Firebase access, deployment, and release are blocked on exact technical-plan approval. The optional project-memory and writing scripts are not installed; direct structural checks passed.
-- **Final state:** Product boundary approved; exact technical contract proposed, committed, pushed, published as stacked draft PR 8, and green in clean-runner baseline CI. No application behavior changed.
-- **Follow-up:** Obtain Andrew's exact approval before implementation, then keep all work inside draft PR 8 and wait for clean-runner CI before calling the block verified.
+- **Files/artifacts:** Versioned model, file storage, repository, refresh and deletion services, provider and route wiring, saved screens, shared reading layout, live entry controls, focused tests, two goldens, `path_provider`, decision 003, `docs/changes/2026-08-22-saved-matchday-songbook.md`, interface and learning memory, `docs/CHANGE_SPEC.md`, and this execution entry.
+- **Skipped or blocked:** The local Firestore emulator remains unavailable because no Java runtime is installed; rules and fixtures are untouched and clean-runner CI will supply the independent result. Native Android and iOS compilation plus the actual airplane-mode force-stop and relaunch walk remain release gates. Firebase access, moderation fixture changes, deployment, merge, and release remain outside approval.
+- **Final state:** Exact contract approved, implemented, visually inspected, red-checked, and verified by all available local repository gates in draft PR 8. It is not yet committed as an implementation checkpoint, clean-CI verified, reviewed, merged, deployed, released, or observed in production.
+- **Follow-up:** Complete structural and scope checks, commit and push the implementation, wait for clean-runner CI, then retain native compilation and the combined device walk as release gates.
 
 ### 2026-08-22T13:14:57Z Specify V1 Songbook and Chant Lab browse split
 

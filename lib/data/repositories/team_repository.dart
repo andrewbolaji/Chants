@@ -5,7 +5,7 @@ class TeamRepository {
   final FirebaseFirestore _firestore;
 
   TeamRepository({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   CollectionReference<Map<String, dynamic>> get _collection =>
       _firestore.collection('teams');
@@ -21,6 +21,14 @@ class TeamRepository {
 
   Future<Team?> getTeam(String id) async {
     final doc = await _collection.doc(id).get();
+    if (!doc.exists) return null;
+    return Team.fromFirestore(doc);
+  }
+
+  Future<Team?> getTeamFromServer(String id) async {
+    final doc = await _collection
+        .doc(id)
+        .get(const GetOptions(source: Source.server));
     if (!doc.exists) return null;
     return Team.fromFirestore(doc);
   }

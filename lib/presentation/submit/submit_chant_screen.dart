@@ -171,7 +171,7 @@ class _SubmitChantScreenState extends ConsumerState<SubmitChantScreen> {
       await Navigator.pushNamed(
         context,
         AppRouter.chantDetail,
-        arguments: decision,
+        arguments: ChantDetailRouteArguments(chant: decision),
       );
       return false;
     }

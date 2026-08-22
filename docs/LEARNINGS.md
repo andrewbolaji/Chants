@@ -12,6 +12,17 @@ This is durable, evidence-backed project memory. It prevents the same failure or
 
 ## Entries
 
+### 2026-08-22T19:38:09Z Queue-time identity checks prevent stale-account local writes
+
+- **Status:** applied
+- **Scope:** Device-local repositories whose asynchronous operations are scoped to the currently authenticated account
+- **Observed:** A screen-level UID gate prevents normal cross-account navigation, but an operation queued before an auth transition can begin after the active account changes unless the persistence boundary checks again.
+- **Evidence:** The repository access test saves under UID A, switches the guard to UID B, and proves both a later load and a queued mutation for UID A fail while UID A's bytes remain unchanged. The mismatched-route widget test also proves UID A's titles do not render for UID B.
+- **Learning:** Identity must be revalidated at the durable operation boundary, not inferred only from the screen that initiated work. UI gates explain access; repository guards enforce it when asynchronous work actually starts.
+- **Applied control:** Production `SavedSongbookRepository` receives an auth-backed access guard, checks every load and queued mutation at execution time, and keeps account-deletion cleanup inside its already-authorized serialized operation.
+- **Revisit when:** Saved state moves to a server-authorized store or a shared local database with a stronger transaction-scoped identity primitive.
+- **Related:** `lib/data/repositories/saved_songbook_repository.dart`, `lib/app/providers.dart`, decision 003
+
 ### 2026-08-22T16:57:38Z Recoverable stream errors need retained route state
 
 - **Status:** applied

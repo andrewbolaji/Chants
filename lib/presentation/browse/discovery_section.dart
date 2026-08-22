@@ -100,10 +100,14 @@ class DiscoverySection extends ConsumerWidget {
                 ],
               ),
             ),
-            ...filtered.take(20).map((chant) => _LiveChantCard(
-                  initialChant: chant,
-                  teamName: teamNames[chant.teamId],
-                )),
+            ...filtered
+                .take(20)
+                .map(
+                  (chant) => _LiveChantCard(
+                    initialChant: chant,
+                    teamName: teamNames[chant.teamId],
+                  ),
+                ),
           ],
         );
       },
@@ -121,7 +125,9 @@ class _LiveChantCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final stream = ref.watch(chantRepositoryProvider).chantStream(initialChant.id);
+    final stream = ref
+        .watch(chantRepositoryProvider)
+        .chantStream(initialChant.id);
 
     return StreamBuilder<Chant?>(
       stream: stream,
@@ -134,7 +140,7 @@ class _LiveChantCard extends ConsumerWidget {
           onTap: () => Navigator.pushNamed(
             context,
             AppRouter.chantDetail,
-            arguments: live,
+            arguments: ChantDetailRouteArguments(chant: live),
           ),
         );
       },
