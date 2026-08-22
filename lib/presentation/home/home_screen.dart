@@ -27,6 +27,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final user = ref.watch(authStateProvider).valueOrNull;
 
     return Scaffold(
       appBar: AppBar(
@@ -60,6 +61,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   Navigator.pushNamed(context, AppRouter.feedback);
                 case 'policy':
                   Navigator.pushNamed(context, AppRouter.contentPolicy);
+                case 'blocked':
+                  Navigator.pushNamed(context, AppRouter.blockedUsers);
                 case 'signout':
                   ref.read(authRepositoryProvider).signOut();
                 case 'delete':
@@ -79,6 +82,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     style: textTheme.bodyMedium
                         ?.copyWith(color: AppColors.textHeadline)),
               ),
+              if (user != null)
+                PopupMenuItem(
+                  value: 'blocked',
+                  child: Text('Blocked users',
+                      style: textTheme.bodyMedium
+                          ?.copyWith(color: AppColors.textHeadline)),
+                ),
               PopupMenuItem(
                 value: 'signout',
                 child: Text('Sign out',
@@ -199,9 +209,10 @@ Future<void> _showDeleteAccountDialog(
     builder: (ctx) => AlertDialog(
       title: const Text('Delete your account?'),
       content: const Text(
-        'This will permanently delete your account, your votes, your reports, '
-        'and your feedback. Your submitted chants will stay as community '
-        'content with your name removed. This cannot be undone.',
+        'This will permanently delete your account, votes, likes, reports, '
+        'feedback, and blocks. Your submitted chants, comments, and replies '
+        'will stay as community content with your name removed. This cannot '
+        'be undone.',
       ),
       actions: [
         TextButton(

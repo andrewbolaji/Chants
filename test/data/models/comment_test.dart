@@ -26,6 +26,7 @@ void main() {
       expect(comment.userId, 'user-123');
       expect(comment.displayName, 'Test User');
       expect(comment.body, 'Test comment body');
+      expect(comment.parentCommentId, isNull);
       expect(comment.createdAt, now);
       expect(comment.likeCount, 5);
       expect(comment.flagCount, 1);
@@ -37,10 +38,25 @@ void main() {
       expect(out['userId'], 'user-123');
       expect(out['displayName'], 'Test User');
       expect(out['body'], 'Test comment body');
+      expect(out['parentCommentId'], isNull);
       expect(out['likeCount'], 5);
       expect(out['flagCount'], 1);
       expect(out['hidden'], false);
       expect(out['removed'], false);
+    });
+
+    test('reply parent round-trips', () {
+      final comment = Comment.fromJson({
+        'chantId': 'chant-abc',
+        'userId': 'user-123',
+        'displayName': 'Test User',
+        'body': 'A direct reply',
+        'parentCommentId': 'parent-1',
+        'createdAt': Timestamp.fromDate(now),
+      }, id: 'reply-1');
+
+      expect(comment.parentCommentId, 'parent-1');
+      expect(comment.toJson()['parentCommentId'], 'parent-1');
     });
 
     test('counters and flags default to safe values', () {

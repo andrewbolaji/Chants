@@ -1,4 +1,6 @@
-# Known Issues
+# Legacy known-issues snapshot
+
+This file is a historical snapshot and is not the current issue authority. Active implementation scope lives in `docs/CHANGE_SPEC.md`, completed remediation in `docs/changes/`, and durable constraints in `docs/decisions/`. Do not add new issues here.
 
 ## Device walkthrough, June 26
 

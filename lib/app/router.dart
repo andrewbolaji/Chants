@@ -14,6 +14,7 @@ import 'package:chants/presentation/home/home_screen.dart';
 import 'package:chants/presentation/moderation/moderation_screen.dart';
 import 'package:chants/presentation/feedback/feedback_screen.dart';
 import 'package:chants/presentation/submit/submit_chant_screen.dart';
+import 'package:chants/presentation/settings/blocked_users_screen.dart';
 
 class AppRouter {
   static const String signIn = '/sign-in';
@@ -28,6 +29,7 @@ class AppRouter {
   static const String submitChant = '/submit';
   static const String moderation = '/moderation';
   static const String feedback = '/feedback';
+  static const String blockedUsers = '/blocked-users';
 
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -79,6 +81,9 @@ class AppRouter {
       case feedback:
         return MaterialPageRoute(
             builder: (_) => const FeedbackScreen());
+      case blockedUsers:
+        return MaterialPageRoute(
+            builder: (_) => const BlockedUsersScreen());
       case home:
       default:
         return MaterialPageRoute(builder: (_) => const HomeScreen());

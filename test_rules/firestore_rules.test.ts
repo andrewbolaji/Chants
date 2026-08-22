@@ -169,6 +169,29 @@ async function seedHiddenChant(chantId: string) {
   });
 }
 
+async function seedComment(
+  commentId: string,
+  chantId: string,
+  userId: string,
+  options: { parentCommentId?: string | null; hidden?: boolean; removed?: boolean } = {},
+) {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    await setDoc(doc(db, "comments", commentId), {
+      chantId,
+      userId,
+      displayName: "TestUser",
+      body: "A comment",
+      parentCommentId: options.parentCommentId ?? null,
+      createdAt: Timestamp.now(),
+      likeCount: 0,
+      flagCount: 0,
+      hidden: options.hidden ?? false,
+      removed: options.removed ?? false,
+    });
+  });
+}
+
 // ===================== SPORTS =====================
 
 describe("sports", () => {
@@ -262,10 +285,19 @@ describe("players", () => {
 // ===================== PROFILES =====================
 
 describe("profiles", () => {
-  it("allows public read of any profile", async () => {
+  it("denies public read of a profile", async () => {
     await seedUserProfile("user1");
     const unauth = testEnv.unauthenticatedContext().firestore();
-    await assertSucceeds(getDoc(doc(unauth, "profiles", "user1")));
+    await assertFails(getDoc(doc(unauth, "profiles", "user1")));
+  });
+
+  it("allows an owner and an operator to read a profile", async () => {
+    await seedUserProfile("user1");
+    await seedOperator("op1");
+    const ownerDb = testEnv.authenticatedContext("user1").firestore();
+    const operatorDb = testEnv.authenticatedContext("op1").firestore();
+    await assertSucceeds(getDoc(doc(ownerDb, "profiles", "user1")));
+    await assertSucceeds(getDoc(doc(operatorDb, "profiles", "user1")));
   });
 
   it("allows owner to create own profile", async () => {
@@ -649,6 +681,7 @@ describe("chants", () => {
 describe("votes", () => {
   it("allows create with correct userId and doc ID", async () => {
     await seedUserProfile("user1");
+    await seedVisibleChant("ch1", "someone");
     const db = testEnv.authenticatedContext("user1").firestore();
     await assertSucceeds(setDoc(doc(db, "votes", "user1_ch1"), {
       chantId: "ch1",
@@ -681,6 +714,7 @@ describe("votes", () => {
   });
 
   it("allows user to update own vote value", async () => {
+    await seedVisibleChant("ch1", "someone");
     await testEnv.withSecurityRulesDisabled(async (context) => {
       const db = context.firestore();
       await setDoc(doc(db, "votes", "user1_ch1"), {
@@ -731,6 +765,7 @@ describe("votes", () => {
 describe("reports", () => {
   it("allows auth user to create report with correct doc ID", async () => {
     await seedUserProfile("user1");
+    await seedVisibleChant("ch1", "someone");
     const db = testEnv.authenticatedContext("user1").firestore();
     await assertSucceeds(setDoc(doc(db, "reports", "user1_ch1"), {
       chantId: "ch1",
@@ -951,6 +986,7 @@ describe("feedback", () => {
 describe("report write correctness", () => {
   it("allows well-formed report create with status pending and correct doc ID", async () => {
     await seedUserProfile("user1");
+    await seedVisibleChant("ch1", "someone");
     const db = testEnv.authenticatedContext("user1").firestore();
     await assertSucceeds(setDoc(doc(db, "reports", "user1_ch1"), {
       chantId: "ch1",
@@ -1176,6 +1212,7 @@ describe("policy acceptance gate", () => {
 
   it("allows comment create once the policy is accepted", async () => {
     await seedUserProfile("accepted2");
+    await seedVisibleChant("ch1", "someone");
     const db = testEnv.authenticatedContext("accepted2").firestore();
     await assertSucceeds(addDoc(collection(db, "comments"), {
       ...validCommentData,
@@ -1201,6 +1238,7 @@ describe("policy acceptance gate", () => {
 describe("user reports", () => {
   it("allows auth user to create a report with the correct doc ID", async () => {
     await seedUserProfile("reporter1");
+    await seedUserProfile("baduser");
     const db = testEnv.authenticatedContext("reporter1").firestore();
     await assertSucceeds(setDoc(doc(db, "userReports", "reporter1_baduser"), {
       reportedUserId: "baduser",
@@ -1227,6 +1265,7 @@ describe("user reports", () => {
       + "target (doc ID dedup, same mechanism as reports/commentReports)",
       async () => {
     await seedUserProfile("reporter2");
+    await seedUserProfile("baduser2");
     const db = testEnv.authenticatedContext("reporter2").firestore();
     await assertSucceeds(setDoc(doc(db, "userReports", "reporter2_baduser2"), {
       reportedUserId: "baduser2",
@@ -1317,6 +1356,225 @@ describe("user reports", () => {
   });
 });
 
+// ===================== COMMENT REPLIES AND BLOCKS =====================
+
+describe("one-level comment replies", () => {
+  function commentData(
+    userId: string,
+    chantId: string,
+    parentCommentId: string | null,
+  ) {
+    return {
+      chantId,
+      userId,
+      displayName: "TestUser",
+      body: "A direct reply",
+      parentCommentId,
+      createdAt: Timestamp.now(),
+      likeCount: 0,
+      flagCount: 0,
+      hidden: false,
+      removed: false,
+    };
+  }
+
+  it("allows a valid direct reply", async () => {
+    await seedUserProfile("author");
+    await seedUserProfile("replier");
+    await seedVisibleChant("ch1", "author");
+    await seedComment("parent", "ch1", "author");
+    const db = testEnv.authenticatedContext("replier").firestore();
+
+    await assertSucceeds(setDoc(
+      doc(db, "comments", "reply"),
+      commentData("replier", "ch1", "parent"),
+    ));
+  });
+
+  it("denies reply-to-reply and invented parents", async () => {
+    await seedUserProfile("author");
+    await seedUserProfile("replier");
+    await seedVisibleChant("ch1", "author");
+    await seedComment("parent", "ch1", "author");
+    await seedComment("existing-reply", "ch1", "replier", {
+      parentCommentId: "parent",
+    });
+    const db = testEnv.authenticatedContext("replier").firestore();
+
+    await assertFails(setDoc(
+      doc(db, "comments", "nested"),
+      commentData("replier", "ch1", "existing-reply"),
+    ));
+    await assertFails(setDoc(
+      doc(db, "comments", "invented"),
+      commentData("replier", "ch1", "missing-parent"),
+    ));
+  });
+
+  it("denies cross-chant, hidden-parent, and removed-parent replies", async () => {
+    await seedUserProfile("author");
+    await seedUserProfile("replier");
+    await seedVisibleChant("ch1", "author");
+    await seedVisibleChant("ch2", "author");
+    await seedComment("other-chant", "ch2", "author");
+    await seedComment("hidden-parent", "ch1", "author", { hidden: true });
+    await seedComment("removed-parent", "ch1", "author", { removed: true });
+    const db = testEnv.authenticatedContext("replier").firestore();
+
+    await assertFails(setDoc(
+      doc(db, "comments", "cross-chant"),
+      commentData("replier", "ch1", "other-chant"),
+    ));
+    await assertFails(setDoc(
+      doc(db, "comments", "under-hidden"),
+      commentData("replier", "ch1", "hidden-parent"),
+    ));
+    await assertFails(setDoc(
+      doc(db, "comments", "under-removed"),
+      commentData("replier", "ch1", "removed-parent"),
+    ));
+  });
+
+  it("keeps chantId and parentCommentId immutable", async () => {
+    await seedUserProfile("replier");
+    await seedVisibleChant("ch1", "author");
+    await seedVisibleChant("ch2", "author");
+    await seedComment("parent", "ch1", "author");
+    await seedComment("reply", "ch1", "replier", {
+      parentCommentId: "parent",
+    });
+    const db = testEnv.authenticatedContext("replier").firestore();
+
+    await assertFails(updateDoc(doc(db, "comments", "reply"), {
+      parentCommentId: null,
+    }));
+    await assertFails(updateDoc(doc(db, "comments", "reply"), {
+      chantId: "ch2",
+    }));
+    await assertSucceeds(updateDoc(doc(db, "comments", "reply"), {
+      removed: true,
+    }));
+  });
+});
+
+describe("blocks and interaction privacy", () => {
+  async function block(blockerId: string, blockedUserId: string) {
+    const db = testEnv.authenticatedContext(blockerId).firestore();
+    await assertSucceeds(setDoc(
+      doc(db, "blocks", `${blockerId}_${blockedUserId}`),
+      {
+        blockerId,
+        blockedUserId,
+        blockedDisplayName: "BlockedFan",
+        createdAt: Timestamp.now(),
+      },
+    ));
+  }
+
+  it("lets the blocker create, read, and delete a block but hides it from the target", async () => {
+    await seedUserProfile("blocker");
+    await seedUserProfile("target");
+    await block("blocker", "target");
+    const blockerDb = testEnv.authenticatedContext("blocker").firestore();
+    const targetDb = testEnv.authenticatedContext("target").firestore();
+
+    await assertSucceeds(getDoc(doc(blockerDb, "blocks", "blocker_target")));
+    await assertFails(getDoc(doc(targetDb, "blocks", "blocker_target")));
+    await assertSucceeds(deleteDoc(doc(blockerDb, "blocks", "blocker_target")));
+  });
+
+  it("denies self-blocks and forged block IDs", async () => {
+    await seedUserProfile("blocker");
+    await seedUserProfile("target");
+    const db = testEnv.authenticatedContext("blocker").firestore();
+
+    await assertFails(setDoc(doc(db, "blocks", "blocker_blocker"), {
+      blockerId: "blocker",
+      blockedUserId: "blocker",
+      blockedDisplayName: "Self",
+      createdAt: Timestamp.now(),
+    }));
+    await assertFails(setDoc(doc(db, "blocks", "wrong-id"), {
+      blockerId: "blocker",
+      blockedUserId: "target",
+      blockedDisplayName: "Target",
+      createdAt: Timestamp.now(),
+    }));
+  });
+
+  it("prevents replies and likes in either direction after a block", async () => {
+    await seedUserProfile("blocker");
+    await seedUserProfile("target");
+    await seedVisibleChant("ch1", "blocker");
+    await seedComment("blocker-comment", "ch1", "blocker");
+    await seedComment("target-comment", "ch1", "target");
+    await block("blocker", "target");
+    const blockerDb = testEnv.authenticatedContext("blocker").firestore();
+    const targetDb = testEnv.authenticatedContext("target").firestore();
+
+    await assertFails(setDoc(doc(blockerDb, "comments", "blocked-reply"), {
+      chantId: "ch1",
+      userId: "blocker",
+      displayName: "TestUser",
+      body: "No interaction",
+      parentCommentId: "target-comment",
+      createdAt: Timestamp.now(),
+      likeCount: 0,
+      flagCount: 0,
+      hidden: false,
+      removed: false,
+    }));
+    await assertFails(setDoc(doc(targetDb, "comments", "reverse-reply"), {
+      chantId: "ch1",
+      userId: "target",
+      displayName: "TestUser",
+      body: "No reverse interaction",
+      parentCommentId: "blocker-comment",
+      createdAt: Timestamp.now(),
+      likeCount: 0,
+      flagCount: 0,
+      hidden: false,
+      removed: false,
+    }));
+    await assertFails(setDoc(
+      doc(blockerDb, "commentLikes", "blocker_target-comment"),
+      {
+        commentId: "target-comment",
+        userId: "blocker",
+        value: 1,
+        createdAt: Timestamp.now(),
+      },
+    ));
+  });
+
+  it("keeps vote and comment-like history private", async () => {
+    await seedUserProfile("owner");
+    await seedUserProfile("stranger");
+    await seedVisibleChant("ch1", "owner");
+    await seedComment("comment", "ch1", "stranger");
+    const ownerDb = testEnv.authenticatedContext("owner").firestore();
+    const strangerDb = testEnv.authenticatedContext("stranger").firestore();
+
+    await assertSucceeds(setDoc(doc(ownerDb, "votes", "owner_ch1"), {
+      chantId: "ch1",
+      userId: "owner",
+      value: 1,
+      createdAt: Timestamp.now(),
+    }));
+    await assertFails(getDoc(doc(strangerDb, "votes", "owner_ch1")));
+    await assertSucceeds(setDoc(
+      doc(ownerDb, "commentLikes", "owner_comment"),
+      {
+        commentId: "comment",
+        userId: "owner",
+        value: 1,
+        createdAt: Timestamp.now(),
+      },
+    ));
+    await assertFails(getDoc(doc(strangerDb, "commentLikes", "owner_comment")));
+  });
+});
+
 // ===================== BLOCK 3: PROFILE CREATE PINS BANNED =====================
 
 describe("profile create pins banned", () => {
@@ -1350,6 +1608,7 @@ describe("profile create pins banned", () => {
 describe("report dedup", () => {
   it("allows report with correct doc ID convention", async () => {
     await seedUserProfile("user1");
+    await seedVisibleChant("ch1", "someone");
     const db = testEnv.authenticatedContext("user1").firestore();
     await assertSucceeds(setDoc(doc(db, "reports", "user1_ch1"), {
       chantId: "ch1",

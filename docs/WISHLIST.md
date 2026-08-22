@@ -1,51 +1,76 @@
 # Chants: Wishlist
 
-## v1.1 (committed, fast follow after v1 ships and gets real use)
+## Promoted into v1
 
-### v1.1 (FIRST): Threaded replies and rival banter
-**The idea:** Nested comment replies so fans can reply directly to a specific comment, not just add to a flat list. This is what turns the comment section into real back-and-forth: a rival fan talks crap, same-club fans respond under it, debates branch. Banter between rival supporters is core to football culture and is the point of comments here.
-**Why it is first in v1.1, not v1:** v1 already ships working comments (post, like, report, moderate), and the banter already happens fine in a flat chronological thread, so flat comments do not block the culture. Threading is a risk multiplier on the exact surface that has already caused the most bugs (the setState-during-build crash and the vote and like drift both lived here), so adding it in the final pre-launch stretch would destabilise the one thing that finally works. It ships as the very first v1.1 feature instead, with real focus and a proper test and device walk, rather than rushed into v1.
-**Scope when built:** reply-to-comment data model, recursive or one-level-deep rendering, collapse and expand, moderation of a reply tree (not just a flat list), and reply notifications. Plan the depth (full nesting vs one level) before building. Reporting and rate limits apply to replies exactly as to comments.
+### One-level replies and rival banter
+**Status:** Implemented in source and automated checks. One reply level reuses comment likes, reports, moderation, blocking, deletion, and rate limits. Unlimited nesting and reply notifications remain v1.1 candidates.
+
+### Saved Matchday Songbook
+**The idea:** A fan can save one chant or a club's current visible songbook before leaving for the ground, then reopen the lyrics with no signal. The v1 contract is an explicit device-local snapshot with refresh and remove actions. It does not rely on an earlier Firestore read happening to remain in cache.
+**Why v1:** Looking up the words at the match is the product's sharpest real-world use case, and stadium connectivity is unreliable. This provides a concrete return habit without waiting for social scale or finished seeding.
+**V1 boundary:** Individual and club-level saves, offline relaunch, clear saved/last-refreshed state, refresh, remove, and graceful handling when the live chant is later hidden or removed. Cross-device sync, automatic background downloads, push reminders, and storage of audio or video remain out of scope.
+
+### Songbook and Chant Lab
+**The idea:** Keep the trusted Terrace Proven archive as the Songbook and give original or not-yet-verified submissions a separate Chant Lab with Top, New, and Rising discovery. Every submission says Already sung or I made this. A link is optional to post but valid evidence plus operator review is required before a user submission becomes Terrace Proven.
+**Why v1:** This is the product identity, not a later social extra. Fans can learn what is genuinely sung while also competing to create what gets sung next. Votes rank work but never manufacture verification.
+**V1 boundary:** Backward-compatible provenance, optional allowlisted YouTube or X evidence, honest unverified states, evidence-gated promotion, Songbook and Lab club/player navigation, Top and New sorting, a Rising signal, a player-scoped Start a chant action, and the existing report/remove path.
+
+### Soft duplicate nudge
+**The idea:** During submission, show similar chants and ask "Is it one of these?" before creating another record. Let the fan continue when it is genuinely new.
+**Why v1:** Chant Lab invites more submissions, so the archive needs a gentle protection against splitting one chant's votes and conversation across duplicates. The matching engine already exists.
+
+### Basic share-out
+**The idea:** Share a chant through the phone's normal share sheet from chant detail, using a stable public URL when one exists and an honest text-only fallback otherwise.
+**Why v1:** The app is the workshop and existing fan networks are the stage. V1 needs a safe way for a promising chant to leave the app without pretending to publish directly to X, TikTok, or YouTube.
+
+### Stable chant identity
+**The idea:** Replace title-derived seed document IDs with stable IDs before the remaining clubs are written live. Migrate the existing Arsenal chant references safely so title edits no longer create a new chant and orphan the old votes, comments, reports, saved snapshots, evidence, or public links.
+**Why v1:** This is already a reproduced failure and the Chant Lab plus sharing direction increases the cost of every future rename. It is cheaper and safer before public engagement and the remaining seed land.
+**V1 boundary:** A dedicated Lane 2 migration spec, representative dependent records, old and new reader compatibility where required, invariant counts before and after, recovery steps, and a rename regression test. Andrew's sourcing work can continue in parallel; only live seed writes wait for this gate.
+
+## v1.1 (committed, fast follow after v1 ships and gets real use)
 
 ### v1.1: Home screen rotating quote
 **The idea:** A single shared quote everyone sees on the home screen, rotating roughly every 3 days, chosen date-deterministically from a curated quotes collection (no per-user randomness, no server cron). Andrew appends entries over time, each copyright-cleared before adding. Real attributed football quotes preferred over copyrighted song lyrics. Goes on the home screen, NOT the OS launch or splash screen (platform guidance keeps that minimal, and it flashes too fast to read).
 **Why v1.1:** Home-screen polish once the core content is proven.
 
-### v1.1: Duplicate and variants model (the first v1.1 feature)
-**The idea:** One entry per chant with the crowd refining it (the Genius and Wikipedia model), not many competing uploads. Reached through three soft moves: (1) Nudge on submit: show similar existing chants ("is it one of these?") and funnel to the existing entry, creating a new one only if genuinely new. Reuses search, cheap, pull forward as the first v1.1 feature. (2) Variants live inside the entry: a primary version plus alternate versions and suggested corrections, surfaced by votes and confirmed by the operator. (3) Operator merge as the backstop for duplicates that slip through. Avoid hard automatic duplicate-blocking: it is brittle and wrongly blocks genuinely new chants.
-**Why v1.1:** Prevents the archive from fragmenting as user submissions grow. Without it, popular chants get multiple near-identical entries that dilute votes and confuse users.
+### v1.1: Collaborative variants and corrections
+**The idea:** Keep one entry per chant while the crowd proposes alternate versions and corrections, votes on them, and an operator confirms the primary version. Operator merge remains the backstop for duplicates that pass the v1 soft nudge. Avoid hard automatic duplicate blocking because it can reject genuinely new chants.
+**Why v1.1:** The v1 nudge protects creation without adding another moderated contribution and voting model. Collaborative refinement earns its own focused safety and lifecycle block.
 
-### v1.1: Comments, replies, and collaborative lyric suggestions
-**The idea:** Threaded discussion on a chant, plus a lyric-suggestion mechanic where the most-upvoted tweaks surface at the top, turning comments into a refinement engine.
-**Why v1.1:** The social layer is what makes the app sticky, but v1 has to prove find-and-add first. Reporting and moderation apply.
+### v1.1: Reply notifications and collaborative lyric suggestions
+**The idea:** Notify a user when someone answers their comment, plus a lyric-suggestion mechanic where the most-upvoted tweaks surface at the top, turning discussion into a refinement engine.
+**Why v1.1:** One-level discussion is already in v1. Notifications introduce delivery preferences, privacy, unread state, and deep-link behavior, while lyric suggestions introduce another moderated voting surface.
 
 ### v1.1: Follow accounts and personalized feeds
 **The idea:** Follow other users, plus a For You feed and a Following feed.
 **Why v1.1:** Needs a base of users and content to be worth anything. Build on the seeded-plus-submitted archive.
+
+### v1.1: Creator profiles and contribution reputation
+**The idea:** Give a fan a public contribution page showing original ideas, Rising chants, and chants that later became Terrace Proven. Reputation comes from visible contribution history, not an opaque universal score.
+**Why v1.1:** Chant Lab creates creator identity naturally, but public profiles expand blocking, privacy, deletion, attribution, and moderation semantics. Launch with the content loop first, then add identity once real contributors exist.
 
 ### v1.1: Subtle surface grain
 **The idea:** A faint print grain on card and scaffold surfaces, part of the locked "matchnight, warmed with playful" design direction, to add tactile programme-paper texture.
 **Why deferred:** The grain asset was generated during the redesign but never wired to any surface, so it was removed rather than shipped as a dead asset. The design reads well without it.
 **Trigger to promote:** If, on device review, the warm surfaces feel flat or too clean and want more texture. Implement as a cheap static tiled low-opacity PNG overlay (3 to 5%) on card and scaffold surfaces, not a runtime ShaderMask on scrolling lists, and confirm scroll stays smooth.
 
-### v1.1: New-signing creation prompts
-**The idea:** A focused creation flow tied to the squad, "make a chant for [new signing]," self-refreshing every transfer window.
-**Why v1.1:** Sits on top of v1 submission. A centerpiece for retention once the base exists.
+### v1.1: Scheduled new-signing creation challenges
+**The idea:** Turn the v1 player-scoped Start a chant action into featured, time-bound challenges for a new signing, with a winner or highlighted Rising entries.
+**Why v1.1:** V1 provides the creation path. Editorial scheduling, challenge state, expiry, winner semantics, and notifications are a separate retention system.
 
-### v1.1: Share out to X, YouTube, TikTok
-**The idea:** First-class sharing so a chant made here goes viral on the platforms fans already use.
-**Why v1.1:** The app is the workshop, those are the stage. Add once there is content worth sharing.
+### v1.1: Rich platform share cards
+**The idea:** Extend the v1 system share action with branded cards, platform-aware previews, attribution, and campaign measurement.
+**Why v1.1:** The safe outbound path belongs in v1. Custom assets, attribution policy, analytics, and platform-specific optimization should follow real sharing behavior.
 
 ### v1.1: Fuller moderation console
 **The idea:** Operator-side queue, flag thresholds, bulk actions, on top of Block 3's basic remove-and-ban.
 **Why v1.1:** v1 ships the basics that keep it safe; the console is an efficiency layer once volume justifies it.
 
-### v1.1: Link a video of the chant
-**The idea:** An optional field on a chant for a link to a video of it (YouTube or X), shown as a "Watch it sung" button that opens the link. Any rendition counts: a crowd clip, a famous version, a lyric video, or the creator's own. Never required, never about showing a face.
-**Why v1.1, not now:** Complements submission and the sharing layer and reinforces the workshop-versus-stage positioning. Not a launch blocker.
-**Why this is not the v2 video feature:** Link-out only, not hosting. No storage, no transcoding, and a far safer IP posture, since the copyrighted audio lives on YouTube or X, not on us. The v2 hosting-and-playback item stays separate.
-**Guardrails:** Domain-allowlist to YouTube and X, validate the URL format, and route the link through the existing report-and-remove moderation path. No open URLs. Handle dead or removed links gracefully.
-**Trigger:** Build alongside or right after the comments and lyric-suggestions block, since it shares the submission and moderation surfaces.
+### v1.1: Multiple renditions and richer linked media
+**The idea:** Expand the single v1 evidence link into a moderated set of crowd clips, creator renditions, or lyric videos without hosting the files.
+**Why v1.1:** One evidence link is enough to prove the product and verification flow. A gallery needs ordering, duplicate handling, per-link reporting, attribution, and dead-link maintenance.
+**Guardrails:** Keep the allowlist, open externally, and never download or separate audio or video.
 
 ### v1.1: Chant quiz and greatest-chant bracket
 **The idea:** Two shareable, fun surfaces built on the verified archive. A chant quiz (guess the club or player from the lyrics or tune, share your score) and a greatest-chant bracket (real chants head to head, crowd votes through rounds, crown a champion). Both make the app fun and shareable and reinforce the real-chants-board identity.
@@ -53,10 +78,10 @@
 **Sequencing within v1.1:** Both need the seeded archive to be good, so they come after seeding. Real chants only, club-neutral, same content policy.
 **Trigger:** Build alongside or right after the comments and lyric-suggestions block, bracket first.
 
-### v1.1: Top and New tabs on the club screen
-**The idea:** Split each club's chants into a default Top tab ranked by score and a New tab in time order, the Reddit Hot/New pattern, so a flood of new submissions lives in New while the proven chants stay in Top. A score floor can drop heavily downvoted chants out of the Top tab entirely.
-**Why v1.1:** At launch clubs hold a handful of chants and all seed scores are 0, so a tab bar over a near-empty flat list looks worse and solves a saturation problem that does not exist yet. The score ranking shipping now is the foundation these tabs sit on.
-**Trigger:** A club's visible chant list passes about 25 chants, or submissions start producing regular low-value entries that bury the good ones. Build it then, together with the score floor.
+### v1.1: Hot ranking and score floors
+**The idea:** Extend v1 Chant Lab Top and New order with time-decayed Hot ranking and a tested score floor that keeps heavily rejected work out of discovery.
+**Why v1.1:** V1 can use the existing score and creation time. Time decay and thresholds need real submission and voting distributions, not guesses.
+**Trigger:** A club's Chant Lab regularly has enough submissions that lifetime score makes old entries immovable or low-value entries bury useful work.
 
 ### v1.1: Community-submitted, votable chant variations
 **The idea:** The full version of the seed-only variations shipping in v1. Users suggest an alternate line, others vote, and the most-sung variation surfaces on the chant detail.
@@ -110,9 +135,9 @@
 **Trigger to promote:** voting is live (Block 4 shipped) and there is enough volume that a ranking is interesting.
 
 ### v2: Weekly objective chant
-**The idea:** A community challenge to write a chant for a chosen player.
-**Why pin, not build:** Overlaps the new-signing engine; Andrew was unsure it is needed.
-**Trigger to promote:** new-signing prompts ship and show appetite for prompted creation.
+**The idea:** A recurring, club-neutral challenge to write a chant for a chosen player or moment, beyond the v1.1 new-signing challenges.
+**Why pin, not build:** A recurring editorial calendar, judging model, archive, and reward loop should follow evidence that one-off new-signing challenges create worthwhile participation.
+**Trigger to promote:** New-signing challenges ship and show sustained appetite for prompted creation.
 
 ### v2: Heavy video at scale
 **The idea:** Rich video upload, storage, transcoding, and playback at volume.
@@ -165,15 +190,10 @@
 **Why pin, not build:** Pairs with the deferred full-text search index.
 **Trigger to promote:** Full-text search ships, or a user fails to find a player by nickname.
 
-### v2: Propose-from-player-page
-**The idea:** Submitting a chant scoped to the player you are viewing, pre-filling that player.
-**Why pin, not build:** Small UX on top of Block 3 submission. Relates to the v1.1 new-signing creation prompts.
-**Trigger to promote:** Block 3 submission ships and users ask to scope their chant to a player page.
-
-### v2: Stable, non-title-derived chant document IDs
-**The idea:** Give each chant a stable ID that does not change when its title is edited, so renames stop creating new documents and orphaning the old ones.
-**Why pin, not build:** Current title-slug IDs work and renames are cleanable by hand pre-launch; this only earns its cost once content volume or real engagement makes orphan cleanup risky.
-**Trigger:** Before public launch, or the next time more than two chants need renaming at once.
+### v2: Deeper discussion trees
+**The idea:** Allow replies to replies beyond the v1 one-level thread when a real conversation needs it.
+**Why pin, not build:** Arbitrary depth expands pagination, rendering, deletion, blocking, moderation, notification, and deep-link behavior. One level captures most direct back-and-forth without a recursive product.
+**Trigger to promote:** Closed-beta evidence shows fans repeatedly need to answer a reply, and reply notifications plus current moderation are stable enough to carry a deeper graph.
 
 ### v2: Proper diacritic display for player names
 **The idea:** Store an ASCII form of a player name for squad matching and render the correct characters in the UI, for example showing Odegaard with its proper diacritic.
@@ -202,7 +222,7 @@
 ## Skipped (deliberately not building, with reason)
 
 ### Skipped: streaming licensed master recordings
-**Reason:** Chants ride existing copyrighted melodies. TikTok and Instagram have licensing deals, a small app will not. Streaming masters is direct copyright exposure. The flexible-media approach (lyrics plus tune name as the low-risk core, optional light recordings) sidesteps it deliberately.
+**Reason:** Chants ride existing copyrighted melodies. Streaming masters creates direct copyright exposure. The v1 approach keeps lyrics and tune-name text as the core and opens allowlisted evidence on the external platform instead of hosting, downloading, or streaming it.
 
 ### Future: Real club crests on chant cards
 **The idea:** Show the actual club crest next to the gold who-it-is-for line on chant cards. Adds instant visual recognition. Requires licensing or sourcing crest assets for every supported club. No placeholder icon (stock shields read as template). Wait until real assets are available.

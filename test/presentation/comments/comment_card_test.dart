@@ -89,6 +89,46 @@ void main() {
       expect(find.text('Report this user'), findsOneWidget);
     });
 
+    testWidgets('top-level comment offers Reply but a reply does not',
+        (tester) async {
+      final comment = _makeComment();
+
+      await tester.pumpWidget(_wrap(CommentCard(
+        comment: comment,
+        likeState: CommentLikeState.initial(0),
+        isAuthor: false,
+        onReply: () {},
+      )));
+      expect(find.text('Reply'), findsOneWidget);
+
+      await tester.pumpWidget(_wrap(CommentCard(
+        comment: comment,
+        likeState: CommentLikeState.initial(0),
+        isAuthor: false,
+        isReply: true,
+        onReply: () {},
+      )));
+      expect(find.text('Reply'), findsNothing);
+    });
+
+    testWidgets('more menu offers and invokes block when configured',
+        (tester) async {
+      var blocked = false;
+      await tester.pumpWidget(_wrap(CommentCard(
+        comment: _makeComment(),
+        likeState: CommentLikeState.initial(0),
+        isAuthor: false,
+        onBlockUser: () => blocked = true,
+      )));
+
+      await tester.tap(find.byIcon(Icons.flag_outlined));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Block this user'));
+      await tester.pumpAndSettle();
+
+      expect(blocked, true);
+    });
+
     testWidgets('selecting "Report this comment" fires onReportComment only',
         (tester) async {
       final comment = _makeComment();

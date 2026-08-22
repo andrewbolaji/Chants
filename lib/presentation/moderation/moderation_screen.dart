@@ -8,6 +8,7 @@ import 'package:chants/data/models/comment.dart';
 import 'package:chants/data/models/feedback_entry.dart';
 import 'package:chants/data/models/user_profile.dart';
 import 'package:chants/data/models/user_report.dart';
+import 'package:chants/presentation/moderation/user_ban_button.dart';
 import 'package:chants/presentation/shared/error_state.dart';
 
 class ModerationScreen extends ConsumerWidget {
@@ -56,7 +57,7 @@ class ModerationScreen extends ConsumerWidget {
               Tab(text: 'Promote'),
               Tab(text: 'Feedback'),
               Tab(text: 'Reported users'),
-              Tab(text: 'Ban'),
+              Tab(text: 'User access'),
             ],
           ),
         ),
@@ -68,7 +69,8 @@ class ModerationScreen extends ConsumerWidget {
               builder: (context, snap) {
                 if (snap.hasError) {
                   return const ErrorState(
-                      message: 'Could not load flagged chants.');
+                    message: 'Could not load flagged chants.',
+                  );
                 }
                 if (!snap.hasData) {
                   return const Center(child: CircularProgressIndicator());
@@ -98,7 +100,8 @@ class ModerationScreen extends ConsumerWidget {
               builder: (context, snap) {
                 if (snap.hasError) {
                   return const ErrorState(
-                      message: 'Could not load flagged comments.');
+                    message: 'Could not load flagged comments.',
+                  );
                 }
                 if (!snap.hasData) {
                   return const Center(child: CircularProgressIndicator());
@@ -128,7 +131,8 @@ class ModerationScreen extends ConsumerWidget {
               builder: (context, snap) {
                 if (snap.hasError) {
                   return const ErrorState(
-                      message: 'Could not load candidates.');
+                    message: 'Could not load candidates.',
+                  );
                 }
                 if (!snap.hasData) {
                   return const Center(child: CircularProgressIndicator());
@@ -139,7 +143,8 @@ class ModerationScreen extends ConsumerWidget {
                     child: Padding(
                       padding: EdgeInsets.all(Spacing.xxl),
                       child: Text(
-                          'No promotion candidates yet. Community chants need a score of 10 or more.'),
+                        'No promotion candidates yet. Community chants need a score of 10 or more.',
+                      ),
                     ),
                   );
                 }
@@ -158,8 +163,7 @@ class ModerationScreen extends ConsumerWidget {
               stream: feedbackStream,
               builder: (context, snap) {
                 if (snap.hasError) {
-                  return const ErrorState(
-                      message: 'Could not load feedback.');
+                  return const ErrorState(message: 'Could not load feedback.');
                 }
                 if (!snap.hasData) {
                   return const Center(child: CircularProgressIndicator());
@@ -213,16 +217,18 @@ class ModerationScreen extends ConsumerWidget {
               builder: (context, snap) {
                 if (snap.hasError) {
                   return const ErrorState(
-                      message: 'Could not load reported users.');
+                    message: 'Could not load reported users.',
+                  );
                 }
                 if (!snap.hasData) {
                   return const Center(child: CircularProgressIndicator());
                 }
-                final profiles = snap.data!.docs
-                    .map(UserProfile.fromFirestore)
-                    .toList()
-                  ..sort(
-                      (a, b) => b.userReportCount.compareTo(a.userReportCount));
+                final profiles =
+                    snap.data!.docs.map(UserProfile.fromFirestore).toList()
+                      ..sort(
+                        (a, b) =>
+                            b.userReportCount.compareTo(a.userReportCount),
+                      );
                 if (profiles.isEmpty) {
                   return const Center(
                     child: Padding(
@@ -236,13 +242,15 @@ class ModerationScreen extends ConsumerWidget {
                   itemCount: profiles.length,
                   itemBuilder: (context, index) {
                     return _ReportedUserCard(
-                        profile: profiles[index], ref: ref);
+                      profile: profiles[index],
+                      ref: ref,
+                    );
                   },
                 );
               },
             ),
-            // Tab 6: ban user
-            const _BanUserTab(),
+            // Tab 6: ban or unban by user ID
+            const _UserAccessTab(),
           ],
         ),
       ),
@@ -264,8 +272,7 @@ class _ModerationCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(chant.title,
-                style: Theme.of(context).textTheme.titleMedium),
+            Text(chant.title, style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: Spacing.xs),
             Text(
               'Flags: ${chant.flagCount} | '
@@ -298,8 +305,9 @@ class _ModerationCard extends StatelessWidget {
                   FilledButton.tonal(
                     onPressed: () => _action(context, 'remove'),
                     style: FilledButton.styleFrom(
-                      backgroundColor:
-                          Theme.of(context).colorScheme.errorContainer,
+                      backgroundColor: Theme.of(
+                        context,
+                      ).colorScheme.errorContainer,
                     ),
                     child: const Text('Remove'),
                   ),
@@ -323,9 +331,9 @@ class _ModerationCard extends StatelessWidget {
           await modRepo.removeChant(chant.id);
       }
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Done. Chant ${action}d.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Done. Chant ${action}d.')));
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -349,19 +357,14 @@ class _PromotionCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(chant.title,
-                style: Theme.of(context).textTheme.titleMedium),
+            Text(chant.title, style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: Spacing.xs),
             Text(
               'Score: ${chant.score} | Status: ${chant.status}',
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: Spacing.xs),
-            Text(
-              chant.lyrics,
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-            ),
+            Text(chant.lyrics, maxLines: 3, overflow: TextOverflow.ellipsis),
             const SizedBox(height: Spacing.sm),
             Row(
               children: [
@@ -373,8 +376,7 @@ class _PromotionCard extends StatelessWidget {
                           .promoteChant(chant.id);
                       if (!context.mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text('Promoted to verified.')),
+                        const SnackBar(content: Text('Promoted to verified.')),
                       );
                     } catch (e) {
                       if (!context.mounted) return;
@@ -408,8 +410,10 @@ class _CommentModerationCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(comment.displayName,
-                style: Theme.of(context).textTheme.titleSmall),
+            Text(
+              comment.displayName,
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
             const SizedBox(height: Spacing.xs),
             Text(
               'Flags: ${comment.flagCount} | '
@@ -442,8 +446,9 @@ class _CommentModerationCard extends StatelessWidget {
                   FilledButton.tonal(
                     onPressed: () => _action(context, 'remove-comment'),
                     style: FilledButton.styleFrom(
-                      backgroundColor:
-                          Theme.of(context).colorScheme.errorContainer,
+                      backgroundColor: Theme.of(
+                        context,
+                      ).colorScheme.errorContainer,
                     ),
                     child: const Text('Remove'),
                   ),
@@ -467,9 +472,9 @@ class _CommentModerationCard extends StatelessWidget {
           await modRepo.removeComment(comment.id);
       }
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Done.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Done.')));
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -498,8 +503,10 @@ class _ReportedUserCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(profile.displayName,
-                style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              profile.displayName,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: Spacing.xs),
             Text(
               'Reports: ${profile.userReportCount} | '
@@ -520,35 +527,31 @@ class _ReportedUserCard extends StatelessWidget {
                     ),
                   );
                 }
-                final reports = snap.data!.docs
-                    .map(UserReport.fromFirestore)
-                    .toList()
-                  ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+                final reports =
+                    snap.data!.docs.map(UserReport.fromFirestore).toList()
+                      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: reports
-                      .map((r) => Padding(
-                            padding:
-                                const EdgeInsets.only(bottom: Spacing.xs),
-                            child: Text(
-                              '${r.reason} (reported by ${r.reportedBy})',
-                              style: Theme.of(context).textTheme.bodySmall,
-                            ),
-                          ))
+                      .map(
+                        (r) => Padding(
+                          padding: const EdgeInsets.only(bottom: Spacing.xs),
+                          child: Text(
+                            '${r.reason} (reported by ${r.reportedBy})',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ),
+                      )
                       .toList(),
                 );
               },
             ),
             const SizedBox(height: Spacing.sm),
-            if (!profile.banned)
-              FilledButton.tonal(
-                onPressed: () => _ban(context),
-                style: FilledButton.styleFrom(
-                  backgroundColor:
-                      Theme.of(context).colorScheme.errorContainer,
-                ),
-                child: const Text('Ban'),
-              ),
+            UserBanButton(
+              banned: profile.banned,
+              onBan: () => _ban(context),
+              onUnban: () => _unban(context),
+            ),
           ],
         ),
       ),
@@ -559,26 +562,41 @@ class _ReportedUserCard extends StatelessWidget {
     try {
       await ref.read(moderationRepositoryProvider).banUser(profile.id);
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('User banned.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('User banned.')));
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ban failed. Try again.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Ban failed. Try again.')));
+    }
+  }
+
+  Future<void> _unban(BuildContext context) async {
+    try {
+      await ref.read(moderationRepositoryProvider).unbanUser(profile.id);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('User unbanned.')));
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Unban failed. Try again.')));
     }
   }
 }
 
-class _BanUserTab extends ConsumerStatefulWidget {
-  const _BanUserTab();
+class _UserAccessTab extends ConsumerStatefulWidget {
+  const _UserAccessTab();
 
   @override
-  ConsumerState<_BanUserTab> createState() => _BanUserTabState();
+  ConsumerState<_UserAccessTab> createState() => _UserAccessTabState();
 }
 
-class _BanUserTabState extends ConsumerState<_BanUserTab> {
+class _UserAccessTabState extends ConsumerState<_UserAccessTab> {
   final _uidController = TextEditingController();
   bool _loading = false;
 
@@ -588,22 +606,31 @@ class _BanUserTabState extends ConsumerState<_BanUserTab> {
     super.dispose();
   }
 
-  Future<void> _ban() async {
+  Future<void> _setBanned(bool banned) async {
     final uid = _uidController.text.trim();
     if (uid.isEmpty) return;
 
     setState(() => _loading = true);
     try {
-      await ref.read(moderationRepositoryProvider).banUser(uid);
+      final repository = ref.read(moderationRepositoryProvider);
+      if (banned) {
+        await repository.banUser(uid);
+      } else {
+        await repository.unbanUser(uid);
+      }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('User banned.')),
+        SnackBar(content: Text(banned ? 'User banned.' : 'User unbanned.')),
       );
       _uidController.clear();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ban failed. Check the user ID and try again.')),
+        SnackBar(
+          content: Text(
+            '${banned ? 'Ban' : 'Unban'} failed. Check the user ID and try again.',
+          ),
+        ),
       );
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -617,7 +644,7 @@ class _BanUserTabState extends ConsumerState<_BanUserTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('Enter the user ID to ban.'),
+          const Text('Enter a user ID to change account access.'),
           const SizedBox(height: Spacing.lg),
           TextField(
             controller: _uidController,
@@ -627,18 +654,31 @@ class _BanUserTabState extends ConsumerState<_BanUserTab> {
             ),
           ),
           const SizedBox(height: Spacing.lg),
-          FilledButton(
-            onPressed: _loading ? null : _ban,
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-            child: _loading
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Text('Ban user'),
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton(
+                  onPressed: _loading ? null : () => _setBanned(true),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.error,
+                  ),
+                  child: _loading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Ban user'),
+                ),
+              ),
+              const SizedBox(width: Spacing.md),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: _loading ? null : () => _setBanned(false),
+                  child: const Text('Unban user'),
+                ),
+              ),
+            ],
           ),
         ],
       ),

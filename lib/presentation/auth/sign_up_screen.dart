@@ -58,6 +58,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       _error = null;
     });
 
+    var authUserCreated = false;
+    var profileCreated = false;
+
     try {
       final cred = await ref.read(authRepositoryProvider).signUp(
             email: _emailController.text.trim(),
@@ -65,6 +68,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
           );
 
       if (cred.user != null) {
+        authUserCreated = true;
         // The date of birth itself is never sent to Firestore. Only the
         // pass/fail result of the age check above is persisted.
         await ref.read(profileRepositoryProvider).createProfile(
@@ -72,6 +76,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               displayName: _displayNameController.text.trim(),
               ageConfirmed17Plus: true,
             );
+        profileCreated = true;
         // Record acceptance before navigating, so the app-level gate (which
         // watches this same profile) never has a reason to bounce a
         // brand-new user back to the acceptance screen on landing.
@@ -81,6 +86,25 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       if (!mounted) return;
       Navigator.of(context).popUntil((route) => route.isFirst);
     } catch (e) {
+      if (authUserCreated) {
+        try {
+          // Prefer the server deletion flow once a profile may exist so the
+          // failed sign-up cannot leave an orphaned profile or interactions.
+          await ref.read(moderationRepositoryProvider).deleteAccount();
+        } catch (_) {
+          if (!profileCreated) {
+            try {
+              await ref.read(authRepositoryProvider).deleteCurrentUser();
+            } catch (_) {
+              await ref.read(authRepositoryProvider).signOut();
+            }
+          } else {
+            // Keep Auth and profile coherent if server cleanup is unavailable.
+            // Signing out lets the user retry without being stranded.
+            await ref.read(authRepositoryProvider).signOut();
+          }
+        }
+      }
       debugPrint('[SignUp] Error: $e');
       if (e is FirebaseAuthException) {
         debugPrint('[SignUp] code=${e.code} message=${e.message}');
@@ -129,7 +153,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 decoration: const InputDecoration(labelText: 'Display name'),
                 autofillHints: const [AutofillHints.username],
                 validator: (v) {
-                  if (v == null || v.trim().isEmpty) return 'Pick a display name.';
+                  if (v == null || v.trim().isEmpty) {
+                    return 'Pick a display name.';
+                  }
                   if (v.trim().length > 50) return '50 characters max.';
                   return null;
                 },

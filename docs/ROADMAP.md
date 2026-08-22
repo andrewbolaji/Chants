@@ -4,18 +4,22 @@ The path from code-complete to public launch, with concrete triggers on every ga
 
 ---
 
-## Status (as of June 2026)
+## Status (as of August 2026)
 
-**Built and verified by static checks:**
-- v1 feature set: auth, agnostic Sport/Competition/Team/Chant data model, browse and search, chant detail, user submission, moderation (report, remove, ban, rate limits, audit log), voting with counter reconciliation, suggestion box.
-- v1 hardening: account deletion, App Check (soft enforce), Crashlytics, billing alerts with kill-switch.
-- v1.1 dedup matching engine (backend only): token-overlap matcher, operator mergeChants function with source-payload snapshot.
+**Built and verified by automated checks:**
+- v1 feature set: auth, agnostic Sport/Competition/Team/Chant data model, browse and search, chant detail, user submission, moderation (report, remove, ban, unban, rate limits, audit log), voting with counter reconciliation, one-level comment replies with likes, user blocking, and suggestion box.
+- v1 hardening in source: account deletion, App Check client wiring, and Crashlytics wiring. Live enforcement and dashboard controls remain release-verification items.
+- Dedup matching engine (backend only): token-overlap matcher and operator `mergeChants` function with a partial audit payload, not a complete undo snapshot.
 - Visual identity: complete "matchnight, warmed with playful" redesign, tokenized, AA contrast proven.
 
 **Not yet done:**
 - Visual sign-off on device and the v1 flow walk-through.
-- Real content seed.
-- v1.1 social layer (frontend).
+- Stable, non-title-derived chant identity before public links and community engagement make renames costly.
+- The remaining verified club seed.
+- The Songbook and Chant Lab split, origin disclosure, evidence-gated Terrace Proven promotion, and creator ranking.
+- Saved Matchday Songbook.
+- The dedup nudge frontend.
+- Basic chant share-out.
 - Store launch prep.
 
 ---
@@ -28,22 +32,31 @@ Run on device, confirm font weights render bold and heavy, walk all core flows a
 
 ---
 
-## Phase 2: Seed
+## Phase 2: Stable identity and seed
 
-Around five verified, externally sourced, policy-checked chants per PL club for the 19 unseeded clubs, plus verifying the Arsenal placeholder set. Content-integrity rule applies: lyrics and squads are sourced and verified externally, never authored from model memory.
+Andrew can continue source and lyric verification without waiting on engineering. Before the remaining clubs are written to live Firestore or chant URLs are made public, replace title-derived seed document IDs with a stable identity contract and migrate the existing Arsenal references through an approved Lane 2 block.
 
-**Trigger to exit:** All 20 clubs have a verified canonical primer set.
+Then seed around five verified, externally sourced, policy-checked chants per Premier League club for the 19 unseeded clubs, plus verifying the Arsenal placeholder set. Content-integrity rule applies: lyrics and squads are sourced and verified externally, never authored from model memory.
+
+Source verification in this phase and the application work in Phase 3 may run in parallel. The stable-ID gate applies to live data writes, not to Andrew's sourcing documents or club JSON preparation.
+
+**Trigger to exit:** Stable IDs preserve existing dependent records through a rename test, and all 20 clubs have a verified canonical primer set.
 
 ---
 
-## Phase 3: v1.1 social layer
+## Phase 3: v1 interaction and creator loop
 
-The reason public launch is gated to v1.1: the social and self-correction layer is core to the product feeling alive. Launching without it would feel static.
+V1 is a trusted songbook and a creator workshop. The work is sequenced as bounded review blocks so the product direction does not become one high-risk rebuild.
 
-- Dedup nudge UI: wire the Block 8 matching engine into the submit flow as a soft "is it one of these?" nudge, not a hard block.
-- Nested/threaded comment replies, the collaborative lyric-suggestion mechanic (propose a correction, crowd upvotes, most-upvoted tweak surfaces), and comment downvotes. (Flat comments with single likes are now v1; see v1 Launch Readiness below.)
+1. **Close the current interaction block.** Replies, blocking, lifecycle fixes, and audited unban are done in source and automated checks. Complete the device walk in `docs/CHANGE_SPEC.md`, then archive its implementation rationale before replacing the active spec.
+2. **Add provenance end to end.** Submission requires Already sung or I made this. The evidence link is optional at posting, an Already sung claim without one stays visibly unverified, and a user submission needs valid evidence plus operator review before Terrace Proven promotion. Wire the existing duplicate matcher into this same submission flow as a soft nudge.
+3. **Expose Songbook and Chant Lab.** Club and player journeys distinguish Terrace Proven content from community work. Chant Lab has Top and New order, a non-verification Rising signal, and a Start a chant action for players who need one.
+4. **Build Saved Matchday Songbook.** Save an individual chant or a club's current visible Songbook as a device-local offline snapshot, then refresh or remove it. Cross-device sync remains deferred.
+5. **Add basic share-out.** Chant detail uses the platform share sheet with a stable public chant URL or an honest text-only fallback. Do not ship a dead deep link or pretend to post directly into another service.
 
-**Trigger to exit:** The social and self-correction surfaces work end to end on the seeded archive.
+The accepted product boundary is in `docs/decisions/004-songbook-and-chant-lab.md`. Each state-changing block gets the framework's Lane 2 change spec, execution log, tests, UI evidence, scoped rationale, and rollback plan. Unlimited nesting, notifications, scheduled challenges, collaborative lyric suggestions, creator follows, and hosted media remain later work.
+
+**Trigger to exit:** The current device walk passes; provenance and promotion rules work end to end; Songbook and Chant Lab remain understandable on club and player screens; Saved Matchday Songbook survives airplane-mode relaunch; the dedup nudge works on the seeded archive; and share-out never produces a broken destination.
 
 ---
 
@@ -63,10 +76,10 @@ The reason public launch is gated to v1.1: the social and self-correction layer 
 Shipped: content policy stub, report/flag flow, remove/ban, rate limits, fail-safe auto-hide, audit log. Open: Andrew writes the real content policy text. Trigger for the fuller moderation console: submission volume outgrows basic remove-and-ban.
 
 ### Music and IP licensing (designed around, not a blocker)
-v1 posture: lyrics plus tune-name text is the core. Media is optional and flexible. Never stream licensed master recordings. Trigger to revisit: engagement on light media formats proves demand and the licensing exposure is understood first.
+V1 posture: lyrics plus tune-name text is the core. Optional evidence links open on an allowlisted external platform. Chants does not host, download, extract, autoplay, or provide background playback for that media, and never streams licensed master recordings. Trigger to revisit hosted media: link engagement proves demand and written moderation, takedown, audio, privacy, cost, and operational controls are approved first.
 
 ### Cold-start and retention (addressed by design)
-Solved by the operator-seeded primer, user submission, cross-club discovery, and the v1.1 social layer.
+The operator-seeded Songbook makes the app useful on day one. Chant Lab, player creation prompts, voting, comments, sharing, and Saved Matchday Songbook provide creation, competition, conversation, distribution, and matchday return loops without waiting for a personalized feed.
 
 ### Expansion
 Architecture is sport-agnostic and league-agnostic from Block 1. Expansion is data, not code. v1 is Football and the Premier League. v2 adds leagues or sports based on usage data.
@@ -84,15 +97,23 @@ Parallel track (not a v1 launch blocker): flip the GitHub repo public for job ap
 - **DONE** Vote rapid-tap reconciliation fixed (commit 9912adf).
 - **DONE** Vote stale-load mismatch fixed via appliedValue reconciliation; detail screen now subscribes to a live chant stream (commit 38f559a).
 
-### Comments on chants (v1, flat, with likes)
+### Comments on chants (v1, likes plus one reply level)
 
-Build after the vote-fix device walk passes, as the last feature block before the remaining launch-prep (seed the other clubs, real content policy, store setup). Plan-first: it introduces a new collection and a new content-safety surface, so it gets a plan Andrew approves before any code.
+**Current:** one direct reply level, one like per user, reporting, moderation, blocking, rate limiting, lifecycle handling, and comment counts are implemented and covered by automated checks.
 
-**Scope in:** a comments collection; post a comment; delete your own comment; a flat comment list on the chant detail screen (single level); a single like per comment per user (upvote only, no downvote) with a denormalized like count; sort by likes descending then newest first; a comment count on the chant card; and the FULL moderation path reused from chant submissions (report a comment, operator remove, ban, rate-limit new or unproven accounts, audit-log every moderation action). Comment likes reuse the appliedValue reconciliation pattern from chant votes so cold loads show the correct count and do not reintroduce the stale-count bug.
+**Next:** complete the live-device keyboard, failed-write, block/unblock, moderation, and account-deletion walk recorded in `docs/CHANGE_SPEC.md`.
 
-**Scope out (stays v1.1):** nested or threaded replies; the collaborative lyric-suggestion mechanic where the most-upvoted tweak surfaces; comment downvotes.
+**Scope out (stays v1.1):** replies to replies, unlimited nesting, reply notifications, mentions, the collaborative lyric-suggestion mechanic, and comment downvotes.
 
-**Note:** confirm at plan time that the chant card can carry a comment-count element without crowding the existing minimal card (tune line, title, who-it-is-for, one lyric line, vote chip, subject label); the like affordance itself lives on the comment, not the card. This is a deliberate density decision.
+The implementation boundary and remaining verification gate live in `docs/CHANGE_SPEC.md`.
+
+### Songbook and Chant Lab (v1)
+
+**Approved product contract:** Chants keeps Terrace Proven content in the trusted Songbook and gives original or not-yet-verified submissions a visible Chant Lab. Submission origin is required. Evidence is optional to post and required to promote a user submission to Terrace Proven. Votes rank ideas but never verify a factual claim.
+
+**Implementation status:** Not started. It must not be folded into the active replies/security working tree. After that block closes, create the Lane 2 plan for the provenance slice first, then the browse split, offline Songbook, and share-out as reviewable vertical blocks.
+
+**Source of truth:** `docs/decisions/004-songbook-and-chant-lab.md` and the interface contract in `docs/INTERFACE.md`.
 
 ### Content (owner: Andrew, critical path)
 
@@ -100,7 +121,7 @@ Build after the vote-fix device walk passes, as the last feature block before th
 - **TODO** Seed the other 19 Premier League clubs. Target about 5 chants per club, roughly 100 total. Floor: no club below 3 genuinely iconic chants. All externally sourced and verified against a real version, never generated. Ship trigger: every club clears the floor and the marquee clubs sit at about 5.
 - **IN PROGRESS** Premier League chant seed. A sourcing spreadsheet covers all 19 clubs that need seeding (every 2026-27 Premier League club except Arsenal, which is already live). Each club has roughly 5 to 6 chants: club anthems, player and manager chants, and one rivalry banter chant, all externally sourced with links, plus a cross-check second source. Lyrics are intentionally blank pending Andrew pasting the exact verified words from each source (content-integrity rule: lyrics are never generated). Content policy applied: rivalry and anti-rival banter is included, only genuine hate, tragedy-mocking, and violence excluded.
   - Status: sourced, awaiting lyric verification by Andrew.
-  - Trigger to seed to Firestore: a club's chants have verified lyrics filled in. At that point seed that club into chants-f95b4 following the existing Arsenal seed pattern (add to the club seed data file, run the seed, confirm the round trip, no duplicates), using the current chantType values sincere and novelty.
+  - Trigger to prepare a club seed file: its chants have verified lyrics filled in. Source work can continue now. The live Firestore write waits for the stable-ID precondition above, then follows the tested seed path with round-trip and duplicate checks, using the current `chantType` values `sincere` and `novelty`.
 - **TODO** Write the real content policy to replace the placeholder in content_policy_screen.dart. Required for app store review since submission is live. Andrew owns the wording.
 
 ### Polish and ship
@@ -124,7 +145,7 @@ Build after the vote-fix device walk passes, as the last feature block before th
 
 ### Pre-launch (start now, needs weeks of runway)
 
-- **One-sentence pitch**, used everywhere (store subtitle, site headline, social bios): *Chants is the songbook of the terraces. Find the words, learn them, and add your own.*
+- **One-sentence pitch**, used everywhere (store subtitle, site headline, social bios): *Chants is the songbook of the terraces and the workshop for what gets sung next.*
 - **Build in public** on one platform, 2 to 3 posts a week. Primary platform is the one where football fans actually gather (X or TikTok). Claim the @chantsfc handle everywhere for consistency but only post actively on the primary.
 - **Collect waitlist emails** on chantsfc.com. Even 30 to 100 people means launch day is not silent.
 - **Join five watering holes** as a real member, weeks before launch: Arsenal and other club subreddits, football fan Twitter, terrace-culture and fan forums. Be helpful, never spam, so at launch you are a member sharing something, not a stranger advertising.
@@ -143,7 +164,7 @@ Build after the vote-fix device walk passes, as the last feature block before th
 ### Post-launch (the grind)
 
 - Content cadence of 2 to 3 posts a week on the primary platform, tied to matchdays and the transfer window (every new signing needs a chant).
-- Make in-app sharing native (share-out to X, TikTok, YouTube is already planned for v1.1) since user sharing is the real growth engine.
+- Make the v1 native share action excellent. Rich platform-specific cards and generated social video remain later growth work.
 - Add an in-app prompt asking happy users to rate the app after a good moment; store ratings drive organic discovery more than anything.
 - SEO groundwork: repurpose handbook and chant content into public help and lyrics pages on chantsfc.com, which compounds over time.
 
@@ -166,7 +187,7 @@ Build after the vote-fix device walk passes, as the last feature block before th
 - Policy acceptance before posting. DONE. Sign up and the first submit or comment are gated on accepting the content policy, and the acceptance is recorded server side. Google user-content requirement. Merged and CI-enforced (flutter, functions, and rules jobs all green on main).
 - Age check at sign up. DONE. Date of birth entered at sign up, age computed locally, sign up blocked under 17. The date of birth itself is never stored, only the pass or fail result. Google age-screening requirement. The 17+ store rating is still the main lever, this is the in-app backup. Merged and CI-enforced.
 - Report a user. DONE. Reporting now covers a user account, not just a chant or comment. Google user-content requirement. Merged and CI-enforced. Known gaps, tracked not fixed: a user who only submits chants and never comments cannot be reported through this UI, since no screen shows a chant's author; and reports, commentReports, and userReports are not rate-limited the way chant and comment creation are.
-- User blocking. Not done. The one remaining feature gate from this audit. A user must be able to block another user (stop seeing their chants and comments, stop them replying). Apple 1.2 hard requirement and the most likely rejection point. Needs a product spec before it can be built.
+- User blocking. DONE in source and automated checks. Directional block records hide comment interactions in the client, rules deny reply and like interaction in either direction, and users can review and undo their blocks.
 - Content policy text. Not done. The real policy wording still needs writing and wiring into content_policy_screen.dart to replace the current placeholder. Required before store submission regardless of the feature gates above.
 
-Priority note: user blocking and the content policy text are now the only things standing between this audit and a clean pre-v1 compliance pass.
+Priority note: the real content policy text and live-device enforcement walk remain before a clean pre-v1 compliance pass.

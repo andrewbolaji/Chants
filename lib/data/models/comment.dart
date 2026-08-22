@@ -6,6 +6,7 @@ class Comment {
   final String userId;
   final String displayName;
   final String body;
+  final String? parentCommentId;
   final DateTime createdAt;
   final int likeCount;
   final int flagCount;
@@ -18,6 +19,7 @@ class Comment {
     required this.userId,
     required this.displayName,
     required this.body,
+    this.parentCommentId,
     required this.createdAt,
     this.likeCount = 0,
     this.flagCount = 0,
@@ -32,6 +34,7 @@ class Comment {
       userId: json['userId'] as String,
       displayName: json['displayName'] as String,
       body: json['body'] as String,
+      parentCommentId: json['parentCommentId'] as String?,
       createdAt: (json['createdAt'] as Timestamp).toDate(),
       likeCount: json['likeCount'] as int? ?? 0,
       flagCount: json['flagCount'] as int? ?? 0,
@@ -50,6 +53,7 @@ class Comment {
       'userId': userId,
       'displayName': displayName,
       'body': body,
+      'parentCommentId': parentCommentId,
       'createdAt': Timestamp.fromDate(createdAt),
       'likeCount': likeCount,
       'flagCount': flagCount,
