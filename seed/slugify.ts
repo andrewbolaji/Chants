@@ -15,7 +15,8 @@ export function slugify(text: string): string {
 
 /**
  * Creates a composite slug: {prefix}-{slugified text}.
- * Used for players (team-player) and chants (team-title).
+ * Used for player IDs and legacy seeded-chant compatibility checks. New seeded
+ * chant IDs are explicit source data and must not be recomputed from titles.
  */
 export function compositeSlug(prefix: string, text: string): string {
   return `${prefix}-${slugify(text)}`;

@@ -3,6 +3,13 @@ import { readFileSync, readdirSync, existsSync } from "fs";
 import { resolve, basename } from "path";
 import { slugify, compositeSlug } from "./slugify";
 import { validateSport, validateCompetition, validateClub, ClubData } from "./validate";
+import {
+  ExistingChantIdentity,
+  findChantIdentityConflicts,
+  resolveSeededChantId,
+  upsertSeededChantInTransaction,
+} from "./chant_identity";
+import { executeSeedPlan, parseSeedArguments } from "./seed_plan";
 
 // --- Init ---
 const serviceAccountPath = resolve(__dirname, "serviceAccountKey.json");
@@ -25,6 +32,79 @@ const CONTENT_FIELDS_CHANT = [
 
 const CONTENT_FIELDS_PLAYER = ["name"];
 const CONTENT_FIELDS_TEAM = ["name", "crestImageUrl"];
+
+function existingChantIdentity(
+  snapshot: admin.firestore.DocumentSnapshot
+): ExistingChantIdentity {
+  const data = snapshot.data() ?? {};
+  return {
+    id: snapshot.id,
+    title: data.title,
+    teamId: data.teamId,
+    createdBy: data.createdBy,
+  };
+}
+
+async function preflightChantIdentities(
+  raw: ClubData,
+  teamSlug: string
+): Promise<void> {
+  const seeded = raw.chants.map((chant) => ({
+    id: resolveSeededChantId(chant),
+    title: chant.title,
+  }));
+  const targetReferences = seeded.map((chant) =>
+    db.collection("chants").doc(chant.id)
+  );
+  const [teamSnapshot, targetSnapshots] = await Promise.all([
+    db.collection("chants").where("teamId", "==", teamSlug).get(),
+    db.getAll(...targetReferences),
+  ]);
+
+  const existingById = new Map<string, ExistingChantIdentity>();
+  for (const snapshot of teamSnapshot.docs) {
+    existingById.set(snapshot.id, existingChantIdentity(snapshot));
+  }
+  for (const snapshot of targetSnapshots) {
+    if (snapshot.exists) {
+      existingById.set(snapshot.id, existingChantIdentity(snapshot));
+    }
+  }
+
+  const conflicts = findChantIdentityConflicts(
+    teamSlug,
+    seeded,
+    [...existingById.values()]
+  );
+  if (conflicts.length > 0) {
+    for (const conflict of conflicts) {
+      console.error(`    IDENTITY CONFLICT [${conflict.kind}]: ${conflict.message}`);
+    }
+    throw new Error(
+      `Chant identity preflight failed for "${teamSlug}". ` +
+        "No club writes were attempted. Correct the seed IDs or prepare an approved migration."
+    );
+  }
+
+  console.log(`    Chant identity preflight: ${seeded.length} safe target(s).`);
+}
+
+function loadClub(filePath: string): { raw: ClubData; teamSlug: string } {
+  const raw: ClubData = JSON.parse(readFileSync(filePath, "utf8"));
+  const teamSlug = slugify(raw.team.name);
+  const errors = validateClub(raw, teamSlug);
+  if (errors.length > 0) {
+    console.error(`Validation failed for ${basename(filePath)}:`, errors);
+    process.exit(1);
+  }
+  return { raw, teamSlug };
+}
+
+async function preflightClub(filePath: string): Promise<void> {
+  const { raw, teamSlug } = loadClub(filePath);
+  console.log(`\n  Club: ${raw.team.name} (${teamSlug})`);
+  await preflightChantIdentities(raw, teamSlug);
+}
 
 async function upsert(
   ref: admin.firestore.DocumentReference,
@@ -90,17 +170,13 @@ async function seedClub(
   sportSlug: string,
   compSlug: string
 ): Promise<void> {
-  const raw: ClubData = JSON.parse(readFileSync(filePath, "utf8"));
-  const teamSlug = slugify(raw.team.name);
-
-  // Validate
-  const errors = validateClub(raw, teamSlug);
-  if (errors.length > 0) {
-    console.error(`Validation failed for ${basename(filePath)}:`, errors);
-    process.exit(1);
-  }
+  const { raw, teamSlug } = loadClub(filePath);
 
   console.log(`\n  Club: ${raw.team.name} (${teamSlug})`);
+
+  // Read every target before the first club write. Unsafe identity state aborts
+  // the club rather than guessing at a migration.
+  await preflightChantIdentities(raw, teamSlug);
 
   // Team
   const teamRef = db.collection("teams").doc(teamSlug);
@@ -135,10 +211,10 @@ async function seedClub(
 
   // Chants
   const now = admin.firestore.FieldValue.serverTimestamp();
-  const seededChantSlugs = new Set<string>();
+  const seededChantIds = new Set<string>();
   for (const chant of raw.chants) {
-    const chantSlug = compositeSlug(teamSlug, chant.title);
-    seededChantSlugs.add(chantSlug);
+    const chantId = resolveSeededChantId(chant);
+    seededChantIds.add(chantId);
     const playerId = chant.playerName
       ? compositeSlug(teamSlug, chant.playerName)
       : null;
@@ -171,21 +247,40 @@ async function seedClub(
       removed: false,
     };
 
-    const chantRef = db.collection("chants").doc(chantSlug);
-    const chantResult = await upsert(chantRef, fullData, CONTENT_FIELDS_CHANT);
-    console.log(`    Chant "${chant.title}" (${chantSlug}): ${chantResult}`);
+    const chantRef = db.collection("chants").doc(chantId);
+    const chantResult = await upsertSeededChantInTransaction({
+      runTransaction: (operation) =>
+        db.runTransaction(async (transaction) =>
+          operation({
+            get: (reference) => transaction.get(reference),
+            create: (reference, data) => {
+              transaction.create(reference, data);
+            },
+            update: (reference, data) => {
+              transaction.update(reference, data);
+            },
+          })
+        ),
+      reference: chantRef,
+      referenceId: chantId,
+      teamSlug,
+      fullData,
+      contentFields: CONTENT_FIELDS_CHANT,
+      updatedAtValue: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    console.log(`    Chant "${chant.title}" (${chantId}): ${chantResult}`);
   }
 
   // Fix C: orphan report
   await reportOrphans("players", "teamId", teamSlug, seededPlayerSlugs);
-  await reportOrphans("chants", "teamId", teamSlug, seededChantSlugs);
+  await reportOrphans("chants", "teamId", teamSlug, seededChantIds);
 }
 
 async function reportOrphans(
   collection: string,
   filterField: string,
   filterValue: string,
-  seededSlugs: Set<string>
+  seededIds: Set<string>
 ): Promise<void> {
   const existing = await db
     .collection(collection)
@@ -193,7 +288,7 @@ async function reportOrphans(
     .get();
   let orphanCount = 0;
   for (const doc of existing.docs) {
-    if (!seededSlugs.has(doc.id)) {
+    if (!seededIds.has(doc.id)) {
       orphanCount++;
       console.log(
         `    ORPHAN ${collection}: "${doc.id}" exists in Firestore but not in seed file. Review manually.`
@@ -207,19 +302,18 @@ async function reportOrphans(
 
 // --- Main ---
 async function main(): Promise<void> {
-  const args = process.argv.slice(2);
+  const { preflightOnly, clubFileNames } = parseSeedArguments(
+    process.argv.slice(2)
+  );
   const clubsDir = resolve(__dirname, "../seed_data/clubs");
 
-  console.log("Seeding Chants...\n");
-
-  const sportSlug = await seedSport();
-  const compSlug = await seedCompetition(sportSlug);
+  console.log(preflightOnly ? "Preflighting Chants...\n" : "Seeding Chants...\n");
 
   // Determine which club files to process
   let clubFiles: string[];
-  if (args.length > 0) {
+  if (clubFileNames.length > 0) {
     // Seed specific clubs
-    clubFiles = args.map((f) => resolve(clubsDir, f));
+    clubFiles = clubFileNames.map((f) => resolve(clubsDir, f));
     for (const f of clubFiles) {
       if (!existsSync(f)) {
         console.error(`Club file not found: ${f}`);
@@ -243,11 +337,17 @@ async function main(): Promise<void> {
     return;
   }
 
-  for (const file of clubFiles) {
-    await seedClub(file, sportSlug, compSlug);
+  const result = await executeSeedPlan(clubFiles, preflightOnly, {
+    preflightClub,
+    seedSport,
+    seedCompetition,
+    seedClub,
+  });
+  if (result === "preflighted") {
+    console.log(`\nDone. Preflighted ${clubFiles.length} club(s); no writes performed.`);
+  } else {
+    console.log(`\nDone. Seeded ${clubFiles.length} club(s).`);
   }
-
-  console.log(`\nDone. Seeded ${clubFiles.length} club(s).`);
 }
 
 main().catch((err) => {
