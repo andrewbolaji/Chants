@@ -1,6 +1,6 @@
 # Change spec: V1 Saved Matchday Songbook
 
-**Status:** Approved, implemented, and locally verified; clean-runner CI and release walk pending
+**Status:** Approved, implemented, and clean-CI verified; review, native compilation, and release walk pending
 **Updated:** 2026-08-22
 **Risk lane:** Lane 2, device-local persistent state, account identity isolation, deletion lifecycle, and material offline UI
 **Stack base:** Draft PR 7, `codex/v1-songbook-chant-lab`
