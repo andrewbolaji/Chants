@@ -1,11 +1,11 @@
 # Change spec: V1 Saved Matchday Songbook
 
-**Status:** Proposed, exact technical approval required before runtime implementation
+**Status:** Approved, implemented, and locally verified; clean-runner CI and release walk pending
 **Updated:** 2026-08-22
 **Risk lane:** Lane 2, device-local persistent state, account identity isolation, deletion lifecycle, and material offline UI
 **Stack base:** Draft PR 7, `codex/v1-songbook-chant-lab`
 
-This is the one active implementation specification on the stacked Saved Matchday Songbook branch. It replaces the completed browse specification only on this branch. Andrew approved the product boundary in decision 003 and selected this as the next v1 block. Product approval does not approve the technical storage and lifecycle contract below.
+This is the one active implementation specification on the stacked Saved Matchday Songbook branch. It replaces the completed browse specification only on this branch. Andrew approved the product boundary in decision 003, selected this as the next v1 block, and explicitly approved this exact technical contract on 2026-08-22.
 
 ## Outcome
 
@@ -225,7 +225,7 @@ This orchestration is implemented in a small account-deletion service rather tha
 
 ## Approval
 
-**Proposed.** Replying with approval of this exact Saved Matchday Songbook specification authorizes repository implementation and local or clean-runner verification within this boundary. It does not authorize Firebase access, moderation fixture changes, deployment, merge, release, or production observation.
+**Approved.** Andrew explicitly approved this exact Saved Matchday Songbook specification on 2026-08-22. Repository implementation and local or clean-runner verification are authorized within this boundary. Approval does not authorize Firebase access, moderation fixture changes, deployment, merge, release, or production observation.
 
 ## Open decisions
 

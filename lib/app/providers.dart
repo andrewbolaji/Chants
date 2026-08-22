@@ -16,6 +16,10 @@ import 'package:chants/data/repositories/feedback_repository.dart';
 import 'package:chants/data/repositories/comment_repository.dart';
 import 'package:chants/data/repositories/block_repository.dart';
 import 'package:chants/data/repositories/moderation_repository.dart';
+import 'package:chants/data/repositories/saved_songbook_repository.dart';
+import 'package:chants/data/services/account_deletion_service.dart';
+import 'package:chants/data/services/saved_songbook_service.dart';
+import 'package:chants/data/models/saved_songbook.dart';
 
 // Repositories
 final authRepositoryProvider = Provider<AuthRepository>(
@@ -73,6 +77,32 @@ final blockRepositoryProvider = Provider<BlockRepository>(
 final moderationRepositoryProvider = Provider<ModerationRepository>(
   (ref) => ModerationRepository(),
 );
+
+final savedSongbookRepositoryProvider = Provider<SavedSongbookRepository>(
+  (ref) => SavedSongbookRepository(
+    canAccess: (uid) => ref.read(authStateProvider).valueOrNull?.uid == uid,
+  ),
+);
+
+final savedSongbookServiceProvider = Provider<SavedSongbookService>((ref) {
+  return SavedSongbookService(
+    savedRepository: ref.watch(savedSongbookRepositoryProvider),
+    chantRepository: ref.watch(chantRepositoryProvider),
+    teamRepository: ref.watch(teamRepositoryProvider),
+  );
+});
+
+final accountDeletionServiceProvider = Provider<AccountDeletionService>((ref) {
+  return AccountDeletionService(
+    moderationRepository: ref.watch(moderationRepositoryProvider),
+    savedSongbookRepository: ref.watch(savedSongbookRepositoryProvider),
+  );
+});
+
+final savedSongbookProvider = FutureProvider.autoDispose
+    .family<SavedSongbook, String>((ref, uid) {
+      return ref.watch(savedSongbookRepositoryProvider).load(uid);
+    });
 
 // Auth state stream
 final authStateProvider = StreamProvider<User?>((ref) {

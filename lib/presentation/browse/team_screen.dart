@@ -38,6 +38,7 @@ class _TeamScreenState extends ConsumerState<TeamScreen>
   List<Player>? _players;
   Object? _playerError;
   bool _showFullSquad = false;
+  bool _savingMatchdayCopy = false;
 
   @override
   void initState() {
@@ -99,7 +100,11 @@ class _TeamScreenState extends ConsumerState<TeamScreen>
   }
 
   void _openChant(Chant chant) {
-    Navigator.pushNamed(context, AppRouter.chantDetail, arguments: chant);
+    Navigator.pushNamed(
+      context,
+      AppRouter.chantDetail,
+      arguments: ChantDetailRouteArguments(chant: chant, team: widget.team),
+    );
   }
 
   void _openPlayer(Player player) {
@@ -114,9 +119,55 @@ class _TeamScreenState extends ConsumerState<TeamScreen>
     );
   }
 
+  Future<void> _saveForMatchday({
+    required String uid,
+    required List<Chant> chants,
+    required bool isRefresh,
+  }) async {
+    if (_savingMatchdayCopy) return;
+    setState(() => _savingMatchdayCopy = true);
+    try {
+      final result = await ref
+          .read(savedSongbookServiceProvider)
+          .saveClubFromFreshBrowse(
+            uid: uid,
+            team: widget.team,
+            songbookChants: chants,
+          );
+      ref.invalidate(savedSongbookProvider(uid));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            isRefresh
+                ? 'Saved copy refreshed with ${result.chantCount} chants.'
+                : '${result.chantCount} chants saved for matchday.',
+          ),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            isRefresh
+                ? 'Could not refresh. Your saved copy is still available.'
+                : 'Could not save a fresh copy. Check your connection and try again.',
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _savingMatchdayCopy = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final isSignedIn = ref.watch(authStateProvider).valueOrNull != null;
+    final user = ref.watch(authStateProvider).valueOrNull;
+    final isSignedIn = user != null;
+    final savedSongbook = user == null
+        ? null
+        : ref.watch(savedSongbookProvider(user.uid)).valueOrNull;
     final browseSnapshot = _browseSnapshot;
 
     late final Widget body;
@@ -132,6 +183,13 @@ class _TeamScreenState extends ConsumerState<TeamScreen>
         rankBrowseTop(projection.songbook),
       );
       final players = _players ?? const <Player>[];
+      final savedClub = savedSongbook?.clubSnapshots[widget.team.id];
+      final canSaveForMatchday =
+          user != null &&
+          !_savingMatchdayCopy &&
+          !browseSnapshot.isFromCache &&
+          _chantError == null &&
+          songbook.isNotEmpty;
       final playerNames = {
         for (final player in players) player.id: player.name,
       };
@@ -146,6 +204,17 @@ class _TeamScreenState extends ConsumerState<TeamScreen>
             playerHasError: _playerError != null,
             isFromCache: browseSnapshot.isFromCache,
             hasRecoverableError: _chantError != null,
+            showMatchdaySave: user != null,
+            savedRefreshedAt: savedClub?.refreshedAt,
+            savingMatchdayCopy: _savingMatchdayCopy,
+            canSaveForMatchday: canSaveForMatchday,
+            onSaveForMatchday: canSaveForMatchday
+                ? () => _saveForMatchday(
+                    uid: user.uid,
+                    chants: songbook,
+                    isRefresh: savedClub != null,
+                  )
+                : null,
             showFullSquad: _showFullSquad,
             onToggleFullSquad: () =>
                 setState(() => _showFullSquad = !_showFullSquad),
@@ -208,6 +277,11 @@ class _TeamSongbookView extends StatelessWidget {
   final bool playerHasError;
   final bool isFromCache;
   final bool hasRecoverableError;
+  final bool showMatchdaySave;
+  final DateTime? savedRefreshedAt;
+  final bool savingMatchdayCopy;
+  final bool canSaveForMatchday;
+  final VoidCallback? onSaveForMatchday;
   final bool showFullSquad;
   final VoidCallback onToggleFullSquad;
   final VoidCallback onOpenChantLab;
@@ -221,6 +295,11 @@ class _TeamSongbookView extends StatelessWidget {
     required this.playerHasError,
     required this.isFromCache,
     required this.hasRecoverableError,
+    required this.showMatchdaySave,
+    required this.savedRefreshedAt,
+    required this.savingMatchdayCopy,
+    required this.canSaveForMatchday,
+    required this.onSaveForMatchday,
     required this.showFullSquad,
     required this.onToggleFullSquad,
     required this.onOpenChantLab,
@@ -272,6 +351,89 @@ class _TeamSongbookView extends StatelessWidget {
           ),
         ),
       ),
+      if (showMatchdaySave)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            Spacing.lg,
+            Spacing.lg,
+            Spacing.lg,
+            Spacing.sm,
+          ),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(Spacing.lg),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(Radii.md),
+              border: Border.all(color: AppColors.divider),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.offline_pin_outlined,
+                      color: AppColors.gold,
+                    ),
+                    const SizedBox(width: Spacing.sm),
+                    Expanded(
+                      child: Text(
+                        'TAKE THIS SONGBOOK TO THE GROUND',
+                        style: Theme.of(context).textTheme.labelMedium,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: Spacing.sm),
+                Text(
+                  savedRefreshedAt == null
+                      ? 'Save the current Terrace Proven set on this device.'
+                      : 'Last refreshed ${_matchdayDate(savedRefreshedAt!)}.',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                if (!canSaveForMatchday && !savingMatchdayCopy) ...[
+                  const SizedBox(height: Spacing.xs),
+                  Text(
+                    isFromCache
+                        ? 'Connect for a fresh copy before saving.'
+                        : hasRecoverableError
+                        ? 'Fresh chants are unavailable right now.'
+                        : chants.isEmpty
+                        ? 'There are no Terrace Proven chants to save yet.'
+                        : 'Preparing the latest copy.',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: Spacing.md),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: onSaveForMatchday,
+                    icon: savingMatchdayCopy
+                        ? const SizedBox.square(
+                            dimension: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Icon(
+                            savedRefreshedAt == null
+                                ? Icons.download_outlined
+                                : Icons.refresh,
+                          ),
+                    label: Text(
+                      savedRefreshedAt == null
+                          ? 'SAVE FOR MATCHDAY'
+                          : 'REFRESH SAVED COPY',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       if (isFromCache)
         const BrowseSupportingNotice(
           label: 'DEVICE CACHE',
@@ -424,6 +586,11 @@ class _TeamSongbookView extends StatelessWidget {
       itemBuilder: (context, index) => items[index],
     );
   }
+}
+
+String _matchdayDate(DateTime date) {
+  final local = date.toLocal();
+  return '${local.day}/${local.month}/${local.year}';
 }
 
 class _SectionHeader extends StatelessWidget {
