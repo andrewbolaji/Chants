@@ -1,11 +1,11 @@
 # Change spec: V1 chant provenance and evidence
 
-**Status:** Proposed, awaiting technical approval
+**Status:** Approved, implemented and locally verified, PR CI pending
 **Updated:** 2026-08-22
 **Risk lane:** Lane 2, persistent schema, authorization, moderation, and external links
 **Stack base:** Draft PR 5, `codex/stable-chant-identity`
 
-This is the one active implementation specification on the stacked provenance branch. It replaces the stable-identity specification only on this branch. Andrew approved the product direction in decision 004 and approved preparing the next stacked block. The technical contract below still requires explicit approval before application, Functions, or Firestore rules implementation begins.
+This is the one active implementation specification on the stacked provenance branch. It replaces the stable-identity specification only on this branch. Andrew approved the product direction in decision 004 and explicitly approved this technical contract on 2026-08-22 before application, Functions, or Firestore rules implementation began.
 
 ## Outcome
 
@@ -18,7 +18,7 @@ This is the one active implementation specification on the stacked provenance br
 
 1. Every new client-created chant stores `origin` as exactly `alreadySung` or `originalIdea`. Neither `chantType` nor score stands in for origin.
 2. Evidence is optional for both origins. When present it is stored as one `evidence` map containing only a derived `provider` and normalized `url`.
-3. Stored evidence has one of two canonical forms: `https://www.youtube.com/watch?v={11-character-video-id}` or `https://x.com/{handle}/status/{numeric-id}`. Input from approved YouTube, youtu.be, X, and Twitter URL forms is normalized before create. HTTP, credentials, ports, deceptive hosts, non-video/profile links, malformed IDs, fragments, and unsupported providers are rejected.
+3. Stored evidence has one of two canonical forms: `https://www.youtube.com/watch?v={11-character-video-id}` or `https://x.com/{handle}/status/{1-to-25-digit-numeric-id}`. Input from approved YouTube, youtu.be, X, and Twitter URL forms is normalized before create. Unrelated query parameters and fragments are removed. HTTP, credentials, ports, deceptive hosts, non-video/profile links, malformed IDs, and unsupported providers are rejected.
 4. Evidence opens only through the operating system as an external application or browser. Chants does not fetch, preview, scrape, download, host, transcode, autoplay, or play it in the background.
 5. A user-created chant cannot transition from `community` to `canonical` unless its stored evidence is valid and an authenticated operator explicitly invokes promotion. The callable revalidates the stored record because the Admin SDK bypasses Firestore rules.
 6. Raw operator Firestore writes enforce the same promotion invariant. Existing and future `createdBy: "system"` chants may remain canonical without public evidence because their proof is the operator sourcing ledger.
@@ -191,7 +191,15 @@ operator remove evidence
 
 ## Approval
 
-**Pending.** Andrew has approved the product contract and preparation of this stacked review block. Application, Functions, and Firestore rules implementation begins only after Andrew explicitly approves this technical specification. That approval will not authorize Firebase deployment, live-data access, or release.
+Andrew explicitly approved this technical specification on 2026-08-22. That approval authorizes repository implementation and verification on draft PR 6. It does not authorize Firebase deployment, live-data access, or release.
+
+## Implementation evidence
+
+- The typed origin and evidence contract, strict Dart normalizer, explicit external link-out, provenance labels, origin-aware submission, and soft duplicate review are implemented in the Flutter source.
+- The callable now revalidates evidence before promotion and removes evidence transactionally, including demotion for user-created canonical chants. Firestore rules independently enforce origin, evidence, author-edit, and raw operator promotion boundaries while retaining moderation access to untouched malformed legacy records.
+- Local verification passed 206 Flutter tests, 35 Functions tests, 42 seed tests, rules TypeScript compilation, and `flutter analyze lib test`. The two 390 by 844 submission goldens were generated and visually inspected without overflow or truncated helper copy.
+- The required red-check was demonstrated by temporarily disabling the Functions promotion guard. Its focused test failed on the missing exception, then passed after restoration.
+- The Firestore emulator suite could not run locally because this machine has no Java runtime. PR CI remains the required independent rules verification. No Firebase project was accessed and nothing was deployed.
 
 ## Open decisions
 

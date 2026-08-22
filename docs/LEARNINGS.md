@@ -12,6 +12,17 @@ This is durable, evidence-backed project memory. It prevents the same failure or
 
 ## Entries
 
+### 2026-08-22T12:45:35Z Long validated forms must retain every field
+
+- **Status:** applied
+- **Scope:** Flutter forms whose controls extend beyond one viewport
+- **Observed:** The submit form used a lazy `ListView`. When the origin control scrolled out of the retained child range, its `FormField` could be disposed, so whole-form validation no longer represented every visible step in the draft.
+- **Evidence:** The origin-required submit widget test and the 390 by 844 submission golden exercise the offscreen origin and submit controls in one retained form.
+- **Learning:** A form that must validate all fields at once cannot rely on lazily disposed descendants unless their state is retained explicitly. Use a retained child structure for bounded forms, or give each lazy field durable state and an independently verified validation contract.
+- **Applied control:** `SubmitChantScreen` uses one `SingleChildScrollView` with a retained `Column`; the focused test proves a missing offscreen origin stops both duplicate lookup and create.
+- **Revisit when:** The submission form grows enough that retaining the full bounded form causes measured performance or memory problems.
+- **Related:** `lib/presentation/submit/submit_chant_screen.dart`, `test/presentation/submit/submit_chant_screen_test.dart`
+
 ### 2026-08-22T01:01:47Z Cross-platform goldens need a bounded visual threshold
 
 - **Status:** promoted

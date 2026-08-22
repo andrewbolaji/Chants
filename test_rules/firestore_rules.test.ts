@@ -6,7 +6,7 @@ import {
 } from "@firebase/rules-unit-testing";
 import { readFileSync } from "fs";
 import { resolve } from "path";
-import { Timestamp, setDoc, getDoc, doc, collection, addDoc, updateDoc, deleteDoc, query, where, getDocs } from "firebase/firestore";
+import { Timestamp, setDoc, getDoc, doc, collection, addDoc, updateDoc, deleteDoc, deleteField, query, where, getDocs } from "firebase/firestore";
 
 const PROJECT_ID = "chants-test";
 
@@ -105,7 +105,15 @@ async function seedUserProfileNoPolicyAcceptance(uid: string) {
   });
 }
 
-async function seedVisibleChant(chantId: string, createdBy: string) {
+async function seedVisibleChant(
+  chantId: string,
+  createdBy: string,
+  options: {
+    status?: "canonical" | "community";
+    origin?: "alreadySung" | "originalIdea";
+    evidence?: { provider: "youtube" | "x"; url: string } | null;
+  } = {},
+) {
   await testEnv.withSecurityRulesDisabled(async (context) => {
     const db = context.firestore();
     await setDoc(doc(db, "chants", chantId), {
@@ -121,8 +129,10 @@ async function seedVisibleChant(chantId: string, createdBy: string) {
       coverImageUrl: null,
       mediaUrl: null,
       mediaType: "none",
-      status: "community",
+      status: options.status ?? "community",
       chantType: "sincere",
+      ...(options.origin === undefined ? {} : { origin: options.origin }),
+      ...(options.evidence === undefined ? {} : { evidence: options.evidence }),
       upvotes: 0,
       downvotes: 0,
       score: 0,
@@ -155,6 +165,8 @@ async function seedHiddenChant(chantId: string) {
       mediaType: "none",
       status: "community",
       chantType: "sincere",
+      origin: "originalIdea",
+      evidence: null,
       upvotes: 0,
       downvotes: 0,
       score: 0,
@@ -167,6 +179,37 @@ async function seedHiddenChant(chantId: string) {
       removed: false,
     });
   });
+}
+
+function validNewChantData(createdBy: string) {
+  return {
+    title: "New chant",
+    sportId: "s1",
+    competitionId: "c1",
+    teamId: "t1",
+    playerId: null,
+    subjectTag: "club",
+    lyrics: "Sing it loud",
+    tuneName: "Original",
+    contextNotes: null,
+    coverImageUrl: null,
+    mediaUrl: null,
+    mediaType: "none",
+    status: "community",
+    chantType: "sincere",
+    origin: "originalIdea",
+    evidence: null,
+    upvotes: 0,
+    downvotes: 0,
+    score: 0,
+    commentCount: 0,
+    createdBy,
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
+    flagCount: 0,
+    hidden: false,
+    removed: false,
+  };
 }
 
 async function seedComment(
@@ -551,6 +594,8 @@ describe("chants", () => {
       mediaType: "none",
       status: "community",
       chantType: "sincere",
+      origin: "originalIdea",
+      evidence: null,
       upvotes: 0,
       downvotes: 0,
       score: 0,
@@ -582,6 +627,8 @@ describe("chants", () => {
       mediaType: "none",
       status: "canonical",
       chantType: "sincere",
+      origin: "originalIdea",
+      evidence: null,
       upvotes: 0,
       downvotes: 0,
       score: 0,
@@ -613,6 +660,8 @@ describe("chants", () => {
       mediaType: "none",
       status: "community",
       chantType: "sincere",
+      origin: "originalIdea",
+      evidence: null,
       upvotes: 10,
       downvotes: 0,
       score: 10,
@@ -664,14 +713,110 @@ describe("chants", () => {
     }));
   });
 
-  it("allows operator to update anything", async () => {
+  it("allows operator moderation fields without changing trust state", async () => {
     await seedVisibleChant("ch1", "user1");
     await seedOperator("op1");
     const db = testEnv.authenticatedContext("op1").firestore();
     await assertSucceeds(updateDoc(doc(db, "chants", "ch1"), {
-      status: "canonical",
       hidden: true,
       upvotes: 50,
+    }));
+  });
+});
+
+describe("chant provenance and evidence", () => {
+  it("requires a valid origin on every new user chant", async () => {
+    await seedUserProfile("user1");
+    const db = testEnv.authenticatedContext("user1").firestore();
+    const missingOrigin = validNewChantData("user1");
+    delete (missingOrigin as Partial<typeof missingOrigin>).origin;
+    await assertFails(setDoc(doc(db, "chants", "missing-origin"), missingOrigin));
+    await assertFails(setDoc(doc(db, "chants", "invalid-origin"), {
+      ...validNewChantData("user1"),
+      origin: "copiedFromSomewhere",
+    }));
+  });
+
+  it("allows Already sung with canonical YouTube evidence", async () => {
+    await seedUserProfile("user1");
+    const db = testEnv.authenticatedContext("user1").firestore();
+    await assertSucceeds(setDoc(doc(db, "chants", "sung-with-proof"), {
+      ...validNewChantData("user1"),
+      origin: "alreadySung",
+      evidence: {
+        provider: "youtube",
+        url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      },
+    }));
+  });
+
+  it("rejects malformed, noncanonical, mismatched, and forged evidence", async () => {
+    await seedUserProfile("user1");
+    const db = testEnv.authenticatedContext("user1").firestore();
+    const invalidEvidence = [
+      {
+        provider: "youtube",
+        url: "https://youtube.com.example.test/watch?v=dQw4w9WgXcQ",
+      },
+      { provider: "youtube", url: "https://youtu.be/dQw4w9WgXcQ" },
+      {
+        provider: "x",
+        url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      },
+      { provider: "x", url: "https://x.com/arsenal" },
+      {
+        provider: "x",
+        url: "https://x.com/arsenal/status/12345678901234567890123456",
+      },
+      {
+        provider: "x",
+        url: "https://x.com/arsenal/status/1234567890",
+        reviewed: true,
+      },
+    ];
+
+    for (let index = 0; index < invalidEvidence.length; index++) {
+      await assertFails(setDoc(doc(db, "chants", `bad-evidence-${index}`), {
+        ...validNewChantData("user1"),
+        evidence: invalidEvidence[index],
+      }));
+    }
+  });
+
+  it("keeps origin and evidence immutable from the author client", async () => {
+    await seedVisibleChant("ch1", "user1", {
+      origin: "originalIdea",
+      evidence: null,
+    });
+    await seedUserProfile("user1");
+    const db = testEnv.authenticatedContext("user1").firestore();
+    await assertFails(updateDoc(doc(db, "chants", "ch1"), {
+      origin: "alreadySung",
+      updatedAt: Timestamp.now(),
+    }));
+    await assertFails(updateDoc(doc(db, "chants", "ch1"), {
+      evidence: {
+        provider: "x",
+        url: "https://x.com/arsenal/status/1234567890",
+      },
+      updatedAt: Timestamp.now(),
+    }));
+  });
+
+  it("freezes author content edits after Terrace Proven promotion", async () => {
+    await seedVisibleChant("ch1", "user1", {
+      status: "canonical",
+      origin: "alreadySung",
+      evidence: {
+        provider: "x",
+        url: "https://x.com/arsenal/status/1234567890",
+      },
+    });
+    await seedUserProfile("user1");
+    const db = testEnv.authenticatedContext("user1").firestore();
+    await assertFails(updateDoc(doc(db, "chants", "ch1"), {
+      title: "Changed after review",
+      updatedAt: Timestamp.now(),
     }));
   });
 });
@@ -1074,6 +1219,8 @@ describe("ban enforcement", () => {
     mediaType: "none",
     status: "community",
     chantType: "sincere",
+    origin: "originalIdea",
+    evidence: null,
     upvotes: 0,
     downvotes: 0,
     score: 0,
@@ -1159,6 +1306,8 @@ describe("policy acceptance gate", () => {
     mediaType: "none",
     status: "community",
     chantType: "sincere",
+    origin: "originalIdea",
+    evidence: null,
     upvotes: 0,
     downvotes: 0,
     score: 0,
@@ -1653,6 +1802,8 @@ describe("server-side length limits", () => {
       mediaType: "none",
       status: "community",
       chantType: "sincere",
+      origin: "originalIdea",
+      evidence: null,
       upvotes: 0, downvotes: 0, score: 0, commentCount: 0,
       createdBy: "user1",
       createdAt: Timestamp.now(),
@@ -1681,6 +1832,8 @@ describe("server-side length limits", () => {
       mediaType: "none",
       status: "community",
       chantType: "sincere",
+      origin: "originalIdea",
+      evidence: null,
       upvotes: 0, downvotes: 0, score: 0, commentCount: 0,
       createdBy: "user1",
       createdAt: Timestamp.now(),
@@ -1709,6 +1862,8 @@ describe("server-side length limits", () => {
       mediaType: "none",
       status: "community",
       chantType: "sincere",
+      origin: "originalIdea",
+      evidence: null,
       upvotes: 0, downvotes: 0, score: 0, commentCount: 0,
       createdBy: "user1",
       createdAt: Timestamp.now(),
@@ -1737,6 +1892,8 @@ describe("server-side length limits", () => {
       mediaType: "none",
       status: "community",
       chantType: "sincere",
+      origin: "originalIdea",
+      evidence: null,
       upvotes: 0, downvotes: 0, score: 0, commentCount: 0,
       createdBy: "user1",
       createdAt: Timestamp.now(),
@@ -1760,12 +1917,102 @@ describe("canonical promotion rules", () => {
     }));
   });
 
-  it("allows operator to set status to canonical", async () => {
+  it("denies raw operator promotion without evidence", async () => {
     await seedVisibleChant("ch1", "user1");
+    await seedOperator("op1");
+    const db = testEnv.authenticatedContext("op1").firestore();
+    await assertFails(updateDoc(doc(db, "chants", "ch1"), {
+      status: "canonical",
+    }));
+  });
+
+  it("allows raw operator promotion with canonical evidence", async () => {
+    await seedVisibleChant("ch1", "user1", {
+      origin: "alreadySung",
+      evidence: {
+        provider: "youtube",
+        url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      },
+    });
     await seedOperator("op1");
     const db = testEnv.authenticatedContext("op1").firestore();
     await assertSucceeds(updateDoc(doc(db, "chants", "ch1"), {
       status: "canonical",
+    }));
+  });
+
+  it("allows the sourcing-ledger exception for a system chant", async () => {
+    await seedVisibleChant("seed-chant", "system");
+    await seedOperator("op1");
+    const db = testEnv.authenticatedContext("op1").firestore();
+    await assertSucceeds(updateDoc(doc(db, "chants", "seed-chant"), {
+      status: "canonical",
+    }));
+  });
+
+  it("cannot strip evidence while leaving a user chant canonical", async () => {
+    await seedVisibleChant("ch1", "user1", {
+      status: "canonical",
+      origin: "alreadySung",
+      evidence: {
+        provider: "x",
+        url: "https://x.com/arsenal/status/1234567890",
+      },
+    });
+    await seedOperator("op1");
+    const db = testEnv.authenticatedContext("op1").firestore();
+    await assertFails(updateDoc(doc(db, "chants", "ch1"), {
+      evidence: deleteField(),
+    }));
+    await assertSucceeds(updateDoc(doc(db, "chants", "ch1"), {
+      evidence: deleteField(),
+      status: "community",
+    }));
+  });
+
+  it("still allows moderation of a legacy user canonical chant", async () => {
+    await seedVisibleChant("legacy", "user1", { status: "canonical" });
+    await seedOperator("op1");
+    const db = testEnv.authenticatedContext("op1").firestore();
+    await assertSucceeds(updateDoc(doc(db, "chants", "legacy"), {
+      hidden: true,
+    }));
+  });
+
+  it("allows moderation when malformed legacy evidence stays untouched", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await setDoc(doc(db, "chants", "legacy-malformed"), {
+        ...validNewChantData("user1"),
+        status: "canonical",
+        evidence: {
+          provider: "youtube",
+          url: "https://youtube.com.example.test/watch?v=dQw4w9WgXcQ",
+        },
+      });
+    });
+    await seedOperator("op1");
+    const db = testEnv.authenticatedContext("op1").firestore();
+    await assertSucceeds(updateDoc(doc(db, "chants", "legacy-malformed"), {
+      hidden: true,
+    }));
+    await assertFails(updateDoc(doc(db, "chants", "legacy-malformed"), {
+      status: "canonical",
+      evidence: {
+        provider: "youtube",
+        url: "https://youtube.com.example.test/watch?v=aaaaaaaaaaa",
+      },
+    }));
+  });
+
+  it("keeps origin immutable for raw operator writes", async () => {
+    await seedVisibleChant("ch1", "user1", {
+      origin: "originalIdea",
+    });
+    await seedOperator("op1");
+    const db = testEnv.authenticatedContext("op1").firestore();
+    await assertFails(updateDoc(doc(db, "chants", "ch1"), {
+      origin: "alreadySung",
     }));
   });
 

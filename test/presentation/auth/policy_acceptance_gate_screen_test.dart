@@ -39,6 +39,8 @@ class _FakeModerationRepository implements ModerationRepository {
   @override
   Future<void> removeChant(String chantId) async {}
   @override
+  Future<void> removeChantEvidence(String chantId) async {}
+  @override
   Future<void> removeComment(String commentId) async {}
   @override
   Future<void> unhideChant(String chantId) async {}

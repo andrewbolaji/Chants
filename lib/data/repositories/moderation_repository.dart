@@ -56,6 +56,13 @@ class ModerationRepository {
     });
   }
 
+  Future<void> removeChantEvidence(String chantId) async {
+    await _functions.httpsCallable('onModerationAction').call({
+      'action': 'remove-evidence',
+      'targetId': chantId,
+    });
+  }
+
   Future<void> hideComment(String commentId) async {
     await _functions.httpsCallable('onModerationAction').call({
       'action': 'hide-comment',

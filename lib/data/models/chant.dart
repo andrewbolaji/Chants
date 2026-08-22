@@ -1,5 +1,62 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+enum ChantOrigin {
+  alreadySung('alreadySung'),
+  originalIdea('originalIdea');
+
+  final String firestoreValue;
+
+  const ChantOrigin(this.firestoreValue);
+
+  static ChantOrigin? fromFirestoreValue(Object? value) {
+    for (final origin in values) {
+      if (origin.firestoreValue == value) return origin;
+    }
+    return null;
+  }
+}
+
+enum EvidenceProvider {
+  youtube('youtube'),
+  x('x');
+
+  final String firestoreValue;
+
+  const EvidenceProvider(this.firestoreValue);
+
+  static EvidenceProvider? fromFirestoreValue(Object? value) {
+    for (final provider in values) {
+      if (provider.firestoreValue == value) return provider;
+    }
+    return null;
+  }
+}
+
+class ChantEvidence {
+  final EvidenceProvider provider;
+  final String url;
+
+  const ChantEvidence({required this.provider, required this.url});
+
+  static ChantEvidence? tryFromJson(Object? value) {
+    if (value is! Map) return null;
+    final json = Map<String, dynamic>.from(value);
+    if (json.length != 2 ||
+        !json.containsKey('provider') ||
+        !json.containsKey('url')) {
+      return null;
+    }
+    final provider = EvidenceProvider.fromFirestoreValue(json['provider']);
+    final url = json['url'];
+    if (provider == null || url is! String || url.isEmpty) return null;
+    return ChantEvidence(provider: provider, url: url);
+  }
+
+  Map<String, dynamic> toJson() {
+    return {'provider': provider.firestoreValue, 'url': url};
+  }
+}
+
 class ChantVariation {
   final String label;
   final String lyric;
@@ -20,11 +77,7 @@ class ChantVariation {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'label': label,
-      'lyric': lyric,
-      'contextNote': contextNote,
-    };
+    return {'label': label, 'lyric': lyric, 'contextNote': contextNote};
   }
 }
 
@@ -44,6 +97,8 @@ class Chant {
   final String mediaType;
   final String status;
   final String chantType;
+  final ChantOrigin? origin;
+  final ChantEvidence? evidence;
   final int upvotes;
   final int downvotes;
   final int score;
@@ -72,6 +127,8 @@ class Chant {
     required this.mediaType,
     required this.status,
     required this.chantType,
+    this.origin,
+    this.evidence,
     this.upvotes = 0,
     this.downvotes = 0,
     this.score = 0,
@@ -114,6 +171,8 @@ class Chant {
       mediaType: json['mediaType'] as String,
       status: json['status'] as String,
       chantType: json['chantType'] as String,
+      origin: ChantOrigin.fromFirestoreValue(json['origin']),
+      evidence: ChantEvidence.tryFromJson(json['evidence']),
       upvotes: json['upvotes'] as int? ?? 0,
       downvotes: json['downvotes'] as int? ?? 0,
       score: json['score'] as int? ?? 0,
@@ -124,7 +183,8 @@ class Chant {
       flagCount: json['flagCount'] as int? ?? 0,
       hidden: json['hidden'] as bool? ?? false,
       removed: json['removed'] as bool? ?? false,
-      variations: (json['variations'] as List<dynamic>?)
+      variations:
+          (json['variations'] as List<dynamic>?)
               ?.map((v) => ChantVariation.fromJson(v as Map<String, dynamic>))
               .toList() ??
           const [],
@@ -151,6 +211,8 @@ class Chant {
       'mediaType': mediaType,
       'status': status,
       'chantType': chantType,
+      'origin': origin?.firestoreValue,
+      'evidence': evidence?.toJson(),
       'upvotes': upvotes,
       'downvotes': downvotes,
       'score': score,
@@ -181,6 +243,8 @@ class Chant {
     String? mediaType,
     String? status,
     String? chantType,
+    ChantOrigin? origin,
+    ChantEvidence? evidence,
     int? upvotes,
     int? downvotes,
     int? score,
@@ -209,6 +273,8 @@ class Chant {
       mediaType: mediaType ?? this.mediaType,
       status: status ?? this.status,
       chantType: chantType ?? this.chantType,
+      origin: origin ?? this.origin,
+      evidence: evidence ?? this.evidence,
       upvotes: upvotes ?? this.upvotes,
       downvotes: downvotes ?? this.downvotes,
       score: score ?? this.score,
