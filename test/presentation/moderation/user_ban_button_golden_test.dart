@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../helpers/tolerant_golden_file_comparator.dart';
+
 Future<void> _loadFonts() async {
   final fonts = {
     'Nunito': 'assets/fonts/Nunito-Variable.ttf',
@@ -20,6 +22,11 @@ Future<void> _loadFonts() async {
 
 void main() {
   testWidgets('operator ban and unban controls visual', (tester) async {
+    installTolerantGoldenComparator(
+      testFile: Uri.base.resolve(
+        'test/presentation/moderation/user_ban_button_golden_test.dart',
+      ),
+    );
     await _loadFonts();
     await tester.binding.setSurfaceSize(const Size(390, 300));
     addTearDown(() => tester.binding.setSurfaceSize(null));

@@ -12,6 +12,17 @@ This is durable, evidence-backed project memory. It prevents the same failure or
 
 ## Entries
 
+### 2026-08-22T01:01:47Z Cross-platform goldens need a bounded visual threshold
+
+- **Status:** promoted
+- **Scope:** Flutter widget goldens generated on one operating system and verified on another
+- **Observed:** The reply and operator-control goldens passed on macOS with Flutter 3.44.8 but failed on Ubuntu with Flutter 3.47.1 at 1.02% and 0.49% pixel difference. The remaining Flutter tests passed.
+- **Evidence:** Draft PR 4 workflow run `32541324140` and the focused local comparator test.
+- **Learning:** Exact pixels are too strict across renderers, but removing visual checks would hide real regressions. Use a documented, measured tolerance with a known-bad test that proves the boundary still rejects material changes.
+- **Applied control:** `test/helpers/tolerant_golden_file_comparator.dart` applies a 1.5% threshold only to the affected visual tests. `test/helpers/tolerant_golden_file_comparator_test.dart` proves a 1% synthetic difference passes and a fully changed image fails.
+- **Revisit when:** A pinned renderer or platform-specific baselines make exact comparison stable, or observed benign drift approaches the 1.5% boundary.
+- **Related:** `.github/workflows/ci.yml`
+
 ### 2026-08-22T00:00:35Z Seed content must come from authoritative supplied sources
 
 - **Status:** promoted
