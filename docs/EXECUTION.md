@@ -13,6 +13,23 @@ This is the chronological evidence trail for substantial engineering work. It re
 
 ## Entries
 
+### 2026-08-22T00:45:56Z Prepare the stable chant identity stack
+
+- **Status:** completed
+- **Scope:** Create a branch stacked on draft PR 4, inspect the seed identity and dependent-reference boundaries, and write the required Lane 2 change contract. No implementation or live Firebase access.
+- **Reference:** `docs/CHANGE_SPEC.md`
+- **Operator:** Codex
+
+| UTC time | Action | Target/environment | Result and evidence |
+|---|---|---|---|
+| 00:45:56 | Created `codex/stable-chant-identity` from `f7079b2`; inspected seed ID derivation, validation, tests, Firestore references, and merge/reconciliation paths | Local repository | Completed. Confirmed seeded chant IDs are currently `compositeSlug(teamSlug, title)`, community chants already use stable auto IDs, only Arsenal exists in club seed data, and dependent collections reference the chant document ID. |
+| 00:45:56 | Replaced the branch-local active spec with the stable-identity Lane 2 contract | Local repository | Completed as proposed. The design freezes current IDs as explicit source data, adds a preflight collision boundary, and refuses automatic migration when live state differs. |
+
+- **Files/artifacts:** `docs/CHANGE_SPEC.md`, this execution entry, stacked branch `codex/stable-chant-identity`.
+- **Skipped or blocked:** Implementation is blocked by the required technical-plan approval. No service-account file was read, no Firebase request was made, and no seed or application file changed.
+- **Final state:** Technical plan prepared locally; not approved, implemented, verified, committed, pushed, reviewed, merged, deployed, or observed.
+- **Follow-up:** Publish the proposed stacked plan for review. After Andrew's explicit approval, implement the narrow repository boundary and keep live preflight separate.
+
 ### 2026-08-22T00:42:03Z Stage the interaction and safety block for review
 
 - **Status:** completed

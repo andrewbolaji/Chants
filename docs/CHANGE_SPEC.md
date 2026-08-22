@@ -1,160 +1,94 @@
-# Active change specification
+# Change spec: Stable chant document identity
 
-**Status:** Implementation and automated verification complete; live-device release walk pending
-**Updated:** 2026-08-18
-**Change:** V1 one-level comment replies
+**Status:** Proposed, awaiting Andrew's technical approval
+**Updated:** 2026-08-21
+**Risk lane:** Lane 2, persistent identity and live-data compatibility
+**Stack base:** Draft PR 4, `codex/v1-interaction-safety-replies`
 
-This file is the only active implementation specification. Andrew approved this technical boundary and sequence on 2026-08-17. Product direction is recorded in `docs/decisions/002-comment-reply-depth-and-retention.md`.
+This is the one active implementation specification on the stacked branch. It replaces the prior branch's reply specification only in this branch. No stable-identity implementation or live data action is authorized until the status is changed to Approved.
 
 ## Outcome
 
-Let a signed-in user reply directly to a top-level comment. Keep the conversation visually and structurally limited to one reply level for v1.
+- **Problem:** Operator-seeded chant document IDs are recomputed from mutable titles. Renaming a seed title therefore targets a new Firestore document and leaves the old chant plus its votes, comments, reports, saved references, evidence, and future public link behind.
+- **Desired behavior:** Every seeded chant has an explicit, immutable source ID. Editing its title updates the same Firestore document. The current Arsenal IDs are frozen in place so the normal case requires no live document rename or dependent-reference migration.
+- **Non-goals:** Stable team or player IDs, changing community auto-generated IDs, editing lyrics or squads, migrating a mismatched live database automatically, changing app models, adding public links, or running the seed against production.
+- **Review boundary:** `seed/`, `seed_data/clubs/arsenal.json`, focused documentation, and tests. No Flutter, Functions, Firestore rules, index, dependency, or Firebase deployment change.
 
-The retention hypothesis is simple: the funniest and most useful parts of a football conversation often happen in the responses. One reply level adds that back-and-forth without introducing an unlimited tree, notification system, or another vote model before launch.
+## Acceptance criteria and invariants
 
-## Product boundary
+1. Every seed chant carries a non-empty explicit `id` that is slug-safe, bounded, globally collision-resistant through the club prefix, and unique within its club file.
+2. The seed writes `chants/{chant.id}` and never computes a chant document ID from `title`.
+3. Changing only a chant title leaves the resolved document ID unchanged in a focused regression test.
+4. The Arsenal IDs added to source data exactly equal the IDs produced by the current legacy algorithm, so adopting the new source contract does not rename the expected live documents.
+5. Duplicate normalized titles remain a validation error even when explicit IDs differ, so stable identity does not weaken duplicate-content protection.
+6. A preflight runs before chant writes and aborts on an unsafe collision, including an explicit ID owned by community content, an ID belonging to another team, or a same-title system chant at another ID.
+7. A same-team, system-owned document at the explicit ID is safe to update even when its stored title differs. That is the rename case this change exists to support.
+8. Preflight failure performs no chant write and prints a corrective message without exposing credentials or document payloads.
+9. The change does not edit any Arsenal title, lyric, tune, context, subject, player, variation, squad member, or classification value.
 
-### In scope
+Invariants:
 
-- A reply action on each visible top-level comment.
-- A composer state that identifies the comment being answered and can be cancelled.
-- Replies rendered directly below their parent.
-- The existing comment like, report, hide, remove, ban, and account-deletion behavior applied to replies.
-- A hard maximum depth of one, enforced in both Firestore rules and the client.
-- Backward compatibility for every existing flat comment document.
+- Seed input remains authoritative and externally verified. The build never invents or rewrites cultural content.
+- Existing engagement stays attached to the same chant document in the expected rollout path.
+- Community content is never overwritten by a predictable operator seed ID.
+- Orphans are reported, never automatically deleted.
+- No production read or write is claimed as verified unless run against the named Firebase project with explicit operator authorization.
 
-### Out of scope
+## Design
 
-- Replies to replies or any deeper nesting.
-- Reply notifications, mentions, activity feeds, or push notifications.
-- Comment downvotes.
-- Collaborative lyric suggestions.
-- Changes to chant voting.
+- **Approach:** Add an explicit `id` to `ChantData` and every Arsenal seed chant. Introduce one small pure identity/preflight module used by both tests and `seed.ts`. Use the explicit ID for the document reference and orphan set. Query existing chants for the team before any club write, pass only minimal identity metadata into the pure preflight, and abort on conflicts. Each chant then uses a Firestore transaction that rechecks target ownership and team membership before creating or applying the existing content-field allowlist.
+- **Failure prevented by the new helper:** A later refactor must not silently reintroduce title-derived document IDs, and the seed must not overwrite a community document that happens to use a predictable ID.
+- **Existing alternative considered:** Keep calling `compositeSlug(teamSlug, chant.title)` and manually delete or merge orphans after a rename. Rejected because public links and user engagement make cleanup destructive and increasingly expensive.
+- **Expected footprint:** One small seed identity module and focused test, changes to the chant interface and validator, a narrow `seed.ts` call-site change, explicit IDs added to the one existing club file, and documentation updates. No new package or service.
+- **Interfaces/contracts:** Club seed JSON now requires `chants[].id`. Titles remain mutable display content. The Dart `Chant.id` contract is unchanged because it already reads the Firestore document ID.
+- **Data/migrations:** Freeze each Arsenal chant's current legacy ID as the new explicit ID. No default-path document move or dependent-reference rewrite. If the live preflight finds a mismatch, abort and write a separate approved migration spec based on the observed IDs and dependent counts.
 
-Those items remain v1.1 candidates. They require their own evidence, specification, and approval.
+## Failure and abuse analysis
 
-## Preconditions
+| Condition | Expected behavior | Evidence |
+|---|---|---|
+| Repeated seed run | Same explicit document IDs are updated through the existing content-field allowlist | Unit test plus existing upsert contract |
+| Title rename | Same ID resolves before and after the title change | Focused identity regression test |
+| Duplicate explicit ID | Validation fails before any club write | Validator test |
+| Duplicate normalized title with different IDs | Validation still fails | Validator test |
+| Community document occupies an explicit seed ID | Preflight aborts, no chant write | Known-bad preflight fixture |
+| Explicit ID belongs to another team | Preflight aborts, no chant write | Known-bad preflight fixture |
+| Same-title system chant exists at a different ID | Preflight aborts for manual reconciliation | Known-bad preflight fixture |
+| Existing same-ID system chant has an older title | Preflight accepts update | Rename fixture |
+| Network or credential failure during preflight | Seed exits nonzero before chant writes and reports a bounded error | Executable scenario or source-level error-path test |
+| Concurrent user claims an ID after preflight | Per-chant transaction rechecks ownership and team membership atomically with create/update and aborts | Focused transaction-helper evidence |
 
-The reply code must not ship until these existing interaction-safety gaps are resolved or explicitly waived in writing:
+## Performance and cost
 
-1. User blocking is available and affects comment visibility and interaction.
-2. Comment writes cannot reference a missing chant, and reply writes cannot reference a missing, hidden, removed, or cross-chant parent.
-3. Account deletion has defined behavior for comments, replies, reports, and report-derived counters.
-4. Chant merge no longer leaves comments and replies attached to a deleted source chant.
-5. Report counters used for auto-hide are idempotent under duplicate trigger delivery.
+- **Workload:** About 5 to 12 seeded chants per club at launch and roughly 100 to 250 total. One team-scoped preflight query per club is acceptable at this workload.
+- **Budget:** No material user-facing latency or ongoing cost. The seed is an operator-only batch tool.
+- **Measurement:** Tests assert query/write planning behavior; no production performance claim is needed.
 
-These are prerequisites because replies increase the volume and reach of the existing user-content surface. They are not optional polish.
+## Rollout and recovery
 
-## Proposed data contract
+- **Deploy/migration order:** Merge code, inspect the source-only ID additions, run seed tests and typecheck, then run an explicitly authorized read-only preflight against `chants-f95b4`. Only after that passes may an operator run a normal club seed.
+- **Staging/canary/flag:** First apply to Arsenal, the only club currently in `seed_data/clubs/`, and inspect the seed output. Add remaining club IDs as their files enter the repository.
+- **Healthy signals and window:** Preflight reports every existing expected Arsenal chant as same-ID and system-owned, normal seed reports updates rather than creates, and the orphan report does not gain a rename-created chant.
+- **Rollback or forward fix:** Before any live seed run, revert the code and JSON additions. After a successful same-ID run, keep explicit IDs and forward-fix defects. If any mismatch is found, stop without writes and create a migration-specific recovery plan. Never delete or rewrite dependent records ad hoc.
+- **Owner:** Andrew authorizes the live preflight and any seed run. Codex implements and verifies repository changes only.
 
-Keep all comments in the existing top-level `comments` collection.
+## Verification plan
 
-- Add nullable `parentCommentId` to the Dart `Comment` model and serialized document.
-- A missing or null `parentCommentId` means a top-level comment. This preserves all existing documents without migration.
-- A non-null `parentCommentId` means a direct reply.
-- The parent must exist, have the same `chantId`, be visible, and itself have no parent.
-- Do not add `replyCount` in this block. The existing chant comment stream already returns the visible comments needed to group replies under parents.
-- `commentCount` continues to mean all visible comment documents, including replies.
-
-The client guard improves the experience, but the Firestore rule is the actual depth and relationship boundary.
-
-## Proposed behavior
-
-1. Load the existing visible comment stream for a chant.
-2. Partition it into top-level comments and replies by `parentCommentId`.
-3. Keep the current top-level ranking: likes descending, then newest first.
-4. Render each parent's replies chronologically, oldest first, immediately below it.
-5. Tapping Reply opens the normal composer with a clear `Replying to <display name>` context and a cancel action.
-6. A reply has like and report actions, but no Reply action.
-7. If a parent disappears through moderation while the screen is open, its replies disappear from the rendered thread rather than becoming top-level comments.
-8. A failed write keeps the typed text recoverable and shows an actionable error.
-
-## Security and lifecycle rules
-
-- Only the authenticated author may create a reply under their own UID.
-- Existing comment length, policy acceptance, ban, and create-rate limits apply to replies.
-- `parentCommentId` is immutable after creation.
-- A top-level comment cannot be converted into a reply, and a reply cannot be moved to another parent or chant.
-- The parent lookup must prove same-chant membership and maximum depth.
-- A reply cannot be created under hidden or removed content.
-- Moderation and deletion logic must treat replies as comments, not as a separate content type.
-- Blocking must prevent the blocker from seeing or interacting with the blocked user's comments and replies.
-
-## Implementation sequence
-
-1. Close the interaction-safety preconditions in separately approved change blocks.
-2. Add the nullable model field and backward-compatibility tests.
-3. Add Firestore rule constraints and emulator tests for every relationship and depth failure.
-4. Add repository write support and grouping logic.
-5. Add reply composer and rendering UI with widget tests.
-6. Run the full Flutter, Functions, seed, and Firestore-rules suites.
-7. Perform a device walk covering keyboard behavior, rapid actions, offline or failed writes, blocking, moderation, and account deletion.
-
-## Required regression tests
-
-- Existing comment documents with no `parentCommentId` deserialize and render as top-level comments.
-- A valid direct reply succeeds.
-- Reply-to-reply, self-invented parent ID, cross-chant parent, hidden parent, and removed parent writes fail.
-- `parentCommentId` and `chantId` cannot be changed after create.
-- Replies group under the right parent and stay chronological.
-- A moderated parent never promotes its replies to the top level.
-- Likes and reports still target the correct comment document.
-- A failed reply write preserves the draft and clears any busy state.
-- The new widget test fails when reply grouping or submission is reverted.
-
-## Verification gate
-
-The block is complete only when:
-
-- `flutter analyze lib test` passes.
-- `flutter test` passes.
-- `cd functions && npm test` passes if Functions are touched.
-- `cd seed && npm test` passes if seed or reconciliation logic is touched.
-- `cd test_rules && npm test` passes with the Firestore emulator.
-- The relevant widget regression test has been proven red against the reverted production change, then green with the implementation.
-- UI behavior has been checked on a real or emulated phone and captured by screenshot.
-- The completed change is moved into `docs/changes/` and any new durable decision is added to `docs/decisions/`.
+| Claim | Check | Expected evidence |
+|---|---|---|
+| Seed package remains valid | `cd seed && npm test` | Full seed suite passes with new identity and validation cases |
+| Types compile | `cd seed && npx tsc --noEmit` | Exit 0 |
+| ID no longer follows title | Focused identity test changes the title while preserving `id` | Test fails if resolution uses `title` |
+| Unsafe collisions stop | Known-good and known-bad preflight fixtures | Every named collision class has a focused assertion |
+| Arsenal content is untouched except IDs | Compare base and working JSON after deleting only `chants[].id` from the new side | Structural equality |
+| Expected rollout is no-rename | Compare every explicit Arsenal ID with the legacy algorithm over the same base title | Exact equality for the full file |
+| Changed prose follows house style | `git diff --check` plus em-dash search on changed prose | Zero findings |
+| No unrelated paths entered the stack | Inspect `git diff --name-only codex/v1-interaction-safety-replies...HEAD` | Only approved seed, source-data, test, and documentation paths |
 
 ## Approval
 
-Andrew approved this technical boundary and sequence on 2026-08-17. Implementation began with the interaction-safety prerequisites.
+Andrew approved stacking additional review branches on 2026-08-21. Because this block changes persistent identity and protects a hard-to-reverse live-data boundary, the repository framework still requires approval of this technical contract after it is visible. Implementation begins only after Andrew explicitly approves this spec.
 
-### Approved completion amendment, 2026-08-18
+## Open decisions
 
-Andrew approved finishing the current interaction-safety block before starting the Saved Matchday Songbook. The completion amendment adds one recovery path exposed by the engineering review:
-
-- Operators can unban a user from a reported-user card or by entering a user ID.
-- Unban is performed by the existing operator-only callable Function, writes an audit entry, and cannot be performed through a direct client profile write.
-- The Functions handler has a focused regression test for the state change, audit payload, and missing-profile failure.
-- The roadmap and wishlist are corrected so completed replies and blocking are no longer described as future work.
-
-This does not change reply depth, add notifications, or touch seed content.
-
-## Implementation result
-
-The approved code boundary is implemented in the working tree.
-
-- One-level replies reuse `comments.parentCommentId`; missing/null remains top-level.
-- Parents rank by likes then recency; replies render oldest-first; orphan replies never become top-level.
-- Reply context is cancellable, replies cannot receive replies, and a failed write preserves both context and draft.
-- Directional blocks have Block, Undo, a Blocked users screen, client visibility filtering, and server denial of reply/like interaction in either direction.
-- Operators can reverse an accidental ban from a reported-user card or by user ID through the audited operator-only callable.
-- Firestore rules enforce parent existence, visibility, same-chant membership, depth, immutable placement, visible interaction targets, private profile/vote/like reads, recent client timestamps, and lifetime chant constraints.
-- Chant/comment report counters are transactional ground-truth recomputes rather than blind increments.
-- Rate-limit account classification is monotonic and backdated new writes cannot escape the one-hour query.
-- Chant merge moves comments/replies. Account deletion removes every report type and block relation, reconciles derived counts, preserves a retryable Auth/profile ordering, and accurately discloses anonymized retained content.
-- Failed sign-up completion has compensating cleanup.
-
-## Verification result
-
-- `flutter analyze lib test`: pass, no issues.
-- `flutter test`: pass, all 182 tests including the reply-thread and operator-access goldens.
-- Focused reply golden: pass at 390 x 844, `test/presentation/comments/goldens/comment_reply_thread.png`.
-- Reply grouping/order regression: deliberately proven red by reversing production reply order, then green after restoration.
-- `cd functions && npm test`: pass, 26 tests after the approved unban amendment.
-- `cd seed && npm test`: pass, 23 tests.
-- Firestore emulator plus `cd test_rules && npm test`: pass, 106 assertions.
-
-## Remaining release check
-
-No iOS or Android simulator was booted during this implementation block. Before this spec moves to `docs/changes/`, perform the live-device walk for software-keyboard resizing, rapid reply/like actions, offline or denied writes, block/unblock, moderation of a parent with visible replies, and account deletion. The engine-rendered phone golden proves layout at the target viewport but does not substitute for platform keyboard and Firebase lifecycle behavior.
+None in the repository design. Live preflight results may reveal a separate migration decision; the safe response is to stop, preserve evidence, and re-plan rather than expanding this block.
