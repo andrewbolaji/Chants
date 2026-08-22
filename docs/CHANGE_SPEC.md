@@ -1,6 +1,6 @@
 # Change spec: V1 chant provenance and evidence
 
-**Status:** Approved, implemented and locally verified, PR CI pending
+**Status:** Implemented and CI-verified, PR review and device walk pending
 **Updated:** 2026-08-22
 **Risk lane:** Lane 2, persistent schema, authorization, moderation, and external links
 **Stack base:** Draft PR 5, `codex/stable-chant-identity`
@@ -199,7 +199,8 @@ Andrew explicitly approved this technical specification on 2026-08-22. That appr
 - The callable now revalidates evidence before promotion and removes evidence transactionally, including demotion for user-created canonical chants. Firestore rules independently enforce origin, evidence, author-edit, and raw operator promotion boundaries while retaining moderation access to untouched malformed legacy records.
 - Local verification passed 206 Flutter tests, 35 Functions tests, 42 seed tests, rules TypeScript compilation, and `flutter analyze lib test`. The two 390 by 844 submission goldens were generated and visually inspected without overflow or truncated helper copy.
 - The required red-check was demonstrated by temporarily disabling the Functions promotion guard. Its focused test failed on the missing exception, then passed after restoration.
-- The Firestore emulator suite could not run locally because this machine has no Java runtime. PR CI remains the required independent rules verification. No Firebase project was accessed and nothing was deployed.
+- The Firestore emulator suite could not run locally because this machine has no Java runtime. GitHub Actions run `32574241342` supplied Java 21 and passed all 117 rules assertions. The same run passed Flutter tests, Flutter analysis, Functions, and seed jobs.
+- No Firebase project was accessed by the implementation workflow and nothing was deployed. PR review and the later live-device walk remain release gates.
 
 ## Open decisions
 

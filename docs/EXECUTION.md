@@ -15,8 +15,8 @@ This is the chronological evidence trail for substantial engineering work. It re
 
 ### 2026-08-22T06:47:59Z Implement v1 chant provenance and evidence
 
-- **Status:** implemented and locally verified, PR CI pending
-- **Scope:** Prepare a stacked Lane 2 contract for required submission origin, optional allowlisted external evidence, evidence-gated Terrace Proven promotion, honest provenance labels, evidence removal, and the soft duplicate nudge. No application, Functions, Firestore rules, dependency, live-service, or deployment change.
+- **Status:** completed in repository and CI, PR review pending
+- **Scope:** Specify and implement required submission origin, optional allowlisted external evidence, evidence-gated Terrace Proven promotion, honest provenance labels, evidence removal, and the soft duplicate nudge on stacked draft PR 6. No live-service access or deployment.
 - **Reference:** `docs/CHANGE_SPEC.md`
 - **Operator:** Codex
 
@@ -30,11 +30,13 @@ This is the chronological evidence trail for substantial engineering work. It re
 | 12:45:35 | Generated and inspected representative interface evidence | Local Flutter test renderer, 390 by 844 | Both origin and evidence submission goldens passed. Visual inspection found no overflow and confirmed full helper copy, clear required origin choices, and the external-link warning. Live-device inspection remains pending. |
 | 12:45:35 | Proved the promotion guard red, restored it, and ran the local verification matrix | Local repository | Disabling the Functions evidence guard made the focused promotion test fail on the missing exception. After restoration, 206 Flutter tests, 35 Functions tests, 42 seed tests, rules TypeScript compilation, and `flutter analyze lib test` passed. `git diff --check` was clean before documentation completion. |
 | 12:45:35 | Checked availability of the Firestore rules emulator | Local workstation | Blocked locally because no Java runtime is installed. The rules source and test file compile, but the 117-assertion emulator suite must run on the clean GitHub Actions runner before the PR is called CI-verified. |
+| 12:53:47 | Committed and pushed the approved implementation | Local Git and GitHub | Commit `9cedea2` added the scoped source, tests, goldens, decision, and current framework records to draft PR 6. The unrelated Android files and pre-existing lockfile version and SDK bumps remained unstaged. |
+| 12:56:13 | Watched clean-runner CI and inspected the rules job evidence | GitHub Actions run `32574241342` | Completed. Flutter tests, Flutter analysis, Functions, seed, and Firestore rules jobs all passed. The Java 21 emulator job reported 117 passing rules assertions, including every new trust-boundary and legacy-compatibility case. |
 
-- **Files/artifacts:** Flutter model, parser, repositories, submission, labels, evidence action, detail and moderation UI; Cloud Functions trust planner and callable integration; Firestore rules; focused tests and goldens; decision 006; `docs/CHANGE_SPEC.md`; and this execution entry.
-- **Skipped or blocked:** Local Firestore emulator execution is blocked by the missing Java runtime. Live Firebase access, deployment, and release remain outside this approval.
-- **Current state:** Approved implementation and local verification are complete on the stacked branch. It is not yet committed, pushed, CI-verified, reviewed, merged, deployed, or observed in production.
-- **Follow-up:** Commit the scoped implementation, push draft PR 6, inspect clean-runner CI, then close the change record with the independent result.
+- **Files/artifacts:** Flutter model, parser, repositories, submission, labels, evidence action, detail and moderation UI; Cloud Functions trust planner and callable integration; Firestore rules; focused tests and goldens; decision 006; `docs/changes/2026-08-22-chant-provenance-evidence.md`; `docs/CHANGE_SPEC.md`; and this execution entry.
+- **Skipped or blocked:** Local Firestore emulator execution remains unavailable because the workstation has no Java runtime; clean-runner CI supplied the independent result. Live Firebase access, deployment, and release remain outside this approval.
+- **Final state:** Approved, implemented, committed, pushed, and green-CI verified in draft PR 6. It is not reviewed, merged, deployed, released, or observed in production. The live-device walk remains pending by Andrew's request.
+- **Follow-up:** Review stacked PRs 4, 5, then 6. Complete the combined device walk before release. The Songbook and Chant Lab browse split can proceed as a separate stacked block without waiting for seed completion.
 
 ### 2026-08-22T00:45:56Z Implement stable seeded chant identity
 
