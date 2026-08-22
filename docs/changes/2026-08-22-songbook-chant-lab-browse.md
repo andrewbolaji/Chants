@@ -37,7 +37,8 @@
 - `cd functions && npm test`: 35 passed.
 - `cd seed && npm test`: 42 passed.
 - `cd test_rules && npm exec tsc -- --noEmit`: exit 0.
-- The local Firestore emulator suite was not run because this machine has no Java runtime. Its rules and fixtures are untouched; the clean GitHub Actions rules job remains the authoritative execution for this block.
+- The local Firestore emulator suite was not run because this machine has no Java runtime. Its rules and fixtures are untouched.
+- GitHub Actions run `32587485488`: Flutter tests, Flutter analysis, Functions, seed, and rules all passed on the clean PR merge commit. The Java-backed Firestore emulator reported 117 passing assertions.
 - Red-check 1: temporarily routing canonical status into Chant Lab made the focused projection test fail on the missing Songbook ID. Restoring the partition made the focused and full suites pass.
 - Red-check 2: temporarily clearing the last successful Player snapshot on a later stream error made the retained-data widget test fail because the chant disappeared. Restoring independent data and error state made it pass.
 - Visual evidence: `team_songbook.png` and `team_chant_lab.png` were generated at 390 by 844 and visually inspected. Clean-runner CI measured benign cross-platform drift at 2.09% and 1.94%, so this test alone uses a 2.2% comparator threshold while the shared default stays at 1.5%. The enlarged-text Team test passes at 1.8x without overflow or clipped Top/New controls.
@@ -51,4 +52,4 @@ The block adds no Firestore read per route, index, collection, field, Cloud Func
 
 ## Rollout, rollback, and follow-up
 
-Draft PR 7 remains unreviewed and unmerged. Complete its clean CI and stacked review after PR 6, then include mixed, canonical-only, community-only, empty, cached, promoted, demoted, hidden, player-prefilled creation, and enlarged-text states in the combined device walk. Rollback is a client-only restoration of the mixed feed; no data or backend rollback is required. The next independent v1 product block is Saved Matchday Songbook.
+Draft PR 7 remains unreviewed and unmerged with green CI. Complete its stacked review after PR 6, then include mixed, canonical-only, community-only, empty, cached, promoted, demoted, hidden, player-prefilled creation, and enlarged-text states in the combined device walk. Rollback is a client-only restoration of the mixed feed; no data or backend rollback is required. The next independent v1 product block is Saved Matchday Songbook.
