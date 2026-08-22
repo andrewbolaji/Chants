@@ -13,6 +13,28 @@ This is the chronological evidence trail for substantial engineering work. It re
 
 ## Entries
 
+### 2026-08-22T00:45:56Z Implement stable seeded chant identity
+
+- **Status:** completed
+- **Scope:** Create a branch stacked on draft PR 4, approve the Lane 2 contract, replace title-derived seeded chant IDs with explicit source IDs, add collision and transaction controls, and verify the repository boundary. No live Firebase access or seed write.
+- **Reference:** `docs/CHANGE_SPEC.md`
+- **Operator:** Codex
+
+| UTC time | Action | Target/environment | Result and evidence |
+|---|---|---|---|
+| 00:45:56 | Created `codex/stable-chant-identity` from `f7079b2`; inspected seed ID derivation, validation, tests, Firestore references, and merge/reconciliation paths | Local repository | Completed. Confirmed seeded chant IDs are currently `compositeSlug(teamSlug, title)`, community chants already use stable auto IDs, only Arsenal exists in club seed data, and dependent collections reference the chant document ID. |
+| 00:45:56 | Replaced the branch-local active spec with the stable-identity Lane 2 contract | Local repository | Completed as proposed. The design freezes current IDs as explicit source data, adds a preflight collision boundary, and refuses automatic migration when live state differs. |
+| 01:26:03 | Recorded Andrew's explicit approval and implemented the approved source boundary | Local repository | Added explicit club-prefixed IDs, pre-write collision evaluation, transactional target recheck, validation, focused tests, decision 005, and rollout documentation. No service-account file was read and no Firebase request was made. |
+| 01:26:03 | Ran the seed suite, TypeScript compiler, and Arsenal source-integrity comparison | Local repository | `npm test` passed 42 tests; `npx tsc --noEmit` exited 0; deleting only the 12 new `chants[].id` fields made the Arsenal JSON structurally equal to the stack base. Every explicit ID also equals its legacy algorithm result. |
+| 01:27:35 | Proved the rename guard red, restored the implementation, and reran green | Local repository | A temporary title-derived resolver made `keeps the document ID when only the title changes` fail with the expected changed ID. The approved explicit resolver was restored; all 42 tests and TypeScript compilation passed again. |
+| 01:34:43 | Added and tested the read-only CLI execution boundary found missing during self-review | Local repository | `--preflight-only` now calls only club preflight operations. Focused tests fail if any sport, competition, or club writer is invoked, prove a read failure stops before writers, and make unknown flags fail closed. |
+| 02:38:05 | Committed and pushed the implementation, updated draft PR 5, and checked CI | Local Git and GitHub | Implementation commit `7c1eea3` is on `codex/stable-chant-identity`. GitHub Actions run `32543937728` passed Flutter tests, Flutter analysis, Functions, seed, and Firestore rules. Draft PR 5 remains stacked on draft PR 4. |
+
+- **Files/artifacts:** `docs/CHANGE_SPEC.md`, `seed/chant_identity.ts`, focused seed tests, `seed_data/clubs/arsenal.json`, decision 005, the completed change record, and stacked draft PR 5.
+- **Skipped or blocked:** The live read-only preflight, production seed, migration, and dependent-record rewrite were deliberately skipped. They require separate operator authorization after review.
+- **Final state:** Approved, implemented, committed, pushed, and clean-CI verified in draft PR 5; not reviewed, merged, deployed, or observed against live data.
+- **Follow-up:** Review the stack in order. After merge, obtain separate authorization before running the read-only live preflight.
+
 ### 2026-08-22T00:42:03Z Stage the interaction and safety block for review
 
 - **Status:** completed

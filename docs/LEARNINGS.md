@@ -58,11 +58,11 @@ This is durable, evidence-backed project memory. It prevents the same failure or
 
 ### 2026-08-22T00:00:35Z Title-derived document IDs make renames destructive
 
-- **Status:** active
+- **Status:** promoted
 - **Scope:** Chant identity and seed reconciliation
 - **Observed:** Renaming a chant created a new document and left the title-derived old document orphaned.
 - **Evidence:** The pre-framework orphan-on-rename control is retained in `docs/BLOCK_RECAPS.md`, and the stable-ID remediation boundary is recorded in `docs/WISHLIST.md` and `docs/ROADMAP.md`.
 - **Learning:** User-visible mutable text is not a stable identity. Move to non-title-derived IDs before engagement data makes rename cleanup risky.
-- **Applied control:** Not yet implemented. The migration is now a v1 engineering prerequisite in `docs/ROADMAP.md`.
-- **Revisit when:** Reassess the migration design only if verified production references make the planned boundary unsafe.
-- **Related:** `docs/WISHLIST.md`
+- **Applied control:** Seeded chants now require explicit immutable IDs. Preflight and transaction-time checks reject unsafe ownership or team collisions, and decision 005 preserves the contract.
+- **Revisit when:** A verified production collision requires migration, or public identity moves away from the Firestore document ID.
+- **Related:** `docs/decisions/005-explicit-seeded-chant-identity.md`

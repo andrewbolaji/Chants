@@ -24,7 +24,8 @@
 **Why v1:** The app is the workshop and existing fan networks are the stage. V1 needs a safe way for a promising chant to leave the app without pretending to publish directly to X, TikTok, or YouTube.
 
 ### Stable chant identity
-**The idea:** Replace title-derived seed document IDs with stable IDs before the remaining clubs are written live. Migrate the existing Arsenal chant references safely so title edits no longer create a new chant and orphan the old votes, comments, reports, saved snapshots, evidence, or public links.
+**Status:** Implemented and verified in the repository. The read-only live preflight remains an operator-authorized rollout gate before the next production seed write.
+**The idea:** Replace title-derived seed document IDs with stable IDs before the remaining clubs are written live. Freeze the existing Arsenal IDs and confirm live references stay attached so title edits no longer create a new chant and orphan votes, comments, reports, saved snapshots, evidence, or public links.
 **Why v1:** This is already a reproduced failure and the Chant Lab plus sharing direction increases the cost of every future rename. It is cheaper and safer before public engagement and the remaining seed land.
 **V1 boundary:** A dedicated Lane 2 migration spec, representative dependent records, old and new reader compatibility where required, invariant counts before and after, recovery steps, and a rename regression test. Andrew's sourcing work can continue in parallel; only live seed writes wait for this gate.
 
