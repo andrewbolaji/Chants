@@ -13,6 +13,23 @@ This is the chronological evidence trail for substantial engineering work. It re
 
 ## Entries
 
+### 2026-08-22T13:14:57Z Specify V1 Songbook and Chant Lab browse split
+
+- **Status:** planned, awaiting technical approval
+- **Scope:** Prepare the stacked Lane 2 contract for separate Songbook and Chant Lab tabs, deterministic Top and New ranking, a non-verification Rising signal, cached and partial browse states, and the player Start a chant path. No runtime, backend, rules, index, dependency, Firebase, or deployment change.
+- **Reference:** `docs/CHANGE_SPEC.md`
+- **Operator:** Codex
+
+| UTC time | Action | Target/environment | Result and evidence |
+|---|---|---|---|
+| 13:14:57 | Created `codex/v1-songbook-chant-lab` from provenance closure commit `1549574` and inspected Team, Player, chant repository, ranking, routing, shared cards and states, tests, interface memory, roadmap, and accepted decisions 004 and 006 | Local repository | Completed. Confirmed both browse routes still consume mixed visible-status streams, Team has route-local frozen ranking while Player can reorder on score emissions, no browse widgets are directly tested, and the existing query boundary can support a client-only split without a new index or backend. |
+| 13:14:57 | Replaced the branch-local active specification with the exact Songbook and Chant Lab technical contract | Local repository | Completed as proposed. The contract selects status-only surface projection, Songbook-first tabs, deterministic Top and New orders, an inclusive seven-day and score-3 Rising signal, stable in-visit Top and Songbook order, cache metadata, fail-soft player metadata, player-prefilled creation, and representative tests and goldens. |
+
+- **Files/artifacts:** `docs/CHANGE_SPEC.md`, this execution entry, and branch `codex/v1-songbook-chant-lab`.
+- **Skipped or blocked:** Runtime implementation is deliberately blocked on explicit technical approval. Live Firebase access, deployment, merge, and release are outside this request.
+- **Current state:** Product direction approved; technical plan written locally; application behavior unchanged.
+- **Follow-up:** Self-review the plan, commit and publish the stacked planning boundary, then ask Andrew to approve or amend the exact contract.
+
 ### 2026-08-22T06:47:59Z Implement v1 chant provenance and evidence
 
 - **Status:** completed in repository and CI, PR review pending

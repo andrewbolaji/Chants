@@ -1,207 +1,207 @@
-# Change spec: V1 chant provenance and evidence
+# Change spec: V1 Songbook and Chant Lab browse split
 
-**Status:** Implemented and CI-verified, PR review and device walk pending
+**Status:** Proposed, awaiting technical approval
 **Updated:** 2026-08-22
-**Risk lane:** Lane 2, persistent schema, authorization, moderation, and external links
-**Stack base:** Draft PR 5, `codex/stable-chant-identity`
+**Risk lane:** Lane 2, trust presentation, ranking behavior, navigation, and cached-state handling
+**Stack base:** Draft PR 6, `codex/v1-provenance-evidence`
 
-This is the one active implementation specification on the stacked provenance branch. It replaces the stable-identity specification only on this branch. Andrew approved the product direction in decision 004 and explicitly approved this technical contract on 2026-08-22 before application, Functions, or Firestore rules implementation began.
+This is the one active implementation specification on the stacked browse branch. It replaces the completed provenance specification only on this branch. Andrew approved the two-surface product direction in decision 004 and asked to begin this next block on 2026-08-22. The exact technical contract below still requires explicit approval before runtime implementation begins.
 
 ## Outcome
 
-- **Problem:** Community chants do not record whether the submitter heard the chant sung or invented it, external evidence has no safe storage or link-out contract, promotion to `canonical` requires no evidence, and the existing duplicate matcher is not connected to submission. The UI therefore blurs terrace history and new ideas, while an operator or callable can mark an unsupported user submission as verified.
-- **Desired behavior:** Every new user submission records one honest origin. It may carry one normalized YouTube or X evidence link, but evidence remains optional at posting. User-created chants stay in Chant Lab until valid evidence exists and an operator promotes them. Existing seeded chants remain Terrace Proven through the retained sourcing ledger. Submission warns about likely duplicates without blocking an intentional post.
-- **Non-goals:** The separate Songbook and Chant Lab browse surfaces, Top/New/Rising ranking, hosted or embedded media, uploads, evidence added after submission, deep-link sharing, public creator profiles, notifications, challenges, unlimited comment nesting, changing seeded source data, or touching live Firebase.
-- **Review boundary:** Chant provenance and evidence models, URL normalization and external link-out, submission and duplicate nudge, honest provenance labels, promotion and evidence-removal moderation, Firestore rules, focused tests, one Flutter dependency, and framework records.
+- **Problem:** Team and player screens still mix `canonical` and `community` chants into one ranked list. Provenance labels now tell the truth at card level, but fans cannot deliberately browse the trusted archive separately from the creator workshop. Player pages also treat an empty list as a dead end rather than an invitation to start the missing chant.
+- **Desired behavior:** Team and player journeys default to a clearly named Songbook containing only Terrace Proven chants and offer a separate Chant Lab containing only community work. Chant Lab supports deterministic Top and New order, marks recent ideas with early support as Rising without implying proof, and makes starting a chant obvious. Status changes move a chant between surfaces without changing its identity.
+- **Non-goals:** Changing chant status semantics, automatic promotion, changing the evidence contract, new Firestore fields or indexes, backend ranking, personalization, following creators, challenges, notifications, share-out, Saved Matchday Songbook, hosted media, evidence attachment after posting, edits to seed content, live Firebase access, or deployment.
+- **Review boundary:** Pure browse projection and ranking, cache metadata exposure, Team and Player screen hierarchy and empty states, a reusable Chant Lab view, the Rising presentation signal, focused tests and goldens, and framework records.
 
 ## Acceptance criteria and invariants
 
-1. Every new client-created chant stores `origin` as exactly `alreadySung` or `originalIdea`. Neither `chantType` nor score stands in for origin.
-2. Evidence is optional for both origins. When present it is stored as one `evidence` map containing only a derived `provider` and normalized `url`.
-3. Stored evidence has one of two canonical forms: `https://www.youtube.com/watch?v={11-character-video-id}` or `https://x.com/{handle}/status/{1-to-25-digit-numeric-id}`. Input from approved YouTube, youtu.be, X, and Twitter URL forms is normalized before create. Unrelated query parameters and fragments are removed. HTTP, credentials, ports, deceptive hosts, non-video/profile links, malformed IDs, and unsupported providers are rejected.
-4. Evidence opens only through the operating system as an external application or browser. Chants does not fetch, preview, scrape, download, host, transcode, autoplay, or play it in the background.
-5. A user-created chant cannot transition from `community` to `canonical` unless its stored evidence is valid and an authenticated operator explicitly invokes promotion. The callable revalidates the stored record because the Admin SDK bypasses Firestore rules.
-6. Raw operator Firestore writes enforce the same promotion invariant. Existing and future `createdBy: "system"` chants may remain canonical without public evidence because their proof is the operator sourcing ledger.
-7. Origin is immutable after client creation. Authors may edit the existing content allowlist only while their chant remains `community`. Promotion therefore freezes author editing at the trust boundary.
-8. Removing evidence from a user-created canonical chant also demotes it to `community` in one server-side transaction and records one audit entry. Removing evidence from a system chant does not change its canonical status.
-9. Existing documents without `origin` or `evidence` remain readable. Existing community documents receive a neutral legacy-community label, and existing canonical system documents remain Terrace Proven. No destructive migration is required.
-10. Before create, submission checks visible chants for the same team and subject and runs the existing pure matcher. If likely matches exist, the fan can open an existing chant, cancel, or post theirs anyway. No match, a failed advisory lookup, or an explicit continue leads to at most one create.
-11. Form text and choices survive validation, duplicate review, external-link validation, and a failed create. The submit action remains disabled while the duplicate check or write is in flight.
-12. User-facing copy says Terrace Proven, Already sung, I made this, Original idea, or Community chant. It never presents votes or the word verified as proof on its own.
+1. The existing `status` field is the only surface-membership authority. `canonical` appears in Songbook and never Chant Lab; `community` appears in Chant Lab and never Songbook.
+2. Votes, score, origin, evidence, creator, chant type, age, and Rising state never change surface membership.
+3. Team and Player screens expose text-labeled `SONGBOOK` and `CHANT LAB` tabs, default to Songbook on a fresh visit, and retain the selected tab while that route remains mounted.
+4. Songbook preserves the existing score-descending total order within its canonical set: score descending, creation time ascending, then document ID ascending.
+5. Chant Lab defaults to `TOP`. Top orders community chants by score descending, creation time ascending, then document ID ascending. `NEW` orders them by creation time descending, then document ID ascending.
+6. Top and Songbook survivor order stays stable during a route visit when only vote counters change. Hidden, removed, or status-changed records disappear immediately. Newly eligible records append in deterministic rank order. New may prepend newer records because its order does not depend on votes.
+7. Rising is a presentation-only signal on a community chant whose `createdAt` is not in the future, is no more than seven days old, and whose net score is at least 3. The seven-day boundary is inclusive. Rising never changes status, promotion eligibility, provenance copy, or Top/New membership.
+8. Chant Lab explains in text that Rising means early community support and is not Terrace Proven. The meaning does not rely on gold, position, iconography, or score alone.
+9. Team Songbook retains club-chant and player-chant grouping plus full-squad access. A chant is never dropped because its player record is missing or still loading; unresolved player chants remain visible with their existing subject label.
+10. Team Chant Lab is one team-wide competitive list across club, player, coach, and rival subjects. Known player names are shown on cards without affecting ranking.
+11. Player Songbook and Chant Lab are scoped to that player only. Signed-in users see `START A CHANT` with that player prefilled. Signed-out users can browse but no write action is implied.
+12. A surface can be empty while the other is populated. Empty Songbook copy points toward Chant Lab without calling community work untrusted or fake. Empty Chant Lab gives a signed-in fan a direct start action and gives a signed-out fan honest sign-in guidance.
+13. The existing visible-query boundary remains intact: every browse query filters `hidden == false` and `removed == false`, so hidden or removed chants never appear in either surface.
+14. Query snapshots expose whether their data came from the Firestore device cache. Cached chants remain usable and receive neutral `DEVICE CACHE` supporting copy; the UI does not claim a live network failure from cache metadata alone. A terminal chant-stream error with no usable data shows the existing error state.
+15. Player metadata loading or failure does not replace an already available chant list with a full-screen spinner or error. It degrades only player names, player grouping, and the squad subsection.
+16. No new Firestore composite index, collection, field, security rule, Cloud Function, runtime package, analytics event, or remote configuration is introduced.
+17. Promotion and demotion received through the existing live stream move the same chant ID to the correct surface. Votes may update the displayed score without making a card jump within Top or Songbook during that visit.
+18. At 390 by 844 and at enlarged text, both tab labels, Top/New controls, Rising explanation, cards, empty actions, and full-squad controls remain readable without overflow or clipped tap targets.
 
 Invariants:
 
-- `status` remains the internal Songbook trust state: `canonical` maps to Terrace Proven and `community` does not.
-- Votes rank taste and momentum only. They never create or imply evidence.
-- Seed content and its sourcing ledger remain authoritative and are not rewritten by this block.
-- Moderation and authorization checks exist at the real trust boundaries, Firestore rules for direct clients and Cloud Functions for Admin SDK writes.
-- External evidence is untrusted user input even after normalization. Opening it is always an explicit fan or operator action.
-- No production or staging read, write, deployment, or dashboard change is authorized by this specification.
+- Terrace Proven remains a reviewed trust state, never a popularity state.
+- Rising remains a reversible, local presentation signal and never a moderation or authorization input.
+- Existing provenance labels remain visible on cards and detail; this block changes hierarchy, not their meanings.
+- The repository continues to read one visible chant stream per Team or Player route. Client-side projection does not add Firestore reads.
+- Existing chant IDs, counters, comments, votes, evidence, and seed records are unchanged.
+- No production or staging read, write, deployment, dashboard change, or release is authorized by this specification.
 
-## Persistent contract
+## Browse and ranking contract
 
-### Chant fields
+### Surface projection
 
-New optional fields are added to the existing flat `chants/{chantId}` document:
-
-```text
-origin: "alreadySung" | "originalIdea"
-evidence: null | {
-  provider: "youtube" | "x",
-  url: canonical HTTPS URL
-}
-```
-
-- New client creates require `origin` and may use `evidence: null`.
-- Reads treat an absent field the same as null for backward compatibility.
-- The model exposes a neutral legacy state when a community document has no origin. It does not invent an origin during read.
-- `origin` and `evidence` are not overloaded into the existing `mediaUrl` or `mediaType` fields. Those fields describe the older media contract and do not prove provenance.
-- The evidence provider is derived from the parsed URL. The client never trusts a separately selected provider.
-- The evidence map has a strict key allowlist so later moderation metadata cannot be forged by a raw client.
-
-### Evidence URL normalization
-
-One pure Dart helper validates user input and emits the stored evidence record. A matching pure TypeScript helper validates stored evidence before promotion. Firestore rules accept only the two canonical stored patterns.
-
-Accepted input families:
-
-- YouTube `youtube.com/watch?v=...`, `youtu.be/...`, and `youtube.com/shorts/...`, including common `www` and mobile host variants.
-- X or legacy Twitter `x.com/{handle}/status/{id}` and `twitter.com/{handle}/status/{id}`, including common `www` and mobile host variants.
-
-Normalization removes unrelated query parameters and fragments, converts YouTube links to the canonical watch URL, and converts Twitter hosts to `x.com`. Exact known-good and known-bad fixtures are asserted independently in Dart, Functions, and Firestore rules tests. The three validators are a security contract and must change together.
-
-### Trust and moderation transitions
+A pure Dart browse service accepts an iterable of already-visible chants and returns projections without mutating the input:
 
 ```text
-new user post
-  -> community + required origin + optional evidence
-
-operator promote
-  -> reject if createdBy != system and evidence is absent or invalid
-  -> canonical after valid evidence and review
-
-operator remove evidence
-  -> delete evidence
-  -> if canonical and createdBy != system, set community in the same transaction
-  -> append audit entry
+Songbook = status == "canonical"
+Chant Lab = status == "community"
 ```
 
-- Promotion is idempotent when the chant is already canonical, but it never repairs or silently accepts an invalid user-created canonical state.
-- A legacy user-created canonical chant without evidence may still be hidden or removed by an operator, but cannot be newly created through this change. Any such live document is reported for manual review rather than automatically rewritten.
-- Raw operator updates keep `createdBy` and `createdAt` immutable, preserve valid status values, and cannot leave a newly promoted or evidence-stripped user chant canonical.
+Unknown future statuses are shown in neither surface and are surfaced to tests as unsupported input. The current model and rules already allow only `canonical` and `community`; this fail-closed projection prevents a later status from accidentally gaining trust presentation.
+
+### Total orders
+
+Songbook and Top use:
+
+```text
+score descending
+createdAt ascending
+id ascending
+```
+
+New uses:
+
+```text
+createdAt descending
+id ascending
+```
+
+Status is not a tie-breaker after projection because each list contains exactly one status. Negative scores remain present. No score floor hides a community chant.
+
+### Stable visit order
+
+Each Songbook or Top view owns a small in-memory order reconciler. On first usable data it records the pure ranked IDs. Later emissions remove IDs no longer present, retain survivor positions, and append unseen IDs in their current deterministic rank order. This prevents an optimistic vote or counter reconciliation from moving the control under the fan's finger. The state is route-local and resets on a new visit.
+
+New is recomputed on each data emission because its order uses immutable creation time. A genuinely new post may appear at the top.
+
+### Rising
+
+Rising is true only when all conditions hold at evaluation time:
+
+```text
+status == "community"
+createdAt <= now
+createdAt >= now - 7 days
+score >= 3
+```
+
+The screen supplies the current client time to a pure helper. Clock manipulation can change only this decorative signal, so it is not a security boundary. The signal refreshes on a chant-stream emission or widget rebuild; v1 does not schedule a midnight timer.
 
 ## Interface and interaction design
 
-### Submission
+### Shared hierarchy
 
-- Add a required semantic choice near the start of the form:
-  - **Already sung**, helper: `I have heard fans sing this.`
-  - **I made this**, helper: `This is my chant idea.`
-- Rename the current `Type` labels from the conflicting `Original` and `Novelty` to **Serious** and **Funny** while retaining the internal `sincere` and `novelty` values.
-- Add `Evidence link (optional)` with copy naming YouTube and X and stating that the link opens outside Chants.
-- Validate evidence locally before any duplicate lookup or Firestore create. An empty field is valid.
-- Run the soft duplicate lookup only after the complete form is locally valid. The comparison uses visible same-team, same-subject candidates, title, and tune.
-- The duplicate sheet says `Is it one of these?`, shows up to three candidates, and offers `View chant`, `Post mine anyway`, and `Go back` paths. It does not accuse the fan of copying and it does not merge content.
-- Advisory lookup failure fails open to the create path because duplicate detection is not an authorization or data-integrity boundary. Create failure remains recoverable with the draft intact.
+- The route app bar carries a two-item `TabBar`: `SONGBOOK` then `CHANT LAB`.
+- Songbook opens first and includes a short plain-language introduction: Terrace Proven chants belong here after sourcing or operator review.
+- Chant Lab begins with the line `NEW SONGS START HERE`, a Top/New segmented control, and supporting copy that says Rising reflects early support, not Terrace Proven status.
+- `RISING` is rendered as secondary text in the card footer, separate from the provenance label. It is never styled as the gold Terrace Proven sticker.
+- The route-level creation action says `START A CHANT`. On a Player route it retains the existing player-prefilled submission arguments.
 
-### Provenance and evidence display
+### Team Songbook
 
-- Replace the current `VERIFIED` badge copy with `TERRACE PROVEN` wherever canonical chants appear.
-- Community cards and detail show one text label:
-  - `Already sung, unverified` for `alreadySung` without canonical status.
-  - `Original idea` for `originalIdea` without canonical status.
-  - `Community chant` for a legacy community document with no origin.
-- A valid evidence record adds a button whose label names its destination, such as `Watch on YouTube` or `View on X`, followed by `Opens outside Chants` in accessible supporting copy.
-- A failed launch leaves the screen in place and shows a retryable message. Missing or malformed legacy evidence is not rendered as a tappable link.
+- Canonical chants with no `playerId` remain under `CLUB CHANTS`.
+- Canonical chants with a known player remain under `PLAYER CHANTS`, retaining the player row and route to that player.
+- Canonical chants with a missing or not-yet-loaded player record remain under `PLAYER CHANTS` as cards rather than disappearing.
+- The current collapsible Full squad control remains at the bottom of Songbook. Player metadata loading or failure receives a compact inline state there.
 
-### Operator review
+### Team Chant Lab
 
-- Promotion candidates show origin, evidence state, and an explicit external evidence action.
-- Promote is disabled with explanatory copy when a user-created candidate lacks valid evidence. The server remains authoritative if the UI is bypassed.
-- Evidence removal is available on applicable moderation cards and requires confirmation. The result copy states when removal also returned the chant to Chant Lab.
+- All community subjects compete in one Top/New list.
+- A known `playerId` adds the player's name to the card. Unknown player metadata leaves the existing `PLAYER` subject tag visible.
+- Empty copy invites a signed-in fan to start the first idea for the club. The signed-out version explains that sign-in is required without showing an enabled creation control.
+
+### Player route
+
+- Songbook contains only canonical chants for that player.
+- Chant Lab contains only community chants for that player with Top/New and Rising behavior identical to Team.
+- When Songbook is empty, copy says no chant has reached the Songbook yet and offers a path to Chant Lab.
+- When Chant Lab is empty, a signed-in user gets `START A CHANT`; the existing navigation passes the player's ID. The same action remains available when the list is populated.
+
+### Cached, partial, error, and status-change states
+
+- Repository browse snapshots carry `chants` and `isFromCache`, using `includeMetadataChanges: true`. A compact `DEVICE CACHE` note appears while the current snapshot is cache-backed. It does not block taps or imply guaranteed offline permanence.
+- If a later stream error retains usable data, the list remains visible with recoverable supporting copy. If no chant data has ever arrived, use the full existing ErrorState.
+- Team chant data renders as soon as available. Player metadata enriches it later. A player-stream problem cannot erase the chant surfaces.
+- A promotion removes the card from Chant Lab and appends it to Songbook for that visit. A demotion performs the inverse. Hidden and removed records vanish from both.
 
 ## Design and implementation seams
 
-- Add typed `ChantOrigin`, `EvidenceProvider`, and `ChantEvidence` model values with backward-compatible Firestore decoding.
-- Add a pure Dart evidence parser/normalizer and a small external-launch widget or service seam so success and failure are testable without opening a real application.
-- Add `url_launcher` as the only new runtime package. The current unrelated local `pubspec.lock` version bumps remain unstaged; only dependency-owned lockfile hunks may enter this branch.
-- Add a one-shot visible-team query to `ChantRepository`; filter subject locally before invoking `ChantMatcher`, avoiding a new Firestore index.
-- Keep `ChantMatcher` pure. The submit screen owns the advisory orchestration and one-write guard.
-- Extract a pure TypeScript promotion/evidence action helper from the callable so missing, malformed, valid, idempotent, and evidence-removal transitions have unit tests without deploying Functions.
-- Keep Firestore rule URL validation strict to canonical stored forms. Input flexibility belongs only in the normalizers.
-- Replace the author chant-update blocklist with an explicit content-field allowlist and require the existing resource status to be `community`.
+- Add a pure `chant_browse.dart` service for surface projection, Top/New ranking, Rising evaluation, and route-local stable order reconciliation.
+- Add a small immutable `ChantBrowseSnapshot` repository value with `chants` and `isFromCache`. Team and Player browse methods use the same existing visible queries with metadata changes enabled.
+- Keep the current list-returning repository methods only if another caller still needs them. Do not duplicate live subscriptions in one route.
+- Add a reusable stateful `ChantLabView` for its introduction, Top/New control, stable Top ordering, Rising copy, card list, empty state, and creation action.
+- Extend `ChantCard` with an explicit `rising` presentation input. The card never derives or trusts Rising by itself.
+- Refactor TeamScreen into a shared data boundary plus separate Songbook and Chant Lab tab bodies. Preserve the current frozen-order intent through the new reconciler rather than screen-specific ID maps.
+- Refactor PlayerScreen to the same tab hierarchy and player-prefilled creation path.
+- Use existing theme, spacing, card, provenance, EmptyState, ErrorState, SectionEyebrow, and tolerant golden utilities. Add no new dependency.
+- Do not edit `firestore.rules`, Cloud Functions, indexes, model persistence, seed files, or Firebase configuration in this block.
 
 ## Failure and abuse analysis
 
 | Condition | Expected behavior | Evidence |
 |---|---|---|
-| New post has no origin | Client validation stops; raw SDK create is denied | Widget and rules tests |
-| Evidence field is empty | Submission succeeds with null evidence | Widget, model, and rules tests |
-| Deceptive host such as `youtube.com.example.test` | Rejected before create and by rules or callable if bypassed | Shared known-bad cases across three suites |
-| YouTube or X tracking URL | Normalized to the bounded canonical stored form | Dart and Functions unit tests |
-| Generic profile, playlist, or home URL | Rejected as non-evidence | Parser and rules tests |
-| Duplicate lookup times out or is denied | Advisory check fails open; one create is attempted | Submit orchestration test |
-| Likely duplicate found | No write until the fan explicitly continues | Widget test with repository spies |
-| Repeated tap during lookup or create | Submit stays disabled; at most one create | Widget test |
-| Raw author changes origin or evidence | Denied | Rules tests |
-| Author edits after promotion | Denied even for ordinary content fields | Rules tests |
-| Raw operator promotes user chant without evidence | Denied | Rules test |
-| Callable promotes user chant without or with malformed evidence | `failed-precondition`; no status or audit write | Functions tests |
-| Valid user evidence plus operator review | Status becomes canonical and audit is appended | Functions unit test plus rules parity case |
-| Evidence removed from user canonical chant | Evidence is deleted and status becomes community atomically | Functions unit test |
-| Seeded canonical chant has no evidence | Remains readable and Terrace Proven | Model/widget compatibility tests |
-| Legacy community chant has no origin | Remains readable with neutral Community chant label | Model/widget compatibility tests |
-| Stored legacy evidence is malformed | No tappable link; promotion rejects it | Model/display and Functions tests |
-| External application cannot open | Stay in Chants and show a retryable message | Widget test through launcher seam |
+| Canonical and community records arrive together | Each appears in exactly one correct surface | Pure projection and screen tests |
+| Unknown future status appears | It appears in neither trusted nor community surface | Pure fail-closed projection test |
+| Community chant has high score | It may rank first in Top but remains outside Songbook | Pure ranking and widget tests |
+| Canonical chant has a negative score | It remains in Songbook | Projection test |
+| Chant is seven days old with score 3 | Rising is true at the inclusive boundary | Clock-controlled unit test |
+| Chant is future-dated, older than seven days, or below score 3 | Rising is false | Unit tests |
+| Vote count changes in Top or Songbook | Card content updates but survivor order does not jump | Stable-order test and widget test |
+| New community post arrives | It appends in Top and may prepend in New | Reconciler and widget tests |
+| Operator promotes or demotes a chant | Same ID leaves one surface and appears in the other | Stream-driven widget test |
+| Chant becomes hidden or removed | It disappears immediately and is not retained by frozen order | Reconciler and repository-boundary checks |
+| Player metadata is loading, missing, or errors | Chants remain visible; only name, grouping detail, and squad state degrade | Team widget tests |
+| Cache-backed snapshot arrives | Existing cards remain usable with neutral cache copy | Widget test |
+| Stream errors before data | Full recoverable error state | Widget test |
+| Player has no Songbook entry | Songbook points to Chant Lab; signed-in Lab can start a prefilled chant | Player widget test |
+| Signed-out viewer sees empty Lab | Guidance mentions sign-in; no enabled write control appears | Widget test |
+| Large text or narrow viewport | Tabs, selector, explanation, cards, and actions do not overflow | Golden and text-scale widget test |
 
 ## Performance and cost
 
-- **Submission read:** One extra visible-team query before a new chant create. Expected v1 team volume is small. The query reuses the existing visibility and team index path and is not run during ordinary browsing.
-- **Client work:** Matching is bounded to one team's visible chants and returns at most three candidates. Record candidate count and elapsed time in local debug instrumentation only if the list becomes materially large.
-- **Backend work:** Promotion adds one chant read before one update and one audit write. Evidence removal uses one transaction plus one audit write.
-- **External cost:** No media bytes are proxied or stored by Chants. The only new behavior is an explicit OS link-out.
-- **Revisit trigger:** Paginate or server-assist duplicate matching when a team exceeds 500 visible chants or local p95 matching exceeds 100 ms on the representative device.
+- **Firestore:** No added query or read per route. Team and Player keep one visible chant subscription; metadata changes may add local snapshot events without document-read cost.
+- **Client work:** Surface filters and sorts are `O(n log n)` over one team or one player's visible chants. V1 volume is expected to be small.
+- **Memory:** Stable order retains only chant IDs for the mounted route. It is discarded on pop.
+- **Rendering:** Tab bodies use lazy lists for chant cards. Empty and intro content remain bounded.
+- **Revisit trigger:** Introduce paginated, server-assisted surface queries when one team exceeds 500 visible chants, route projection exceeds 16 ms at p95 on the representative device, or one snapshot materially increases billed reads.
 
 ## Rollout and recovery
 
-- **Order:** Merge the stacked code, deploy Firestore rules before exposing the origin-aware client, deploy Functions before enabling operator promotion, then release the client. The exact deployment commands and named Firebase project require separate authorization.
-- **Backward compatibility:** The released reader accepts absent provenance fields. New rules require origin only on new client creates, so no bulk migration gates rollout.
-- **Canary:** In a non-production or explicitly authorized operator test, create one post per origin, one post without evidence, and one with each provider. Confirm the labels, link-out warning, duplicate nudge, promotion rejection, valid promotion, and removal-demotion behavior.
-- **Healthy signals:** No increase in denied legitimate creates, no callable promotion without evidence, no unsupported stored domains, link launch errors remain bounded, and duplicate review does not materially reduce completed submissions.
-- **Rollback:** The client can be rolled back because readers are backward compatible. Do not roll back rules or Functions to versions that allow evidence-free user promotion while the new trust labels remain visible. If link abuse appears, disable evidence entry and external actions in a forward fix while retaining stored records for operator review.
-- **Data recovery:** No automatic deletion or migration. An invalid record found after release is hidden or has evidence removed through audited moderation.
-- **Owner:** Andrew authorizes deploys and release. Codex implements and verifies repository changes only.
+- **Order:** Merge after PRs 4, 5, and 6. No backend or rules deployment is introduced by this block. Release only with the provenance and promotion boundary from PR 6 so Songbook membership remains honest.
+- **Backward compatibility:** Every existing visible chant already has one of the two allowed statuses. Missing origin or evidence does not affect surface projection.
+- **Canary:** On an authorized non-production or local device, inspect a team and player with canonical-only, community-only, mixed, empty, cached, promoted, demoted, and hidden data. Confirm Top/New and Rising boundaries with fixed fixtures.
+- **Healthy signals:** Fans can identify both surfaces without instruction, creation starts increase from player pages, Top/New switches are used, and no community chant is reported as falsely Terrace Proven.
+- **Rollback:** Revert the client hierarchy to the mixed browse list. No data or backend rollback is required. Keep PR 6's provenance, evidence, rules, and Functions controls intact.
+- **Owner:** Andrew authorizes review, merge, release, and any live environment work. Codex implements and verifies repository changes only.
 
 ## Verification plan
 
 | Claim | Check | Expected evidence |
 |---|---|---|
-| Models remain backward compatible | `flutter test test/data/models/chant_test.dart` | Absent and populated provenance records decode and round-trip as specified |
-| URL contract is strict | Focused Dart, Functions, and rules cases over the same accepted and rejected examples | Every layer agrees on canonical stored values and rejects deceptive inputs |
-| Submission requires origin and preserves the draft | Focused submit widget/orchestration tests | Validation and failure paths retain all entered fields |
-| Duplicate nudge is soft and one-write | Repository-spy widget tests | No write before continue; view/cancel writes zero; continue and lookup failure write once |
-| Provenance is understandable | Card/detail widget tests and 390 by 844 golden or screenshot | Terrace Proven, unverified sung claim, original idea, and legacy state are distinct in text |
-| Link-out is explicit and recoverable | Widget tests with success/failure launcher | Destination named, outside-app warning present, failure stays on screen |
-| Promotion invariant holds through direct clients | Firestore emulator suite | Missing and malformed evidence cannot become canonical; system compatibility remains |
-| Admin SDK cannot bypass the product rule | Functions unit suite | Pure action helper rejects unsupported promotion and atomically demotes on evidence removal |
-| Existing suites stay green | `flutter test`, `flutter analyze lib test`, `cd functions && npm test`, rules emulator suite, and `cd seed && npm test` | All touched and regression suites pass |
-| New test proves behavior | Temporarily revert one core guard and run its focused test | Test fails for the intended reason, then passes after restoration |
-| Interface is reviewable | Screenshot or golden at representative viewport plus later device walk | No overflow at normal and enlarged text; semantics remain readable |
-| Stack remains scoped | `git diff --name-only codex/stable-chant-identity...HEAD`, `git diff --check`, and changed-prose dash search | Only approved provenance paths; no unrelated Android or lockfile version bump hunks |
+| Projection is trust-correct | Pure service tests | Canonical and community partition exactly; unknown status fails closed |
+| Top and New are deterministic | Pure ranking tests | Exact total order, negative retention, no input mutation |
+| Rising is bounded and non-authoritative | Clock-controlled service tests | Inclusive seven-day and score thresholds; future, old, canonical, and low-score cases false |
+| Vote updates do not move controls | Stable-order tests plus real Chant Lab widget test | Survivor IDs stay fixed while score text updates |
+| Status changes move surfaces | Team and Player stream-driven widget tests | Same ID leaves one tab and appears in the other |
+| Empty paths create correctly | Player and Team widget tests with route observers | Signed-in start passes exact team, sport, competition, and player arguments; signed-out has no write control |
+| Partial and cached states stay usable | Widget tests over browse snapshot and player metadata states | Cached cards remain tappable; metadata failure does not erase chants; no-data error is full-screen |
+| Hierarchy is understandable | 390 by 844 Songbook and Chant Lab goldens plus enlarged-text test | Clear tabs, selector, Rising explanation, empty path, and no overflow |
+| Existing app remains green | `flutter test`, `flutter analyze lib test`, Functions, seed, rules TypeScript, and clean-runner CI | All regression and untouched boundary suites pass |
+| New test proves behavior | Temporarily break the status projection or stable-order guard | Focused test fails for the intended reason, then passes after restoration |
+| Stack remains scoped | Compare against `codex/v1-provenance-evidence`, run `git diff --check`, and search changed prose for forbidden dashes | Only approved Flutter, test, and framework paths; no Android, unrelated lockfile, backend, rules, index, seed, or dependency diff |
 
 ## Approval
 
-Andrew explicitly approved this technical specification on 2026-08-22. That approval authorizes repository implementation and verification on draft PR 6. It does not authorize Firebase deployment, live-data access, or release.
-
-## Implementation evidence
-
-- The typed origin and evidence contract, strict Dart normalizer, explicit external link-out, provenance labels, origin-aware submission, and soft duplicate review are implemented in the Flutter source.
-- The callable now revalidates evidence before promotion and removes evidence transactionally, including demotion for user-created canonical chants. Firestore rules independently enforce origin, evidence, author-edit, and raw operator promotion boundaries while retaining moderation access to untouched malformed legacy records.
-- Local verification passed 206 Flutter tests, 35 Functions tests, 42 seed tests, rules TypeScript compilation, and `flutter analyze lib test`. The two 390 by 844 submission goldens were generated and visually inspected without overflow or truncated helper copy.
-- The required red-check was demonstrated by temporarily disabling the Functions promotion guard. Its focused test failed on the missing exception, then passed after restoration.
-- The Firestore emulator suite could not run locally because this machine has no Java runtime. GitHub Actions run `32574241342` supplied Java 21 and passed all 117 rules assertions. The same run passed Flutter tests, Flutter analysis, Functions, and seed jobs.
-- No Firebase project was accessed by the implementation workflow and nothing was deployed. PR review and the later live-device walk remain release gates.
+**Pending.** Andrew asked to proceed with the Songbook and Chant Lab block, which authorizes inspection, specification, and preparation of the next stacked review boundary. Runtime implementation begins only after Andrew explicitly approves this exact technical contract. Approval will not authorize Firebase access, deployment, merge, or release.
 
 ## Open decisions
 
-None. Exact spacing and component treatment may be refined during screenshot review without changing the schema, trust boundary, external-link contract, or duplicate behavior above.
+None. The product split, default Songbook surface, Top/New controls, Rising-as-non-proof direction, and player creation path were already approved in decision 004. This specification fixes the exact ranking, recency threshold, cache wording, ordering stability, partial-state behavior, and test seams needed to implement them safely.
