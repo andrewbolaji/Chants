@@ -89,7 +89,11 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
   }
 
   void _openChant(Chant chant) {
-    Navigator.pushNamed(context, AppRouter.chantDetail, arguments: chant);
+    Navigator.pushNamed(
+      context,
+      AppRouter.chantDetail,
+      arguments: ChantDetailRouteArguments(chant: chant),
+    );
   }
 
   @override

@@ -72,34 +72,47 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             itemBuilder: (context) => [
               PopupMenuItem(
                 value: 'feedback',
-                child: Text('Send feedback',
-                    style: textTheme.bodyMedium
-                        ?.copyWith(color: AppColors.textHeadline)),
+                child: Text(
+                  'Send feedback',
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: AppColors.textHeadline,
+                  ),
+                ),
               ),
               PopupMenuItem(
                 value: 'policy',
-                child: Text('Content policy',
-                    style: textTheme.bodyMedium
-                        ?.copyWith(color: AppColors.textHeadline)),
+                child: Text(
+                  'Content policy',
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: AppColors.textHeadline,
+                  ),
+                ),
               ),
               if (user != null)
                 PopupMenuItem(
                   value: 'blocked',
-                  child: Text('Blocked users',
-                      style: textTheme.bodyMedium
-                          ?.copyWith(color: AppColors.textHeadline)),
+                  child: Text(
+                    'Blocked users',
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: AppColors.textHeadline,
+                    ),
+                  ),
                 ),
               PopupMenuItem(
                 value: 'signout',
-                child: Text('Sign out',
-                    style: textTheme.bodyMedium
-                        ?.copyWith(color: AppColors.textHeadline)),
+                child: Text(
+                  'Sign out',
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: AppColors.textHeadline,
+                  ),
+                ),
               ),
               PopupMenuItem(
                 value: 'delete',
-                child: Text('Delete account',
-                    style: textTheme.bodyMedium
-                        ?.copyWith(color: AppColors.error)),
+                child: Text(
+                  'Delete account',
+                  style: textTheme.bodyMedium?.copyWith(color: AppColors.error),
+                ),
               ),
             ],
           ),
@@ -147,6 +160,67 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           const SizedBox(height: Spacing.sm),
 
+          if (_query.isEmpty && user != null) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
+              child: Card(
+                color: AppColors.surface,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(Radii.md),
+                  onTap: () => Navigator.pushNamed(
+                    context,
+                    AppRouter.savedSongbook,
+                    arguments: user.uid,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(Spacing.lg),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(Spacing.md),
+                          decoration: BoxDecoration(
+                            color: AppColors.gold.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(Radii.sm),
+                          ),
+                          child: const Icon(
+                            Icons.bookmark_outline,
+                            color: AppColors.gold,
+                          ),
+                        ),
+                        const SizedBox(width: Spacing.md),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'MATCHDAY SONGBOOK',
+                                style: textTheme.titleMedium,
+                              ),
+                              const SizedBox(height: Spacing.xs),
+                              const Text(
+                                'Saved on this device, ready when the signal drops.',
+                                style: TextStyle(
+                                  fontFamily: 'Nunito',
+                                  fontSize: 13,
+                                  color: AppColors.textMuted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(
+                          Icons.chevron_right,
+                          color: AppColors.textFaint,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: Spacing.sm),
+          ],
+
           // Premier League entry
           if (_query.isEmpty) ...[
             Padding(
@@ -156,10 +230,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 onTap: () => Navigator.pushNamed(
                   context,
                   AppRouter.competition,
-                  arguments: {
-                    'id': 'premier-league',
-                    'name': 'Premier League',
-                  },
+                  arguments: {'id': 'premier-league', 'name': 'Premier League'},
                 ),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
@@ -181,10 +252,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ],
                         ),
                       ),
-                      Icon(
-                        Icons.chevron_right,
-                        color: AppColors.textFaint,
-                      ),
+                      Icon(Icons.chevron_right, color: AppColors.textFaint),
                     ],
                   ),
                 ),
@@ -203,7 +271,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 }
 
 Future<void> _showDeleteAccountDialog(
-    BuildContext context, WidgetRef ref) async {
+  BuildContext context,
+  WidgetRef ref,
+) async {
+  final uid = ref.read(authStateProvider).valueOrNull?.uid;
+  if (uid == null) return;
   final confirmed = await showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
@@ -211,7 +283,8 @@ Future<void> _showDeleteAccountDialog(
       content: const Text(
         'This will permanently delete your account, votes, likes, reports, '
         'feedback, and blocks. Your submitted chants, comments, and replies '
-        'will stay as community content with your name removed. This cannot '
+        'will stay as community content with your name removed. Your Saved '
+        'Matchday Songbook on this device will also be removed. This cannot '
         'be undone.',
       ),
       actions: [
@@ -220,9 +293,7 @@ Future<void> _showDeleteAccountDialog(
           child: const Text('Cancel'),
         ),
         FilledButton(
-          style: FilledButton.styleFrom(
-            backgroundColor: AppColors.error,
-          ),
+          style: FilledButton.styleFrom(backgroundColor: AppColors.error),
           onPressed: () => Navigator.pop(ctx, true),
           child: const Text('DELETE MY ACCOUNT'),
         ),
@@ -233,13 +304,14 @@ Future<void> _showDeleteAccountDialog(
   if (confirmed != true || !context.mounted) return;
 
   try {
-    await ref.read(moderationRepositoryProvider).deleteAccount();
+    await ref.read(accountDeletionServiceProvider).deleteAccount(uid);
   } catch (e) {
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text(
-            'Could not delete your account. Try again or contact us via feedback.'),
+          'Could not delete your account. Try again or contact us via feedback.',
+        ),
       ),
     );
   }

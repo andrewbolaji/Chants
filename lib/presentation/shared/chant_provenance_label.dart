@@ -5,12 +5,21 @@ import 'package:chants/data/models/chant.dart';
 import 'package:chants/presentation/shared/gold_foil_badge.dart';
 
 class ChantProvenanceLabel extends StatelessWidget {
-  final Chant chant;
+  final String status;
+  final ChantOrigin? origin;
 
-  const ChantProvenanceLabel({super.key, required this.chant});
+  ChantProvenanceLabel({super.key, required Chant chant})
+    : status = chant.status,
+      origin = chant.origin;
+
+  const ChantProvenanceLabel.fromValues({
+    super.key,
+    required this.status,
+    required this.origin,
+  });
 
   String get _label {
-    return switch (chant.origin) {
+    return switch (origin) {
       ChantOrigin.alreadySung => 'ALREADY SUNG, UNVERIFIED',
       ChantOrigin.originalIdea => 'ORIGINAL IDEA',
       null => 'COMMUNITY CHANT',
@@ -19,7 +28,7 @@ class ChantProvenanceLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (chant.status == 'canonical') return const GoldFoilBadge();
+    if (status == 'canonical') return const GoldFoilBadge();
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: Spacing.sm, vertical: 3),

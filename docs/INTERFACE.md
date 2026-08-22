@@ -19,10 +19,24 @@ This is the current design contract and decision history for Chants. Read the re
 | Browse and club lists | Songbook-first tabs, separate Chant Lab Top and New order, loading, surface-specific empty states, cached and recoverable-error notices, hidden/removed disappearance, and fail-soft player metadata | Preserve reading order, explicit trust words, semantic section headings, stable controls during vote changes, text scaling, and one-handed navigation | `lib/presentation/browse/`, `lib/data/services/chant_browse.dart`, `lib/presentation/shared/empty_state.dart`, `lib/presentation/shared/error_state.dart` |
 | Chant card | Show title, who it is for, useful provenance, tune, score, and comments without turning the card into a metadata wall | Entire card target is semantic and tappable; badges cannot rely on color alone | `lib/presentation/shared/chant_card.dart`, `docs/DESIGN_DIRECTION_V2.md` |
 | Chant detail | Loud identity header, calm lyrics, context, vote, report, comments, and any safe external evidence action | Long lyrics fall back to left alignment; link purpose is explicit; text scaling and screen readers retain logical order | `lib/presentation/browse/chant_detail_screen.dart`, `docs/DESIGN_DIRECTION_V2.md` |
+| Saved Matchday Songbook | Local-first overview, club snapshots, read-only chant detail, explicit refresh and remove, last-refreshed disclosure, UID lock, corrupt and future-version recovery states | Ownership and freshness use words as well as icons; saved detail omits live controls; 390 by 844 and enlarged text remain scrollable and unclipped | `lib/presentation/saved/`, `lib/data/models/saved_songbook.dart`, decision 003 |
 | Submission form | Preserve entered work on validation or network failure; distinguish required from optional fields; denied and banned states explain the next action | Every choice has a text label and semantic group; keyboard never hides the active field or submit result | `lib/presentation/submit/submit_chant_screen.dart` |
 | Comments and replies | One visible reply level, recoverable failed writes, reporting, blocking, moderation disappearance, and no orphan promotion | Reply context and hierarchy are announced without indentation alone; tap targets and text scale remain usable | `lib/presentation/comments/`, `docs/decisions/002-comment-reply-depth-and-retention.md` |
 
 ## Decision log
+
+### 2026-08-22T19:38:09Z Make saved lyrics a timestamped device copy
+
+- **Status:** active
+- **Surface and user problem:** Fans need lyrics at a crowded ground where connectivity is unreliable, but incidental Firestore cache behavior cannot support a clear offline promise.
+- **Decision:** Home exposes one signed-in Matchday Songbook. Team and live chant detail save explicit UID-scoped device snapshots. Saved overview, club, and detail routes read locally first, label the copy and refresh date, omit live social and media actions, and require explicit refresh or removal.
+- **Why:** The feature supports the app's sharpest matchday job without turning favorites into another cloud product or implying stale counters and conversation are live.
+- **Alternatives considered:** Generic cloud favorites, which do not prove lyrics are present offline; Firestore cache, which is incidental and lifecycle-unclear; background downloads, which add scheduling and consent surface before demand is proven.
+- **Required states:** Loading, empty, populated, individually saved, saved with club, cache-disabled save, busy, refresh failure with retained copy, zero-item refreshed club, corrupt, unsupported version, UID mismatch, removal confirmation, and account-deletion cleanup.
+- **Accessibility/responsive impact:** Bookmark ownership and freshness are explicit text and semantics. Destructive actions require confirmation. Read-only detail follows the live lyric hierarchy without vote, comment, report, evidence, or media affordances. The overview and detail goldens pass at 390 by 844, and the overview passes at 1.6x text.
+- **Implementation evidence:** The approved Lane 2 implementation, focused widget and persistence tests, deliberate reconstruction red check, two inspected goldens, and green clean-runner CI are recorded in `docs/changes/2026-08-22-saved-matchday-songbook.md`. Native compilation, PR review, and the live airplane-mode device walk remain pending.
+- **Revisit when:** Users expect cross-device sync, snapshot volume approaches the 2 MiB or 500-ID boundary, moderation requires online revocation stronger than refresh, or offline audio and video are separately approved.
+- **Related:** `docs/decisions/003-saved-matchday-songbook-offline-v1.md`, `docs/CHANGE_SPEC.md`
 
 ### 2026-08-22T00:00:35Z Separate Songbook truth from Chant Lab creativity
 

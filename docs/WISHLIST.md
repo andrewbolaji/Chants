@@ -6,6 +6,7 @@
 **Status:** Implemented in source and automated checks. One reply level reuses comment likes, reports, moderation, blocking, deletion, and rate limits. Unlimited nesting and reply notifications remain v1.1 candidates.
 
 ### Saved Matchday Songbook
+**Status:** Implemented and green-CI verified on stacked draft PR 8. Native client compilation, review, and the airplane-mode device walk remain before release.
 **The idea:** A fan can save one chant or a club's current visible songbook before leaving for the ground, then reopen the lyrics with no signal. The v1 contract is an explicit device-local snapshot with refresh and remove actions. It does not rely on an earlier Firestore read happening to remain in cache.
 **Why v1:** Looking up the words at the match is the product's sharpest real-world use case, and stadium connectivity is unreliable. This provides a concrete return habit without waiting for social scale or finished seeding.
 **V1 boundary:** Individual and club-level saves, offline relaunch, clear saved/last-refreshed state, refresh, remove, and graceful handling when the live chant is later hidden or removed. Cross-device sync, automatic background downloads, push reminders, and storage of audio or video remain out of scope.
