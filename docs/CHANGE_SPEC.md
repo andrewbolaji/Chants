@@ -1,6 +1,6 @@
 # Change spec: Stable chant document identity
 
-**Status:** Approved, repository implementation locally verified; live preflight pending
+**Status:** Approved, implemented, and clean-CI verified; live preflight pending
 **Updated:** 2026-08-21
 **Risk lane:** Lane 2, persistent identity and live-data compatibility
 **Stack base:** Draft PR 4, `codex/v1-interaction-safety-replies`
