@@ -1,6 +1,6 @@
 # Change spec: V1 Songbook and Chant Lab browse split
 
-**Status:** Implemented and locally verified, PR review pending
+**Status:** Implemented and CI verified, PR review pending
 **Updated:** 2026-08-22
 **Risk lane:** Lane 2, trust presentation, ranking behavior, navigation, and cached-state handling
 **Stack base:** Draft PR 6, `codex/v1-provenance-evidence`

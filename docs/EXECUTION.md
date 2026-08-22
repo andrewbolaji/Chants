@@ -15,7 +15,7 @@ This is the chronological evidence trail for substantial engineering work. It re
 
 ### 2026-08-22T13:14:57Z Specify V1 Songbook and Chant Lab browse split
 
-- **Status:** implemented and locally verified, PR review pending
+- **Status:** completed in repository and CI, PR review pending
 - **Scope:** Prepare the stacked Lane 2 contract for separate Songbook and Chant Lab tabs, deterministic Top and New ranking, a non-verification Rising signal, cached and partial browse states, and the player Start a chant path. No runtime, backend, rules, index, dependency, Firebase, or deployment change.
 - **Reference:** `docs/CHANGE_SPEC.md`
 - **Operator:** Codex
@@ -31,11 +31,12 @@ This is the chronological evidence trail for substantial engineering work. It re
 | 16:57:38 | Proved both critical guards red, restored them, and ran the local verification matrix | Local repository | Routing canonical status into Chant Lab made the projection test fail. Clearing the retained Player snapshot on a later stream error made the chant-disappearance test fail. After restoration, 224 Flutter tests, 35 Functions tests, 42 seed tests, rules TypeScript compilation, and `flutter analyze lib test` passed. |
 | 16:57:38 | Checked availability of the Firestore rules emulator | Local workstation | Blocked locally because no Java runtime is installed. Rules and fixtures are untouched and TypeScript compiles; the emulator suite must run on the clean GitHub Actions runner before CI verification is complete. |
 | 17:20:31 | Inspected the first implementation CI run | GitHub Actions run `32587305522` | Functions, seed, rules, and Flutter analysis passed. The Flutter job had 223 non-golden tests pass, then failed only because the two new text-heavy full-screen goldens differed by 2.09% and 1.94% across macOS Flutter 3.44.8 and Ubuntu Flutter 3.47.1, above the 1.5% default. Applied a measured 2.2% threshold only in the new browse golden test; the shared default remains unchanged. |
+| 17:26:39 | Verified the corrected implementation on a clean runner and inspected the rules evidence | GitHub Actions run `32587485488` | Completed. Flutter tests, Flutter analysis, Functions, seed, and rules all passed. The Java-backed Firestore emulator reported 117 passing assertions. |
 
 - **Files/artifacts:** Pure browse service; cache-aware chant repository snapshot; shared Chant Lab and support-notice widgets; Team, Player, and ChantCard updates; focused unit, widget, enlarged-text, and golden tests; decision 007; `docs/changes/2026-08-22-songbook-chant-lab-browse.md`; interface, roadmap, learning, spec, and this execution entry.
 - **Skipped or blocked:** Local Firestore emulator execution remains unavailable because the workstation has no Java runtime. Live Firebase access, deployment, merge, release, and device inspection remain outside this implementation pass.
-- **Current state:** Exact contract approved, implemented, visually inspected, and locally verified on draft PR 7's branch. The implementation is not yet committed, pushed, clean-CI verified, reviewed, merged, deployed, released, or observed in production.
-- **Follow-up:** Self-review the complete diff, commit only scoped paths, push draft PR 7, require clean CI including the Java rules runner, then hand Andrew the combined device-walk checkpoints.
+- **Final state:** Exact contract approved, implemented, visually inspected, committed, pushed, and green-CI verified in draft PR 7. It is not reviewed, merged, deployed, released, or observed in production. The combined device walk remains pending by Andrew's request.
+- **Follow-up:** Review stacked PRs 4, 5, 6, then 7. Complete the combined device walk before release. Saved Matchday Songbook is the next independent v1 product block that does not depend on remaining seed work.
 
 ### 2026-08-22T06:47:59Z Implement v1 chant provenance and evidence
 
