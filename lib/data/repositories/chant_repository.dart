@@ -20,15 +20,24 @@ class ChantRepository {
         .where('removed', isEqualTo: false);
   }
 
-  /// All visible chants for a team, ranked by the four-key total order
-  /// (score desc, canonical first, createdAt asc, id asc).
+  /// Visible team browse data plus Firestore cache provenance.
   /// Uses composite index: teamId + hidden + removed + score desc.
-  Stream<List<Chant>> chantsForTeamStream({required String teamId}) {
+  Stream<ChantBrowseSnapshot> teamBrowseStream({required String teamId}) {
     return _visibleChants()
         .where('teamId', isEqualTo: teamId)
         .orderBy('score', descending: true)
-        .snapshots()
-        .map((snap) => rankChants(snap.docs.map(Chant.fromFirestore).toList()));
+        .snapshots(includeMetadataChanges: true)
+        .map(
+          (snap) => ChantBrowseSnapshot(
+            chants: rankChants(snap.docs.map(Chant.fromFirestore).toList()),
+            isFromCache: snap.metadata.isFromCache,
+          ),
+        );
+  }
+
+  /// Compatibility stream for callers that do not need cache provenance.
+  Stream<List<Chant>> chantsForTeamStream({required String teamId}) {
+    return teamBrowseStream(teamId: teamId).map((snapshot) => snapshot.chants);
   }
 
   /// One-shot visible team set used only by the advisory duplicate nudge.
@@ -42,12 +51,24 @@ class ChantRepository {
     return snap.docs.map(Chant.fromFirestore).toList();
   }
 
-  /// All visible chants for a player, ranked by the four-key total order.
-  Stream<List<Chant>> chantsForPlayerStream({required String playerId}) {
+  /// Visible player browse data plus Firestore cache provenance.
+  Stream<ChantBrowseSnapshot> playerBrowseStream({required String playerId}) {
     return _visibleChants()
         .where('playerId', isEqualTo: playerId)
-        .snapshots()
-        .map((snap) => rankChants(snap.docs.map(Chant.fromFirestore).toList()));
+        .snapshots(includeMetadataChanges: true)
+        .map(
+          (snap) => ChantBrowseSnapshot(
+            chants: rankChants(snap.docs.map(Chant.fromFirestore).toList()),
+            isFromCache: snap.metadata.isFromCache,
+          ),
+        );
+  }
+
+  /// Compatibility stream for callers that do not need cache provenance.
+  Stream<List<Chant>> chantsForPlayerStream({required String playerId}) {
+    return playerBrowseStream(
+      playerId: playerId,
+    ).map((snapshot) => snapshot.chants);
   }
 
   /// All visible chants for the discovery shuffle (Fix B).
@@ -107,4 +128,14 @@ class ChantRepository {
               .toList(),
         );
   }
+}
+
+class ChantBrowseSnapshot {
+  final List<Chant> chants;
+  final bool isFromCache;
+
+  ChantBrowseSnapshot({
+    required Iterable<Chant> chants,
+    this.isFromCache = false,
+  }) : chants = List.unmodifiable(chants);
 }

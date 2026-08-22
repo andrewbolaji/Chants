@@ -9,6 +9,7 @@ class ChantCard extends StatelessWidget {
   final Chant chant;
   final String? teamName;
   final String? playerName;
+  final bool rising;
   final VoidCallback onTap;
 
   const ChantCard({
@@ -16,6 +17,7 @@ class ChantCard extends StatelessWidget {
     required this.chant,
     this.teamName,
     this.playerName,
+    this.rising = false,
     required this.onTap,
   });
 
@@ -116,17 +118,35 @@ class ChantCard extends StatelessWidget {
               // Footer: subject tag (left) | comment count + vote chip (right)
               Row(
                 children: [
-                  Text(
-                    subjectLabel,
-                    style: const TextStyle(
-                      fontFamily: 'SpaceMono',
-                      fontSize: 9,
-                      color: AppColors.textMuted,
-                      letterSpacing: 0.8,
-                      fontWeight: FontWeight.w700,
+                  Expanded(
+                    child: Wrap(
+                      spacing: Spacing.sm,
+                      runSpacing: Spacing.xs,
+                      children: [
+                        Text(
+                          subjectLabel,
+                          style: const TextStyle(
+                            fontFamily: 'SpaceMono',
+                            fontSize: 9,
+                            color: AppColors.textMuted,
+                            letterSpacing: 0.8,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        if (rising)
+                          const Text(
+                            'RISING',
+                            style: TextStyle(
+                              fontFamily: 'SpaceMono',
+                              fontSize: 9,
+                              color: AppColors.success,
+                              letterSpacing: 0.8,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                      ],
                     ),
                   ),
-                  const Spacer(),
                   if (chant.commentCount > 0) ...[
                     Icon(
                       Icons.chat_bubble_outline,

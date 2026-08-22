@@ -12,6 +12,17 @@ This is durable, evidence-backed project memory. It prevents the same failure or
 
 ## Entries
 
+### 2026-08-22T16:57:38Z Recoverable stream errors need retained route state
+
+- **Status:** applied
+- **Scope:** Flutter screens that promise to keep previously usable live data visible through a later stream error
+- **Observed:** A `StreamBuilder` error snapshot is not a durable store for the last successful payload. Treating `snapshot.data` as retained would turn a reconnect failure into a full-screen error even after the fan had readable chants.
+- **Evidence:** The Player-route retained-data widget test first receives a usable chant snapshot and then a stream error. Deliberately clearing the retained snapshot in the error handler made the test fail because the chant disappeared. Restoring the retained route state made the focused and full Flutter suites pass.
+- **Learning:** When stale data is explicitly more useful than an error replacement, own the last successful payload and the current error independently. Show a full error only before any usable payload has arrived.
+- **Applied control:** Team and Player routes own one stream subscription each, retain the last `ChantBrowseSnapshot`, clear the error on fresh data, and render `LAST LOADED CHANTS` supporting copy after a later error.
+- **Revisit when:** A shared asynchronous state abstraction provides the same tested data-plus-error semantics without adding duplicate subscriptions or hiding cache provenance.
+- **Related:** `lib/presentation/browse/team_screen.dart`, `lib/presentation/browse/player_screen.dart`, `test/presentation/browse/player_screen_test.dart`
+
 ### 2026-08-22T12:45:35Z Long validated forms must retain every field
 
 - **Status:** applied

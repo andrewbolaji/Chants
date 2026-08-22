@@ -1,11 +1,11 @@
 # Change spec: V1 Songbook and Chant Lab browse split
 
-**Status:** Proposed, awaiting technical approval
+**Status:** Implemented and locally verified, PR review pending
 **Updated:** 2026-08-22
 **Risk lane:** Lane 2, trust presentation, ranking behavior, navigation, and cached-state handling
 **Stack base:** Draft PR 6, `codex/v1-provenance-evidence`
 
-This is the one active implementation specification on the stacked browse branch. It replaces the completed provenance specification only on this branch. Andrew approved the two-surface product direction in decision 004 and asked to begin this next block on 2026-08-22. The exact technical contract below still requires explicit approval before runtime implementation begins.
+This is the one active implementation specification on the stacked browse branch. It replaces the completed provenance specification only on this branch. Andrew approved the two-surface product direction in decision 004, then explicitly approved this exact technical contract on 2026-08-22.
 
 ## Outcome
 
@@ -200,7 +200,7 @@ The screen supplies the current client time to a pure helper. Clock manipulation
 
 ## Approval
 
-**Pending.** Andrew asked to proceed with the Songbook and Chant Lab block, which authorizes inspection, specification, and preparation of the next stacked review boundary. Runtime implementation begins only after Andrew explicitly approves this exact technical contract. Approval will not authorize Firebase access, deployment, merge, or release.
+**Approved.** Andrew explicitly approved this Songbook and Chant Lab technical specification on 2026-08-22. Implementation is authorized within this repository boundary. Approval does not authorize Firebase access, deployment, merge, or release.
 
 ## Open decisions
 

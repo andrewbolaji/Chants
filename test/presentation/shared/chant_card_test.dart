@@ -78,6 +78,16 @@ void main() {
       expect(find.text('CLUB'), findsOneWidget);
     });
 
+    testWidgets('shows Rising only when explicitly requested', (tester) async {
+      await tester.pumpWidget(
+        wrap(ChantCard(chant: testChant, rising: true, onTap: () {})),
+      );
+      expect(find.text('RISING'), findsOneWidget);
+
+      await tester.pumpWidget(wrap(ChantCard(chant: testChant, onTap: () {})));
+      expect(find.text('RISING'), findsNothing);
+    });
+
     testWidgets('parody pill is not shown on card', (tester) async {
       final noveltyChant = testChant.copyWith(chantType: 'novelty');
       await tester.pumpWidget(

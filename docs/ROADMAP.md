@@ -11,6 +11,7 @@ The path from code-complete to public launch, with concrete triggers on every ga
 - v1 hardening in source: account deletion, App Check client wiring, and Crashlytics wiring. Live enforcement and dashboard controls remain release-verification items.
 - Stable seeded chant identity in source: explicit immutable IDs, collision preflight, and transactional ownership checks. The separately authorized live preflight remains pending.
 - V1 provenance in source and green draft-PR CI: required origin, optional normalized YouTube or X evidence, honest trust labels, evidence-gated Terrace Proven promotion, moderated evidence removal, and a soft duplicate nudge. PR review and the later device walk remain pending.
+- Songbook and Chant Lab browse split in source: status-only trust surfaces, deterministic Top and New order, non-verification Rising, stable vote-time order, cached and recoverable states, fail-soft player metadata, and player-scoped Start a chant. Draft PR 7 review, CI, and the device walk remain pending.
 - Dedup matching engine (backend only): token-overlap matcher and operator `mergeChants` function with a partial audit payload, not a complete undo snapshot.
 - Visual identity: complete "matchnight, warmed with playful" redesign, tokenized, AA contrast proven.
 
@@ -18,7 +19,6 @@ The path from code-complete to public launch, with concrete triggers on every ga
 - Visual sign-off on device and the v1 flow walk-through.
 - The read-only live chant-identity preflight before the next production seed write.
 - The remaining verified club seed.
-- The Songbook and Chant Lab browse split and creator ranking.
 - Saved Matchday Songbook.
 - The dedup nudge frontend.
 - Basic chant share-out.
@@ -52,7 +52,7 @@ V1 is a trusted songbook and a creator workshop. The work is sequenced as bounde
 
 1. **Close the current interaction block.** Replies, blocking, lifecycle fixes, and audited unban are done in source and automated checks. Complete the device walk in `docs/CHANGE_SPEC.md`, then archive its implementation rationale before replacing the active spec.
 2. **Add provenance end to end.** Implemented in source and verified by green draft-PR CI. Submission requires Already sung or I made this. The evidence link is optional at posting, an Already sung claim without one stays visibly unverified, and a user submission needs valid evidence plus operator review before Terrace Proven promotion. The existing duplicate matcher now provides a soft pre-create nudge. PR review and the combined device walk remain before release.
-3. **Expose Songbook and Chant Lab.** Club and player journeys distinguish Terrace Proven content from community work. Chant Lab has Top and New order, a non-verification Rising signal, and a Start a chant action for players who need one.
+3. **Expose Songbook and Chant Lab.** Implemented and locally verified in source on draft PR 7. Club and player journeys distinguish Terrace Proven content from community work. Chant Lab has Top and New order, a non-verification Rising signal, retained readable data through reconnect errors, and a Start a chant action for players who need one. PR review, CI, and the device walk remain.
 4. **Build Saved Matchday Songbook.** Save an individual chant or a club's current visible Songbook as a device-local offline snapshot, then refresh or remove it. Cross-device sync remains deferred.
 5. **Add basic share-out.** Chant detail uses the platform share sheet with a stable public chant URL or an honest text-only fallback. Do not ship a dead deep link or pretend to post directly into another service.
 
@@ -113,7 +113,7 @@ The implementation boundary and remaining verification gate live in `docs/CHANGE
 
 **Approved product contract:** Chants keeps Terrace Proven content in the trusted Songbook and gives original or not-yet-verified submissions a visible Chant Lab. Submission origin is required. Evidence is optional to post and required to promote a user submission to Terrace Proven. Votes rank ideas but never verify a factual claim.
 
-**Implementation status:** The provenance slice is implemented on stacked draft PR 6 with green CI, local tests, and 390 by 844 visual evidence. The Songbook and Chant Lab browse split, offline Songbook, and share-out remain separate reviewable vertical blocks.
+**Implementation status:** The provenance slice is implemented on stacked draft PR 6 with green CI. The browse split is implemented and locally verified on stacked draft PR 7 with pure ranking tests, real Team and Player widget boundaries, retained-data red-check evidence, enlarged-text coverage, and inspected 390 by 844 Songbook and Chant Lab goldens. PR 7 CI and review, offline Songbook, share-out, and the combined device walk remain.
 
 **Source of truth:** `docs/decisions/004-songbook-and-chant-lab.md` and the interface contract in `docs/INTERFACE.md`.
 
