@@ -24,11 +24,12 @@ This is the chronological evidence trail for substantial engineering work. It re
 |---|---|---|---|
 | 13:14:57 | Created `codex/v1-songbook-chant-lab` from provenance closure commit `1549574` and inspected Team, Player, chant repository, ranking, routing, shared cards and states, tests, interface memory, roadmap, and accepted decisions 004 and 006 | Local repository | Completed. Confirmed both browse routes still consume mixed visible-status streams, Team has route-local frozen ranking while Player can reorder on score emissions, no browse widgets are directly tested, and the existing query boundary can support a client-only split without a new index or backend. |
 | 13:14:57 | Replaced the branch-local active specification with the exact Songbook and Chant Lab technical contract | Local repository | Completed as proposed. The contract selects status-only surface projection, Songbook-first tabs, deterministic Top and New orders, an inclusive seven-day and score-3 Rising signal, stable in-visit Top and Songbook order, cache metadata, fail-soft player metadata, player-prefilled creation, and representative tests and goldens. |
+| 13:31:00 | Committed and published the planning boundary | Local repository and GitHub | Completed in commit `3414a0f`. Opened stacked draft PR [#7](https://github.com/andrewbolaji/Chants/pull/7) against `codex/v1-provenance-evidence`. Runtime implementation remains intentionally absent. |
 
 - **Files/artifacts:** `docs/CHANGE_SPEC.md`, this execution entry, and branch `codex/v1-songbook-chant-lab`.
 - **Skipped or blocked:** Runtime implementation is deliberately blocked on explicit technical approval. Live Firebase access, deployment, merge, and release are outside this request.
-- **Current state:** Product direction approved; technical plan written locally; application behavior unchanged.
-- **Follow-up:** Self-review the plan, commit and publish the stacked planning boundary, then ask Andrew to approve or amend the exact contract.
+- **Current state:** Product direction approved; technical plan published in stacked draft PR 7; application behavior unchanged.
+- **Follow-up:** Ask Andrew to approve or amend the exact contract, then begin runtime implementation only after explicit technical approval.
 
 ### 2026-08-22T06:47:59Z Implement v1 chant provenance and evidence
 
