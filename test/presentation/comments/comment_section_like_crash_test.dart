@@ -24,6 +24,8 @@ class _MockUser extends Mock implements User {
 class _FakeCommentRepository implements CommentRepository {
   final StreamController<List<Comment>> controller =
       StreamController<List<Comment>>.broadcast();
+  Comment? createdComment;
+  bool failCreate = false;
 
   @override
   Stream<List<Comment>> commentsForChantStream({required String chantId}) {
@@ -51,6 +53,12 @@ class _FakeCommentRepository implements CommentRepository {
   }) async {}
 
   @override
+  Future<void> createComment(Comment comment) async {
+    if (failCreate) throw StateError('write failed');
+    createdComment = comment;
+  }
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
@@ -75,14 +83,21 @@ class _FakeProfileRepository implements ProfileRepository {
 Comment _makeComment({
   String id = 'comment-1',
   int likeCount = 0,
+  String body = 'Test comment body',
+  String userId = 'other-user',
+  String displayName = 'OtherUser',
+  String? parentCommentId,
+  DateTime? createdAt,
 }) {
   return Comment(
     id: id,
     chantId: 'chant-1',
-    userId: 'other-user',
-    displayName: 'OtherUser',
-    body: 'Test comment body',
-    createdAt: DateTime.now().subtract(const Duration(hours: 1)),
+    userId: userId,
+    displayName: displayName,
+    body: body,
+    parentCommentId: parentCommentId,
+    createdAt:
+        createdAt ?? DateTime.now().subtract(const Duration(hours: 1)),
     likeCount: likeCount,
   );
 }
@@ -108,6 +123,9 @@ void main() {
         profileRepositoryProvider.overrideWithValue(fakeProfileRepo),
         authStateProvider
             .overrideWith((ref) => Stream.value(fakeUser as User?)),
+        blockedUserIdsProvider.overrideWith(
+          (ref, userId) => Stream.value(<String>{}),
+        ),
       ],
       child: const MaterialApp(
         home: Scaffold(
@@ -182,4 +200,117 @@ void main() {
       expect(find.byIcon(Icons.favorite), findsOneWidget);
     },
   );
+
+  testWidgets(
+    'groups replies below their parent in chronological order and hides orphans',
+    (tester) async {
+      await tester.pumpWidget(wrap());
+      final now = DateTime.now();
+      final parent = _makeComment(
+        id: 'parent-1',
+        body: 'Parent comment',
+        createdAt: now.subtract(const Duration(hours: 3)),
+      );
+      final olderReply = _makeComment(
+        id: 'reply-1',
+        body: 'Older reply',
+        parentCommentId: parent.id,
+        createdAt: now.subtract(const Duration(hours: 2)),
+      );
+      final newerReply = _makeComment(
+        id: 'reply-2',
+        body: 'Newer reply',
+        parentCommentId: parent.id,
+        createdAt: now.subtract(const Duration(hours: 1)),
+      );
+      final orphan = _makeComment(
+        id: 'orphan',
+        body: 'Orphan reply',
+        parentCommentId: 'missing-parent',
+      );
+
+      fakeCommentRepo.controller.add([
+        newerReply,
+        orphan,
+        parent,
+        olderReply,
+      ]);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Orphan reply'), findsNothing);
+      expect(find.text('Reply'), findsOneWidget);
+      expect(
+        tester.getTopLeft(find.text('Parent comment')).dy,
+        lessThan(tester.getTopLeft(find.text('Older reply')).dy),
+      );
+      expect(
+        tester.getTopLeft(find.text('Older reply')).dy,
+        lessThan(tester.getTopLeft(find.text('Newer reply')).dy),
+      );
+    },
+  );
+
+  testWidgets('reply submission persists the parent ID', (tester) async {
+    await tester.pumpWidget(wrap());
+    fakeCommentRepo.controller.add([
+      _makeComment(
+        id: 'parent-1',
+        body: 'Parent comment',
+        displayName: 'FunnyFan',
+      ),
+    ]);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Reply'));
+    await tester.pump();
+    expect(find.text('Replying to FunnyFan'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField), 'Direct answer');
+    await tester.pump();
+    final sendButton = tester.widget<IconButton>(
+      find.ancestor(
+        of: find.byIcon(Icons.send_rounded),
+        matching: find.byType(IconButton),
+      ),
+    );
+    expect(sendButton.onPressed, isNotNull);
+    sendButton.onPressed!();
+    await tester.pumpAndSettle();
+
+    expect(fakeCommentRepo.createdComment?.parentCommentId, 'parent-1');
+    expect(fakeCommentRepo.createdComment?.body, 'Direct answer');
+    expect(find.text('Replying to FunnyFan'), findsNothing);
+  });
+
+  testWidgets('failed reply preserves its draft and reply context',
+      (tester) async {
+    fakeCommentRepo.failCreate = true;
+    await tester.pumpWidget(wrap());
+    fakeCommentRepo.controller.add([
+      _makeComment(
+        id: 'parent-1',
+        body: 'Parent comment',
+        displayName: 'FunnyFan',
+      ),
+    ]);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Reply'));
+    await tester.pump();
+    await tester.enterText(find.byType(TextField), 'Keep this draft');
+    await tester.pump();
+    final sendButton = tester.widget<IconButton>(
+      find.ancestor(
+        of: find.byIcon(Icons.send_rounded),
+        matching: find.byType(IconButton),
+      ),
+    );
+    expect(sendButton.onPressed, isNotNull);
+    sendButton.onPressed!();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Replying to FunnyFan'), findsOneWidget);
+    expect(find.text('Keep this draft'), findsOneWidget);
+    expect(find.text('Could not post your comment. Try again.'), findsOneWidget);
+  });
 }

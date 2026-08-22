@@ -16,13 +16,73 @@ service cloud.firestore {
     }
 
     function isNotBanned() {
-      return get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.banned == false;
+      return exists(/databases/$(database)/documents/profiles/$(request.auth.uid))
+        && get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.banned == false;
     }
 
     // Must match CURRENT_POLICY_VERSION in functions/src/index.ts and
     // kCurrentPolicyVersion in lib/app/policy.dart.
     function hasAcceptedPolicy() {
-      return get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.acceptedPolicyVersion == 'v1';
+      return exists(/databases/$(database)/documents/profiles/$(request.auth.uid))
+        && get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.acceptedPolicyVersion == 'v1';
+    }
+
+    function isVisibleChant(chantId) {
+      return exists(/databases/$(database)/documents/chants/$(chantId))
+        && isVisible(get(/databases/$(database)/documents/chants/$(chantId)));
+    }
+
+    function isVisibleComment(commentId) {
+      return exists(/databases/$(database)/documents/comments/$(commentId))
+        && isVisible(get(/databases/$(database)/documents/comments/$(commentId)));
+    }
+
+    function hasBlock(blockerId, blockedUserId) {
+      return exists(/databases/$(database)/documents/blocks/$(blockerId + '_' + blockedUserId));
+    }
+
+    function noBlockBetween(firstUserId, secondUserId) {
+      return !hasBlock(firstUserId, secondUserId)
+        && !hasBlock(secondUserId, firstUserId);
+    }
+
+    function validRecentClientTimestamp(value) {
+      return value is timestamp
+        && value <= request.time
+        && value >= request.time - duration.value(1, 'h');
+    }
+
+    function validChantContent(data) {
+      return data.title is string
+        && data.title.size() > 0
+        && data.title.size() <= 200
+        && data.lyrics is string
+        && data.lyrics.size() > 0
+        && data.lyrics.size() <= 5000
+        && data.tuneName is string
+        && data.tuneName.size() > 0
+        && data.tuneName.size() <= 200
+        && data.teamId is string
+        && data.teamId.size() > 0
+        && data.subjectTag in ['player', 'coach', 'club', 'rival']
+        && data.chantType in ['sincere', 'novelty']
+        && data.mediaType in ['none', 'audio', 'tuneRecording', 'lyricVideo',
+                              'screenRecording', 'crowdClip']
+        && (data.contextNotes == null ||
+            (data.contextNotes is string && data.contextNotes.size() <= 500));
+    }
+
+    function validReplyParent(data) {
+      return !('parentCommentId' in data)
+        || data.parentCommentId == null
+        || (data.parentCommentId is string
+            && isVisibleComment(data.parentCommentId)
+            && get(/databases/$(database)/documents/comments/$(data.parentCommentId)).data.chantId == data.chantId
+            && (!('parentCommentId' in get(/databases/$(database)/documents/comments/$(data.parentCommentId)).data)
+                || get(/databases/$(database)/documents/comments/$(data.parentCommentId)).data.parentCommentId == null)
+            && noBlockBetween(
+                request.auth.uid,
+                get(/databases/$(database)/documents/comments/$(data.parentCommentId)).data.userId));
     }
 
     // sports: public read, operator write
@@ -49,14 +109,18 @@ service cloud.firestore {
       allow write: if isOperator();
     }
 
-    // profiles: public read, owner create (role, banned, ageConfirmed17Plus,
+    // profiles: private to the owner and operators, owner create (role, banned, ageConfirmed17Plus,
     // userReportCount pinned; acceptedPolicyVersion/acceptedPolicyAt must be
     // absent, only the acceptPolicy Cloud Function sets them via the Admin
     // SDK), owner update (cannot change role, banned, ageConfirmed17Plus,
     // acceptedPolicyVersion, acceptedPolicyAt, or userReportCount)
     match /profiles/{userId} {
-      allow read: if true;
+      allow get: if isAuth() && (request.auth.uid == userId || isOperator());
+      allow list: if isOperator();
       allow create: if isAuth() && request.auth.uid == userId
+        && request.resource.data.keys().hasOnly(
+            ['displayName', 'role', 'banned', 'ageConfirmed17Plus',
+             'userReportCount', 'createdAt', 'updatedAt'])
         && request.resource.data.role == 'user'
         && request.resource.data.banned == false
         && request.resource.data.ageConfirmed17Plus == true
@@ -66,12 +130,15 @@ service cloud.firestore {
         && request.resource.data.displayName is string
         && request.resource.data.displayName.size() > 0
         && request.resource.data.displayName.size() <= 50
-        && request.resource.data.createdAt is timestamp
-        && request.resource.data.updatedAt is timestamp;
+        && validRecentClientTimestamp(request.resource.data.createdAt)
+        && validRecentClientTimestamp(request.resource.data.updatedAt);
       allow update: if isAuth() && request.auth.uid == userId
-        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(
-            ['role', 'banned', 'ageConfirmed17Plus', 'acceptedPolicyVersion',
-             'acceptedPolicyAt', 'userReportCount']);
+        && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['displayName', 'updatedAt'])
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() > 0
+        && request.resource.data.displayName.size() <= 50
+        && validRecentClientTimestamp(request.resource.data.updatedAt);
     }
 
     // chants: public read (visible only), auth create (not banned, server-side length limits), restricted update
@@ -89,39 +156,36 @@ service cloud.firestore {
         && request.resource.data.flagCount == 0
         && request.resource.data.hidden == false
         && request.resource.data.removed == false
-        && request.resource.data.title is string
-        && request.resource.data.title.size() > 0
-        && request.resource.data.title.size() <= 200
-        && request.resource.data.lyrics is string
-        && request.resource.data.lyrics.size() > 0
-        && request.resource.data.lyrics.size() <= 5000
-        && request.resource.data.tuneName is string
-        && request.resource.data.tuneName.size() > 0
-        && request.resource.data.tuneName.size() <= 200
-        && (request.resource.data.contextNotes == null
-            || request.resource.data.contextNotes.size() <= 500);
+        && validRecentClientTimestamp(request.resource.data.createdAt)
+        && request.resource.data.updatedAt is timestamp
+        && validChantContent(request.resource.data);
       // Author can update content fields only, never counters/status/hidden/removed
       allow update: if isAuth()
         && resource.data.createdBy == request.auth.uid
         && !request.resource.data.diff(resource.data).affectedKeys()
             .hasAny(['upvotes','downvotes','score','commentCount',
-                     'flagCount','hidden','removed','status','createdBy','createdAt']);
+                     'flagCount','hidden','removed','status','createdBy','createdAt'])
+        && validChantContent(request.resource.data);
       // Operator can update anything (moderation, promote to canonical)
       allow update: if isOperator();
     }
 
-    // votes: one per user per chant, value 1 or -1, not banned
+    // votes: private to the owner/operator, one per user per visible chant
     match /votes/{voteId} {
-      allow read: if true;
+      allow read: if isAuth()
+        && (resource.data.userId == request.auth.uid || isOperator());
       allow create: if isAuth()
         && isNotBanned()
         && request.resource.data.userId == request.auth.uid
         && voteId == request.auth.uid + '_' + request.resource.data.chantId
-        && (request.resource.data.value == 1 || request.resource.data.value == -1);
+        && (request.resource.data.value == 1 || request.resource.data.value == -1)
+        && validRecentClientTimestamp(request.resource.data.createdAt)
+        && isVisibleChant(request.resource.data.chantId);
       allow update: if isAuth()
         && isNotBanned()
         && resource.data.userId == request.auth.uid
         && (request.resource.data.value == 1 || request.resource.data.value == -1)
+        && isVisibleChant(resource.data.chantId)
         && !request.resource.data.diff(resource.data).affectedKeys()
             .hasAny(['userId','chantId']);
       allow delete: if isAuth() && resource.data.userId == request.auth.uid;
@@ -134,7 +198,9 @@ service cloud.firestore {
         && isNotBanned()
         && request.resource.data.reportedBy == request.auth.uid
         && request.resource.data.status == 'pending'
-        && reportId == request.auth.uid + '_' + request.resource.data.chantId;
+        && reportId == request.auth.uid + '_' + request.resource.data.chantId
+        && request.resource.data.createdAt is timestamp
+        && isVisibleChant(request.resource.data.chantId);
     }
 
     // auditLog: no client writes (Cloud Functions use Admin SDK), operator read
@@ -152,14 +218,20 @@ service cloud.firestore {
         && hasAcceptedPolicy()
         && request.resource.data.userId == request.auth.uid
         && request.resource.data.displayName is string
+        && request.resource.data.displayName ==
+            get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.displayName
         && request.resource.data.displayName.size() > 0
         && request.resource.data.body is string
         && request.resource.data.body.size() > 0
         && request.resource.data.body.size() <= 500
+        && request.resource.data.chantId is string
+        && validRecentClientTimestamp(request.resource.data.createdAt)
         && request.resource.data.likeCount == 0
         && request.resource.data.flagCount == 0
         && request.resource.data.hidden == false
-        && request.resource.data.removed == false;
+        && request.resource.data.removed == false
+        && isVisibleChant(request.resource.data.chantId)
+        && validReplyParent(request.resource.data);
       // Author can only soft-delete (set removed: true on their own comment)
       allow update: if isAuth()
         && resource.data.userId == request.auth.uid
@@ -169,18 +241,28 @@ service cloud.firestore {
       allow update: if isOperator();
     }
 
-    // commentLikes: one per user per comment (doc ID = userId_commentId), value always 1, not banned
+    // commentLikes: private to the owner/operator, one per user per visible comment
     match /commentLikes/{likeId} {
-      allow read: if true;
+      allow read: if isAuth()
+        && (resource.data.userId == request.auth.uid || isOperator());
       allow create: if isAuth()
         && isNotBanned()
         && request.resource.data.userId == request.auth.uid
         && likeId == request.auth.uid + '_' + request.resource.data.commentId
-        && request.resource.data.value == 1;
+        && request.resource.data.value == 1
+        && validRecentClientTimestamp(request.resource.data.createdAt)
+        && isVisibleComment(request.resource.data.commentId)
+        && noBlockBetween(
+            request.auth.uid,
+            get(/databases/$(database)/documents/comments/$(request.resource.data.commentId)).data.userId);
       allow update: if isAuth()
         && isNotBanned()
         && resource.data.userId == request.auth.uid
         && request.resource.data.value == 1
+        && isVisibleComment(resource.data.commentId)
+        && noBlockBetween(
+            request.auth.uid,
+            get(/databases/$(database)/documents/comments/$(resource.data.commentId)).data.userId)
         && !request.resource.data.diff(resource.data).affectedKeys()
             .hasAny(['userId','commentId']);
       allow delete: if isAuth() && resource.data.userId == request.auth.uid;
@@ -193,7 +275,9 @@ service cloud.firestore {
         && isNotBanned()
         && request.resource.data.reportedBy == request.auth.uid
         && request.resource.data.status == 'pending'
-        && reportId == request.auth.uid + '_' + request.resource.data.commentId;
+        && reportId == request.auth.uid + '_' + request.resource.data.commentId
+        && request.resource.data.createdAt is timestamp
+        && isVisibleComment(request.resource.data.commentId);
     }
 
     // userReports: one per reporter per reported user (doc ID =
@@ -207,7 +291,29 @@ service cloud.firestore {
         && request.resource.data.reportedBy == request.auth.uid
         && request.resource.data.reportedUserId != request.auth.uid
         && request.resource.data.status == 'pending'
-        && reportId == request.auth.uid + '_' + request.resource.data.reportedUserId;
+        && reportId == request.auth.uid + '_' + request.resource.data.reportedUserId
+        && request.resource.data.createdAt is timestamp
+        && exists(/databases/$(database)/documents/profiles/$(request.resource.data.reportedUserId));
+    }
+
+    // blocks: directional and private to the blocker. The deterministic ID
+    // prevents duplicates; updates are unnecessary because unblock is delete.
+    match /blocks/{blockId} {
+      allow read: if isAuth() && resource.data.blockerId == request.auth.uid;
+      allow create: if isAuth()
+        && request.resource.data.keys().hasOnly(
+            ['blockerId', 'blockedUserId', 'blockedDisplayName', 'createdAt'])
+        && request.resource.data.blockerId == request.auth.uid
+        && request.resource.data.blockedUserId is string
+        && request.resource.data.blockedUserId != request.auth.uid
+        && request.resource.data.blockedDisplayName is string
+        && request.resource.data.blockedDisplayName.size() > 0
+        && request.resource.data.blockedDisplayName.size() <= 50
+        && request.resource.data.createdAt is timestamp
+        && blockId == request.auth.uid + '_' + request.resource.data.blockedUserId
+        && exists(/databases/$(database)/documents/profiles/$(request.resource.data.blockedUserId));
+      allow delete: if isAuth() && resource.data.blockerId == request.auth.uid;
+      allow update: if false;
     }
 
     // feedback: auth create, user reads own, operator reads all

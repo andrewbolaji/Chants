@@ -26,7 +26,9 @@ class CommentSection extends ConsumerStatefulWidget {
 
 class _CommentSectionState extends ConsumerState<CommentSection> {
   final _bodyController = TextEditingController();
+  final _composerFocus = FocusNode();
   bool _posting = false;
+  Comment? _replyingTo;
 
   // Per-comment like state, keyed by comment ID.
   final Map<String, CommentLikeState> _likeStates = {};
@@ -55,6 +57,7 @@ class _CommentSectionState extends ConsumerState<CommentSection> {
       _likeLoadedFor.clear();
       _commentsLoading = true;
       _commentsError = false;
+      _replyingTo = null;
       _subscribeToComments();
     }
   }
@@ -81,6 +84,10 @@ class _CommentSectionState extends ConsumerState<CommentSection> {
 
         setState(() {
           _comments = comments;
+          if (_replyingTo != null &&
+              !comments.any((comment) => comment.id == _replyingTo!.id)) {
+            _replyingTo = null;
+          }
           _commentsLoading = false;
           _commentsError = false;
         });
@@ -99,6 +106,7 @@ class _CommentSectionState extends ConsumerState<CommentSection> {
   void dispose() {
     _commentsSub?.cancel();
     _bodyController.dispose();
+    _composerFocus.dispose();
     super.dispose();
   }
 
@@ -113,18 +121,18 @@ class _CommentSectionState extends ConsumerState<CommentSection> {
     if (_likeLoadedFor.contains(commentId)) return;
     _likeLoadedFor.add(commentId);
 
-    final like = await ref.read(commentRepositoryProvider).getUserLike(
-          userId: userId,
-          commentId: commentId,
-        );
+    final like = await ref
+        .read(commentRepositoryProvider)
+        .getUserLike(userId: userId, commentId: commentId);
 
     if (!mounted) return;
     if (like != null) {
       setState(() {
         final current = _likeStates[commentId];
         if (current != null) {
-          _likeStates[commentId] =
-              current.reconcileFromPersistedLike(like.appliedValue);
+          _likeStates[commentId] = current.reconcileFromPersistedLike(
+            like.appliedValue,
+          );
         }
       });
     }
@@ -151,15 +159,13 @@ class _CommentSectionState extends ConsumerState<CommentSection> {
 
     try {
       if (toggled.liked) {
-        await ref.read(commentRepositoryProvider).likeComment(
-              userId: userId,
-              commentId: commentId,
-            );
+        await ref
+            .read(commentRepositoryProvider)
+            .likeComment(userId: userId, commentId: commentId);
       } else {
-        await ref.read(commentRepositoryProvider).unlikeComment(
-              userId: userId,
-              commentId: commentId,
-            );
+        await ref
+            .read(commentRepositoryProvider)
+            .unlikeComment(userId: userId, commentId: commentId);
       }
       if (!mounted) return;
       setState(() {
@@ -184,6 +190,7 @@ class _CommentSectionState extends ConsumerState<CommentSection> {
       userId: userId,
       displayName: displayName,
       body: body,
+      parentCommentId: _replyingTo?.id,
       createdAt: DateTime.now(),
     );
 
@@ -191,7 +198,10 @@ class _CommentSectionState extends ConsumerState<CommentSection> {
       await ref.read(commentRepositoryProvider).createComment(comment);
       if (!mounted) return;
       _bodyController.clear();
-      setState(() => _posting = false);
+      setState(() {
+        _posting = false;
+        _replyingTo = null;
+      });
     } catch (_) {
       if (!mounted) return;
       setState(() => _posting = false);
@@ -199,6 +209,71 @@ class _CommentSectionState extends ConsumerState<CommentSection> {
         const SnackBar(
           content: Text('Could not post your comment. Try again.'),
         ),
+      );
+    }
+  }
+
+  void _startReply(Comment comment) {
+    setState(() => _replyingTo = comment);
+    _composerFocus.requestFocus();
+  }
+
+  Future<void> _blockUser(Comment comment, String blockerId) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Block ${comment.displayName}?'),
+        content: const Text(
+          'Their comments and replies will be hidden from you. You can '
+          'unblock them later from Blocked users.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Block'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    try {
+      await ref
+          .read(blockRepositoryProvider)
+          .blockUser(
+            blockerId: blockerId,
+            blockedUserId: comment.userId,
+            blockedDisplayName: comment.displayName,
+          );
+      if (!mounted) return;
+      if (_replyingTo?.userId == comment.userId) {
+        setState(() => _replyingTo = null);
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${comment.displayName} blocked.'),
+          action: SnackBarAction(
+            label: 'Undo',
+            onPressed: () {
+              ref
+                  .read(blockRepositoryProvider)
+                  .unblockUser(
+                    blockerId: blockerId,
+                    blockedUserId: comment.userId,
+                  );
+            },
+          ),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not block this user. Try again.')),
       );
     }
   }
@@ -215,9 +290,7 @@ class _CommentSectionState extends ConsumerState<CommentSection> {
             child: const Text('Cancel'),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.error,
-            ),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Delete'),
           ),
@@ -242,7 +315,7 @@ class _CommentSectionState extends ConsumerState<CommentSection> {
   }
 
   /// Sort: likeCount descending, then createdAt descending (newest first).
-  List<Comment> _sorted(List<Comment> comments) {
+  List<Comment> _sortedTopLevel(List<Comment> comments) {
     final sorted = List<Comment>.of(comments);
     sorted.sort((a, b) {
       final likeCmp = b.likeCount.compareTo(a.likeCount);
@@ -252,15 +325,38 @@ class _CommentSectionState extends ConsumerState<CommentSection> {
     return sorted;
   }
 
+  List<Comment> _sortedReplies(List<Comment> comments) {
+    final sorted = List<Comment>.of(comments);
+    sorted.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    return sorted;
+  }
+
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authStateProvider);
     final user = authState.valueOrNull;
     final isSignedIn = user != null;
     final textTheme = Theme.of(context).textTheme;
+    final blockedUserIds = user == null
+        ? <String>{}
+        : ref.watch(blockedUserIdsProvider(user.uid)).valueOrNull ?? <String>{};
 
-    final comments = _comments;
-    final sorted = _sorted(comments);
+    final comments = _comments
+        .where((comment) => !blockedUserIds.contains(comment.userId))
+        .toList();
+    final topLevel = _sortedTopLevel(
+      comments.where((comment) => comment.parentCommentId == null).toList(),
+    );
+    final repliesByParent = <String, List<Comment>>{};
+    for (final reply in comments.where(
+      (comment) => comment.parentCommentId != null,
+    )) {
+      repliesByParent.putIfAbsent(reply.parentCommentId!, () => []).add(reply);
+    }
+    final renderedCommentCount = topLevel.fold<int>(
+      0,
+      (count, parent) => count + 1 + (repliesByParent[parent.id]?.length ?? 0),
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -272,9 +368,9 @@ class _CommentSectionState extends ConsumerState<CommentSection> {
             vertical: Spacing.sm,
           ),
           child: SectionEyebrow(
-            text: comments.isEmpty
+            text: renderedCommentCount == 0
                 ? 'Comments'
-                : 'Comments (${comments.length})',
+                : 'Comments ($renderedCommentCount)',
           ),
         ),
 
@@ -294,14 +390,14 @@ class _CommentSectionState extends ConsumerState<CommentSection> {
             ),
             child: Text(
               'Could not load comments. Try again.',
-              style: textTheme.bodyMedium?.copyWith(
-                color: AppColors.textMuted,
-              ),
+              style: textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
             ),
           ),
 
         // Empty
-        if (!_commentsLoading && !_commentsError && comments.isEmpty)
+        if (!_commentsLoading &&
+            !_commentsError &&
+            renderedCommentCount == 0)
           Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: Spacing.lg,
@@ -327,36 +423,78 @@ class _CommentSectionState extends ConsumerState<CommentSection> {
           ),
 
         // Comment list
-        ...sorted.map((comment) {
+        ...topLevel.expand((comment) {
+          final thread = <Widget>[];
           final likeState =
               _likeStates[comment.id] ?? CommentLikeState.initial(0);
           final isAuthor = isSignedIn && comment.userId == user.uid;
 
-          return CommentCard(
-            comment: comment,
-            likeState: likeState,
-            isAuthor: isAuthor,
-            onToggleLike: isSignedIn
-                ? () => _toggleLike(comment.id, user.uid)
-                : null,
-            onReportComment: isSignedIn
-                ? () => showReportSheet(
+          thread.add(
+            CommentCard(
+              comment: comment,
+              likeState: likeState,
+              isAuthor: isAuthor,
+              onReply: isSignedIn ? () => _startReply(comment) : null,
+              onToggleLike: isSignedIn
+                  ? () => _toggleLike(comment.id, user.uid)
+                  : null,
+              onReportComment: isSignedIn
+                  ? () => showReportSheet(
                       context: context,
                       target: ReportComment(comment.id),
                       ref: ref,
                     )
-                : null,
-            onReportUser: isSignedIn
-                ? () => showReportSheet(
+                  : null,
+              onReportUser: isSignedIn
+                  ? () => showReportSheet(
                       context: context,
                       target: ReportUser(comment.userId),
                       ref: ref,
                     )
-                : null,
-            onDelete: isAuthor
-                ? () => _softDelete(comment.id)
-                : null,
+                  : null,
+              onBlockUser: isSignedIn && !isAuthor
+                  ? () => _blockUser(comment, user.uid)
+                  : null,
+              onDelete: isAuthor ? () => _softDelete(comment.id) : null,
+            ),
           );
+
+          final replies = _sortedReplies(repliesByParent[comment.id] ?? []);
+          for (final reply in replies) {
+            final replyLikeState =
+                _likeStates[reply.id] ?? CommentLikeState.initial(0);
+            final isReplyAuthor = isSignedIn && reply.userId == user.uid;
+            thread.add(
+              CommentCard(
+                comment: reply,
+                likeState: replyLikeState,
+                isAuthor: isReplyAuthor,
+                isReply: true,
+                onToggleLike: isSignedIn
+                    ? () => _toggleLike(reply.id, user.uid)
+                    : null,
+                onReportComment: isSignedIn
+                    ? () => showReportSheet(
+                        context: context,
+                        target: ReportComment(reply.id),
+                        ref: ref,
+                      )
+                    : null,
+                onReportUser: isSignedIn
+                    ? () => showReportSheet(
+                        context: context,
+                        target: ReportUser(reply.userId),
+                        ref: ref,
+                      )
+                    : null,
+                onBlockUser: isSignedIn && !isReplyAuthor
+                    ? () => _blockUser(reply, user.uid)
+                    : null,
+                onDelete: isReplyAuthor ? () => _softDelete(reply.id) : null,
+              ),
+            );
+          }
+          return thread;
         }),
 
         const SizedBox(height: Spacing.lg),
@@ -370,9 +508,7 @@ class _CommentSectionState extends ConsumerState<CommentSection> {
             ),
             child: Text(
               'Sign in to comment.',
-              style: textTheme.bodyMedium?.copyWith(
-                color: AppColors.textMuted,
-              ),
+              style: textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
             ),
           )
         else
@@ -384,9 +520,14 @@ class _CommentSectionState extends ConsumerState<CommentSection> {
   }
 
   Widget _buildComposer(
-      BuildContext context, String userId, TextTheme textTheme) {
+    BuildContext context,
+    String userId,
+    TextTheme textTheme,
+  ) {
     // Check if the user is banned
-    final profileStream = ref.watch(profileRepositoryProvider).profileStream(userId);
+    final profileStream = ref
+        .watch(profileRepositoryProvider)
+        .profileStream(userId);
 
     return StreamBuilder(
       stream: profileStream,
@@ -400,9 +541,7 @@ class _CommentSectionState extends ConsumerState<CommentSection> {
             ),
             child: Text(
               'You cannot comment right now.',
-              style: textTheme.bodyMedium?.copyWith(
-                color: AppColors.textMuted,
-              ),
+              style: textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
             ),
           );
         }
@@ -418,77 +557,106 @@ class _CommentSectionState extends ConsumerState<CommentSection> {
             horizontal: Spacing.lg,
             vertical: Spacing.md,
           ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: TextField(
-                  controller: _bodyController,
-                  maxLength: 500,
-                  maxLines: 3,
-                  minLines: 1,
-                  style: textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textBody,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: 'Add a comment...',
-                    hintStyle: textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textMuted,
-                    ),
-                    counterText: '',
-                    filled: true,
-                    fillColor: AppColors.surface,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: Spacing.lg,
-                      vertical: Spacing.md,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(Radii.sm),
-                      borderSide: const BorderSide(
-                        color: AppColors.outline,
-                        width: 0.5,
+              if (_replyingTo != null) ...[
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Replying to ${_replyingTo!.displayName}',
+                        style: textTheme.bodySmall?.copyWith(
+                          color: AppColors.textMuted,
+                        ),
                       ),
                     ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(Radii.sm),
-                      borderSide: const BorderSide(
-                        color: AppColors.outline,
-                        width: 0.5,
-                      ),
+                    IconButton(
+                      tooltip: 'Cancel reply',
+                      onPressed: () => setState(() => _replyingTo = null),
+                      icon: const Icon(Icons.close, size: 18),
+                      visualDensity: VisualDensity.compact,
                     ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(Radii.sm),
-                      borderSide: const BorderSide(
-                        color: AppColors.gold,
-                        width: 1,
-                      ),
-                    ),
-                  ),
-                  onChanged: (_) => setState(() {}),
+                  ],
                 ),
-              ),
-              const SizedBox(width: Spacing.sm),
-              SizedBox(
-                width: 44,
-                height: 44,
-                child: IconButton(
-                  onPressed:
-                      _bodyController.text.trim().isNotEmpty && !_posting
+                const SizedBox(height: Spacing.xs),
+              ],
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _bodyController,
+                      focusNode: _composerFocus,
+                      maxLength: 500,
+                      maxLines: 3,
+                      minLines: 1,
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: AppColors.textBody,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: _replyingTo == null
+                            ? 'Add a comment...'
+                            : 'Write a reply...',
+                        hintStyle: textTheme.bodyMedium?.copyWith(
+                          color: AppColors.textMuted,
+                        ),
+                        counterText: '',
+                        filled: true,
+                        fillColor: AppColors.surface,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: Spacing.lg,
+                          vertical: Spacing.md,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(Radii.sm),
+                          borderSide: const BorderSide(
+                            color: AppColors.outline,
+                            width: 0.5,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(Radii.sm),
+                          borderSide: const BorderSide(
+                            color: AppColors.outline,
+                            width: 0.5,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(Radii.sm),
+                          borderSide: const BorderSide(
+                            color: AppColors.gold,
+                            width: 1,
+                          ),
+                        ),
+                      ),
+                      onChanged: (_) => setState(() {}),
+                    ),
+                  ),
+                  const SizedBox(width: Spacing.sm),
+                  SizedBox(
+                    width: 44,
+                    height: 44,
+                    child: IconButton(
+                      onPressed:
+                          _bodyController.text.trim().isNotEmpty && !_posting
                           ? () => _postComment(
-                                userId,
-                                profile?.displayName ?? 'Anonymous',
-                              )
+                              userId,
+                              profile?.displayName ?? 'Anonymous',
+                            )
                           : null,
-                  icon: Icon(
-                    Icons.send_rounded,
-                    color:
-                        _bodyController.text.trim().isNotEmpty && !_posting
+                      icon: Icon(
+                        Icons.send_rounded,
+                        color:
+                            _bodyController.text.trim().isNotEmpty && !_posting
                             ? AppColors.gold
                             : AppColors.textMuted,
-                    size: 22,
+                        size: 22,
+                      ),
+                      padding: EdgeInsets.zero,
+                    ),
                   ),
-                  padding: EdgeInsets.zero,
-                ),
+                ],
               ),
             ],
           ),
