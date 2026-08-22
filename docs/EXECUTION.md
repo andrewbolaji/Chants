@@ -29,10 +29,11 @@ This is the chronological evidence trail for substantial engineering work. It re
 | 00:48:00 | Inspected failed Flutter CI logs | GitHub Actions, Ubuntu with Flutter stable 3.47.1 | Functional tests passed, but the reply and operator-control goldens differed from the macOS-generated baselines by 1.02% and 0.49%. The push and pull-request triggers also started duplicate workflow runs for the same commit. |
 | 01:01:47 | Added a bounded golden comparator, its known-good and known-bad guard, and one-run-per-PR workflow triggers; ran the focused tests | Local macOS with Flutter stable 3.44.8 | Completed. All three focused tests passed. The guard accepts a 1% synthetic pixel difference under the 1.5% boundary and rejects a completely different image. Full-suite and remote Linux verification remain pending. |
 | 01:03:18 | Ran the full Flutter suite and static analysis | Local macOS with Flutter stable 3.44.8 | `flutter test` passed 183 tests. Root analysis was polluted by generated `build/ios/SourcePackages` examples and failed outside changed source; `flutter analyze test` then completed with no issues. Clean-checkout CI remains the authoritative root analysis. |
+| 01:06:13 | Watched replacement CI to completion | GitHub Actions run `32542321292` on draft PR 4 | Completed. Flutter tests, Flutter analysis, Functions, seed, and all 106 Firestore rules assertions passed on the clean Linux runner. |
 
 - **Files/artifacts:** Branch `codex/v1-interaction-safety-replies`, commits `66be441` and `04b9ff6`, draft PR 4, and its linked CI runs.
 - **Skipped or blocked:** Live-device walk remains pending by user request. Android Gradle and lockfile changes are excluded from this block.
-- **Final state:** Implemented and locally verified with 183 passing Flutter tests; draft PR opened; first CI run diagnosed and corrected locally; replacement CI verification pending; not review-complete, merged, deployed, or observed in production.
+- **Final state:** Implemented and verified locally and in clean CI; draft PR open and green; live-device walk pending; not review-complete, merged, deployed, or observed in production.
 - **Follow-up:** Prepare the stable-identity stacked spec. Complete the live-device walk before PR 4 leaves draft status.
 
 ### 2026-08-21T23:59:53Z Adopt project memory and define the v1 creator loop
