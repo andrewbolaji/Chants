@@ -15,7 +15,7 @@ This is the chronological evidence trail for substantial engineering work. It re
 
 ### 2026-08-22T00:42:03Z Stage the interaction and safety block for review
 
-- **Status:** in progress
+- **Status:** completed
 - **Scope:** Create a feature branch from local `main`, commit the current interaction, safety, and documentation work, push it, and open a draft pull request. Preserve unrelated Android Gradle and `pubspec.lock` changes unstaged.
 - **Reference:** `docs/CHANGE_SPEC.md`
 - **Operator:** Codex with Andrew's authorization to stage and stack review branches
@@ -25,11 +25,12 @@ This is the chronological evidence trail for substantial engineering work. It re
 | 00:42:03 | Inspected branch, remotes, working-tree paths, recent history, and open-PR availability | Local repository and GitHub CLI | Local inspection completed on `main` at `f780628`. GitHub PR listing could not reach `api.github.com` in the sandbox and will be retried with authorized network access. |
 | 00:42:33 | Created `codex/v1-interaction-safety-replies` and staged 55 confirmed paths | Local Git index | Completed. Android Gradle files and `pubspec.lock` remain unstaged; no `seed/` or `seed_data/` path is staged. Initial diff check identified Markdown trailing spaces for correction before commit. |
 | 00:43:28 | Committed the application, Functions, rules, and focused-test boundary | Local branch | Completed as `66be441` (`Add one-level replies and interaction safety`), 28 paths. Documentation was deliberately left for a separate review commit. |
+| 00:44:24 | Committed documentation as `04b9ff6`, pushed the branch, created draft PR 4, and verified its base/head and initial checks | GitHub | Completed. PR is open and draft at `https://github.com/andrewbolaji/Chants/pull/4`, base `main`, head `codex/v1-interaction-safety-replies`. CI started; Functions and seed had already passed in the first run while the remaining checks were in progress. |
 
-- **Files/artifacts:** Pending branch, commit, draft PR, and CI URL.
+- **Files/artifacts:** Branch `codex/v1-interaction-safety-replies`, commits `66be441` and `04b9ff6`, draft PR 4, and its linked CI runs.
 - **Skipped or blocked:** Live-device walk remains pending by user request. Android Gradle and lockfile changes are excluded from this block.
-- **Final state:** In progress.
-- **Follow-up:** Stage only confirmed paths, inspect the index, create a recovery commit, publish a draft PR, then prepare the next stacked spec.
+- **Final state:** Implemented and locally verified; draft PR opened; CI in progress; not review-complete, merged, deployed, or observed in production.
+- **Follow-up:** Prepare the stable-identity stacked spec. Complete the live-device walk before PR 4 leaves draft status.
 
 ### 2026-08-21T23:59:53Z Adopt project memory and define the v1 creator loop
 
