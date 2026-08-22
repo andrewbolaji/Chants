@@ -8,7 +8,10 @@ import 'package:chants/data/models/comment.dart';
 import 'package:chants/data/models/feedback_entry.dart';
 import 'package:chants/data/models/user_profile.dart';
 import 'package:chants/data/models/user_report.dart';
+import 'package:chants/data/services/chant_evidence.dart';
 import 'package:chants/presentation/moderation/user_ban_button.dart';
+import 'package:chants/presentation/shared/chant_provenance_label.dart';
+import 'package:chants/presentation/shared/evidence_link_action.dart';
 import 'package:chants/presentation/shared/error_state.dart';
 
 class ModerationScreen extends ConsumerWidget {
@@ -288,6 +291,15 @@ class _ModerationCard extends StatelessWidget {
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             const SizedBox(height: Spacing.sm),
+            ChantProvenanceLabel(chant: chant),
+            if (ChantEvidenceParser.isCanonical(chant.evidence)) ...[
+              const SizedBox(height: Spacing.sm),
+              EvidenceLinkAction(
+                evidence: chant.evidence!,
+                showSupportingCopy: false,
+              ),
+            ],
+            const SizedBox(height: Spacing.sm),
             Wrap(
               spacing: 8,
               children: [
@@ -310,6 +322,11 @@ class _ModerationCard extends StatelessWidget {
                       ).colorScheme.errorContainer,
                     ),
                     child: const Text('Remove'),
+                  ),
+                if (ChantEvidenceParser.isCanonical(chant.evidence))
+                  FilledButton.tonal(
+                    onPressed: () => _confirmEvidenceRemoval(context),
+                    child: const Text('Remove evidence'),
                   ),
               ],
             ),
@@ -341,6 +358,51 @@ class _ModerationCard extends StatelessWidget {
       );
     }
   }
+
+  Future<void> _confirmEvidenceRemoval(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Remove evidence?'),
+        content: Text(
+          chant.status == 'canonical' && chant.createdBy != 'system'
+              ? 'This also returns the chant to Chant Lab.'
+              : 'The external link will no longer appear on this chant.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('CANCEL'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('REMOVE EVIDENCE'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    try {
+      await ref
+          .read(moderationRepositoryProvider)
+          .removeChantEvidence(chant.id);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            chant.status == 'canonical' && chant.createdBy != 'system'
+                ? 'Evidence removed. Chant returned to Chant Lab.'
+                : 'Evidence removed.',
+          ),
+        ),
+      );
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not remove evidence.')),
+      );
+    }
+  }
 }
 
 class _PromotionCard extends StatelessWidget {
@@ -351,6 +413,8 @@ class _PromotionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hasEvidence = ChantEvidenceParser.isCanonical(chant.evidence);
+    final canPromote = chant.createdBy == 'system' || hasEvidence;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(Spacing.md),
@@ -364,27 +428,54 @@ class _PromotionCard extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: Spacing.xs),
+            ChantProvenanceLabel(chant: chant),
+            const SizedBox(height: Spacing.xs),
             Text(chant.lyrics, maxLines: 3, overflow: TextOverflow.ellipsis),
+            if (hasEvidence) ...[
+              const SizedBox(height: Spacing.sm),
+              EvidenceLinkAction(
+                evidence: chant.evidence!,
+                showSupportingCopy: false,
+              ),
+            ] else if (chant.createdBy == 'system') ...[
+              const SizedBox(height: Spacing.sm),
+              Text(
+                'Seed source is covered by the operator sourcing ledger.',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ] else ...[
+              const SizedBox(height: Spacing.sm),
+              Text(
+                'Valid YouTube or X evidence is required before Terrace Proven.',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
             const SizedBox(height: Spacing.sm),
             Row(
               children: [
                 FilledButton.tonal(
-                  onPressed: () async {
-                    try {
-                      await ref
-                          .read(moderationRepositoryProvider)
-                          .promoteChant(chant.id);
-                      if (!context.mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Promoted to verified.')),
-                      );
-                    } catch (e) {
-                      if (!context.mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Promotion failed.')),
-                      );
-                    }
-                  },
+                  onPressed: !canPromote
+                      ? null
+                      : () async {
+                          try {
+                            await ref
+                                .read(moderationRepositoryProvider)
+                                .promoteChant(chant.id);
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Promoted to Terrace Proven.'),
+                              ),
+                            );
+                          } catch (e) {
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Promotion failed.'),
+                              ),
+                            );
+                          }
+                        },
                   child: const Text('Promote'),
                 ),
               ],

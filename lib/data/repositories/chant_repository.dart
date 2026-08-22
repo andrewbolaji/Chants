@@ -6,7 +6,7 @@ class ChantRepository {
   final FirebaseFirestore _firestore;
 
   ChantRepository({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   CollectionReference<Map<String, dynamic>> get _collection =>
       _firestore.collection('chants');
@@ -29,6 +29,17 @@ class ChantRepository {
         .orderBy('score', descending: true)
         .snapshots()
         .map((snap) => rankChants(snap.docs.map(Chant.fromFirestore).toList()));
+  }
+
+  /// One-shot visible team set used only by the advisory duplicate nudge.
+  /// Subject filtering stays client-side so this reuses the existing query
+  /// shape and does not add another composite index.
+  Future<List<Chant>> visibleChantsForTeamOnce({required String teamId}) async {
+    final snap = await _visibleChants()
+        .where('teamId', isEqualTo: teamId)
+        .orderBy('score', descending: true)
+        .get();
+    return snap.docs.map(Chant.fromFirestore).toList();
   }
 
   /// All visible chants for a player, ranked by the four-key total order.
@@ -61,13 +72,14 @@ class ChantRepository {
   /// Emits the current chant and re-emits on any field change (score,
   /// hidden, etc.), so VoteControls.didUpdateWidget can reconcile.
   Stream<Chant?> chantStream(String id) {
-    return _collection.doc(id).snapshots().map(
-          (doc) => doc.exists ? Chant.fromFirestore(doc) : null,
-        );
+    return _collection
+        .doc(id)
+        .snapshots()
+        .map((doc) => doc.exists ? Chant.fromFirestore(doc) : null);
   }
 
-  Future<DocumentReference> createChant(Chant chant) async {
-    return _collection.add(chant.toJson());
+  Future<void> createChant(Chant chant) async {
+    await _collection.add(chant.toJson());
   }
 
   Future<void> updateChantContent({
@@ -88,9 +100,11 @@ class ChantRepository {
         .where('removed', isEqualTo: false)
         .orderBy('score', descending: true)
         .snapshots()
-        .map((snap) => snap.docs
-            .map(Chant.fromFirestore)
-            .where((c) => c.score >= promotionThreshold)
-            .toList());
+        .map(
+          (snap) => snap.docs
+              .map(Chant.fromFirestore)
+              .where((c) => c.score >= promotionThreshold)
+              .toList(),
+        );
   }
 }

@@ -7,31 +7,36 @@ void main() {
     final now = DateTime(2026, 5, 24, 12, 0, 0);
 
     Map<String, dynamic> validJson() => {
-          'title': 'Glory Glory Man United',
-          'sportId': 's1',
-          'competitionId': 'c1',
-          'teamId': 't1',
-          'playerId': null,
-          'subjectTag': 'club',
-          'lyrics': 'Glory glory Man United',
-          'tuneName': 'Battle Hymn of the Republic',
-          'contextNotes': null,
-          'coverImageUrl': null,
-          'mediaUrl': null,
-          'mediaType': 'none',
-          'status': 'community',
-          'chantType': 'sincere',
-          'upvotes': 0,
-          'downvotes': 0,
-          'score': 0,
-          'commentCount': 0,
-          'createdBy': 'user1',
-          'createdAt': Timestamp.fromDate(now),
-          'updatedAt': Timestamp.fromDate(now),
-          'flagCount': 0,
-          'hidden': false,
-          'removed': false,
-        };
+      'title': 'Glory Glory Man United',
+      'sportId': 's1',
+      'competitionId': 'c1',
+      'teamId': 't1',
+      'playerId': null,
+      'subjectTag': 'club',
+      'lyrics': 'Glory glory Man United',
+      'tuneName': 'Battle Hymn of the Republic',
+      'contextNotes': null,
+      'coverImageUrl': null,
+      'mediaUrl': null,
+      'mediaType': 'none',
+      'status': 'community',
+      'chantType': 'sincere',
+      'origin': 'alreadySung',
+      'evidence': {
+        'provider': 'youtube',
+        'url': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      },
+      'upvotes': 0,
+      'downvotes': 0,
+      'score': 0,
+      'commentCount': 0,
+      'createdBy': 'user1',
+      'createdAt': Timestamp.fromDate(now),
+      'updatedAt': Timestamp.fromDate(now),
+      'flagCount': 0,
+      'hidden': false,
+      'removed': false,
+    };
 
     test('fromJson and toJson round-trip', () {
       final chant = Chant.fromJson(validJson(), id: 'ch1');
@@ -42,10 +47,14 @@ void main() {
       expect(chant.contextNotes, isNull);
       expect(chant.upvotes, 0);
       expect(chant.hidden, false);
+      expect(chant.origin, ChantOrigin.alreadySung);
+      expect(chant.evidence?.provider, EvidenceProvider.youtube);
 
       final output = chant.toJson();
       expect(output['title'], 'Glory Glory Man United');
       expect(output['status'], 'community');
+      expect(output['origin'], 'alreadySung');
+      expect((output['evidence'] as Map)['provider'], 'youtube');
       expect(output.containsKey('id'), false);
     });
 
@@ -62,6 +71,36 @@ void main() {
       expect(chant.score, 0);
       expect(chant.commentCount, 0);
       expect(chant.flagCount, 0);
+    });
+
+    test('legacy chant without provenance remains readable', () {
+      final json = validJson()
+        ..remove('origin')
+        ..remove('evidence');
+      final chant = Chant.fromJson(json, id: 'legacy');
+
+      expect(chant.origin, isNull);
+      expect(chant.evidence, isNull);
+      expect(chant.toJson()['origin'], isNull);
+      expect(chant.toJson()['evidence'], isNull);
+    });
+
+    test('malformed provenance is neutral instead of trusted', () {
+      final json = validJson()
+        ..['origin'] = 'forged'
+        ..['evidence'] = {'provider': 'youtube', 'url': 123};
+      final chant = Chant.fromJson(json, id: 'malformed');
+
+      expect(chant.origin, isNull);
+      expect(chant.evidence, isNull);
+
+      final extraEvidence = validJson()
+        ..['evidence'] = {
+          'provider': 'youtube',
+          'url': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+          'reviewed': true,
+        };
+      expect(Chant.fromJson(extraEvidence, id: 'extra').evidence, isNull);
     });
 
     test('valid subject tags', () {

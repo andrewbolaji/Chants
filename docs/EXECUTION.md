@@ -13,9 +13,9 @@ This is the chronological evidence trail for substantial engineering work. It re
 
 ## Entries
 
-### 2026-08-22T06:47:59Z Specify v1 chant provenance and evidence
+### 2026-08-22T06:47:59Z Implement v1 chant provenance and evidence
 
-- **Status:** planned, awaiting technical approval
+- **Status:** implemented and locally verified, PR CI pending
 - **Scope:** Prepare a stacked Lane 2 contract for required submission origin, optional allowlisted external evidence, evidence-gated Terrace Proven promotion, honest provenance labels, evidence removal, and the soft duplicate nudge. No application, Functions, Firestore rules, dependency, live-service, or deployment change.
 - **Reference:** `docs/CHANGE_SPEC.md`
 - **Operator:** Codex
@@ -25,11 +25,16 @@ This is the chronological evidence trail for substantial engineering work. It re
 | 06:47:59 | Created `codex/v1-provenance-evidence` from stable-identity commit `6aea174` and inspected the chant model, submit flow, repository queries, matcher, detail and card labels, moderation UI and callable, Firestore rules, tests, accepted product decision, interface contract, and roadmap | Local repository | Completed. Confirmed origin and evidence are absent, `VERIFIED` remains in the UI, promotion accepts evidence-free user chants, authors can still edit promoted chants, the matcher is pure but unwired, and `url_launcher` is not installed. |
 | 06:47:59 | Replaced the branch-local active spec with the provenance and evidence technical contract | Local repository | Completed as proposed. The contract selects explicit backward-compatible fields, canonical external URL forms, client and server validation parity, a raw-write promotion guard, evidence removal with demotion, an author-edit freeze after promotion, and a fail-open advisory duplicate check. |
 | 06:53:20 | Committed and pushed the planning boundary and opened stacked draft PR 6 | Local Git and GitHub | Completed. Commit `037428d` is published at `https://github.com/andrewbolaji/Chants/pull/6`, with base `codex/stable-chant-identity` and head `codex/v1-provenance-evidence`. CI started. |
+| 07:54:42 | Recorded Andrew's explicit approval of the provenance technical specification | Local repository | Approved. Repository implementation and verification may begin on draft PR 6. Live Firebase access, deployment, and release remain unauthorized. |
+| 12:45:35 | Implemented the approved application and trust boundary | Local repository | Added typed origin and evidence data, strict YouTube and X normalization, external link-out, honest labels, origin-aware submission, soft duplicate review, evidence-gated promotion, transactional evidence removal, raw-write rules parity, and focused tests. Self-review also retained operator moderation for untouched malformed legacy evidence while keeping its mutation and promotion blocked. |
+| 12:45:35 | Generated and inspected representative interface evidence | Local Flutter test renderer, 390 by 844 | Both origin and evidence submission goldens passed. Visual inspection found no overflow and confirmed full helper copy, clear required origin choices, and the external-link warning. Live-device inspection remains pending. |
+| 12:45:35 | Proved the promotion guard red, restored it, and ran the local verification matrix | Local repository | Disabling the Functions evidence guard made the focused promotion test fail on the missing exception. After restoration, 206 Flutter tests, 35 Functions tests, 42 seed tests, rules TypeScript compilation, and `flutter analyze lib test` passed. `git diff --check` was clean before documentation completion. |
+| 12:45:35 | Checked availability of the Firestore rules emulator | Local workstation | Blocked locally because no Java runtime is installed. The rules source and test file compile, but the 117-assertion emulator suite must run on the clean GitHub Actions runner before the PR is called CI-verified. |
 
-- **Files/artifacts:** `docs/CHANGE_SPEC.md`, this execution entry, and the stacked planning branch.
-- **Skipped or blocked:** Implementation and verification are deliberately blocked on explicit technical approval. Live Firebase access and deployment are outside this approval.
-- **Current state:** Product direction approved; technical plan committed and published in stacked draft PR 6; application behavior unchanged.
-- **Follow-up:** Ask Andrew to approve or amend the exact technical contract before implementation.
+- **Files/artifacts:** Flutter model, parser, repositories, submission, labels, evidence action, detail and moderation UI; Cloud Functions trust planner and callable integration; Firestore rules; focused tests and goldens; decision 006; `docs/CHANGE_SPEC.md`; and this execution entry.
+- **Skipped or blocked:** Local Firestore emulator execution is blocked by the missing Java runtime. Live Firebase access, deployment, and release remain outside this approval.
+- **Current state:** Approved implementation and local verification are complete on the stacked branch. It is not yet committed, pushed, CI-verified, reviewed, merged, deployed, or observed in production.
+- **Follow-up:** Commit the scoped implementation, push draft PR 6, inspect clean-runner CI, then close the change record with the independent result.
 
 ### 2026-08-22T00:45:56Z Implement stable seeded chant identity
 
