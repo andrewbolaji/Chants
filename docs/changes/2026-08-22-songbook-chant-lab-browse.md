@@ -40,7 +40,7 @@
 - The local Firestore emulator suite was not run because this machine has no Java runtime. Its rules and fixtures are untouched; the clean GitHub Actions rules job remains the authoritative execution for this block.
 - Red-check 1: temporarily routing canonical status into Chant Lab made the focused projection test fail on the missing Songbook ID. Restoring the partition made the focused and full suites pass.
 - Red-check 2: temporarily clearing the last successful Player snapshot on a later stream error made the retained-data widget test fail because the chant disappeared. Restoring independent data and error state made it pass.
-- Visual evidence: `team_songbook.png` and `team_chant_lab.png` were generated at 390 by 844, passed the bounded cross-platform comparator, and were visually inspected. The enlarged-text Team test passes at 1.8x without overflow or clipped Top/New controls.
+- Visual evidence: `team_songbook.png` and `team_chant_lab.png` were generated at 390 by 844 and visually inspected. Clean-runner CI measured benign cross-platform drift at 2.09% and 1.94%, so this test alone uses a 2.2% comparator threshold while the shared default stays at 1.5%. The enlarged-text Team test passes at 1.8x without overflow or clipped Top/New controls.
 - Scope evidence: `git diff --check` and the changed-prose dash scan pass. Unrelated Android Gradle and lockfile changes remain outside the implementation boundary.
 
 ## Security, privacy, abuse, and infrastructure impact
