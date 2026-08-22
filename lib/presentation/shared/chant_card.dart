@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:chants/app/colors.dart';
 import 'package:chants/app/spacing.dart';
 import 'package:chants/data/models/chant.dart';
-import 'package:chants/presentation/shared/gold_foil_badge.dart';
+import 'package:chants/presentation/shared/chant_provenance_label.dart';
 import 'package:chants/presentation/shared/vote_controls.dart';
 
 class ChantCard extends StatelessWidget {
@@ -62,10 +62,8 @@ class ChantCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  if (chant.status == 'canonical') ...[
-                    const SizedBox(width: Spacing.xs),
-                    const GoldFoilBadge(),
-                  ],
+                  const SizedBox(width: Spacing.xs),
+                  Flexible(child: ChantProvenanceLabel(chant: chant)),
                 ],
               ),
               const SizedBox(height: Spacing.xs),

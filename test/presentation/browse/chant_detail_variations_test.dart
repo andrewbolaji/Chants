@@ -22,9 +22,10 @@ class _MockCommentRepository extends Mock implements CommentRepository {
   Stream<List<Comment>> commentsForChantStream({required String chantId}) =>
       Stream.value([]);
   @override
-  Future<CommentLike?> getUserLike(
-          {required String userId, required String commentId}) async =>
-      null;
+  Future<CommentLike?> getUserLike({
+    required String userId,
+    required String commentId,
+  }) async => null;
 }
 
 class _MockProfileRepository extends Mock implements ProfileRepository {
@@ -32,7 +33,12 @@ class _MockProfileRepository extends Mock implements ProfileRepository {
   Stream<UserProfile?> profileStream(String userId) => Stream.value(null);
 }
 
-Chant _makeChant({List<ChantVariation> variations = const []}) {
+Chant _makeChant({
+  List<ChantVariation> variations = const [],
+  String status = 'canonical',
+  ChantOrigin? origin,
+  ChantEvidence? evidence,
+}) {
   return Chant(
     id: 'test-chant',
     title: 'Super Mik Arteta',
@@ -44,8 +50,10 @@ Chant _makeChant({List<ChantVariation> variations = const []}) {
     tuneName: 'Traditional terrace tune',
     contextNotes: 'A tribute to manager Mikel Arteta.',
     mediaType: 'none',
-    status: 'canonical',
+    status: status,
     chantType: 'sincere',
+    origin: origin,
+    evidence: evidence,
     createdBy: 'system',
     createdAt: DateTime(2026, 1, 1),
     updatedAt: DateTime(2026, 1, 1),
@@ -67,15 +75,18 @@ Widget _wrap(Widget child) {
 
 void main() {
   group('ChantDetailScreen variations', () {
-    testWidgets('shows "Also sung as" section when variations exist',
-        (tester) async {
-      final chant = _makeChant(variations: [
-        const ChantVariation(
-          label: 'Current version',
-          lyric: 'Gabi at the back, Gabi in attack',
-          contextNote: 'Kieran Tierney left, so fans swapped his name out.',
-        ),
-      ]);
+    testWidgets('shows "Also sung as" section when variations exist', (
+      tester,
+    ) async {
+      final chant = _makeChant(
+        variations: [
+          const ChantVariation(
+            label: 'Current version',
+            lyric: 'Gabi at the back, Gabi in attack',
+            contextNote: 'Kieran Tierney left, so fans swapped his name out.',
+          ),
+        ],
+      );
       await tester.pumpWidget(_wrap(ChantDetailScreen(chant: chant)));
       await tester.pumpAndSettle();
 
@@ -88,8 +99,9 @@ void main() {
       );
     });
 
-    testWidgets('hides "Also sung as" section when no variations',
-        (tester) async {
+    testWidgets('hides "Also sung as" section when no variations', (
+      tester,
+    ) async {
       final chant = _makeChant();
       await tester.pumpWidget(_wrap(ChantDetailScreen(chant: chant)));
       await tester.pumpAndSettle();
@@ -97,22 +109,55 @@ void main() {
       expect(find.text('ALSO SUNG AS'), findsNothing);
     });
 
-    testWidgets('variation with null contextNote shows lyric only',
-        (tester) async {
-      final chant = _makeChant(variations: [
-        const ChantVariation(
-          label: 'Original',
-          lyric: 'Kieran at the back, Gabi in attack',
-        ),
-      ]);
+    testWidgets('variation with null contextNote shows lyric only', (
+      tester,
+    ) async {
+      final chant = _makeChant(
+        variations: [
+          const ChantVariation(
+            label: 'Original',
+            lyric: 'Kieran at the back, Gabi in attack',
+          ),
+        ],
+      );
       await tester.pumpWidget(_wrap(ChantDetailScreen(chant: chant)));
       await tester.pumpAndSettle();
 
       expect(find.text('ORIGINAL'), findsOneWidget);
-      expect(
-        find.text('Kieran at the back, Gabi in attack'),
-        findsOneWidget,
+      expect(find.text('Kieran at the back, Gabi in attack'), findsOneWidget);
+    });
+  });
+
+  group('ChantDetailScreen provenance', () {
+    testWidgets('shows an unverified Already sung claim honestly', (
+      tester,
+    ) async {
+      final chant = _makeChant(
+        status: 'community',
+        origin: ChantOrigin.alreadySung,
       );
+      await tester.pumpWidget(_wrap(ChantDetailScreen(chant: chant)));
+      await tester.pumpAndSettle();
+
+      expect(find.text('ALREADY SUNG, UNVERIFIED'), findsOneWidget);
+      expect(find.text('TERRACE PROVEN'), findsNothing);
+    });
+
+    testWidgets('shows a valid external evidence action', (tester) async {
+      final chant = _makeChant(
+        status: 'community',
+        origin: ChantOrigin.originalIdea,
+        evidence: const ChantEvidence(
+          provider: EvidenceProvider.x,
+          url: 'https://x.com/arsenal/status/1234567890',
+        ),
+      );
+      await tester.pumpWidget(_wrap(ChantDetailScreen(chant: chant)));
+      await tester.pumpAndSettle();
+
+      expect(find.text('ORIGINAL IDEA'), findsOneWidget);
+      expect(find.text('View on X'), findsOneWidget);
+      expect(find.text('Opens outside Chants.'), findsOneWidget);
     });
   });
 }

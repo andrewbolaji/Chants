@@ -2,6 +2,11 @@ import * as admin from "firebase-admin";
 import { onDocumentCreated, onDocumentWritten } from "firebase-functions/v2/firestore";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { writeAuditEntry } from "./audit";
+import {
+  ChantTrustAction,
+  ChantTrustPlan,
+  planChantTrustAction,
+} from "./chant_trust";
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -168,6 +173,46 @@ export async function handleUserBanAction(params: {
   return { success: true };
 }
 
+async function applyChantTrustAction(params: {
+  action: ChantTrustAction;
+  actorUid: string;
+  targetId: string;
+}): Promise<{ success: true; changed: boolean }> {
+  const chantRef = db.collection("chants").doc(params.targetId);
+  const auditRef = db.collection("auditLog").doc();
+  let plan: ChantTrustPlan | undefined;
+
+  await db.runTransaction(async (transaction) => {
+    const chantSnap = await transaction.get(chantRef);
+    if (!chantSnap.exists) {
+      throw new HttpsError("not-found", "Chant not found.");
+    }
+
+    plan = planChantTrustAction(params.action, chantSnap.data()!);
+    if (!plan.changed) return;
+
+    const update: admin.firestore.UpdateData<admin.firestore.DocumentData> = {};
+    if (plan.nextStatus) update.status = plan.nextStatus;
+    if (plan.deleteEvidence) {
+      update.evidence = admin.firestore.FieldValue.delete();
+    }
+    transaction.update(chantRef, update);
+    transaction.set(auditRef, {
+      actorId: params.actorUid,
+      action: plan.auditAction,
+      targetType: "chant",
+      targetId: params.targetId,
+      detail: plan.auditDetail,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+  });
+
+  if (!plan) {
+    throw new HttpsError("internal", "Moderation action was not planned.");
+  }
+  return { success: true, changed: plan.changed };
+}
+
 export const onModerationAction = onCall(
   { region: "europe-west2" },
   async (request) => {
@@ -251,37 +296,10 @@ export const onModerationAction = onCall(
         });
       }
 
-      case "promote": {
-        const chantSnap = await db.collection("chants").doc(targetId).get();
-        if (!chantSnap.exists) {
-          throw new HttpsError("not-found", "Chant not found.");
-        }
-        await db.collection("chants").doc(targetId).update({ status: "canonical" });
-        await writeAuditEntry({
-          actorId: actorUid,
-          action: "promote",
-          targetType: "chant",
-          targetId,
-          detail: "Community chant promoted to canonical by operator.",
-        });
-        return { success: true };
-      }
-
-      case "demote": {
-        const chantSnap2 = await db.collection("chants").doc(targetId).get();
-        if (!chantSnap2.exists) {
-          throw new HttpsError("not-found", "Chant not found.");
-        }
-        await db.collection("chants").doc(targetId).update({ status: "community" });
-        await writeAuditEntry({
-          actorId: actorUid,
-          action: "demote",
-          targetType: "chant",
-          targetId,
-          detail: "Canonical chant demoted to community by operator.",
-        });
-        return { success: true };
-      }
+      case "promote":
+      case "demote":
+      case "remove-evidence":
+        return applyChantTrustAction({ action, actorUid, targetId });
 
       case "hide-comment": {
         const cSnap = await db.collection("comments").doc(targetId).get();
@@ -343,7 +361,7 @@ export const onModerationAction = onCall(
       default:
         throw new HttpsError(
           "invalid-argument",
-          `Unknown action "${action}". Valid: hide, unhide, remove, ban, promote, demote, hide-comment, unhide-comment, remove-comment.`
+          `Unknown action "${action}". Valid: hide, unhide, remove, ban, unban, promote, demote, remove-evidence, hide-comment, unhide-comment, remove-comment.`
         );
     }
   }

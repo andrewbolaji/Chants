@@ -72,6 +72,50 @@ service cloud.firestore {
             (data.contextNotes is string && data.contextNotes.size() <= 500));
     }
 
+    function validOrigin(value) {
+      return value in ['alreadySung', 'originalIdea'];
+    }
+
+    function hasValidEvidence(data) {
+      return 'evidence' in data
+        && data.evidence is map
+        && data.evidence.keys().hasOnly(['provider', 'url'])
+        && data.evidence.provider is string
+        && data.evidence.url is string
+        && (
+          (data.evidence.provider == 'youtube'
+            && data.evidence.url.matches(
+              'https://www[.]youtube[.]com/watch[?]v=[A-Za-z0-9_-]{11}'))
+          ||
+          (data.evidence.provider == 'x'
+            && data.evidence.url.matches(
+              'https://x[.]com/[A-Za-z0-9_]{1,15}/status/[0-9]{1,25}'))
+        );
+    }
+
+    function validOptionalEvidence(data) {
+      return !('evidence' in data)
+        || data.evidence == null
+        || hasValidEvidence(data);
+    }
+
+    function validEvidenceUpdate(before, after) {
+      return validOptionalEvidence(after)
+        || !after.diff(before).affectedKeys().hasAny(['evidence']);
+    }
+
+    function validCanonicalTrustState(before, after) {
+      return after.status != 'canonical'
+        || before.createdBy == 'system'
+        || hasValidEvidence(after)
+        || (
+          before.status == 'canonical'
+          && before.createdBy != 'system'
+          && !hasValidEvidence(before)
+          && !after.diff(before).affectedKeys().hasAny(['status', 'evidence'])
+        );
+    }
+
     function validReplyParent(data) {
       return !('parentCommentId' in data)
         || data.parentCommentId == null
@@ -149,6 +193,8 @@ service cloud.firestore {
         && hasAcceptedPolicy()
         && request.resource.data.createdBy == request.auth.uid
         && request.resource.data.status == 'community'
+        && validOrigin(request.resource.data.origin)
+        && validOptionalEvidence(request.resource.data)
         && request.resource.data.upvotes == 0
         && request.resource.data.downvotes == 0
         && request.resource.data.score == 0
@@ -159,15 +205,31 @@ service cloud.firestore {
         && validRecentClientTimestamp(request.resource.data.createdAt)
         && request.resource.data.updatedAt is timestamp
         && validChantContent(request.resource.data);
-      // Author can update content fields only, never counters/status/hidden/removed
+      // Authors can edit an explicit content allowlist only while community.
+      // Origin and evidence are immutable from the direct client path.
       allow update: if isAuth()
         && resource.data.createdBy == request.auth.uid
+        && resource.data.status == 'community'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+             'title', 'lyrics', 'tuneName', 'contextNotes', 'coverImageUrl',
+             'mediaUrl', 'mediaType', 'subjectTag', 'chantType', 'playerId',
+             'updatedAt'
+           ])
+        && request.resource.data.updatedAt != resource.data.updatedAt
+        && validRecentClientTimestamp(request.resource.data.updatedAt)
+        && validChantContent(request.resource.data)
+        && validEvidenceUpdate(resource.data, request.resource.data);
+      // Operators retain moderation control but cannot mutate ownership or
+      // leave a newly promoted or evidence-stripped user chant canonical.
+      allow update: if isOperator()
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.createdAt == resource.data.createdAt
         && !request.resource.data.diff(resource.data).affectedKeys()
-            .hasAny(['upvotes','downvotes','score','commentCount',
-                     'flagCount','hidden','removed','status','createdBy','createdAt'])
-        && validChantContent(request.resource.data);
-      // Operator can update anything (moderation, promote to canonical)
-      allow update: if isOperator();
+            .hasAny(['origin'])
+        && request.resource.data.status in ['canonical', 'community']
+        && validChantContent(request.resource.data)
+        && validEvidenceUpdate(resource.data, request.resource.data)
+        && validCanonicalTrustState(resource.data, request.resource.data);
     }
 
     // votes: private to the owner/operator, one per user per visible chant
