@@ -13,6 +13,31 @@ This is the chronological evidence trail for substantial engineering work. It re
 
 ## Entries
 
+### 2026-08-25T08:50:37Z Review the combined v1 feature stack
+
+- **Status:** Whole-project review completed; Lane 2 remediation proposed and pending approval
+- **Scope:** Review the exact combined state of stacked draft PRs 4 through 9 across Flutter, Functions, Firestore rules, seed, native configuration, CI, tests, and current framework records. Refresh the two canonical milestone documents and replace the completed share spec with the resulting remediation proposal. No runtime fix, Firebase access, deployment, seed write, merge, release, or device action.
+- **Reference:** `ENGINEERING_OVERVIEW.md`, `docs/IMPLEMENTATION_RATIONALE.md`, `docs/CHANGE_SPEC.md`
+- **Operator:** Codex
+
+| UTC time | Action | Target/environment | Result and evidence |
+|---|---|---|---|
+| 07:10:00 | Created `codex/v1-stacked-engineering-review` from exact PR 9 head `b72f4ab` and established the comparison boundary | Local repository | Combined stack contains 136 changed paths, 14,557 insertions, and 1,546 deletions relative to `main`. Preserved the user's pre-existing `android/app/build.gradle.kts`, `android/settings.gradle.kts`, and `pubspec.lock` modifications unstaged. |
+| 07:18:00 | Inspected application, repository, model, rules, Functions, seed, CI, native, test, and framework boundaries | Local repository | Confirmed the implemented provenance, duplicate nudge, browse split, saved snapshots, share gateway, stable identity, replies, blocks, and moderation paths. Identified raw-write/model schema mismatch, Discover moderation retention, vote parent-deletion race, comments failure/overflow, stale Player prefill, fail-open analysis, debug release signing, and placeholder policy. |
+| 07:45:00 | Probed live-detail share revocation with a temporary focused widget test | Local Flutter renderer | Probe passed: after a current stream value followed by an error, the snapshot no longer supplies current data and Share disables. Removed the temporary test. This rejected the initial broader hypothesis and narrowed the defect to stale route data before current confirmation and Discover retention. |
+| 07:55:00 | Probed per-comment like hydration failure | Local Flutter renderer | Deliberately throwing from `getUserLike` failed with an unhandled `StateError` from `CommentSection._loadUserLike`. Removed the temporary test after recording the red result. |
+| 08:02:00 | Probed the empty-comments state at 390 by 844 and 1.8x text | Local Flutter renderer | Failed with a 430-pixel right `RenderFlex` overflow. Removed the temporary test after recording the red result. |
+| 08:15:00 | Probed moderation revocation in the real Discover widget | Local Flutter renderer | A permission-style stream error left `MODERATED CHANT` rendered because `_LiveChantCard` restored `initialChant`. Removed the temporary test after the expected red result. |
+| 08:25:00 | Ran the available full local correctness matrix | Local macOS, Flutter 3.44.8, Dart 3.12.2, Node 20.20.2 | `flutter test` passed 271; `flutter analyze lib test` passed; Functions passed 35; seed passed 42; seed `tsc --noEmit` passed; `git diff --check main...HEAD` passed. Local rules emulator remained blocked by missing Java; exact-head PR 9 CI had previously passed 117 Java-backed assertions. |
+| 08:32:00 | Checked formatter conformance without writing files | Local Dart tool | `dart format --output=none --set-exit-if-changed lib test` reported 56 committed files would change. Output mode preserved the worktree. Recorded formatter normalization as separate debt because mixing 56 mechanical rewrites into authority remediation would obscure review. |
+| 08:36:00 | Attempted a current production npm advisory check | npm advisory endpoint | Sandboxed Functions and seed checks failed DNS. The elevated request was rejected because it would disclose dependency metadata to a public service without separate explicit authorization. Did not retry or work around the denial; advisory status remains unverified. |
+| 08:50:37 | Refreshed the whole-project truth and drafted the remediation boundary | Local repository | Replaced stale amendment-style milestone docs with current exact-head overview and rationale. Replaced the completed share spec with a proposed Lane 2 exact-schema, moderation, trigger, comments, submission, CI, and documentation contract. No runtime, rules, Functions, CI, or release implementation was made. |
+
+- **Files/artifacts:** `ENGINEERING_OVERVIEW.md`, `docs/IMPLEMENTATION_RATIONALE.md`, proposed `docs/CHANGE_SPEC.md`, and this execution entry.
+- **Skipped or blocked:** Local rules emulator, Android and iOS native compilation, dependency advisory audit, live Firebase inspection, stable-ID preflight, seed writes, deployment, merge, signing, release, and device walk.
+- **Final state:** Review complete and evidenced. Existing suites are green, but the stack is not release-ready. Runtime remediation waits for Andrew's explicit approval of `docs/CHANGE_SPEC.md`.
+- **Follow-up:** Approve or revise the stacked v1 authority and integration remediation spec. Then implement that bounded block, require Java-backed clean-runner rules evidence, and perform the combined native/device walk only after the code stack is review-clean.
+
 ### 2026-08-25T00:08:50Z Implement V1 basic share-out
 
 - **Status:** implemented and clean-runner verified; native compilation, review, and device walk pending
