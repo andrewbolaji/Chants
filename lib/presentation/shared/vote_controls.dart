@@ -14,7 +14,11 @@ class OptimisticVoteState {
   int optimisticDelta = 0;
   bool busy = false;
 
-  OptimisticVoteState({required this.serverScore, this.userVote, this.confirmedVote});
+  OptimisticVoteState({
+    required this.serverScore,
+    this.userVote,
+    this.confirmedVote,
+  });
 
   int get displayScore => serverScore + optimisticDelta;
 
@@ -66,12 +70,14 @@ class VoteControls extends ConsumerStatefulWidget {
   final Chant chant;
   final bool large;
   final bool compact;
+  final bool enabled;
 
   const VoteControls({
     super.key,
     required this.chant,
     this.large = false,
     this.compact = false,
+    this.enabled = true,
   });
 
   @override
@@ -87,7 +93,7 @@ class _VoteControlsState extends ConsumerState<VoteControls> {
   void initState() {
     super.initState();
     _vote = OptimisticVoteState(serverScore: widget.chant.score);
-    _loadUserVote();
+    if (widget.enabled) _loadUserVote();
   }
 
   @override
@@ -95,6 +101,9 @@ class _VoteControlsState extends ConsumerState<VoteControls> {
     super.didUpdateWidget(old);
     if (old.chant.score != widget.chant.score) {
       _vote.reconcileServerScore(widget.chant.score);
+    }
+    if (!old.enabled && widget.enabled && !_loaded) {
+      _loadUserVote();
     }
   }
 
@@ -104,10 +113,9 @@ class _VoteControlsState extends ConsumerState<VoteControls> {
       setState(() => _loaded = true);
       return;
     }
-    final vote = await ref.read(voteRepositoryProvider).getUserVote(
-          userId: user.uid,
-          chantId: widget.chant.id,
-        );
+    final vote = await ref
+        .read(voteRepositoryProvider)
+        .getUserVote(userId: user.uid, chantId: widget.chant.id);
     if (!mounted) return;
     setState(() {
       if (vote != null) {
@@ -121,7 +129,8 @@ class _VoteControlsState extends ConsumerState<VoteControls> {
           // reflects (null for a new vote, old value for a flip).
           _vote.confirmedVote = vote.appliedValue;
           _vote.optimisticDelta = OptimisticVoteState.deltaForTransition(
-            vote.appliedValue, vote.value,
+            vote.appliedValue,
+            vote.value,
           );
         }
       }
@@ -130,11 +139,12 @@ class _VoteControlsState extends ConsumerState<VoteControls> {
   }
 
   Future<void> _onVote(int value) async {
+    if (!widget.enabled) return;
     final user = ref.read(authStateProvider).valueOrNull;
     if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Sign in to vote.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Sign in to vote.')));
       return;
     }
 
@@ -159,10 +169,7 @@ class _VoteControlsState extends ConsumerState<VoteControls> {
     try {
       final voteRepo = ref.read(voteRepositoryProvider);
       if (newVote == null) {
-        await voteRepo.removeVote(
-          userId: user.uid,
-          chantId: widget.chant.id,
-        );
+        await voteRepo.removeVote(userId: user.uid, chantId: widget.chant.id);
       } else {
         await voteRepo.castVote(
           userId: user.uid,
@@ -215,10 +222,7 @@ class _VoteControlsState extends ConsumerState<VoteControls> {
     try {
       final voteRepo = ref.read(voteRepositoryProvider);
       if (settledVote == null) {
-        await voteRepo.removeVote(
-          userId: userId,
-          chantId: widget.chant.id,
-        );
+        await voteRepo.removeVote(userId: userId, chantId: widget.chant.id);
       } else {
         await voteRepo.castVote(
           userId: userId,
@@ -247,7 +251,7 @@ class _VoteControlsState extends ConsumerState<VoteControls> {
 
   @override
   Widget build(BuildContext context) {
-    if (!_loaded) return const SizedBox(width: 88);
+    if (!_loaded && widget.enabled) return const SizedBox(width: 88);
 
     final score = _vote.displayScore;
     final iconSize = widget.large ? 28.0 : (widget.compact ? 18.0 : 22.0);
@@ -261,9 +265,7 @@ class _VoteControlsState extends ConsumerState<VoteControls> {
         borderRadius: BorderRadius.circular(Radii.sm),
         border: Border.all(color: AppColors.outline, width: 0.5),
       ),
-      padding: EdgeInsets.symmetric(
-        horizontal: widget.compact ? 0 : 2,
-      ),
+      padding: EdgeInsets.symmetric(horizontal: widget.compact ? 0 : 2),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -275,12 +277,11 @@ class _VoteControlsState extends ConsumerState<VoteControls> {
               width: buttonSize,
               height: buttonSize,
               child: IconButton(
-                icon: Icon(
-                  Icons.arrow_drop_up,
-                  size: iconSize + 6,
-                ),
-                color: _vote.userVote == 1 ? AppColors.gold : AppColors.textMuted,
-                onPressed: () => _onVote(1),
+                icon: Icon(Icons.arrow_drop_up, size: iconSize + 6),
+                color: _vote.userVote == 1
+                    ? AppColors.gold
+                    : AppColors.textMuted,
+                onPressed: widget.enabled ? () => _onVote(1) : null,
                 tooltip: 'Upvote',
                 padding: EdgeInsets.zero,
               ),
@@ -297,9 +298,7 @@ class _VoteControlsState extends ConsumerState<VoteControls> {
                 fontFamily: 'SpaceMono',
                 fontWeight: FontWeight.w700,
                 fontSize: fontSize,
-                color: score > 0
-                    ? AppColors.textHeadline
-                    : AppColors.textMuted,
+                color: score > 0 ? AppColors.textHeadline : AppColors.textMuted,
               ),
             ),
           ),
@@ -312,12 +311,11 @@ class _VoteControlsState extends ConsumerState<VoteControls> {
               width: buttonSize,
               height: buttonSize,
               child: IconButton(
-                icon: Icon(
-                  Icons.arrow_drop_down,
-                  size: iconSize + 6,
-                ),
-                color: _vote.userVote == -1 ? AppColors.error : AppColors.textMuted,
-                onPressed: () => _onVote(-1),
+                icon: Icon(Icons.arrow_drop_down, size: iconSize + 6),
+                color: _vote.userVote == -1
+                    ? AppColors.error
+                    : AppColors.textMuted,
+                onPressed: widget.enabled ? () => _onVote(-1) : null,
                 tooltip: 'Downvote',
                 padding: EdgeInsets.zero,
               ),

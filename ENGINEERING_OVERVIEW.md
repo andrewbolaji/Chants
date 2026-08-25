@@ -1,8 +1,8 @@
 # Chants engineering overview
 
-This is the current whole-project map for Chants. It describes the combined state of stacked draft PRs 4 through 9 at commit `b72f4abddea0cd8a3b201de2d4dda246c62a413c`, reviewed on 2026-08-25. The stack changes 136 files relative to `main`, with 14,557 insertions and 1,546 deletions. Every material claim names the implementation path and symbol that supports it.
+This is the current whole-project map for Chants. It describes the combined state of stacked draft PRs 4 through 9 at commit `b72f4abddea0cd8a3b201de2d4dda246c62a413c`, plus the approved authority and integration remediation implemented in the current `codex/v1-stacked-engineering-review` worktree on 2026-08-25. Every material claim names the implementation path and symbol that supports it.
 
-This document is descriptive, not an approval record. `docs/CHANGE_SPEC.md` is the one active remediation proposal. `docs/EXECUTION.md` records review evidence. `docs/IMPLEMENTATION_RATIONALE.md` is the companion coverage ledger and verification record. Completed feature reasoning lives in `docs/changes/`, and durable decisions live in `docs/decisions/`.
+This document is descriptive, not an approval record. `docs/CHANGE_SPEC.md` contains the approved and implemented remediation contract. `docs/EXECUTION.md` records review and implementation evidence. `docs/IMPLEMENTATION_RATIONALE.md` is the companion coverage ledger and verification record. Completed reasoning lives in `docs/changes/`, and durable decisions live in `docs/decisions/`.
 
 Three unrelated working-tree changes predated this review and remain unstaged: `android/app/build.gradle.kts`, `android/settings.gradle.kts`, and `pubspec.lock`. The review did not overwrite or stage them.
 
@@ -10,21 +10,22 @@ Three unrelated working-tree changes predated this review and remain unstaged: `
 
 The stacked product work is coherent and unusually well tested for a pre-v1 mobile app. The combined client, Functions, seed, and rules design now supports one-level replies, blocking, audited unban, stable seeded chant IDs, explicit provenance and evidence, separate Songbook and Chant Lab browse surfaces, device-local Saved Matchday Songbook, and native plain-text share-out.
 
-The stack is not release-ready yet. The review found four implementation defects that should be remediated before the combined device walk:
+The approved remediation closes the four material implementation defects found by the review:
 
-1. **P1, raw-write schema and deserialization denial of service.** `firestore.rules :: validChantContent` validates the headline chant fields but does not validate `sportId`, `competitionId`, `playerId`, media URL field types, or `variations`, and chant create has no exact-key allowlist. `lib/data/models/chant.dart :: Chant.fromJson` casts those fields directly. A raw authenticated client can therefore create a rule-valid visible chant whose malformed `variations` or typed fields throw while a whole Team, Player, or Discover query is being mapped. Votes, comment likes, reports, comments, user reports, and feedback also lack complete exact-schema controls; vote and like owners can mutate the Function-owned `appliedValue` bookkeeping field. This is a data-integrity and availability boundary, not cosmetic validation.
-2. **P1, moderation revocation in Discover and Share.** `lib/presentation/browse/discovery_section.dart :: _LiveChantCard` falls back to its route snapshot whenever the live document stream errors or emits null. A focused widget probe reproduced a moderated chant remaining in Discover after a permission-denied stream error. That stale card can open `ChantDetailScreen`, where `initialData` currently enables Share before a current live document has been confirmed. Team and Player query streams correctly remove hidden or removed documents; Discover is the inconsistent path.
-3. **P1, missing-parent trigger guard during merge.** `functions/src/index.ts :: handleVoteWritten` always batches an update to the parent chant. `mergeChants` deletes source vote documents and later deletes the source chant. A delayed delete-trigger delivery can therefore update a missing source chant and fail with `NOT_FOUND`. `handleCommentLikeWritten` already demonstrates the required existence guard. The merge callable is also sequential, non-resumable, not end-to-end tested, and its audit payload is partial despite comments in `functions/src/index.ts` calling it full.
-4. **P2, comments reliability and accessibility.** `lib/presentation/comments/comment_section.dart :: _loadUserLike` is started without awaiting or catching its Firestore read. A focused test proved a failed lookup escapes as an unhandled asynchronous error and is marked loaded, so it never retries. The empty-comments `Row` in the same file overflows at 390 logical pixels and 1.8x text; the focused probe measured a 430-pixel right overflow. The current enlarged-text share test uses a nonempty comment fixture and therefore misses this state.
+1. **Direct-write parser parity.** `firestore.rules :: validUserChantSchema` and the collection match blocks now enforce exact typed client shapes, Team and Player relationships, bounded reports and feedback, v1 media and variations limits, and server ownership of `appliedValue`. `test_rules/firestore_rules.test.ts` proves the current client payloads and hostile raw writes in a 131-assertion emulator suite.
+2. **Moderation revocation and live actions.** `lib/presentation/browse/discovery_section.dart :: _LiveChantCard` keeps a safe card through a transient error but removes it on permission denial, current absence, hidden, or removed data. `lib/presentation/browse/chant_detail_screen.dart` keeps route text readable while Save, Share, Report, Vote, and Comment wait for a current visible live chant.
+3. **Missing-parent trigger tolerance.** `functions/src/index.ts :: handleVoteWritten` now reads and validates the parent before the vote query or batch. The missing-parent test proves zero query, batch, or child stamp write after deletion. Source comments no longer call the partial merge audit summary full or undo-capable.
+4. **Comments and Player resilience.** `CommentSection` contains and retries failed like hydration, contains failed Undo, and lays out the empty state at 390 by 844 and 1.8x text. `SubmitChantScreen` clears a stale prefilled Player with recovery copy and remains usable after Player-stream failure.
 
 Release gates also remain outside those defects:
 
 - `android/app/build.gradle.kts :: android.buildTypes.release` signs with the debug keystore, which blocks a store release.
 - `lib/presentation/content_policy/content_policy_screen.dart :: ContentPolicyBody` still tells users the full policy is coming later.
-- `.github/workflows/ci.yml :: flutter-analyze` exits successfully when `FIREBASE_OPTIONS_DART` is absent, so a green job can mean analysis never ran. The checked-in `lib/firebase_options.dart.example` is sufficient for static analysis and removes the need for this fail-open behavior.
 - Native client compilation and the combined iPhone, Android, iPad share, keyboard, moderation, account deletion, and airplane-mode walk remain incomplete.
 
-The active remediation contract in `docs/CHANGE_SPEC.md` covers the four implementation defects plus the CI gate. Signing credentials, final policy wording, live deployment, and device actions require separate owner input or authorization.
+The prior fail-open analysis path is also closed. `.github/workflows/ci.yml :: flutter-analyze` now uses the secret when present or copies `lib/firebase_options.dart.example`, then always runs analysis.
+
+The stack is still not release-ready. Signing credentials, final policy wording, independent review, clean-runner CI for this remediation, native compilation, live deployment, and device actions require separate owner input or authorization.
 
 ## What the product is now
 
@@ -83,7 +84,7 @@ Deterministic interaction document IDs enforce one row per relationship:
 
 Profiles are owner-private and operator-readable. Votes and comment likes are owner-private and operator-readable. Visible chants and comments are publicly readable. Reports and the audit log are operator-readable. Blocks are private to the blocker. Those policies are implemented in the matching blocks in `firestore.rules`.
 
-The principal open authority problem is not who may write, but what a permitted writer may shape. Exact schema, type, bounded-string, server-bookkeeping, and referential checks are complete for profiles and blocks but incomplete across other client-created collections. `docs/CHANGE_SPEC.md` proposes closing those gaps without migrating existing documents.
+Direct-client authority now includes exact shapes for profiles, blocks, chants, votes, comment likes, comments, reports, user reports, and feedback. New direct user chants must match stored Team and optional Player relationships and fit the shipped parser. User media and variations remain deliberately unavailable in v1 direct writes. Admin SDK seed and Function writes remain separate authority paths. Existing legacy visible chants remain readable, while a legacy document that does not fit the current schema cannot use the strict direct-author edit path until normalized.
 
 ## Counters and asynchronous reconciliation
 
@@ -93,15 +94,15 @@ Chant vote totals, comment like totals, visible comment counts, and report-deriv
 
 Votes and comment likes also write `appliedValue` in the same batch as the parent counter. `OptimisticVoteState` and `CommentLikeState` use that stamp to distinguish a local write that the server count has already absorbed from one still waiting for its trigger. The no-op guards in both Functions prevent the `appliedValue` write-back from looping.
 
-The missing chant-existence guard in `handleVoteWritten` is the exception. It matters during `mergeChants` and any future parent deletion. The remediation should make its behavior match the existing comment-like missing-parent guard and add a focused regression test.
+Both vote and comment-like handlers now check parent existence before aggregate work. The vote missing-parent regression test proves a delayed trigger after deletion makes no query, opens no batch, and writes no reconciliation stamp.
 
 ## Browse, moderation, and live state
 
 `lib/data/repositories/chant_repository.dart :: _visibleChants` applies `hidden == false` and `removed == false` to list queries. `TeamScreen` and `PlayerScreen` subscribe to query snapshots, preserve their last usable result through ordinary connection errors, and remove a chant when the query authoritatively removes it.
 
-Discover is different. `discoveryChants()` performs a one-shot full visible fetch and shuffles it. Each card then listens to a single document only to update the score. On any stream error or null, `_LiveChantCard` restores the one-shot `initialChant`. That retention policy cannot distinguish a transient network failure from a permission denial caused by moderation, which is why the focused review probe left hidden content rendered.
+Discover performs a one-shot visible fetch and shuffles it, then each card listens to its document. `_LiveChantCard` classifies Firebase permission denial separately from ordinary connection failure: transient failure retains the last safe card, while denial, current absence, hidden, or removed state removes it.
 
-`ChantDetailScreen` also receives a route snapshot. Retaining text is defensible for ordinary connectivity loss, but external sharing should require a current, visible live confirmation. The proposed remediation makes that distinction explicit instead of treating every stale snapshot as equally actionable.
+`ChantDetailScreen` receives a route snapshot for readable fallback. It now derives a separate current-authority state from an active, error-free, visible live document. Save, Share, Report, Vote, and Comment are unavailable until that state exists. This keeps useful lyrics readable without letting a stale route authorize an external or mutating action.
 
 Discover currently reads all visible chants with no page size in `ChantRepository.discoveryChants()`. Saved club refresh also reads the complete visible Team set from the server. Both are acceptable at the current 12-chant seed, but Discover must paginate or adopt a server-supported random-selection strategy when content volume grows.
 
@@ -113,15 +114,15 @@ The soft duplicate nudge is implemented, despite stale wording in `docs/ROADMAP.
 
 Promotion is not vote-driven. `functions/src/chant_trust.ts :: planChantTrustAction` requires valid stored evidence for user-created canonical promotion. System-owned seed content is the documented sourcing-ledger exception. Evidence removal demotes user-owned canonical content in the same transaction.
 
-One client robustness gap remains in the player-prefilled submission route. `SubmitChantScreen` passes `_selectedPlayerId` as the dropdown initial value without first proving that the asynchronously loaded player list contains it. A removed or stale player can therefore trip Flutter's exactly-one-matching-item assertion. This is included as a lower-severity fix in the active remediation proposal.
+Player-prefilled submission now validates the loaded Player set before giving the dropdown an initial value. A removed or moved Player clears the selection, explains the recovery, and lets the fan choose again or switch subject. Player-stream failure also leaves the subject control usable instead of spinning indefinitely.
 
 ## Comments, replies, blocks, and reports
 
 Comments are flat Firestore documents. A nullable or absent `parentCommentId` means top-level; a non-null parent means one direct reply. `firestore.rules :: validReplyParent` rejects missing, hidden, cross-chant, reply-to-reply, and block-conflicting parents. `CommentSection` ranks parents by likes then recency and sorts replies oldest first.
 
-Blocking is directional for storage and private visibility, but reply and like rules check both directions. The client filters blocked authors from the rendered thread. The block snackbar's Undo callback currently starts `unblockUser` without awaiting or translating failure, which is a smaller reliability gap to handle with the comments remediation.
+Blocking is directional for storage and private visibility, but reply and like rules check both directions. The client filters blocked authors from the rendered thread. Block snackbar Undo now contains repository failure and shows `Could not unblock this user. Try again.`
 
-Report counters are computed from pending report rows inside a Firestore transaction. Chant and comment content auto-hide at three pending reports and never auto-remove. User reports only increase an operator-review count. Report and feedback creation have no velocity limit, and report reason schemas are not currently bounded by rules. Schema bounds are in the active remediation; rate limiting remains a separate abuse-control follow-up.
+Report counters are computed from pending report rows inside a Firestore transaction. Chant and comment content auto-hide at three pending reports and never auto-remove. User reports only increase an operator-review count. Report reasons and feedback now have exact typed and bounded client schemas. Creation velocity remains a separate abuse-control follow-up.
 
 ## Saved Matchday Songbook
 
@@ -145,22 +146,21 @@ Local verification on 2026-08-25:
 
 | Check | Result |
 |---|---|
-| `flutter test` | PASS, 271 tests |
+| `flutter test` | PASS, 282 tests |
 | `flutter analyze lib test` | PASS, no issues |
-| `cd functions && npm test` | PASS, 35 tests |
+| `flutter analyze` | FAIL only in ignored `build/ios/SourcePackages` third-party examples from prior native attempt; clean checkout pending |
+| `cd functions && npm test` | PASS, 36 tests |
 | `cd seed && npm test` | PASS, 42 tests |
 | `cd seed && npx tsc --noEmit` | PASS |
 | `git diff --check main...HEAD` | PASS |
-| focused moderation-revocation probe | RED as expected: stale Discover card remained |
-| focused comment-like read-error probe | RED as expected: unhandled `StateError` escaped |
-| focused empty-comments enlarged-text probe | RED as expected: 430-pixel right overflow |
-| focused live-share revocation probe | PASS: an active stream error disabled Share |
+| `PATH=/usr/local/opt/openjdk/bin:$PATH firebase emulators:exec ...` | PASS, 131 rules assertions |
+| focused moderation and live-action tests | PASS: denial removes Discover card; stale detail actions remain unavailable |
+| focused comments resilience tests | PASS: read retry, Undo failure, and 1.8x empty state are contained |
+| focused stale Player tests and goldens | PASS: missing and failed Player data recover without assertion or clipping |
 
-All temporary probes were removed after their result, and the worktree returned to only the three pre-existing unrelated modifications.
+The earlier review probes supplied red evidence for stale Discover retention, escaping like-read failure, and the enlarged-text overflow. Their permanent regression tests now pass. A Homebrew Java runtime and the cached Firestore emulator made full local authorization verification possible; all 131 assertions pass. Clean-runner CI for the new remediation remains pending.
 
-The Firestore emulator could not run locally because no Java runtime is configured. Draft PR 9's clean GitHub Actions run at this exact commit reported 117 passing Java-backed rules assertions along with green Flutter, analysis, Functions, and seed jobs. That proves the existing rules suite, not the missing adversarial schema cases discovered here.
-
-`dart format --output=none --set-exit-if-changed lib test` reported that 56 committed Dart files would change. It made no files writable because output was disabled. Formatting is not a CI gate today; the active remediation keeps the large mechanical rewrite separate and proposes adding an enforceable gate only after the current tree is normalized in its own reviewable commit.
+`dart format --output=none --set-exit-if-changed lib test` reported during review that 56 committed Dart files would change. It made no files writable because output was disabled. Formatting is not a CI gate today; this remediation keeps the large mechanical rewrite separate and proposes adding an enforceable gate only after the current tree is normalized in its own reviewable commit.
 
 An attempted current npm production advisory audit was not completed. The sandboxed attempt could not reach the registry, and the elevated request was rejected because it would disclose the dependency manifest to the public npm advisory service without separate explicit authorization. Current advisory status is therefore unverified.
 
@@ -183,11 +183,11 @@ Crashlytics is wired, but there is no repository-defined alerting, function-erro
 
 ## Where I most want your eyes
 
-1. **The exact Firestore write schema.** Review `firestore.rules` beside every Dart `fromJson` cast. A rule-valid document must never be able to crash a public query mapper.
-2. **Moderation disappearance across cached and retained UI.** Review Discover, detail, comments, saved snapshots, and offline semantics as separate policies. Retention during network failure is useful; retention after an authoritative permission denial is not.
-3. **Parent deletion and trigger delivery.** Add missing-parent guards anywhere a child trigger updates a parent, then test delayed delivery against merge and deletion.
-4. **Release configuration.** The real policy, Android release signing, native compilation, App Check dashboard state, and device walk are release blockers even though repository unit tests are green.
-5. **Destructive workflows.** `mergeChants` and `deleteAccount` both need resumable or idempotent execution before volume makes a partial run expensive.
+1. **The strict author-update boundary.** Review exact current-schema enforcement against any real legacy documents before rollout; legacy reads remain compatible, but invalid legacy documents cannot use direct author editing until normalized.
+2. **Moderation and offline semantics.** Confirm on device that readable route fallback, Discover disappearance, Saved Songbook copies, and disabled live actions communicate their different authority clearly.
+3. **Release configuration.** The real policy, Android release signing, native compilation, App Check dashboard state, clean-runner CI, and device walk are release blockers even though local suites are green.
+4. **Destructive workflows.** `mergeChants` and `deleteAccount` both need resumable or idempotent execution before volume makes a partial run expensive.
+5. **Scale boundaries.** Discover's full fetch and ground-truth counter scans need measured budgets before community volume makes linear reads material.
 
 ## Unverified
 
@@ -195,6 +195,7 @@ Crashlytics is wired, but there is no repository-defined alerting, function-erro
 - No live stable-ID preflight or seed write ran.
 - No Android build succeeded locally because the Android SDK is unavailable. No iOS build succeeded because inherited Cloud Firestore Swift Package sources failed compilation in the prior native check. No native file mutation from that attempt remains.
 - No iPhone, Android, or iPad walkthrough ran in this review.
+- Clean-runner CI has not yet run against the remediation worktree.
 - Android release signing remains debug-only in the tracked configuration.
 - The content policy remains placeholder copy.
 - Dependency freshness and current security-advisory state are unverified.

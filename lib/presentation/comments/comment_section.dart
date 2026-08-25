@@ -6,6 +6,7 @@ import 'package:chants/app/colors.dart';
 import 'package:chants/app/providers.dart';
 import 'package:chants/app/spacing.dart';
 import 'package:chants/data/models/comment.dart';
+import 'package:chants/data/models/comment_like.dart';
 import 'package:chants/presentation/comments/comment_card.dart';
 import 'package:chants/presentation/report/report_sheet.dart';
 import 'package:chants/presentation/shared/section_eyebrow.dart';
@@ -13,11 +14,13 @@ import 'package:chants/presentation/shared/section_eyebrow.dart';
 class CommentSection extends ConsumerStatefulWidget {
   final String chantId;
   final int commentCount;
+  final bool actionsEnabled;
 
   const CommentSection({
     super.key,
     required this.chantId,
     required this.commentCount,
+    this.actionsEnabled = true,
   });
 
   @override
@@ -121,17 +124,24 @@ class _CommentSectionState extends ConsumerState<CommentSection> {
     if (_likeLoadedFor.contains(commentId)) return;
     _likeLoadedFor.add(commentId);
 
-    final like = await ref
-        .read(commentRepositoryProvider)
-        .getUserLike(userId: userId, commentId: commentId);
+    CommentLike? like;
+    try {
+      like = await ref
+          .read(commentRepositoryProvider)
+          .getUserLike(userId: userId, commentId: commentId);
+    } catch (_) {
+      _likeLoadedFor.remove(commentId);
+      return;
+    }
 
     if (!mounted) return;
-    if (like != null) {
+    final persistedLike = like;
+    if (persistedLike != null) {
       setState(() {
         final current = _likeStates[commentId];
         if (current != null) {
           _likeStates[commentId] = current.reconcileFromPersistedLike(
-            like.appliedValue,
+            persistedLike.appliedValue,
           );
         }
       });
@@ -151,6 +161,7 @@ class _CommentSectionState extends ConsumerState<CommentSection> {
   }
 
   Future<void> _toggleLike(String commentId, String userId) async {
+    if (!widget.actionsEnabled) return;
     final current = _likeStates[commentId];
     if (current == null || current.busy) return;
 
@@ -179,6 +190,7 @@ class _CommentSectionState extends ConsumerState<CommentSection> {
   }
 
   Future<void> _postComment(String userId, String displayName) async {
+    if (!widget.actionsEnabled) return;
     final body = _bodyController.text.trim();
     if (body.isEmpty || _posting) return;
 
@@ -214,11 +226,13 @@ class _CommentSectionState extends ConsumerState<CommentSection> {
   }
 
   void _startReply(Comment comment) {
+    if (!widget.actionsEnabled) return;
     setState(() => _replyingTo = comment);
     _composerFocus.requestFocus();
   }
 
   Future<void> _blockUser(Comment comment, String blockerId) async {
+    if (!widget.actionsEnabled) return;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -259,14 +273,8 @@ class _CommentSectionState extends ConsumerState<CommentSection> {
           content: Text('${comment.displayName} blocked.'),
           action: SnackBarAction(
             label: 'Undo',
-            onPressed: () {
-              ref
-                  .read(blockRepositoryProvider)
-                  .unblockUser(
-                    blockerId: blockerId,
-                    blockedUserId: comment.userId,
-                  );
-            },
+            onPressed: () =>
+                _undoBlock(blockerId: blockerId, blockedUserId: comment.userId),
           ),
         ),
       );
@@ -278,7 +286,26 @@ class _CommentSectionState extends ConsumerState<CommentSection> {
     }
   }
 
+  Future<void> _undoBlock({
+    required String blockerId,
+    required String blockedUserId,
+  }) async {
+    try {
+      await ref
+          .read(blockRepositoryProvider)
+          .unblockUser(blockerId: blockerId, blockedUserId: blockedUserId);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not unblock this user. Try again.'),
+        ),
+      );
+    }
+  }
+
   Future<void> _softDelete(String commentId) async {
+    if (!widget.actionsEnabled) return;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -395,9 +422,7 @@ class _CommentSectionState extends ConsumerState<CommentSection> {
           ),
 
         // Empty
-        if (!_commentsLoading &&
-            !_commentsError &&
-            renderedCommentCount == 0)
+        if (!_commentsLoading && !_commentsError && renderedCommentCount == 0)
           Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: Spacing.lg,
@@ -412,10 +437,13 @@ class _CommentSectionState extends ConsumerState<CommentSection> {
                   color: AppColors.textMuted,
                 ),
                 const SizedBox(width: Spacing.sm),
-                Text(
-                  'No comments yet. Be the first.',
-                  style: textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textMuted,
+                Flexible(
+                  child: Text(
+                    'No comments yet. Be the first.',
+                    textAlign: TextAlign.center,
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: AppColors.textMuted,
+                    ),
                   ),
                 ),
               ],
@@ -434,28 +462,32 @@ class _CommentSectionState extends ConsumerState<CommentSection> {
               comment: comment,
               likeState: likeState,
               isAuthor: isAuthor,
-              onReply: isSignedIn ? () => _startReply(comment) : null,
-              onToggleLike: isSignedIn
+              onReply: isSignedIn && widget.actionsEnabled
+                  ? () => _startReply(comment)
+                  : null,
+              onToggleLike: isSignedIn && widget.actionsEnabled
                   ? () => _toggleLike(comment.id, user.uid)
                   : null,
-              onReportComment: isSignedIn
+              onReportComment: isSignedIn && widget.actionsEnabled
                   ? () => showReportSheet(
                       context: context,
                       target: ReportComment(comment.id),
                       ref: ref,
                     )
                   : null,
-              onReportUser: isSignedIn
+              onReportUser: isSignedIn && widget.actionsEnabled
                   ? () => showReportSheet(
                       context: context,
                       target: ReportUser(comment.userId),
                       ref: ref,
                     )
                   : null,
-              onBlockUser: isSignedIn && !isAuthor
+              onBlockUser: isSignedIn && !isAuthor && widget.actionsEnabled
                   ? () => _blockUser(comment, user.uid)
                   : null,
-              onDelete: isAuthor ? () => _softDelete(comment.id) : null,
+              onDelete: isAuthor && widget.actionsEnabled
+                  ? () => _softDelete(comment.id)
+                  : null,
             ),
           );
 
@@ -470,27 +502,30 @@ class _CommentSectionState extends ConsumerState<CommentSection> {
                 likeState: replyLikeState,
                 isAuthor: isReplyAuthor,
                 isReply: true,
-                onToggleLike: isSignedIn
+                onToggleLike: isSignedIn && widget.actionsEnabled
                     ? () => _toggleLike(reply.id, user.uid)
                     : null,
-                onReportComment: isSignedIn
+                onReportComment: isSignedIn && widget.actionsEnabled
                     ? () => showReportSheet(
                         context: context,
                         target: ReportComment(reply.id),
                         ref: ref,
                       )
                     : null,
-                onReportUser: isSignedIn
+                onReportUser: isSignedIn && widget.actionsEnabled
                     ? () => showReportSheet(
                         context: context,
                         target: ReportUser(reply.userId),
                         ref: ref,
                       )
                     : null,
-                onBlockUser: isSignedIn && !isReplyAuthor
+                onBlockUser:
+                    isSignedIn && !isReplyAuthor && widget.actionsEnabled
                     ? () => _blockUser(reply, user.uid)
                     : null,
-                onDelete: isReplyAuthor ? () => _softDelete(reply.id) : null,
+                onDelete: isReplyAuthor && widget.actionsEnabled
+                    ? () => _softDelete(reply.id)
+                    : null,
               ),
             );
           }
@@ -508,6 +543,17 @@ class _CommentSectionState extends ConsumerState<CommentSection> {
             ),
             child: Text(
               'Sign in to comment.',
+              style: textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
+            ),
+          )
+        else if (!widget.actionsEnabled)
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: Spacing.lg,
+              vertical: Spacing.sm,
+            ),
+            child: Text(
+              'Live updates are required to join the comments.',
               style: textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
             ),
           )

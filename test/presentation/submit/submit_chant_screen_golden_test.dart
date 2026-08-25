@@ -99,4 +99,49 @@ void main() {
       matchesGoldenFile('goldens/submit_chant_evidence.png'),
     );
   });
+
+  testWidgets('missing prefilled Player recovery visual', (tester) async {
+    installTolerantGoldenComparator(
+      testFile: Uri.base.resolve(
+        'test/presentation/submit/submit_chant_screen_golden_test.dart',
+      ),
+    );
+    await _loadFonts();
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authStateProvider.overrideWith(
+            (ref) => Stream.value(_GoldenUser() as User?),
+          ),
+          playerRepositoryProvider.overrideWithValue(_GoldenPlayerRepository()),
+        ],
+        child: MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: ChantTheme.dark,
+          home: const SubmitChantScreen(
+            teamId: 'arsenal',
+            sportId: 'football',
+            competitionId: 'premier-league',
+            prefilledPlayerId: 'former-player',
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('player-selection-notice')),
+      400,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('player-selection-notice')), findsOneWidget);
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('goldens/submit_chant_stale_player.png'),
+    );
+  });
 }

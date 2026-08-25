@@ -18,9 +18,14 @@ class _MockUser extends Mock implements User {
 }
 
 class _FakePlayerRepository extends Mock implements PlayerRepository {
+  final Stream<List<Player>> players;
+
+  _FakePlayerRepository([Stream<List<Player>>? players])
+    : players = players ?? Stream.value(const []);
+
   @override
   Stream<List<Player>> playersForTeamStream({required String teamId}) {
-    return Stream.value([]);
+    return players;
   }
 }
 
@@ -62,18 +67,25 @@ Chant candidate() => Chant(
   updatedAt: DateTime(2026, 1, 1),
 );
 
-Widget _wrap(_FakeChantRepository repository) {
+Widget _wrap(
+  _FakeChantRepository repository, {
+  Stream<List<Player>>? players,
+  String? prefilledPlayerId,
+}) {
   return ProviderScope(
     overrides: [
       authStateProvider.overrideWith((ref) => Stream.value(_MockUser())),
       chantRepositoryProvider.overrideWithValue(repository),
-      playerRepositoryProvider.overrideWithValue(_FakePlayerRepository()),
+      playerRepositoryProvider.overrideWithValue(
+        _FakePlayerRepository(players),
+      ),
     ],
-    child: const MaterialApp(
+    child: MaterialApp(
       home: SubmitChantScreen(
         teamId: 'arsenal',
         sportId: 'football',
         competitionId: 'premier-league',
+        prefilledPlayerId: prefilledPlayerId,
       ),
     ),
   );
@@ -276,4 +288,73 @@ void main() {
     expect(repository.lookups, 1);
     expect(repository.created, hasLength(1));
   });
+
+  testWidgets('missing prefilled Player clears without a dropdown assertion', (
+    tester,
+  ) async {
+    final repository = _FakeChantRepository();
+    await tester.pumpWidget(
+      _wrap(
+        repository,
+        prefilledPlayerId: 'moved-player',
+        players: Stream.value(const [
+          Player(id: 'current-player', teamId: 'arsenal', name: 'Current'),
+        ]),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('player-selection-notice')),
+      400,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'That player is no longer on this club list. Pick another player '
+        'or choose a different subject.',
+      ),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+
+    await tester.tap(find.text('Club'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('player-selection-notice')), findsNothing);
+  });
+
+  testWidgets(
+    'Player stream error explains recovery and allows subject switch',
+    (tester) async {
+      final repository = _FakeChantRepository();
+      await tester.pumpWidget(
+        _wrap(
+          repository,
+          prefilledPlayerId: 'player-1',
+          players: Stream<List<Player>>.error(StateError('offline')),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('player-load-error')),
+        400,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(
+          'Could not load this club’s players. Try again when you are '
+          'connected, or choose another subject.',
+        ),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+
+      await tester.tap(find.text('Club'));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('player-load-error')), findsNothing);
+    },
+  );
 }

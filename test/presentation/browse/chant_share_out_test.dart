@@ -5,6 +5,7 @@ import 'package:chants/app/theme.dart';
 import 'package:chants/data/models/chant.dart';
 import 'package:chants/data/models/comment.dart';
 import 'package:chants/data/models/comment_like.dart';
+import 'package:chants/data/models/saved_songbook.dart';
 import 'package:chants/data/models/team.dart';
 import 'package:chants/data/repositories/chant_repository.dart';
 import 'package:chants/data/repositories/comment_repository.dart';
@@ -19,9 +20,27 @@ import 'package:mockito/mockito.dart';
 class _ChantRepository extends Mock implements ChantRepository {
   final StreamController<Chant?> controller =
       StreamController<Chant?>.broadcast();
+  Chant? current;
+  bool emitCurrentOnListen = true;
 
   @override
-  Stream<Chant?> chantStream(String id) => controller.stream;
+  Stream<Chant?> chantStream(String id) => Stream<Chant?>.multi((events) {
+    if (emitCurrentOnListen && current != null) events.add(current);
+    final subscription = controller.stream.listen(
+      (chant) {
+        current = chant;
+        events.add(chant);
+      },
+      onError: events.addError,
+      onDone: events.close,
+    );
+    events.onCancel = subscription.cancel;
+  });
+}
+
+class _User extends Mock implements User {
+  @override
+  String get uid => 'viewer-1';
 }
 
 class _CommentRepository extends Mock implements CommentRepository {
@@ -98,13 +117,21 @@ Widget _app({
   required ChantShareGateway gateway,
   double textScale = 1,
   List<Comment> comments = const [],
+  User? user,
 }) {
+  repository.current = chant;
   return ProviderScope(
     overrides: [
-      authStateProvider.overrideWith((ref) => Stream<User?>.value(null)),
+      authStateProvider.overrideWith((ref) => Stream<User?>.value(user)),
       chantRepositoryProvider.overrideWithValue(repository),
       commentRepositoryProvider.overrideWithValue(_CommentRepository(comments)),
       chantShareGatewayProvider.overrideWithValue(gateway),
+      blockedUserIdsProvider.overrideWith(
+        (ref, uid) => Stream.value(const <String>{}),
+      ),
+      savedSongbookProvider.overrideWith(
+        (ref, uid) async => SavedSongbook.empty(),
+      ),
     ],
     child: MaterialApp(
       theme: ChantTheme.dark,
@@ -238,6 +265,88 @@ void main() {
 
       await repository.controller.close();
     }
+  });
+
+  testWidgets(
+    'stale route is readable but cannot share without current visible authority',
+    (tester) async {
+      final repository = _ChantRepository()..emitCurrentOnListen = false;
+      final gateway = _ShareGateway();
+      addTearDown(repository.controller.close);
+
+      await tester.pumpWidget(
+        _app(chant: _chant(), repository: repository, gateway: gateway),
+      );
+      await tester.pump();
+
+      expect(find.text('NORTH BANK SONG'), findsOneWidget);
+      var shareButton = tester.widget<IconButton>(
+        find.widgetWithIcon(IconButton, Icons.ios_share_outlined),
+      );
+      expect(shareButton.onPressed, isNull);
+
+      repository.controller.add(_chant());
+      await tester.pump();
+      shareButton = tester.widget<IconButton>(
+        find.widgetWithIcon(IconButton, Icons.ios_share_outlined),
+      );
+      expect(shareButton.onPressed, isNotNull);
+
+      repository.controller.addError(
+        FirebaseException(plugin: 'cloud_firestore', code: 'permission-denied'),
+      );
+      await tester.pump();
+      shareButton = tester.widget<IconButton>(
+        find.widgetWithIcon(IconButton, Icons.ios_share_outlined),
+      );
+      expect(shareButton.onPressed, isNull);
+      expect(gateway.payloads, isEmpty);
+    },
+  );
+
+  testWidgets('all live-target actions wait for current authority', (
+    tester,
+  ) async {
+    final repository = _ChantRepository()..emitCurrentOnListen = false;
+    final gateway = _ShareGateway();
+    addTearDown(repository.controller.close);
+
+    await tester.pumpWidget(
+      _app(
+        chant: _chant(),
+        repository: repository,
+        gateway: gateway,
+        user: _User(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final saveButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.bookmark_border),
+    );
+    final shareButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.ios_share_outlined),
+    );
+    final reportButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.flag_outlined).first,
+    );
+    final upvoteButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.arrow_drop_up),
+    );
+    final downvoteButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.arrow_drop_down),
+    );
+
+    expect(saveButton.onPressed, isNull);
+    expect(shareButton.onPressed, isNull);
+    expect(reportButton.onPressed, isNull);
+    expect(upvoteButton.onPressed, isNull);
+    expect(downvoteButton.onPressed, isNull);
+    expect(
+      find.text('Live updates are required to join the comments.'),
+      findsOneWidget,
+    );
+    expect(gateway.payloads, isEmpty);
   });
 
   testWidgets('detail actions remain usable with enlarged text', (

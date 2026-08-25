@@ -1,13 +1,11 @@
 # Change spec: Stacked v1 authority and integration remediation
 
-**Status:** Proposed, pending Andrew's explicit approval
+**Status:** Implemented and locally verified on 2026-08-25; independent review and clean-runner CI pending
 **Updated:** 2026-08-25
 **Risk lane:** Lane 2, direct-write authorization, moderation lifecycle, asynchronous server triggers, and release gates
 **Stack base:** `b72f4abddea0cd8a3b201de2d4dda246c62a413c`, exact head of stacked draft PR 9
 
-This is the one active implementation proposal produced by the whole-project stacked engineering review. It replaces the completed Basic Share-Out spec, whose reasoning is retained in `docs/changes/2026-08-24-basic-share-out.md`.
-
-Approval of the review did not approve this remediation implementation. No runtime, rules, Functions, CI, or release file changes begin until Andrew approves this exact specification.
+This is the approved and implemented contract produced by the whole-project stacked engineering review. It replaces the completed Basic Share-Out spec, whose reasoning is retained in `docs/changes/2026-08-24-basic-share-out.md`. Andrew's exact implementation approval and the measured result are retained below and in `docs/EXECUTION.md`.
 
 ## Outcome
 
@@ -163,9 +161,9 @@ Healthy signals are zero parser failures from public snapshots, immediate Discov
 
 ## Approval
 
-**Pending.** Andrew has approved beginning the stacked engineering review, not implementing this resulting Lane 2 remediation. Implementation begins only after an explicit approval such as `approved stacked v1 authority and integration remediation spec`.
+**Approved.** Andrew approved this exact specification with `approved stacked v1 authority and integration remediation spec` on 2026-08-25.
 
-Approval will authorize repository edits and proportionate local or clean-runner verification only. It will not authorize production or staging access, dependency disclosure, deployment, live preflight, seed writes, merge, signing credentials, store submission, release, or external device actions.
+Approval authorized repository edits and proportionate local or clean-runner verification only. It did not authorize production or staging access, dependency disclosure, deployment, live preflight, seed writes, merge, signing credentials, store submission, release, or external device actions.
 
 ## Open decisions
 

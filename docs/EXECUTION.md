@@ -13,6 +13,29 @@ This is the chronological evidence trail for substantial engineering work. It re
 
 ## Entries
 
+### 2026-08-25T10:25:44Z Implement stacked v1 authority and integration remediation
+
+- **Status:** Implemented and locally verified; independent review and clean-runner CI pending
+- **Scope:** Implement the exact approved Lane 2 schema, moderation, live-action, comments, stale Player, vote-trigger, CI, test, and framework-record boundary. No Firebase deployment or data access, live seed action, native build, device action, merge, signing, or release.
+- **Reference:** `docs/CHANGE_SPEC.md`, decision 009
+- **Operator:** Codex
+
+| UTC time | Action | Target/environment | Result and evidence |
+|---|---|---|---|
+| 09:05:00 | Received Andrew's exact approval and preserved the existing worktree boundary | Local repository | Approved with `approved stacked v1 authority and integration remediation spec`. Preserved the user's existing Gradle and lockfile changes unstaged. |
+| 09:15:00 | Implemented exact direct-write schemas and client write parity | Firestore rules and Dart repositories | Added parser-safe chant, vote, comment-like, comment, report, and feedback shapes; Team and Player relationships; server-owned reconciliation stamps; and transactional vote and like intent writes. |
+| 09:32:00 | Implemented moderation and current-live action authority | Discover and chant detail | Permission denial, current absence, hidden, and removed states now fail closed. Ordinary transient Discover failure retains safe content. Live Save, Share, Report, Vote, and Comment actions wait for current visible authority. |
+| 09:47:00 | Implemented comments, submission, trigger, and CI resilience | Flutter, Functions, GitHub Actions | Contained retryable like hydration and Undo failure, fixed enlarged empty layout, added stale Player recovery, guarded missing vote parent before query and batch, corrected merge comments, and made analysis use a deterministic checked-in fixture when no secret exists. |
+| 10:08:00 | Ran focused and subsystem verification | Local macOS and Node 20 | Focused authority, share, comments, submission, golden, and regression groups passed. Functions passed 36 and seed passed 42. Rules TypeScript compiled. |
+| 10:21:00 | Started the real local Firestore emulator with the available Homebrew Java runtime | Local OpenJDK 26 and Firestore emulator 1.21.0 | First run exposed one author-update rule path over the 1,000-expression limit and one legacy-shaped positive fixture. Removed redundant exact-key work and made the positive fixture current-schema. |
+| 10:23:00 | Reran the complete Java-backed rules suite | Local Firestore emulator | PASS, 131 assertions. Hostile shapes, types, timestamps, hierarchy, media, variations, reports, feedback, and reconciliation stamps fail closed; current client shapes pass. |
+| 10:25:44 | Ran final Flutter, analysis, rules compilation, and diff checks; refreshed durable records | Local macOS, Flutter 3.44.8 | `flutter test` passed 282; `flutter analyze lib test`, rules `tsc --noEmit`, and `git diff --check` passed. A separate repository-wide analysis attempt traversed ignored `build/ios/SourcePackages` from the earlier failed native build and reported third-party example errors; no first-party analyzer issue was reported. Added decision 009, completed-change rationale, interface and learning memory, and milestone corrections. |
+
+- **Files/artifacts:** Runtime and test paths named in the approved spec, two submission goldens, decision 009, `docs/changes/2026-08-25-stacked-v1-authority-integration-remediation.md`, refreshed milestone docs, and this execution entry.
+- **Skipped or blocked:** Native Android and iOS compilation, live Firebase inspection, stable-ID preflight, seed writes, deployment, merge, signing, release, and device walkthrough were not authorized or remain separate gates.
+- **Final state:** Approved implementation is locally green with 282 Flutter, 131 rules, 36 Functions, and 42 seed tests. No commit, push, or PR update has been made for this block.
+- **Follow-up:** Obtain independent review and clean-runner CI, whose clean checkout will prove the workflow's repository-wide `flutter analyze`, then perform the combined native and device walkthrough before release.
+
 ### 2026-08-25T08:50:37Z Review the combined v1 feature stack
 
 - **Status:** Whole-project review completed; Lane 2 remediation proposed and pending approval

@@ -26,16 +26,16 @@ jobs:
         with:
           channel: stable
       - run: flutter pub get
-      - name: Write Firebase options from secret
-        if: ${{ env.FIREBASE_OPTIONS_DART != '' }}
-        run: cat > lib/firebase_options.dart <<< "$FIREBASE_OPTIONS_DART"
-      - name: Analyze
+      - name: Configure Firebase options for static analysis
         run: |
-          if [ -z "$FIREBASE_OPTIONS_DART" ]; then
-            echo "Skipping analyze: FIREBASE_OPTIONS_DART secret not set"
-            exit 0
+          if [ -n "$FIREBASE_OPTIONS_DART" ]; then
+            cat > lib/firebase_options.dart <<< "$FIREBASE_OPTIONS_DART"
+          else
+            cp lib/firebase_options.dart.example lib/firebase_options.dart
+            echo "Using checked-in non-secret Firebase analysis fixture"
           fi
-          flutter analyze
+      - name: Analyze
+        run: flutter analyze
 
   functions:
     runs-on: ubuntu-latest

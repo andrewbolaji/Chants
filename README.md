@@ -4,7 +4,7 @@
 
 **The songbook of the terraces and the workshop for what gets sung next.**
 
-Chants is a mobile app where football fans find and learn terrace songs, contribute the ones that are missing, and back new ideas that deserve to be sung next. Every chant has its lyrics, the tune it is sung to, and the story behind it. Fans can already vote, comment, and create; the remaining v1 work makes the trusted Songbook and community Chant Lab distinction explicit.
+Chants is a mobile app where football fans find and learn terrace songs, contribute the ones that are missing, and back new ideas that deserve to be sung next. Every chant has its lyrics, the tune it is sung to, and the story behind it. The trusted Songbook keeps Terrace Proven material distinct from the community Chant Lab, where fans can create, compete, vote, and comment.
 
 > **Status:** In active development. App Store submission is in progress; not yet live on the stores. Arsenal is fully seeded; the remaining Premier League clubs are being added.
 
@@ -27,11 +27,14 @@ Chants is a mobile app where football fans find and learn terrace songs, contrib
 - **Browse by competition and club.** Drill down from the Premier League to a club, then to a player, then to a specific chant. Clubs show their chants ranked by score, with verified (canonical) content leading on ties.
 - **Learn-focused chant detail.** Lyrics, tune name, context notes explaining the history, and an "Also sung as" section for alternate versions when they exist.
 - **Community submission.** Any signed-in user can add a chant. Submissions enter as community content; operators can verify them.
+- **Songbook and Chant Lab.** Terrace Proven chants form the trusted archive. Original and already-sung community submissions compete separately in Chant Lab, with optional YouTube or X evidence and a soft duplicate warning before posting.
 - **Voting.** Upvote, downvote, or remove your vote. Score updates instantly (optimistic UI) and reconciles against the server.
 - **Comments with likes and direct replies.** Top-level comments sort by most liked, then newest; one chronological reply level sits below each parent. Users can block another account and manage their block list.
 - **Reporting and moderation.** Flag a chant or comment. Auto-hide at a configurable report threshold. Operator tools for hide, unhide, remove, and ban, with an audit log. Rate limits for new and established accounts.
 - **Discover.** A shuffled mix of chants across all clubs on the home screen, with live-updating scores.
 - **Search.** Filter chants by title, lyrics, tune name, or club name with results updating as you type.
+- **Saved Matchday Songbook.** Save one chant or a club's Songbook as a bounded device copy for quick offline reading at the ground.
+- **Share-out.** Send a complete, honestly labelled chant through the native share sheet without inventing a dead public link.
 - **Account management.** Email/password auth, password reset, and in-app account deletion with contribution anonymization and counter reconciliation. Remaining lifecycle gaps are tracked in the engineering review documents.
 
 ---
@@ -127,7 +130,7 @@ Eleven Functions exports in source (all configured for `europe-west2`; live depl
 
 **Content integrity.** All seed content (lyrics, squads, cultural context) is externally sourced and verified by hand. The build process can only transform supplied data in place; it never generates or rewrites content. This is a standing rule with the highest priority in the project.
 
-**Test coverage across layers.** 182 Flutter tests (including phone-sized reply-thread and operator-access goldens), 106 Firestore security-rules assertions, 26 Cloud Functions tests, and 23 seed-pipeline tests. Regression guards for timing-sensitive UI and reply grouping run against the real widgets; reply ordering was also proven red against a deliberate production mutation and green after restoration.
+**Test coverage across layers.** 282 Flutter tests, 131 Firestore security-rules assertions, 36 Cloud Functions tests, and 42 seed-pipeline tests. Regression guards cover timing-sensitive UI, moderation revocation, direct-write abuse, trigger deletion races, responsive comment states, stale Player recovery, reply grouping, and offline snapshot reconstruction.
 
 ---
 

@@ -204,9 +204,7 @@ class CommentCard extends StatelessWidget {
           // Body: calm readable text
           Text(
             comment.body,
-            style: textTheme.bodyMedium?.copyWith(
-              color: AppColors.textBody,
-            ),
+            style: textTheme.bodyMedium?.copyWith(color: AppColors.textBody),
           ),
           const SizedBox(height: Spacing.sm),
 
@@ -220,9 +218,7 @@ class CommentCard extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      likeState.liked
-                          ? Icons.favorite
-                          : Icons.favorite_border,
+                      likeState.liked ? Icons.favorite : Icons.favorite_border,
                       size: 16,
                       color: likeState.liked
                           ? AppColors.gold
@@ -256,7 +252,7 @@ class CommentCard extends StatelessWidget {
               ],
               const Spacer(),
               // Report (if not author) or delete (if author)
-              if (isAuthor)
+              if (isAuthor && onDelete != null)
                 GestureDetector(
                   onTap: onDelete,
                   child: Icon(
@@ -265,7 +261,9 @@ class CommentCard extends StatelessWidget {
                     color: AppColors.textMuted,
                   ),
                 )
-              else
+              else if (onReportComment != null ||
+                  onReportUser != null ||
+                  onBlockUser != null)
                 PopupMenuButton<_MoreChoice>(
                   tooltip: 'More actions',
                   icon: Icon(

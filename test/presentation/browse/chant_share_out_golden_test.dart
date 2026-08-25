@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:chants/app/providers.dart';
 import 'package:chants/app/theme.dart';
 import 'package:chants/data/models/chant.dart';
@@ -29,7 +31,10 @@ class _User extends Mock implements User {
 
 class _ChantRepository extends Mock implements ChantRepository {
   @override
-  Stream<Chant?> chantStream(String id) => Stream.value(_chant);
+  Stream<Chant?> chantStream(String id) async* {
+    yield _chant;
+    await Completer<void>().future;
+  }
 }
 
 class _CommentRepository extends Mock implements CommentRepository {

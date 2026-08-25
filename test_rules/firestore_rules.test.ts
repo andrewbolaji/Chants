@@ -88,6 +88,32 @@ async function seedBannedUser(uid: string) {
   });
 }
 
+async function seedTeam(
+  teamId = "t1",
+  sportId = "s1",
+  competitionId = "c1",
+) {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    await setDoc(doc(db, "teams", teamId), {
+      sportId,
+      competitionId,
+      name: "Test Team",
+      crestImageUrl: null,
+    });
+  });
+}
+
+async function seedPlayer(playerId: string, teamId: string) {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    await setDoc(doc(db, "players", playerId), {
+      teamId,
+      name: "Test Player",
+    });
+  });
+}
+
 // Age-confirmed but never accepted the content policy. Used to test the new
 // hasAcceptedPolicy() gate on chants/comments create.
 async function seedUserProfileNoPolicyAcceptance(uid: string) {
@@ -143,6 +169,7 @@ async function seedVisibleChant(
       flagCount: 0,
       hidden: false,
       removed: false,
+      variations: [],
     });
   });
 }
@@ -177,6 +204,7 @@ async function seedHiddenChant(chantId: string) {
       flagCount: 0,
       hidden: true,
       removed: false,
+      variations: [],
     });
   });
 }
@@ -209,6 +237,7 @@ function validNewChantData(createdBy: string) {
     flagCount: 0,
     hidden: false,
     removed: false,
+    variations: [],
   };
 }
 
@@ -557,6 +586,10 @@ describe("profiles", () => {
 // ===================== CHANTS =====================
 
 describe("chants", () => {
+  beforeEach(async () => {
+    await seedTeam();
+  });
+
   it("allows public read of visible chants", async () => {
     await seedVisibleChant("ch1", "user1");
     const unauth = testEnv.unauthenticatedContext().firestore();
@@ -606,6 +639,7 @@ describe("chants", () => {
       flagCount: 0,
       hidden: false,
       removed: false,
+      variations: [],
     }));
   });
 
@@ -639,6 +673,7 @@ describe("chants", () => {
       flagCount: 0,
       hidden: false,
       removed: false,
+      variations: [],
     }));
   });
 
@@ -672,11 +707,12 @@ describe("chants", () => {
       flagCount: 0,
       hidden: false,
       removed: false,
+      variations: [],
     }));
   });
 
   it("allows author to update content fields", async () => {
-    await seedVisibleChant("ch1", "user1");
+    await seedVisibleChant("ch1", "user1", { origin: "originalIdea" });
     await seedUserProfile("user1");
     const db = testEnv.authenticatedContext("user1").firestore();
     await assertSucceeds(updateDoc(doc(db, "chants", "ch1"), {
@@ -725,6 +761,10 @@ describe("chants", () => {
 });
 
 describe("chant provenance and evidence", () => {
+  beforeEach(async () => {
+    await seedTeam();
+  });
+
   it("requires a valid origin on every new user chant", async () => {
     await seedUserProfile("user1");
     const db = testEnv.authenticatedContext("user1").firestore();
@@ -821,6 +861,110 @@ describe("chant provenance and evidence", () => {
   });
 });
 
+describe("direct chant schema and relationships", () => {
+  beforeEach(async () => {
+    await seedUserProfile("user1");
+    await seedTeam();
+  });
+
+  it("allows a Player chant only for a Player on the selected Team", async () => {
+    await seedPlayer("p1", "t1");
+    const db = testEnv.authenticatedContext("user1").firestore();
+
+    await assertSucceeds(setDoc(doc(db, "chants", "player-chant"), {
+      ...validNewChantData("user1"),
+      subjectTag: "player",
+      playerId: "p1",
+    }));
+  });
+
+  it("denies malformed fields, forged media, and unknown keys", async () => {
+    const db = testEnv.authenticatedContext("user1").firestore();
+    const invalidPayloads = [
+      { ...validNewChantData("user1"), variations: "not-a-list" },
+      {
+        ...validNewChantData("user1"),
+        variations: [{ label: "Injected", lyric: "Unsafe" }],
+      },
+      { ...validNewChantData("user1"), playerId: 42 },
+      { ...validNewChantData("user1"), sportId: { forged: true } },
+      {
+        ...validNewChantData("user1"),
+        mediaType: "crowdClip",
+        mediaUrl: "https://example.test/clip.mp4",
+      },
+      {
+        ...validNewChantData("user1"),
+        coverImageUrl: "https://example.test/cover.jpg",
+      },
+      { ...validNewChantData("user1"), unexpected: "x".repeat(1024) },
+    ];
+
+    for (let index = 0; index < invalidPayloads.length; index++) {
+      await assertFails(setDoc(
+        doc(db, "chants", `invalid-shape-${index}`),
+        invalidPayloads[index],
+      ));
+    }
+  });
+
+  it("denies Team hierarchy and Player relationship mismatches", async () => {
+    await seedTeam("t2", "s1", "c1");
+    await seedPlayer("p-on-t2", "t2");
+    const db = testEnv.authenticatedContext("user1").firestore();
+
+    await assertFails(setDoc(doc(db, "chants", "wrong-sport"), {
+      ...validNewChantData("user1"),
+      sportId: "wrong-sport",
+    }));
+    await assertFails(setDoc(doc(db, "chants", "wrong-competition"), {
+      ...validNewChantData("user1"),
+      competitionId: "wrong-competition",
+    }));
+    await assertFails(setDoc(doc(db, "chants", "missing-team"), {
+      ...validNewChantData("user1"),
+      teamId: "missing",
+    }));
+    await assertFails(setDoc(doc(db, "chants", "wrong-player-team"), {
+      ...validNewChantData("user1"),
+      subjectTag: "player",
+      playerId: "p-on-t2",
+    }));
+    await assertFails(setDoc(doc(db, "chants", "club-with-player"), {
+      ...validNewChantData("user1"),
+      playerId: "p-on-t2",
+    }));
+  });
+
+  it("denies stale or future client timestamps", async () => {
+    const db = testEnv.authenticatedContext("user1").firestore();
+    const twoHours = 2 * 60 * 60 * 1000;
+
+    await assertFails(setDoc(doc(db, "chants", "stale-created"), {
+      ...validNewChantData("user1"),
+      createdAt: Timestamp.fromMillis(Date.now() - twoHours),
+    }));
+    await assertFails(setDoc(doc(db, "chants", "future-updated"), {
+      ...validNewChantData("user1"),
+      updatedAt: Timestamp.fromMillis(Date.now() + twoHours),
+    }));
+  });
+
+  it("keeps dormant media and schema fields immutable for authors", async () => {
+    await seedVisibleChant("ch1", "user1", { origin: "originalIdea" });
+    const db = testEnv.authenticatedContext("user1").firestore();
+
+    await assertFails(updateDoc(doc(db, "chants", "ch1"), {
+      coverImageUrl: "https://example.test/cover.jpg",
+      updatedAt: Timestamp.now(),
+    }));
+    await assertFails(updateDoc(doc(db, "chants", "ch1"), {
+      variations: deleteField(),
+      updatedAt: Timestamp.now(),
+    }));
+  });
+});
+
 // ===================== VOTES =====================
 
 describe("votes", () => {
@@ -858,6 +1002,27 @@ describe("votes", () => {
     }));
   });
 
+  it("denies unknown and Function-owned fields on create", async () => {
+    await seedUserProfile("user1");
+    await seedVisibleChant("ch1", "someone");
+    const db = testEnv.authenticatedContext("user1").firestore();
+    const base = {
+      chantId: "ch1",
+      userId: "user1",
+      value: 1,
+      createdAt: Timestamp.now(),
+    };
+
+    await assertFails(setDoc(doc(db, "votes", "user1_ch1"), {
+      ...base,
+      appliedValue: 1,
+    }));
+    await assertFails(setDoc(doc(db, "votes", "user1_ch1"), {
+      ...base,
+      unexpected: true,
+    }));
+  });
+
   it("allows user to update own vote value", async () => {
     await seedVisibleChant("ch1", "someone");
     await testEnv.withSecurityRulesDisabled(async (context) => {
@@ -887,6 +1052,32 @@ describe("votes", () => {
     await seedUserProfile("user1");
     const db = testEnv.authenticatedContext("user1").firestore();
     await assertFails(updateDoc(doc(db, "votes", "user1_ch1"), { userId: "user2" }));
+  });
+
+  it("preserves Function-owned appliedValue on owner updates", async () => {
+    await seedVisibleChant("ch1", "someone");
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await setDoc(doc(db, "votes", "user1_ch1"), {
+        chantId: "ch1",
+        userId: "user1",
+        value: 1,
+        createdAt: Timestamp.now(),
+        appliedValue: 1,
+      });
+    });
+    await seedUserProfile("user1");
+    const db = testEnv.authenticatedContext("user1").firestore();
+
+    await assertSucceeds(updateDoc(doc(db, "votes", "user1_ch1"), {
+      value: -1,
+    }));
+    await assertFails(updateDoc(doc(db, "votes", "user1_ch1"), {
+      appliedValue: -1,
+    }));
+    await assertFails(updateDoc(doc(db, "votes", "user1_ch1"), {
+      appliedValue: deleteField(),
+    }));
   });
 
   it("allows user to delete own vote", async () => {
@@ -1124,6 +1315,202 @@ describe("feedback", () => {
     const db = testEnv.authenticatedContext("user1").firestore();
     await assertFails(updateDoc(doc(db, "feedback", "fb1"), { resolved: true }));
   });
+
+  it("denies unknown fields, invalid types, categories, and timestamps", async () => {
+    const db = testEnv.authenticatedContext("user1").firestore();
+    const base = {
+      userId: "user1",
+      category: "suggestion",
+      message: "Useful feedback",
+      followUpOk: true,
+      resolved: false,
+      createdAt: Timestamp.now(),
+    };
+    const invalidPayloads = [
+      { ...base, unexpected: true },
+      { ...base, category: "compliment" },
+      { ...base, message: "" },
+      { ...base, message: 42 },
+      { ...base, followUpOk: "yes" },
+      { ...base, resolved: 0 },
+      {
+        ...base,
+        createdAt: Timestamp.fromMillis(Date.now() + 2 * 60 * 60 * 1000),
+      },
+    ];
+
+    for (const payload of invalidPayloads) {
+      await assertFails(addDoc(collection(db, "feedback"), payload));
+    }
+  });
+});
+
+describe("exact comment and comment-like schemas", () => {
+  beforeEach(async () => {
+    await seedUserProfile("user1");
+    await seedVisibleChant("ch1", "someone");
+  });
+
+  it("allows the shipped top-level comment shape", async () => {
+    const db = testEnv.authenticatedContext("user1").firestore();
+    await assertSucceeds(addDoc(collection(db, "comments"), {
+      chantId: "ch1",
+      userId: "user1",
+      displayName: "TestUser",
+      body: "A useful comment",
+      parentCommentId: null,
+      createdAt: Timestamp.now(),
+      likeCount: 0,
+      flagCount: 0,
+      hidden: false,
+      removed: false,
+    }));
+  });
+
+  it("denies unknown comment fields and malformed counter or flag types", async () => {
+    const db = testEnv.authenticatedContext("user1").firestore();
+    const base = {
+      chantId: "ch1",
+      userId: "user1",
+      displayName: "TestUser",
+      body: "A useful comment",
+      createdAt: Timestamp.now(),
+      likeCount: 0,
+      flagCount: 0,
+      hidden: false,
+      removed: false,
+    };
+
+    await assertFails(addDoc(collection(db, "comments"), {
+      ...base,
+      unexpected: "raw-client-field",
+    }));
+    await assertFails(addDoc(collection(db, "comments"), {
+      ...base,
+      likeCount: "0",
+    }));
+    await assertFails(addDoc(collection(db, "comments"), {
+      ...base,
+      hidden: 0,
+    }));
+  });
+
+  it("denies Function-owned and unknown comment-like fields", async () => {
+    await seedComment("comment1", "ch1", "someone");
+    const db = testEnv.authenticatedContext("user1").firestore();
+    const base = {
+      commentId: "comment1",
+      userId: "user1",
+      value: 1,
+      createdAt: Timestamp.now(),
+    };
+
+    await assertFails(setDoc(doc(db, "commentLikes", "user1_comment1"), {
+      ...base,
+      appliedValue: 1,
+    }));
+    await assertFails(setDoc(doc(db, "commentLikes", "user1_comment1"), {
+      ...base,
+      unexpected: true,
+    }));
+  });
+
+  it("preserves Function-owned comment-like appliedValue", async () => {
+    await seedComment("comment1", "ch1", "someone");
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await setDoc(doc(db, "commentLikes", "user1_comment1"), {
+        commentId: "comment1",
+        userId: "user1",
+        value: 1,
+        createdAt: Timestamp.now(),
+        appliedValue: 1,
+      });
+    });
+    const db = testEnv.authenticatedContext("user1").firestore();
+
+    await assertFails(updateDoc(doc(db, "commentLikes", "user1_comment1"), {
+      appliedValue: -1,
+    }));
+    await assertFails(updateDoc(doc(db, "commentLikes", "user1_comment1"), {
+      appliedValue: deleteField(),
+    }));
+  });
+});
+
+describe("exact report schemas", () => {
+  beforeEach(async () => {
+    await seedUserProfile("reporter");
+    await seedUserProfile("target");
+    await seedVisibleChant("ch1", "someone");
+    await seedComment("comment1", "ch1", "target");
+  });
+
+  it("allows the current chant, comment, and user report shapes", async () => {
+    const db = testEnv.authenticatedContext("reporter").firestore();
+    const common = {
+      reportedBy: "reporter",
+      reason: "Offensive content",
+      createdAt: Timestamp.now(),
+      status: "pending",
+    };
+
+    await assertSucceeds(setDoc(doc(db, "reports", "reporter_ch1"), {
+      ...common,
+      chantId: "ch1",
+    }));
+    await assertSucceeds(setDoc(
+      doc(db, "commentReports", "reporter_comment1"),
+      { ...common, commentId: "comment1" },
+    ));
+    await assertSucceeds(setDoc(
+      doc(db, "userReports", "reporter_target"),
+      { ...common, reportedUserId: "target" },
+    ));
+  });
+
+  it("denies unknown, empty, oversized, nonstring, and stale report data", async () => {
+    const db = testEnv.authenticatedContext("reporter").firestore();
+    const cases = [
+      {
+        collectionName: "reports",
+        targetField: "chantId",
+        targetId: "ch1",
+        documentId: "reporter_ch1",
+      },
+      {
+        collectionName: "commentReports",
+        targetField: "commentId",
+        targetId: "comment1",
+        documentId: "reporter_comment1",
+      },
+      {
+        collectionName: "userReports",
+        targetField: "reportedUserId",
+        targetId: "target",
+        documentId: "reporter_target",
+      },
+    ];
+
+    for (const testCase of cases) {
+      const base = {
+        [testCase.targetField]: testCase.targetId,
+        reportedBy: "reporter",
+        reason: "Offensive content",
+        createdAt: Timestamp.now(),
+        status: "pending",
+      };
+      const target = doc(db, testCase.collectionName, testCase.documentId);
+      await assertFails(setDoc(target, { ...base, unexpected: true }));
+      await assertFails(setDoc(target, { ...base, reason: "" }));
+      await assertFails(setDoc(target, { ...base, reason: "x".repeat(251) }));
+      await assertFails(setDoc(target, { ...base, reason: 42 }));
+      await assertFails(setDoc(target, {
+        ...base,
+        createdAt: Timestamp.fromMillis(Date.now() - 2 * 60 * 60 * 1000),
+      }));
+    }
+  });
 });
 
 // ===================== REPORT WRITE CORRECTNESS (Fix D) =====================
@@ -1231,7 +1618,12 @@ describe("ban enforcement", () => {
     flagCount: 0,
     hidden: false,
     removed: false,
+    variations: [],
   };
+
+  beforeEach(async () => {
+    await seedTeam();
+  });
 
   it("denies chant create by banned user", async () => {
     await seedBannedUser("banned1");
@@ -1317,7 +1709,12 @@ describe("policy acceptance gate", () => {
     flagCount: 0,
     hidden: false,
     removed: false,
+    variations: [],
   };
+
+  beforeEach(async () => {
+    await seedTeam();
+  });
 
   const validCommentData = {
     displayName: "TestUser",
@@ -1784,6 +2181,10 @@ describe("report dedup", () => {
 // ===================== BLOCK 3: SERVER-SIDE LENGTH LIMITS (Fix 3) =====================
 
 describe("server-side length limits", () => {
+  beforeEach(async () => {
+    await seedTeam();
+  });
+
   it("denies chant with title > 200 chars", async () => {
     await seedUserProfile("user1");
     const db = testEnv.authenticatedContext("user1").firestore();
@@ -1811,6 +2212,7 @@ describe("server-side length limits", () => {
       flagCount: 0,
       hidden: false,
       removed: false,
+      variations: [],
     }));
   });
 
@@ -1841,6 +2243,7 @@ describe("server-side length limits", () => {
       flagCount: 0,
       hidden: false,
       removed: false,
+      variations: [],
     }));
   });
 
@@ -1871,6 +2274,7 @@ describe("server-side length limits", () => {
       flagCount: 0,
       hidden: false,
       removed: false,
+      variations: [],
     }));
   });
 
@@ -1901,6 +2305,7 @@ describe("server-side length limits", () => {
       flagCount: 0,
       hidden: false,
       removed: false,
+      variations: [],
     }));
   });
 });

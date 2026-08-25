@@ -14,6 +14,7 @@ The path from code-complete to public launch, with concrete triggers on every ga
 - Songbook and Chant Lab browse split in source and green draft-PR CI: status-only trust surfaces, deterministic Top and New order, non-verification Rising, stable vote-time order, cached and recoverable states, fail-soft player metadata, and player-scoped Start a chant. Draft PR 7 review and the device walk remain pending.
 - Saved Matchday Songbook implemented and green-CI verified on draft PR 8: UID-scoped device snapshots, individual and club ownership, explicit server refresh, atomic persistence, account-deletion cleanup, and read-only offline routes. Native client compilation, PR review, and the airplane-mode device walk remain pending.
 - Basic share-out implemented and green-CI verified on stacked draft PR 9: current live chant text, honest trust wording, optional future HTTPS seam, duplicate-tap guard, iPad anchor, recoverable invocation failure, and no dead current URL. Native compilation, PR review, and the device destination walk remain pending.
+- Stacked v1 authority and integration remediation implemented and locally verified: exact direct-write schemas, server-owned vote and like stamps, authoritative moderation disappearance, current-live action gates, missing-parent vote-trigger tolerance, resilient comments and stale Player recovery, and deterministic CI analysis configuration. Review, clean-runner CI, native compilation, and the combined device walk remain pending.
 - Dedup matching engine (backend only): token-overlap matcher and operator `mergeChants` function with a partial audit payload, not a complete undo snapshot.
 - Visual identity: complete "matchnight, warmed with playful" redesign, tokenized, AA contrast proven.
 
@@ -22,8 +23,8 @@ The path from code-complete to public launch, with concrete triggers on every ga
 - The read-only live chant-identity preflight before the next production seed write.
 - The remaining verified club seed.
 - Saved Matchday Songbook native client compilation and airplane-mode device walk.
-- The dedup nudge frontend.
 - Basic share-out native compilation, PR review, and device destination walk.
+- Review and clean-runner CI for the stacked authority remediation.
 - Store launch prep.
 
 ---
@@ -115,7 +116,7 @@ The implementation boundary and remaining verification gate live in `docs/CHANGE
 
 **Approved product contract:** Chants keeps Terrace Proven content in the trusted Songbook and gives original or not-yet-verified submissions a visible Chant Lab. Submission origin is required. Evidence is optional to post and required to promote a user submission to Terrace Proven. Votes rank ideas but never verify a factual claim.
 
-**Implementation status:** The provenance slice is implemented on stacked draft PR 6 with green CI. The browse split is implemented and green-CI verified on stacked draft PR 7 with pure ranking tests, real Team and Player widget boundaries, retained-data red-check evidence, enlarged-text coverage, inspected 390 by 844 Songbook and Chant Lab goldens, and 117 passing Firestore rules assertions. Saved Matchday Songbook is implemented and green-CI verified on stacked draft PR 8 with strict UID-scoped persistence, refresh and lifecycle tests, a reconstruction red check, inspected overview and detail goldens, and 117 passing Firestore rules assertions. Basic share-out is implemented and green-CI verified on stacked draft PR 9 with pure payload tests, real-detail interaction tests, a deliberate red check, an inspected 390 by 844 golden, and 117 passing Firestore rules assertions. Native compilation, stacked review, and the combined device walk remain.
+**Implementation status:** The provenance slice, browse split, Saved Matchday Songbook, and Basic Share-Out are implemented in the stack. The follow-on authority remediation is locally green with 282 Flutter tests, 131 Java-backed Firestore rules assertions, 36 Functions tests, 42 seed tests, and clean Dart analysis. Native compilation, independent review, clean-runner CI for the remediation, and the combined device walk remain.
 
 **Source of truth:** `docs/decisions/004-songbook-and-chant-lab.md` and the interface contract in `docs/INTERFACE.md`.
 

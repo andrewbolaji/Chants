@@ -9,6 +9,7 @@ import 'package:chants/presentation/shared/chant_card.dart';
 import 'package:chants/presentation/shared/empty_state.dart';
 import 'package:chants/presentation/shared/error_state.dart';
 import 'package:chants/presentation/shared/section_eyebrow.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 final discoveryProvider = FutureProvider<List<Chant>>((ref) {
   return ref.watch(chantRepositoryProvider).discoveryChants();
@@ -20,6 +21,15 @@ final allTeamsProvider = StreamProvider<Map<String, String>>((ref) {
       .teamsForCompetitionStream(competitionId: 'premier-league')
       .map((teams) => {for (final t in teams) t.id: t.name});
 });
+
+bool isChantPermissionDenied(Object? error) {
+  if (error is FirebaseException) {
+    final code = error.code.toLowerCase().replaceAll('_', '-');
+    if (code == 'permission-denied') return true;
+  }
+  final description = error.toString().toLowerCase().replaceAll('_', '-');
+  return description.contains('permission-denied');
+}
 
 class DiscoverySection extends ConsumerWidget {
   final String searchQuery;
@@ -133,7 +143,18 @@ class _LiveChantCard extends ConsumerWidget {
       stream: stream,
       initialData: initialChant,
       builder: (context, snap) {
+        final permissionDenied = isChantPermissionDenied(snap.error);
+        final hasAuthoritativeValue =
+            snap.connectionState == ConnectionState.active && !snap.hasError;
+        final current = snap.data;
+        if (permissionDenied ||
+            (hasAuthoritativeValue &&
+                (current == null || current.hidden || current.removed))) {
+          return const SizedBox.shrink();
+        }
+
         final live = snap.data ?? initialChant;
+        if (live.hidden || live.removed) return const SizedBox.shrink();
         return ChantCard(
           chant: live,
           teamName: teamName,
