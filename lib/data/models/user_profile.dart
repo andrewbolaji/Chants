@@ -6,6 +6,7 @@ class UserProfile {
   final String role;
   final bool banned;
   final bool ageConfirmed17Plus;
+  final bool deletionPending;
   final String? acceptedPolicyVersion;
   final DateTime? acceptedPolicyAt;
   final int userReportCount;
@@ -18,6 +19,7 @@ class UserProfile {
     required this.role,
     this.banned = false,
     this.ageConfirmed17Plus = false,
+    this.deletionPending = false,
     this.acceptedPolicyVersion,
     this.acceptedPolicyAt,
     this.userReportCount = 0,
@@ -35,6 +37,7 @@ class UserProfile {
       role: json['role'] as String,
       banned: json['banned'] as bool? ?? false,
       ageConfirmed17Plus: json['ageConfirmed17Plus'] as bool? ?? false,
+      deletionPending: json['deletionPending'] as bool? ?? false,
       acceptedPolicyVersion: json['acceptedPolicyVersion'] as String?,
       acceptedPolicyAt:
           (json['acceptedPolicyAt'] as Timestamp?)?.toDate(),
@@ -69,6 +72,7 @@ class UserProfile {
     String? role,
     bool? banned,
     bool? ageConfirmed17Plus,
+    bool? deletionPending,
     String? acceptedPolicyVersion,
     DateTime? acceptedPolicyAt,
     int? userReportCount,
@@ -81,6 +85,7 @@ class UserProfile {
       role: role ?? this.role,
       banned: banned ?? this.banned,
       ageConfirmed17Plus: ageConfirmed17Plus ?? this.ageConfirmed17Plus,
+      deletionPending: deletionPending ?? this.deletionPending,
       acceptedPolicyVersion:
           acceptedPolicyVersion ?? this.acceptedPolicyVersion,
       acceptedPolicyAt: acceptedPolicyAt ?? this.acceptedPolicyAt,

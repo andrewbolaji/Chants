@@ -91,6 +91,14 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
           // Prefer the server deletion flow once a profile may exist so the
           // failed sign-up cannot leave an orphaned profile or interactions.
           await ref.read(moderationRepositoryProvider).deleteAccount();
+          // The callable now returns after durable job acceptance. Sign out
+          // this failed registration while the server finishes cleanup.
+          try {
+            await ref.read(authRepositoryProvider).signOut();
+          } catch (_) {
+            // The pending-account gate still blocks app access if this
+            // best-effort local sign-out is delayed or fails.
+          }
         } catch (_) {
           if (!profileCreated) {
             try {

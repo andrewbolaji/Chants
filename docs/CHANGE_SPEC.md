@@ -1,138 +1,154 @@
-# Change spec: V1 report and feedback abuse controls
+# Change spec: V1 account deletion recovery
 
-**Status:** Approved, implemented, and locally verified; packaging, clean-runner CI, and independent review pending
+**Status:** Approved, implemented, and locally verified; packaging and clean-runner CI pending
 **Updated:** 2026-08-25
-**Risk lane:** Lane 2, moderation intake, server authority, persistent rate state, and client-to-Function migration
-**Stack base:** `625217940e9817d9801b90f28aa4025e48dfbd48`, exact head of stacked PR 10
-**Branch:** `codex/v1-abuse-controls`, stacked above PR 10
+**Risk lane:** Lane 2, destructive lifecycle, background retry, Firebase Auth, persistent server state, and client sign-out behavior
+**Stack base:** `dccbad02426022e49ff3ed21b0ae9baf9424985f`, exact green-CI head of stacked draft PR 12
+**Branch:** `codex/v1-account-deletion-recovery`, stacked above PR 12
 
-This is the one active implementation proposal for the next v1 block. PR 10 is clean-runner green. Its completed authority-remediation reasoning remains in `docs/changes/2026-08-25-stacked-v1-authority-integration-remediation.md` and decision 009.
+This is the active contract for the final bounded v1 engineering block. The completed report and feedback boundary remains recorded in `docs/changes/2026-08-25-v1-report-feedback-abuse-controls.md` and decision 010. Andrew approved this exact contract before runtime implementation began.
 
 ## Outcome
 
-- **Problem:** Report documents use deterministic one-per-target IDs and now have exact schemas, but a raw authenticated client can still report many different chants, comments, or users as quickly as writes can be issued. Feedback uses random IDs and can be created without a velocity bound. Post-write triggers cannot prevent storage, moderation-queue, audit-log, counter, and Function load that has already occurred.
-- **Desired behavior:** All report and feedback admission moves behind authenticated Cloud Functions that derive identity and server fields, validate the current target, enforce one atomic server-owned per-user budget, and create the accepted document in the same transaction. Direct clients can read only their existing allowed views and cannot create these documents. The UI distinguishes duplicate, rate-limited, and recoverable failures without losing entered work.
-- **Non-goals:** Changing report categories, auto-hide threshold, report resolution, moderation queue design, report or feedback deletion policy, operator tools, App Check enforcement state, account-deletion resumability, merge resumability, user appeals, notifications, analytics, pagination, hosted media, dependencies, indexes, deployment, Firebase access, live data, seed work, signing, merge, release, device actions, or formatter normalization.
-- **Stop boundary:** This block closes unauthenticated-shape and authenticated-velocity abuse at moderation intake. It does not turn the reporting system into a general trust-and-safety platform.
+- **Problem:** `deleteAccount` performs eleven sequential cleanup stages inside one callable. A timeout or process failure can leave partial cleanup with no durable phase. Retrying from the beginning cannot rediscover already-deleted documents whose target IDs were needed for counter repair. A failure after Firebase Auth deletion can also strand the profile because the caller can no longer authenticate to retry.
+- **Desired behavior:** The authenticated request durably marks the account as deletion-pending and creates one private job. A retry-enabled server worker advances that job through bounded, idempotent pages until interactions are deleted, retained contributions are anonymized, Auth is removed, and the profile and job are atomically finalized. The client treats durable job acceptance as the deletion boundary, removes the device Songbook, and signs out.
+- **Non-goals:** Undo or account restoration; deleting retained chants, comments, or replies; changing report, feedback, audit, or contribution retention policy; exposing deletion progress to other users; an operator recovery console; email or push confirmation; scheduled polling; Cloud Tasks; TTL; a new dependency or Firestore index; merge resumability; hosted media; notifications; analytics; deployment; Firebase access; live data; seed work; signing; merge; release; native build; device actions; or repository-wide formatting.
+- **Stop boundary:** One deterministic job per UID, one retry-enabled worker, one pending-account gate, and the trigger correction required for deleted user-report counters. No general workflow engine is introduced.
 
 ## Acceptance criteria and invariants
 
-### Server-authoritative submission
+### Durable request boundary
 
-1. Add callable Functions `submitReport` and `submitFeedback` in `europe-west2`. Authentication is required. The actor UID is derived only from `request.auth.uid`.
-2. Both callables require an existing profile whose `banned` field is exactly false. A missing or malformed profile returns `failed-precondition`; a banned reporter returns `permission-denied`.
-3. `submitReport` accepts exactly `targetType`, `targetId`, and `reason`. `targetType` is one of `chant`, `comment`, or `user`; `targetId` is a trimmed string from 1 through 512 JavaScript characters; `reason` is trimmed, nonempty, and at most 250 characters. Unknown fields, wrong types, and client-supplied identity, time, status, or collection names are rejected as `invalid-argument`.
-4. Chant and comment targets must exist and currently have `hidden == false` and `removed == false`. A user target must have an existing profile and cannot equal the reporter. Missing targets return `not-found`; unavailable content returns `failed-precondition`.
-5. Accepted reports retain the current collection and deterministic ID contracts: `reports/{uid}_{chantId}`, `commentReports/{uid}_{commentId}`, and `userReports/{uid}_{reportedUserId}`. The server writes exactly the current five fields with `reportedBy` from auth, `createdAt` from server time, and `status == pending`.
-6. An existing deterministic report returns `already-exists` and does not consume rate budget, overwrite the original reason, reopen a resolved report, or produce another audit or counter event.
-7. `submitFeedback` accepts exactly `category`, `message`, and `followUpOk`. Category is one of `suggestion`, `bug`, `question`, or `other`; the trimmed message is nonempty and at most 1,000 characters; `followUpOk` is boolean. The server chooses the document ID and writes UID, server time, and `resolved == false`.
-8. Callable validation and accepted document construction live in testable handlers that receive their Firestore and clock boundaries rather than hiding all behavior inside exported wrappers.
+1. Keep the callable name `deleteAccount` in `europe-west2` and keep its request payload empty. Authentication is required, and the target UID comes only from `request.auth.uid`.
+2. The callable transaction reads `profiles/{uid}` and `accountDeletionJobs/{uid}`. If the job already exists, it returns the same accepted outcome without replacing its phase or timestamps, while reasserting `deletionPending: true` if a profile still exists and the field is missing. This makes a client retry idempotent and repairs the deny marker without resetting progress.
+3. If no job exists, the transaction creates `accountDeletionJobs/{uid}` with exactly `schemaVersion`, `phase`, `requestedAt`, and `updatedAt`. Version 1 begins at `disable-auth`. The UID is derived from the document path and is not duplicated in client-supplied data.
+4. When the profile exists, the same transaction sets server-owned `deletionPending` to true and updates no other profile field. A missing profile is not a blocker because failed sign-up cleanup can legitimately have Auth without a completed profile.
+5. The callable returns `{ accepted: true, success: true }` only after the job transaction commits. It performs no collection scan, user-data deletion, contribution anonymization, audit write, or Auth deletion inline. `success` is retained for one mixed-version release and means durable acceptance, not completed physical cleanup.
+6. Firestore rules deny every client read and write to `accountDeletionJobs`. Profile create cannot supply `deletionPending`, and owner profile update is denied once the stored field is true.
 
-### Atomic velocity budgets
+### Pending-account authority
 
-9. Add one server-only `safetyRateLimits/{uid}` document per account. Firestore rules allow no direct client read or write. The document contains independent report and feedback window timestamps and counters plus server `updatedAt`; absent fields initialize safely.
-10. All three report target types share one anchored one-hour window. Accounts younger than 24 hours may create at most 5 accepted reports in that window. Older accounts may create at most 20. Classification uses the server-read profile `createdAt`; missing or malformed creation time takes the safer new-account limit.
-11. Feedback permits at most 3 accepted entries in one anchored 24-hour window for every account.
-12. The callable transaction reads the reporter profile, target, deterministic report when applicable, and rate document before writing. Budget increment and submission creation commit atomically. Concurrent calls cannot exceed the accepted count through a read-then-write race.
-13. Expired windows reset on the next accepted attempt. A rejected invalid, unavailable, duplicate, or over-limit submission consumes no budget.
-14. Limit rejection uses `resource-exhausted` with stable server messages. The response may return success and target type, but it never returns another user's state, exact budget history, or operator data.
-15. No scheduled cleanup or TTL is added. The bounded rate document remains one small server-only row per submitting UID and is deleted by `deleteAccount` with that user's other private data.
+7. `UserProfile` parses `deletionPending` as an optional server field defaulting to false. Client profile serialization never emits it.
+8. `isOperator` and the existing active-account helper in Firestore rules require both that no `accountDeletionJobs/{uid}` exists and that the profile's pending field is absent or exactly false. The absent-field check must be explicit so every pre-change profile stays compatible. Profile creation also requires no deletion job. A pending account cannot create or update chants, votes, comments, comment likes, or blocks, and cannot use operator authority. Existing owner deletes that only reduce data may remain allowed.
+9. `acceptPolicy`, `submitReport`, and `submitFeedback` reject a pending account. Every server callable that grants user or operator authority from a profile must check the pending flag when its touched path is in this block.
+10. The signed-in app gate never renders Home or the policy gate for a pending profile. It renders a small account-deletion-in-progress screen with no content or interaction surface and a Sign out action. The normal accepted client path signs out immediately after local cleanup, so this screen is a recovery fallback for delayed sign-out, a reopened old session, or a mixed-version client.
 
-### Client migration and interface behavior
+### Retry-enabled bounded worker
 
-16. Add one replaceable client repository boundary for safety submissions using `FirebaseFunctions.instanceFor(region: 'europe-west2')`. Report and feedback screens never send a reporter UID, timestamp, status, resolved value, or collection name.
-17. The report sheet sends one typed target plus reason through that boundary. Remove the three direct report-create methods from the production repository APIs. Existing Firestore repositories may retain read-only checks, but no direct report-create method or provider remains on a shipped path.
-18. Feedback uses the same server-authoritative boundary and returns `Future<void>` or a typed success result rather than exposing a Firestore `DocumentReference`.
-19. The client translates `already-exists` to `You already reported this.`, `resource-exhausted` to `You have sent several reports recently. Try again later.` or `You have sent several messages recently. Try again later.`, and other failures to the existing retry copy.
-20. A failed report keeps the sheet open with category and note intact and restores the submit control. A failed feedback attempt keeps category, message, and follow-up choice intact. Successful copy remains unchanged.
-21. Existing signed-out behavior remains fail-closed. Tests cover enlarged text only if the new error copy changes measured layout; no visual redesign or new golden is required otherwise.
+11. Add one `onDocumentWritten` worker for `accountDeletionJobs/{uid}` in `europe-west2` with event retry enabled. A delete event or missing current job is a successful no-op.
+12. Each invocation reads the current server-owned phase and performs at most one bounded unit: one Auth operation, one audit operation, one finalization batch, or one query page of at most 200 documents. It never scans every matching document into one invocation.
+13. Collection pages use existing UID query fields and mutate at most 200 matching rows plus the job heartbeat in one Firestore batch. Deleted rows disappear from the next query. Anonymized rows change their queried ownership field to `deleted-user`, so the next page also makes forward progress without an offset.
+14. A nonempty page leaves the phase unchanged and updates `updatedAt`, causing the next worker event. An empty page advances to the next phase. Phase advancement re-reads the job transactionally and advances only if the stored phase still matches, so duplicate or racing delivery cannot move the job backward or skip a phase.
+15. The ordered phases are: disable Auth; delete votes; delete chant reports; delete feedback; delete the private safety-rate row; anonymize chants; anonymize comments and replies; delete comment likes; delete comment reports; delete user reports filed by the account; delete user reports against the account; delete blocks created by the account; delete blocks against the account; write the deterministic audit entry; delete Auth; finalize profile and job.
+16. `disable-auth` calls the Admin Auth API with `disabled: true`. A missing Auth user is a successful no-op. This prevents a new sign-in while cleanup continues; the profile pending flag remains the direct-write authority because an already-issued token can outlive disablement.
+17. Delete and anonymize operations are idempotent under duplicate delivery. The worker does not use blind counter increments, client timestamps, random recovery IDs, or an in-memory-only progress list.
+18. The audit phase writes one deterministic `delete-account-{uid}` audit document with bounded lifecycle detail and a server timestamp. Retry overwrites the same semantic entry instead of producing duplicate deletion audits. It does not store email, device data, raw deleted payloads, or full contribution content.
+19. The Auth phase treats `auth/user-not-found` as already complete. Finalization deletes `profiles/{uid}` and `accountDeletionJobs/{uid}` in one Firestore batch. If Auth deletion succeeds and finalization fails, the retained job event retries, sees Auth already absent, and retries finalization without requiring the user.
+20. No failed worker phase deletes or rewinds the job. Retry delivery remains the recovery mechanism. A permanent retry failure is an operational alert condition, not a client-visible claim that deletion completed.
 
-### Rules, triggers, deletion, and compatibility
+### Counter and retained-content convergence
 
-22. Firestore rules deny all direct client creates in `reports`, `commentReports`, `userReports`, and `feedback`. Existing allowed reads remain unchanged. Operators and Admin SDK Functions continue to use their current server authority.
-23. Existing report documents remain valid data. `onReportCreated`, `onCommentReportCreated`, and `onUserReportCreated` retain ground-truth counters, auto-hide behavior, and audit logging without a counter or schema migration.
-24. Existing feedback rows remain readable to their owner and operators. No stored document is rewritten.
-25. Account deletion removes `safetyRateLimits/{uid}`. Failure to find that document is a successful no-op. The broader sequential deletion redesign stays outside this block.
-26. No Firestore index, dependency, scheduled Function, or new client permission is introduced.
+21. Submitted chants remain community content and change only `createdBy` to `deleted-user`. Comments and replies remain community content and change only `userId` to `deleted-user` plus `displayName` to `Deleted user`. The current user-facing retention promise remains true.
+22. Vote, chant-report, comment-like, and comment-report deletes continue through their existing ground-truth write triggers. Delayed or duplicate delivery converges without the worker retaining affected target IDs.
+23. Add deletion handling for `userReports`, whose current trigger handles only creates. A deleted report recomputes `userReportCount` for the surviving reported profile from ground truth. Create audit behavior remains create-only, and a missing target profile is a successful no-op.
+24. Comment anonymization keeps visibility and parent relationships unchanged. Existing comment-count recomputation may run from the write trigger, but account deletion does not remove retained comments from the count.
+25. Profile and job deletion happen only after every interaction and retained-content phase has reached an empty query. New user-authored writes are blocked from the moment the request transaction commits.
+
+### Client and device-local behavior
+
+26. `ModerationRepository.deleteAccount` remains the replaceable callable boundary and accepts only an explicit `accepted == true` response. Missing or malformed success data is a failure.
+27. `AccountDeletionService` stages the active UID's Saved Matchday Songbook before requesting deletion. A request failure restores the exact staged bytes. A staging failure prevents the remote request.
+28. After durable acceptance, the service finalizes the local tombstone and signs out. A failure to remove the already-unreadable tombstone does not reverse or misreport the accepted remote deletion; normal storage initialization retries tombstone cleanup. Sign-out is attempted even when tombstone cleanup is deferred.
+29. The confirmation copy states that deletion starts after confirmation, retained chants and comments stay anonymized, the local Songbook is removed, and completion may continue briefly in the background. It does not promise undo, instantaneous physical erasure, or recovery of submitted content.
+30. The normal success path returns to Sign in. A request failure leaves the account and Songbook usable and shows retry copy. The pending fallback screen remains readable at 390 by 844 logical pixels and 1.8 text scale without overflow.
 
 ### Verification and delivery
 
-27. Functions tests prove authentication, exact payload validation, banned and missing profiles, each target type, hidden and removed content, self-report rejection, deterministic deduplication, server-owned fields, new and established limits, feedback limit, window reset, malformed rate state, rejected-attempt non-consumption, and concurrent transaction retry behavior at the handler boundary.
-28. Rules tests replace prior valid direct-create expectations with denial for all four collections while preserving owner/operator read coverage and Admin-seeded compatibility fixtures.
-29. Flutter tests prove target mapping, no client identity fields, duplicate and limit copy, retained form state, success behavior, and generic retry behavior on the production report and feedback surfaces.
-30. Existing Flutter, Functions, seed, rules, and analysis suites remain green. New load-bearing tests receive a deliberate red check before restoration. `git diff --check` passes and only approved paths are staged.
-31. Planning, implementation, local verification, clean-runner verification, review, deployment, and observation remain separate states. This specification authorizes none of deployment, Firebase access, live data reads or writes, seed operations, merge, signing, release, or device actions.
+31. Functions tests prove authenticated empty requests, missing-profile cleanup, deterministic duplicate requests, exact job shape, same-transaction pending state, every phase transition, 200-row page bounds, multi-page progress, duplicate delivery, stale phase protection, Auth disable, Auth already missing, deterministic audit, failure retention, and final profile-plus-job cleanup.
+32. A focused trigger test proves user-report deletion repairs a surviving target's `userReportCount` and writes no create audit. Existing vote, report, comment-like, comment, and user-report create tests remain green.
+33. Rules tests prove jobs are completely private, clients cannot set or clear `deletionPending`, an account with a job cannot create a late profile, pending users cannot create or update active content or exercise operator access, ordinary profiles without the new field retain current behavior, and cleanup-reducing owner deletes remain as explicitly allowed.
+34. Flutter tests prove profile parsing, pending gate precedence, request result validation, local success and request-failure compensation, deferred tombstone cleanup, sign-out, and confirmation or failure copy. The pending screen receives a screenshot review.
+35. Existing Flutter, Functions, seed, rules, and analysis suites remain green. New load-bearing tests receive deliberate red checks before restoration. `git diff --check` passes and the three pre-existing Android and lockfile edits remain unstaged.
+36. Planning, implementation, local verification, clean-runner verification, external review, deployment, observation, merge, and release remain separate states. This specification authorizes none of deployment, Firebase access, live reads or writes, seed operations, merge, signing, release, native build, or device actions.
 
 Invariants:
 
-- Reporting is available only to an authenticated, profiled, non-banned account.
-- The server, not the client, owns reporter identity, stored time, status, resolution state, collection routing, and velocity counters.
-- One reporter can contribute at most one report to one target document.
-- Duplicate and rejected attempts do not consume budget or alter accepted evidence.
-- Report counts remain ground-truth recomputations; rate budgets never become moderation evidence.
-- Popularity, reporting volume, and rate-limit state never change provenance or Terrace Proven status.
-- Existing client-visible report and feedback data is not migrated or deleted by this block.
+- A client can request deletion only for its authenticated UID.
+- Durable server acceptance happens before the client destroys its recoverable local copy or signs out.
+- Once accepted, deletion no longer depends on the user keeping the app open or authenticating again.
+- Pending accounts cannot create new retained data while cleanup is progressing.
+- Retry and duplicate delivery never undo anonymization, recreate interactions, duplicate the deletion audit, or move the job backward.
+- Chants and comments remain as anonymized community content; private interactions and profile data are removed.
+- The worker never claims completion while a phase, profile, or job remains.
 
 ## Design
 
-### Callable boundary
+### Job state machine
 
-Introduce a small `SafetySubmissionRepository` used by both report and feedback UI. Its public API accepts domain values only. The repository maps those values to `submitReport` or `submitFeedback` callable payloads and translates `FirebaseFunctionsException.code` into a small typed failure enum. Widget code owns user-facing copy.
+Place the request transaction and worker in a focused `functions/src/account_deletion.ts` module. The exported callable wrapper and Firestore trigger stay in `functions/src/index.ts`. The module receives Firestore, Auth, clock, and audit boundaries explicitly so failure and redelivery can be tested without live Firebase.
 
-Keep the server implementation explicit. A target descriptor maps `targetType` to the current collection, target field, and deterministic report collection. The server never accepts those storage names from the client. Validation happens before the transaction where possible, then the transaction re-reads every authoritative document used to approve and count the write.
+The job is a cursor, not an archive. Its phase is the only durable progress needed because every data phase queries the rows that still carry the deleting UID. A batch that mutates a page also updates the job heartbeat, so either both the page and next event exist or neither does. An empty-page transition uses a transaction to avoid stale duplicate events regressing state.
 
-### Rate state
+Use a fixed phase allowlist and schema version. Unknown versions or phases fail closed and retain the job for investigation. Do not guess a next phase from malformed state.
 
-Use one `safetyRateLimits/{uid}` document instead of queries over user-authored timestamps or counters on the public profile. The document is never client-readable, does not affect `UserProfile.fromJson`, and is deleted with the account. One document serializes concurrent report and feedback counters independently without a new index.
+### Authority during cleanup
 
-An anchored window begins with the first accepted submission after expiry. It is not a calendar-hour bucket, so a user cannot receive a full fresh allowance merely by crossing an hour boundary. Rate counts are abuse controls, not product analytics or moderation evidence.
+The profile remains until the final batch because current rules and callables use it as the account authority record. `deletionPending` turns that record into a deny state while still letting the worker find and finalize it. Disabling Auth blocks future sign-ins, while the profile flag handles already-issued credentials.
 
-### Rollout compatibility
+The pending app screen is a recovery surface, not a progress dashboard. It exposes no phase, counts, timestamps, or retry controls because server retry owns progress and the job is intentionally private.
 
-The safe later deployment order is Functions first, client second, then restrictive rules after supported clients use the callable. Because Chants is not publicly released, these may be coordinated in one release after review. Deploying restrictive rules before the callable client would temporarily break reporting and feedback, so rules-first rollout is explicitly wrong for this block.
+### Trigger convergence
+
+Bulk deletion already emits one document event per removed vote, chant report, comment like, and comment report. Those handlers recompute from ground truth and tolerate missing parents. User-report deletion is the only missing convergence path, so this block adds that exact trigger behavior rather than storing potentially large affected-ID arrays in the job.
+
+### Local deletion boundary
+
+The callable now means "the durable deletion job exists," not "every remote row is already gone." That is the correct handoff point for local cleanup and sign-out because the server worker no longer needs the client. The existing tombstone provides crash safety before acceptance and unreadability after acceptance.
 
 ## Failure and abuse analysis
 
 | Condition | Required behavior | Evidence |
 |---|---|---|
-| Raw SDK creates a valid-looking report | Rules deny before storage | Rules test for each report collection |
-| Raw SDK creates feedback repeatedly | Rules deny before storage | Rules test |
-| Caller supplies another UID or `status: reviewed` | Callable rejects unknown fields; server derives fields | Functions payload tests |
-| Five new-account reports race simultaneously at the boundary | Transaction retries serialize the shared budget; accepted count cannot exceed 5 | Handler transaction test |
-| Duplicate report is retried after a timeout | Returns `already-exists`; original row and budget remain unchanged | Functions idempotency test |
-| Moderator resolved an earlier report | Reporter cannot overwrite or reopen it | Deterministic existing-document test |
-| Content is hidden between request and commit | Target read participates in transaction and retry; no report is accepted against unavailable current state | Functions transaction test |
-| Rate document has absent or malformed fields | Safer defaults apply; no unbounded admission or crash | Functions malformed-state test |
-| Feedback limit is reached | Form remains intact with specific retry-later copy | Repository and widget tests |
-| Account deletion runs after submissions | Private rate row is removed along with other user-private data | Deletion-focused test or handler proof |
-| Callable succeeds and trigger is redelivered | Existing ground-truth report handlers converge | Existing Functions tests |
+| Caller supplies a target UID or job phase | Empty-payload validation rejects it; server derives UID and phase | Functions request tests |
+| Same request is sent twice | Existing job is returned as accepted without phase reset | Functions idempotency test |
+| Function dies after deleting one page | Page mutation and heartbeat are durable; retry processes remaining rows | Multi-page failure test |
+| Two worker events process the same phase | Mutations are idempotent and transactional advancement cannot regress or skip | Duplicate-delivery test |
+| User signs in again during cleanup | Auth disable blocks new sign-in; pending profile blocks current-token writes | Auth fake and rules tests |
+| Worker fails after Auth deletion | Job remains; retry treats missing Auth as complete and retries final batch | Finalization failure test |
+| User-report delete trigger arrives after target profile deletion | Ground-truth count is computed and missing profile is a successful no-op | Trigger test |
+| Local staging fails | No remote request occurs; active file remains | Flutter service test |
+| Remote request fails before acceptance | Exact local bytes are restored and account stays usable | Flutter service test |
+| Local tombstone removal fails after acceptance | Remote job remains accepted, sign-out proceeds, later initialization retries cleanup | Flutter service and storage tests |
+| Malformed server-owned job appears | Worker fails closed and preserves evidence; it does not delete Auth | Functions malformed-job test |
+| Old client calls the new Function | Empty request remains compatible; cleanup completes in background | Contract review |
+| New client calls the old Function during rollout | The new client requires `accepted == true`, so deploy the new Function before the new client | Rollout review |
 
 ## Performance, cost, and privacy
 
-- Each accepted report uses bounded document reads for reporter, target, deterministic report, and one rate row, then atomically writes the report and rate row. Feedback omits the deterministic-report read.
-- Rejected malformed calls stop before storage work where possible. Duplicate and rate-limited calls write nothing.
-- One private rate document per submitting UID is bounded state. No raw request history, device identifier, IP address, or third-party analytics data is stored.
-- Accepted report and feedback storage remains unchanged, so moderation queries and triggers need no new index.
-- Callable invocation and transaction cost are justified at a safety boundary and replace unbounded direct-write admission.
+- A worker invocation mutates at most 201 Firestore documents, including its heartbeat. No invocation loads an unbounded user history.
+- The state machine adds one server-only document and a bounded number of trigger invocations per deletion. It adds no polling, scheduler, task queue, index, dependency, IP address, device identifier, or raw-payload archive.
+- Existing per-document counter triggers still run for deleted interactions. This can be noisy for a very active account, but the work converges from ground truth and remains acceptable before v1 volume. Revisit when measured deletion volume or trigger cost requires bulk reconciliation.
+- The job stores only lifecycle phase and server timestamps. The audit stores one UID-scoped bounded event and no content body or email.
 
 ## Rollout and recovery
 
-1. Implement pure validation and transaction handlers, then prove focused red and green tests.
-2. Migrate Flutter submission paths and failure copy.
-3. Deny direct creates in rules and run the Java-backed suite.
-4. Require the full local matrix and clean-runner CI before review completion.
-5. After separate deployment authorization, deploy Functions, then client, then restrictive rules. Confirm accepted report, duplicate, limit, trigger, and operator visibility in a non-production environment before production.
+1. Implement and prove the Function state machine, deletion trigger, rules, client lifecycle, pending screen, and focused red checks locally.
+2. Run the complete local matrix and clean-runner CI before external review.
+3. After separate deployment authorization, deploy backward-compatible rules first, then Functions, then the client. Rules treat absent `deletionPending` as active, the new callable keeps the old name and empty payload, and the new client begins only after the new `{ accepted: true }` response is deployed.
+4. Keep returning `success: true` beside `accepted: true` for one release so old clients continue treating durable acceptance as success. The worker owns completion after either client version receives that response.
+5. Do not roll back or remove the worker while any deletion job exists. A rollback keeps the worker deployed until jobs drain, restores client and rules behavior only after that check, then removes the job path in a separately verified deploy.
+6. No live job inspection, deployment, seed action, merge, or release occurs under this specification.
 
-Rollback restores the prior direct-create rules and client repositories before removing the callables. The private rate collection may remain harmlessly if rollback occurs; a later approved cleanup may delete it. No accepted report or feedback migration is required.
-
-Healthy signals are callable success without direct writes, bounded `resource-exhausted` responses, no duplicate overwrites, unchanged ground-truth counters, no rate-state permission exposure, and no increase in trigger errors.
+Healthy signals are jobs advancing without manual retries, no pending account writes, no duplicate deletion audits, no permanently retained jobs, ground-truth counters converging after interaction deletion, and profile plus job disappearing after Auth deletion.
 
 ## Approval
 
-**Approved.** Andrew approved this exact boundary with `approved v1 report and feedback abuse controls spec` on 2026-08-25.
+**Approved.** Andrew approved this exact contract with `approved v1 account deletion recovery spec` on 2026-08-25.
 
-Approval authorizes repository implementation, tests, and proportionate local or clean-runner verification on `codex/v1-abuse-controls`. It does not authorize Firebase access, deployment, live observation, seed operations, merge, signing, release, device actions, App Check enforcement changes, account-deletion redesign, or merge redesign.
+Approval authorizes repository implementation, tests, screenshots, and proportionate local or clean-runner verification on `codex/v1-account-deletion-recovery`. It does not authorize Firebase access, deployment, live observation, seed operations, merge, signing, release, native build, or device actions.
 
-## Open decisions
+## Implementation result
 
-None required before approval. This proposal chooses server callables, one private atomic budget row, 5 reports per anchored hour for accounts under 24 hours, 20 for older accounts, and 3 feedback entries per anchored 24 hours. These are conservative prelaunch defaults and can be revisited from observed non-production or beta usage through a separate approved change.
+The approved boundary is implemented in the local worktree. The full local matrix passes 310 Flutter tests, 69 Functions tests, 42 seed tests, 135 Java-backed Firestore rules assertions, scoped Flutter analysis, Functions and rules TypeScript compilation, and diff checks. Three deliberate red checks proved the page bound, pending-account rule denial, and pending app-gate precedence before restoration. The pending-state golden was visually inspected at 390 by 844.
+
+The completed record is `docs/changes/2026-08-25-v1-account-deletion-recovery.md`, and durable decision 011 preserves the architecture. Commit, push, clean-runner CI, external freeze review, native compilation, device walk, deployment, and release remain separate later states.

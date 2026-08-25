@@ -281,11 +281,11 @@ Future<void> _showDeleteAccountDialog(
     builder: (ctx) => AlertDialog(
       title: const Text('Delete your account?'),
       content: const Text(
-        'This will permanently delete your account, votes, likes, reports, '
-        'feedback, and blocks. Your submitted chants, comments, and replies '
-        'will stay as community content with your name removed. Your Saved '
-        'Matchday Songbook on this device will also be removed. This cannot '
-        'be undone.',
+        'This starts permanent deletion of your account, votes, likes, '
+        'reports, feedback, and blocks. Your submitted chants, comments, and '
+        'replies stay as community content with your name removed. Your '
+        'Saved Matchday Songbook on this device is also removed. Cleanup may '
+        'continue briefly in the background. This cannot be undone.',
       ),
       actions: [
         TextButton(
@@ -310,7 +310,8 @@ Future<void> _showDeleteAccountDialog(
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text(
-          'Could not delete your account. Try again or contact us via feedback.',
+          'Deletion did not start. Your account and Saved Songbook are still '
+          'available. Try again.',
         ),
       ),
     );

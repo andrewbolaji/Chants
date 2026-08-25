@@ -37,6 +37,33 @@ Chants is the home for football chants. Fans use it to find the songs, learn the
 
 ---
 
+## Account deletion
+
+**What it does.** Permanently removes your account and private activity. Chants and comments you added remain as community content under `Deleted user`, so active song and conversation pages do not break.
+
+**How to use it.**
+1. Open the home-screen menu and choose Delete account.
+2. Read the confirmation. It explains that private activity and the device's Saved Matchday Songbook are removed, while submitted chants and comments stay anonymized.
+3. Confirm deletion. Once Chants safely queues the request, the app removes the local Songbook and signs you out.
+4. Remote cleanup may continue briefly after sign-out. You can close the app and do not need to keep it online.
+
+**Behind the scenes.** The request first creates a private durable deletion job and marks the profile as pending. A retry-enabled server worker disables new sign-ins, removes votes, reports, feedback, likes, blocks, and private rate state in bounded pages, anonymizes retained contributions, writes one audit event, deletes Firebase Auth, then atomically removes the profile and job. Repeated requests and duplicate server events resume safely rather than starting over.
+
+If the request fails before it is safely queued, the account and exact local Songbook stay available. If a pending session is reopened before sign-out completes, the app shows only the deletion-in-progress screen and Sign out.
+
+**Limits and gotchas.**
+- There is no undo or account restoration in v1.
+- Submitted chants and comments are retained without your identity. The confirmation states this before deletion starts.
+- The app does not show internal phases or an estimated completion time.
+- A permanently failing server job requires operator investigation. There is no in-app recovery console in v1.
+
+**Where it shows up.** Delete account confirmation from Home, the signed-out Sign In screen after acceptance, and the deletion-in-progress fallback screen for a retained pending session.
+
+> [screenshot: Account deletion confirmation]
+> [screenshot: Deletion in progress]
+
+---
+
 ## Browse and Navigation (Block 2)
 
 **What it does.** Lets you explore chants by drilling down from the Premier League to a club, then to a player, then to a specific chant. A discovery shuffle on the home screen mixes chants across all clubs so you can stumble on something new.

@@ -93,4 +93,18 @@ describe("handleAcceptPolicy", () => {
     assert.strictEqual(second.accepted, true);
     assert.strictEqual(updateCalls.length, 2);
   });
+
+  it("pending deletion rejects acceptance without a write", async () => {
+    profileStore["user1"] = {
+      role: "user",
+      banned: false,
+      deletionPending: true,
+    };
+
+    await assert.rejects(
+      handleAcceptPolicy("user1", fakeDb),
+      (error: { code?: string }) => error.code === "failed-precondition"
+    );
+    assert.strictEqual(updateCalls.length, 0);
+  });
 });

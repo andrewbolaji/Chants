@@ -4,17 +4,27 @@ import 'package:chants/data/repositories/saved_songbook_repository.dart';
 class AccountDeletionService {
   final ModerationRepository _moderationRepository;
   final SavedSongbookRepository _savedSongbookRepository;
+  final Future<void> Function() _signOut;
 
   const AccountDeletionService({
     required ModerationRepository moderationRepository,
     required SavedSongbookRepository savedSongbookRepository,
+    required Future<void> Function() signOut,
   }) : _moderationRepository = moderationRepository,
-       _savedSongbookRepository = savedSongbookRepository;
+       _savedSongbookRepository = savedSongbookRepository,
+       _signOut = signOut;
 
-  Future<void> deleteAccount(String uid) {
-    return _savedSongbookRepository.runAccountDeletion(
+  Future<void> deleteAccount(String uid) async {
+    await _savedSongbookRepository.runAccountDeletion(
       uid: uid,
       deleteRemoteAccount: _moderationRepository.deleteAccount,
     );
+    try {
+      await _signOut();
+    } catch (_) {
+      // Remote deletion is already durable and local data is unreadable.
+      // The pending-profile app gate is the recovery surface for a session
+      // that could not complete this best-effort sign-out.
+    }
   }
 }

@@ -208,6 +208,9 @@ function validateReporterProfile(
   if (profile.banned !== false) {
     throw new HttpsError("failed-precondition", "Reporter profile is unavailable.");
   }
+  if (profile.deletionPending === true) {
+    throw new HttpsError("failed-precondition", "Account deletion is in progress.");
+  }
   return profile;
 }
 
