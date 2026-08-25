@@ -12,6 +12,17 @@ This is durable, evidence-backed project memory. It prevents the same failure or
 
 ## Entries
 
+### 2026-08-25T00:41:42Z Native verification can mutate project scaffolding before it fails
+
+- **Status:** applied
+- **Scope:** Flutter native build checks on an inherited iOS project whose dependency manager or lifecycle template predates the current Flutter tool
+- **Observed:** `flutter build ios --simulator --debug --no-codesign` began CocoaPods-to-SwiftPM and UIScene project migrations before Xcode failed inside inherited Cloud Firestore sources. The failed verification left tracked project files changed and generated package-resolution files present.
+- **Evidence:** The post-build diff showed changes to AppFrameworkInfo, AppDelegate, Info.plist, the Xcode project and scheme, a collapsed Podfile lock, and two generated SwiftPM resolution files even though no native migration was approved.
+- **Learning:** A native compile command is not necessarily read-only. Treat the platform tree and lockfiles as possible outputs, inspect them after every attempt, and separate intentional plugin registration from tool-driven template migration.
+- **Applied control:** The share block restored every tracked iOS file exactly to branch HEAD, removed the generated SwiftPM files, and records native compilation as blocked rather than accepting unrelated migration work.
+- **Revisit when:** The iOS dependency-manager and UIScene migrations receive their own approved change, or the Flutter tool provides a verified no-migration compilation mode.
+- **Related:** `docs/changes/2026-08-24-basic-share-out.md`
+
 ### 2026-08-22T19:38:09Z Queue-time identity checks prevent stale-account local writes
 
 - **Status:** applied

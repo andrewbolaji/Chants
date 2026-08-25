@@ -18,12 +18,25 @@ This is the current design contract and decision history for Chants. Read the re
 |---|---|---|---|
 | Browse and club lists | Songbook-first tabs, separate Chant Lab Top and New order, loading, surface-specific empty states, cached and recoverable-error notices, hidden/removed disappearance, and fail-soft player metadata | Preserve reading order, explicit trust words, semantic section headings, stable controls during vote changes, text scaling, and one-handed navigation | `lib/presentation/browse/`, `lib/data/services/chant_browse.dart`, `lib/presentation/shared/empty_state.dart`, `lib/presentation/shared/error_state.dart` |
 | Chant card | Show title, who it is for, useful provenance, tune, score, and comments without turning the card into a metadata wall | Entire card target is semantic and tappable; badges cannot rely on color alone | `lib/presentation/shared/chant_card.dart`, `docs/DESIGN_DIRECTION_V2.md` |
-| Chant detail | Loud identity header, calm lyrics, context, vote, report, comments, and any safe external evidence action | Long lyrics fall back to left alignment; link purpose is explicit; text scaling and screen readers retain logical order | `lib/presentation/browse/chant_detail_screen.dart`, `docs/DESIGN_DIRECTION_V2.md` |
+| Chant detail | Loud identity header, calm lyrics, context, vote, save, share, report, comments, and any safe external evidence action | Long lyrics fall back to left alignment; link purpose is explicit; Share has a text alternative and valid iPad anchor; text scaling and screen readers retain logical order | `lib/presentation/browse/chant_detail_screen.dart`, `lib/data/services/chant_share.dart`, `docs/DESIGN_DIRECTION_V2.md` |
 | Saved Matchday Songbook | Local-first overview, club snapshots, read-only chant detail, explicit refresh and remove, last-refreshed disclosure, UID lock, corrupt and future-version recovery states | Ownership and freshness use words as well as icons; saved detail omits live controls; 390 by 844 and enlarged text remain scrollable and unclipped | `lib/presentation/saved/`, `lib/data/models/saved_songbook.dart`, decision 003 |
 | Submission form | Preserve entered work on validation or network failure; distinguish required from optional fields; denied and banned states explain the next action | Every choice has a text label and semantic group; keyboard never hides the active field or submit result | `lib/presentation/submit/submit_chant_screen.dart` |
 | Comments and replies | One visible reply level, recoverable failed writes, reporting, blocking, moderation disappearance, and no orphan promotion | Reply context and hierarchy are announced without indentation alone; tap targets and text scale remain usable | `lib/presentation/comments/`, `docs/decisions/002-comment-reply-depth-and-retention.md` |
 
 ## Decision log
+
+### 2026-08-25T00:41:42Z Share a useful chant before a public destination exists
+
+- **Status:** active
+- **Surface and user problem:** Live chant detail had no distribution action, while the product has no public chant resolver and must not send recipients to a guessed dead link.
+- **Decision:** Place one Share action between Save and Report on live detail. The system sheet receives the current title, optional known team, full main lyrics, tune, honest trust line, and Chants footer. Current builds are text-only. A later approved route may supply one validated HTTPS URL through the existing payload seam.
+- **Why:** A useful rendition can travel through any installed application now without pretending Chants controls a destination, delivery, or third-party retention.
+- **Alternatives considered:** A guessed website link, which is broken; title-only promotional copy, which is not useful to the recipient; generated cards or direct social integrations, which add media, permissions, SDK, and platform-policy scope.
+- **Required states:** Current stream value, known or absent team, all provenance states, pending duplicate tap, dismissed or unavailable platform result, invocation failure, invalid source rectangle, and hidden or removed chant.
+- **Accessibility/responsive impact:** The control is labeled `Share this chant`, uses the native sheet, passes the button's laid-out global rectangle for iPad, and remains reachable with Save and Report at 390 by 844 and 1.8x text.
+- **Implementation evidence:** Pure payload and gateway tests, real-detail widget tests, a deliberate missing-lyrics red check, 271 passing Flutter tests, and an inspected launch-viewport golden. Native compilation, clean-runner CI, PR review, and device sharing remain pending.
+- **Revisit when:** A stable HTTPS chant route exists, recipients need richer previews, device testing finds platform-specific payload loss, or direct publishing has evidence strong enough to justify its account and SDK surface.
+- **Related:** `docs/decisions/008-native-text-share-before-public-links.md`, `docs/CHANGE_SPEC.md`
 
 ### 2026-08-22T19:38:09Z Make saved lyrics a timestamped device copy
 

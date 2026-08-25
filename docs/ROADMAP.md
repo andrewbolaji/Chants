@@ -13,6 +13,7 @@ The path from code-complete to public launch, with concrete triggers on every ga
 - V1 provenance in source and green draft-PR CI: required origin, optional normalized YouTube or X evidence, honest trust labels, evidence-gated Terrace Proven promotion, moderated evidence removal, and a soft duplicate nudge. PR review and the later device walk remain pending.
 - Songbook and Chant Lab browse split in source and green draft-PR CI: status-only trust surfaces, deterministic Top and New order, non-verification Rising, stable vote-time order, cached and recoverable states, fail-soft player metadata, and player-scoped Start a chant. Draft PR 7 review and the device walk remain pending.
 - Saved Matchday Songbook implemented and green-CI verified on draft PR 8: UID-scoped device snapshots, individual and club ownership, explicit server refresh, atomic persistence, account-deletion cleanup, and read-only offline routes. Native client compilation, PR review, and the airplane-mode device walk remain pending.
+- Basic share-out implemented and locally verified on the stacked share branch: current live chant text, honest trust wording, optional future HTTPS seam, duplicate-tap guard, iPad anchor, recoverable invocation failure, and no dead current URL. Clean-runner CI, native compilation, PR review, and the device destination walk remain pending.
 - Dedup matching engine (backend only): token-overlap matcher and operator `mergeChants` function with a partial audit payload, not a complete undo snapshot.
 - Visual identity: complete "matchnight, warmed with playful" redesign, tokenized, AA contrast proven.
 
@@ -22,7 +23,7 @@ The path from code-complete to public launch, with concrete triggers on every ga
 - The remaining verified club seed.
 - Saved Matchday Songbook native client compilation and airplane-mode device walk.
 - The dedup nudge frontend.
-- Basic chant share-out.
+- Basic share-out clean-runner CI, native compilation, PR review, and device destination walk.
 - Store launch prep.
 
 ---
@@ -55,7 +56,7 @@ V1 is a trusted songbook and a creator workshop. The work is sequenced as bounde
 2. **Add provenance end to end.** Implemented in source and verified by green draft-PR CI. Submission requires Already sung or I made this. The evidence link is optional at posting, an Already sung claim without one stays visibly unverified, and a user submission needs valid evidence plus operator review before Terrace Proven promotion. The existing duplicate matcher now provides a soft pre-create nudge. PR review and the combined device walk remain before release.
 3. **Expose Songbook and Chant Lab.** Implemented and clean-CI verified in source on draft PR 7. Club and player journeys distinguish Terrace Proven content from community work. Chant Lab has Top and New order, a non-verification Rising signal, retained readable data through reconnect errors, and a Start a chant action for players who need one. PR review and the device walk remain.
 4. **Build Saved Matchday Songbook.** Implemented and green-CI verified on draft PR 8. One chant or a club's current visible Songbook can be stored as a UID-scoped device snapshot, refreshed explicitly, read without live social dependencies, and removed locally. Native client compilation, review, and the airplane-mode force-stop and relaunch walk remain. Cross-device sync stays deferred.
-5. **Add basic share-out.** Chant detail uses the platform share sheet with a stable public chant URL or an honest text-only fallback. Do not ship a dead deep link or pretend to post directly into another service.
+5. **Add basic share-out.** Implemented and locally verified on the stacked share branch. Live chant detail uses the platform share sheet with a complete text-only rendition and honest trust wording. Current builds emit no URL because no public resolver exists. Clean-runner CI, native compilation, review, and the device walk remain.
 
 The accepted product boundary is in `docs/decisions/004-songbook-and-chant-lab.md`. Each state-changing block gets the framework's Lane 2 change spec, execution log, tests, UI evidence, scoped rationale, and rollback plan. Unlimited nesting, notifications, scheduled challenges, collaborative lyric suggestions, creator follows, and hosted media remain later work.
 
@@ -114,7 +115,7 @@ The implementation boundary and remaining verification gate live in `docs/CHANGE
 
 **Approved product contract:** Chants keeps Terrace Proven content in the trusted Songbook and gives original or not-yet-verified submissions a visible Chant Lab. Submission origin is required. Evidence is optional to post and required to promote a user submission to Terrace Proven. Votes rank ideas but never verify a factual claim.
 
-**Implementation status:** The provenance slice is implemented on stacked draft PR 6 with green CI. The browse split is implemented and green-CI verified on stacked draft PR 7 with pure ranking tests, real Team and Player widget boundaries, retained-data red-check evidence, enlarged-text coverage, inspected 390 by 844 Songbook and Chant Lab goldens, and 117 passing Firestore rules assertions. Saved Matchday Songbook is implemented and green-CI verified on stacked draft PR 8 with strict UID-scoped persistence, refresh and lifecycle tests, a reconstruction red check, inspected overview and detail goldens, and 117 passing Firestore rules assertions. Native compilation, stacked review, share-out, and the combined device walk remain.
+**Implementation status:** The provenance slice is implemented on stacked draft PR 6 with green CI. The browse split is implemented and green-CI verified on stacked draft PR 7 with pure ranking tests, real Team and Player widget boundaries, retained-data red-check evidence, enlarged-text coverage, inspected 390 by 844 Songbook and Chant Lab goldens, and 117 passing Firestore rules assertions. Saved Matchday Songbook is implemented and green-CI verified on stacked draft PR 8 with strict UID-scoped persistence, refresh and lifecycle tests, a reconstruction red check, inspected overview and detail goldens, and 117 passing Firestore rules assertions. Basic share-out is implemented and locally verified on the stacked share branch with pure payload tests, real-detail interaction tests, a deliberate red check, and an inspected 390 by 844 golden. Native compilation, clean-runner share CI, stacked review, and the combined device walk remain.
 
 **Source of truth:** `docs/decisions/004-songbook-and-chant-lab.md` and the interface contract in `docs/INTERFACE.md`.
 

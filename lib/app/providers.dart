@@ -18,6 +18,7 @@ import 'package:chants/data/repositories/block_repository.dart';
 import 'package:chants/data/repositories/moderation_repository.dart';
 import 'package:chants/data/repositories/saved_songbook_repository.dart';
 import 'package:chants/data/services/account_deletion_service.dart';
+import 'package:chants/data/services/chant_share.dart';
 import 'package:chants/data/services/saved_songbook_service.dart';
 import 'package:chants/data/models/saved_songbook.dart';
 
@@ -76,6 +77,10 @@ final blockRepositoryProvider = Provider<BlockRepository>(
 
 final moderationRepositoryProvider = Provider<ModerationRepository>(
   (ref) => ModerationRepository(),
+);
+
+final chantShareGatewayProvider = Provider<ChantShareGateway>(
+  (ref) => PlatformChantShareGateway(),
 );
 
 final savedSongbookRepositoryProvider = Provider<SavedSongbookRepository>(
