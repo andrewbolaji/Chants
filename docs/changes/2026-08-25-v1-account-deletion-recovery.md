@@ -44,8 +44,9 @@
 - `git diff --check`: passed after the final documentation refresh.
 - Deliberate red checks changed the 200-row worker page to 201, reopened pending block creation, and inverted the pending app gate. Each focused test failed for the intended reason before production behavior was restored.
 - The 390 by 844 pending-state golden was generated with repository fonts and visually inspected. The hierarchy, copy, action, and viewport are unclipped and consistent with the Chants design system.
+- Clean-runner GitHub Actions run `32907722272` passed all five jobs on implementation commit `98f2c9ee98d5feb7a901cb3e8907b056b340b05d`: 310 Flutter tests, repository-wide Flutter analysis, 69 Functions tests, 42 seed tests, and 135 Java-backed Firestore rules assertions.
 
-Independent review, clean-runner CI, native compilation, and the combined device walk remain pending. The source block is locally complete but uncommitted and unpushed until Andrew separately authorizes packaging.
+The block is packaged in stacked draft PR 13 against `codex/v1-abuse-controls`. Independent review, native compilation, and the combined device walk remain pending.
 
 ## Security, privacy, performance, and infrastructure impact
 
@@ -57,6 +58,6 @@ The safe rollout order is backward-compatible rules, Functions, then the client.
 
 ## Review boundary and follow-up
 
-The last whole-stack external-review baseline remains commit `c57815c`. After this block is packaged and clean-runner green, the final external freeze review should use the exact range `c57815c...<account-deletion-freeze-head>`.
+The last whole-stack external-review baseline remains commit `c57815c`. The final external freeze review should use the exact range `c57815c...<final-pr-13-head>` after the CI-evidence record is committed and its replacement checks pass.
 
 At that point, remaining work is not another planned v1 feature block. It is external review and remediation if needed, native compilation, the combined device walk, verified content seeding, real policy and legal copy, signing, deployment preparation, and release operations. Resumable chant merge, operator recovery tooling, notifications, deeper replies, and hosted media remain later work.

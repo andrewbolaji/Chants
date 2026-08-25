@@ -46,5 +46,5 @@ User-report deletion receives its own ground-truth convergence trigger so deleti
 
 ## Validation and revisit trigger
 
-- **Evidence:** 69 Functions tests, 135 Java-backed rules assertions, 310 Flutter tests including an inspected 390 by 844 golden, 42 seed tests, three deliberate red checks, and the completed record in `docs/changes/2026-08-25-v1-account-deletion-recovery.md`.
+- **Evidence:** 69 Functions tests, 135 Java-backed rules assertions, 310 Flutter tests including an inspected 390 by 844 golden, 42 seed tests, three deliberate red checks, clean-runner GitHub Actions run `32907722272`, and the completed record in `docs/changes/2026-08-25-v1-account-deletion-recovery.md`.
 - **Revisit when:** deletion volume or duration produces retained jobs, Eventarc retry needs a dead-letter or alerting path, legal retention policy changes, exports or restoration are added, or a reusable destructive-work orchestration service becomes justified.

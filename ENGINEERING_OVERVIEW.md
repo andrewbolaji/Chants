@@ -1,6 +1,6 @@
 # Chants engineering overview
 
-This is the current whole-project map for Chants. It describes the combined stacked application through the clean PR 12 head `dccbad02426022e49ff3ed21b0ae9baf9424985f`, plus the approved durable account-deletion recovery implemented in the current `codex/v1-account-deletion-recovery` worktree on 2026-08-25. The immutable baseline for the coming external freeze review remains `c57815c`; that review must use the Git range `c57815c...<freeze-head>`. Every material claim names the implementation path and symbol that supports it.
+This is the current whole-project map for Chants. It describes the combined stacked application through durable account-deletion implementation commit `98f2c9ee98d5feb7a901cb3e8907b056b340b05d` in draft PR 13, plus this CI-evidence refresh. The immutable baseline for the coming external freeze review remains `c57815c`; that review must use the Git range `c57815c...<final-pr-13-head>`. Every material claim names the implementation path and symbol that supports it.
 
 This document is descriptive, not an approval record. `docs/CHANGE_SPEC.md` contains the approved and implemented remediation contract. `docs/EXECUTION.md` records review and implementation evidence. `docs/IMPLEMENTATION_RATIONALE.md` is the companion coverage ledger and verification record. Completed reasoning lives in `docs/changes/`, and durable decisions live in `docs/decisions/`.
 
@@ -27,7 +27,7 @@ The prior fail-open analysis path is also closed. `.github/workflows/ci.yml :: f
 
 Two later stacked blocks close risks that the review identified. `functions/src/safety_submission.ts` and decision 010 move report and feedback admission behind atomic private budgets. `functions/src/account_deletion.ts` and decision 011 replace synchronous deletion with a private bounded retry job, pending-account authority, and recoverable Auth finalization.
 
-The stack is still not release-ready. Signing credentials, final policy wording, independent freeze review, clean-runner CI for the final deletion layer, native compilation, live deployment, and device actions require separate owner input or authorization.
+The stack is still not release-ready. Signing credentials, final policy wording, independent freeze review, native compilation, live deployment, and device actions require separate owner input or authorization.
 
 ## What the product is now
 
@@ -168,8 +168,9 @@ Local verification on 2026-08-25:
 | focused moderation and live-action tests | PASS: denial removes Discover card; stale detail actions remain unavailable |
 | focused comments resilience tests | PASS: read retry, Undo failure, and 1.8x empty state are contained |
 | focused stale Player tests and goldens | PASS: missing and failed Player data recover without assertion or clipping |
+| draft PR 13 GitHub Actions run `32907722272` | PASS: Flutter test, Flutter analysis, Functions, seed, and 135 Java-backed rules assertions |
 
-The earlier review probes supplied red evidence for stale Discover retention, escaping like-read failure, and the enlarged-text overflow. The final deletion block supplied deliberate red evidence for its 200-row bound, pending-account block denial, and app-gate precedence. All production behavior was restored and the complete local matrix passes. Clean-runner CI for the final deletion branch remains pending.
+The earlier review probes supplied red evidence for stale Discover retention, escaping like-read failure, and the enlarged-text overflow. The final deletion block supplied deliberate red evidence for its 200-row bound, pending-account block denial, and app-gate precedence. All production behavior was restored, the complete local matrix passes, and all five draft PR 13 jobs passed on a clean runner.
 
 `dart format --output=none --set-exit-if-changed lib test` reported during review that 56 committed Dart files would change. It made no files writable because output was disabled. Formatting is not a CI gate today; this remediation keeps the large mechanical rewrite separate and proposes adding an enforceable gate only after the current tree is normalized in its own reviewable commit.
 
@@ -196,7 +197,7 @@ Crashlytics is wired, but there is no repository-defined alerting, function-erro
 
 1. **The strict author-update boundary.** Review exact current-schema enforcement against any real legacy documents before rollout; legacy reads remain compatible, but invalid legacy documents cannot use direct author editing until normalized.
 2. **Moderation and offline semantics.** Confirm on device that readable route fallback, Discover disappearance, Saved Songbook copies, and disabled live actions communicate their different authority clearly.
-3. **Release configuration.** The real policy, Android release signing, native compilation, App Check dashboard state, clean-runner CI, and device walk are release blockers even though local suites are green.
+3. **Release configuration.** The real policy, Android release signing, native compilation, App Check dashboard state, and device walk are release blockers even though local and clean-runner suites are green.
 4. **Remaining destructive workflow.** `mergeChants` is still sequential, partially audited, and non-resumable. Account deletion is now bounded and resumable, but retained-job operations still need production alerting.
 5. **Scale boundaries.** Discover's full fetch and ground-truth counter scans need measured budgets before community volume makes linear reads material.
 

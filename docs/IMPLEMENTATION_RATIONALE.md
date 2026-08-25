@@ -6,12 +6,12 @@
 
 - **Product:** Chants, a Flutter and Firebase mobile app for learning trusted football chants and publishing new chant ideas.
 - **External review baseline:** `c57815c`, the last whole-stack engineering-review commit. The coming freeze review must compare that commit to the eventual account-deletion freeze head.
-- **Current stack base:** `dccbad02426022e49ff3ed21b0ae9baf9424985f`, the exact clean-runner green head of stacked draft PR 12, plus the approved account-deletion recovery in the current worktree.
-- **Review type:** Current whole-project milestone snapshot before final clean-runner CI, external freeze review, and the combined device walk. It is not a release sign-off.
+- **Current stack head:** Account-deletion implementation commit `98f2c9ee98d5feb7a901cb3e8907b056b340b05d` in stacked draft PR 13, plus this CI-evidence refresh.
+- **Review type:** Current whole-project milestone snapshot before external freeze review and the combined device walk. It is not a release sign-off.
 - **Coverage:** Flutter client, Cloud Functions, Firestore rules and tests, seed pipeline, native configuration, CI, framework docs, and release boundaries.
 - **Excluded:** Vendored `node_modules`, generated Flutter and TypeScript output, live Firebase data and dashboard state, deployed artifacts, store dashboards, and operating-system device behavior.
 - **Preserved unrelated work:** `android/app/build.gradle.kts`, `android/settings.gradle.kts`, and `pubspec.lock` were already modified and remain unstaged.
-- **Current status:** The approved report and feedback boundary is clean-runner green. Durable account deletion is implemented and locally green. Packaging, final clean-runner CI, independent freeze review, native compilation, and the combined device walk remain pending.
+- **Current status:** Durable account deletion is packaged in draft PR 13 and all five clean-runner jobs pass. Independent freeze review, native compilation, and the combined device walk remain pending.
 
 ## Repository coverage ledger
 
@@ -33,7 +33,7 @@
 | Saved Matchday Songbook | UID-isolated bounded local JSON snapshots, explicit refresh, offline read-only routes | Maximum 500 unique chants and 2 MiB; local actions require active matching UID | Model, repository, service, widget, lifecycle, and golden tests | Physical force-stop/airplane-mode persistence unverified; no cross-device sync by design |
 | Share-out | Plain-text native sheet from live detail in `chant_share.dart` and `chant_detail_screen.dart` | No public URL or delivery claim; every live-target action requires current visible authority | Payload, gateway, authority, enlarged-text, and golden tests | Native device destination behavior unverified |
 | Seed | Explicit stable chant IDs, read-only preflight, transaction ownership recheck, validation, orphan report | Source content is human supplied; seed may transform but never invent lyrics or context | 42 seed tests plus TypeScript | Only Arsenal JSON exists; no live preflight or remaining club write ran |
-| CI | Five GitHub Actions jobs in `.github/workflows/ci.yml` | Tests, rules, and analysis must fail closed before merge | Exact-head PR 12 clean-runner green; deterministic analysis fixture active | Flutter version is unpinned; no format gate; final deletion-layer CI pending |
+| CI | Five GitHub Actions jobs in `.github/workflows/ci.yml` | Tests, rules, and analysis must fail closed before merge | Draft PR 13 run `32907722272` passed all jobs; deterministic analysis fixture active | Flutter version is unpinned; no format gate |
 | Native release | Flutter Android/iOS shells and plugin registration | Store signing and native compilation are separate release gates | Source inspection and prior attempted builds | Android uses debug signing; Android SDK unavailable locally; inherited iOS Firestore Swift sources failed compile |
 
 ## System overview and architecture
@@ -148,7 +148,7 @@ No repository retention job exists for audit or feedback. No user-data export ex
 | Accepted deletion no longer depends on client auth or uptime | Durable job, pending marker, retry-enabled worker, Auth-missing tolerance, atomic finalization | PASS in Functions failure-injection and Flutter lifecycle tests |
 | Pending deletion cannot create new active data | Rules require no job and absent-or-false pending state; touched callables check pending; app gate precedes Home | PASS in rules, Functions, and app-gate tests |
 | Stable seed identity survives title edits | Explicit source ID plus preflight and transaction recheck | PASS locally; live preflight unverified |
-| A green analysis job means analysis ran | CI writes secret or deterministic example, then always invokes analysis | PASS by workflow inspection; clean-runner proof pending |
+| A green analysis job means analysis ran | CI writes secret or deterministic example, then always invokes analysis | PASS by workflow inspection and PR 13 clean-runner result |
 | Store release uses production signing | Android release explicitly selects debug signing | **FAIL, release gate** |
 
 ## Security and privacy
@@ -175,7 +175,7 @@ No current dependency advisory conclusion is claimed. The audit request was bloc
 | `share_plus ^11.1.0` | Native share sheet | Plain-text operating-system handoff | Gateway and widgets pass; native compile/device gate pending |
 | Functions Node 20 | `firebase-admin ^13`, `firebase-functions ^6.3` | Server authority | 69 local tests pass |
 | Seed Node | `firebase-admin ^13` | Manual Admin writes | 42 tests and `tsc --noEmit` pass |
-| Rules test | Firebase emulator, Java in CI and local Homebrew runtime | Authorization assertions | 135 passed locally; final deletion-layer clean-runner result pending |
+| Rules test | Firebase emulator, Java in CI and local Homebrew runtime | Authorization assertions | 135 passed locally and in PR 13 clean-runner CI |
 | Android Gradle | AGP 8.11.1, Kotlin 2.2.20 | Android build | User has unstaged Crashlytics plugin changes; release signs debug |
 | iOS | deployment target 15.0, CocoaPods scaffold | iOS build | Prior simulator compilation failed in inherited Cloud Firestore Swift package sources |
 
@@ -209,7 +209,7 @@ Before public volume, establish query/read budgets for Discover and counters, Fu
 | comments resilience tests | Local Flutter renderer | PASS, 8 focused | Like-read retry, Undo failure, and 1.8x empty state are contained |
 | submit tests and two goldens | Local Flutter renderer | PASS, 10 focused plus 2 goldens | Stale and failed Player data recover without assertion or clipping |
 | `dart format --output=none --set-exit-if-changed lib test` | Dart 3.12.2 | FAIL, 56 files would change | Formatting is not normalized or gated; output mode preserved files |
-| exact-head draft PR 12 CI | GitHub Actions run `32894622653` | PASS: Flutter, analyze, Functions, seed, rules | Clean Linux evidence for the account-deletion base; final layer CI pending |
+| draft PR 13 implementation CI | GitHub Actions run `32907722272` on `98f2c9e` | PASS: 310 Flutter, analysis, 69 Functions, 42 seed, 135 rules | Clean Linux and Java evidence for the final runtime layer |
 
 The earlier review probes supplied red evidence for stale Discover retention, escaping like hydration, and the 430-pixel overflow. The deletion block deliberately broke its 200-row bound, pending block denial, and pending app gate; each new guard failed for the intended reason before restoration. Permanent regression coverage passes. The final worktree contains the approved stack changes plus the same three pre-existing user modifications.
 
@@ -217,7 +217,7 @@ Skipped or blocked:
 
 - Android build: no Android SDK.
 - iOS build: prior inherited Cloud Firestore Swift package compile failure.
-- Final deletion-layer clean-runner CI: pending packaging and push authorization.
+- External freeze review: pending against `c57815c...<final-pr-13-head>`.
 - Live Firebase, deploy, seed, merge, release, and device actions: not authorized.
 - npm production advisory audit: network failed in sandbox and elevated disclosure was rejected.
 
@@ -242,11 +242,11 @@ Recovery paths:
 | Document or claim | Current source reality | Action |
 |---|---|---|
 | README test counts and feature status | Current counts are 310 Flutter, 135 rules, 69 Functions, and 42 seed; durable deletion is built | Corrected in this block |
-| Roadmap freeze state | Final deletion feature block is locally complete; packaging, CI, review, and release gates remain | Corrected in this block |
-| CI analysis state | Five jobs exist and analysis runs with secret or deterministic fixture | PR 12 green; final deletion-layer run pending |
+| Roadmap freeze state | Final deletion feature block is packaged and clean-runner green; review and release gates remain | Corrected in this block |
+| CI analysis state | Five jobs exist and analysis runs with secret or deterministic fixture | PR 13 run `32907722272` green |
 | Function merge comments | Audit payload is bounded and cannot reverse the operation | Corrected source comments; historical archive retained |
 | `docs/KNOWN_ISSUES.md` | Clearly labels itself a legacy snapshot | No longer an authority defect |
-| `docs/CHANGE_SPEC.md` | Account-deletion recovery contract is approved, implemented, and locally verified | Retain until independent review and clean-runner CI close the block |
+| `docs/CHANGE_SPEC.md` | Account-deletion recovery contract is approved, implemented, and clean-runner verified | Retain through independent review |
 
 ## Known compromises, gaps, and uncertainty
 
@@ -256,7 +256,6 @@ Recovery paths:
 | No retained-deletion-job alert or console | A permanent worker failure depends on manual investigation | Andrew | Before public beta or first observed retained job |
 | Android debug signing | Store release blocked | Andrew | Before production build |
 | Placeholder policy | User consent and store compliance incomplete | Andrew | Before any public submission release |
-| Final deletion-layer clean-runner result pending | Local correctness lacks independent Linux confirmation for this exact worktree | Andrew | Before external freeze review |
 | 56 files not formatter-normalized | Mechanical churn and inconsistent style | Andrew | Separate normalization commit before adding format gate |
 | No staging, runbook, backup proof, or data export | Incident and regulatory recovery depend on manual console work | Andrew | Before public beta or real irreproducible content |
 | Discover full fetch and ground-truth counter scans | Linear reads and write amplification | Andrew | When closed-beta metrics show meaningful volume |

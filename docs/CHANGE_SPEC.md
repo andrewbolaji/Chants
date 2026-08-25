@@ -1,6 +1,6 @@
 # Change spec: V1 account deletion recovery
 
-**Status:** Approved, implemented, and locally verified; packaging and clean-runner CI pending
+**Status:** Approved, implemented, packaged, and clean-runner verified; external freeze review pending
 **Updated:** 2026-08-25
 **Risk lane:** Lane 2, destructive lifecycle, background retry, Firebase Auth, persistent server state, and client sign-out behavior
 **Stack base:** `dccbad02426022e49ff3ed21b0ae9baf9424985f`, exact green-CI head of stacked draft PR 12
@@ -151,4 +151,4 @@ Approval authorizes repository implementation, tests, screenshots, and proportio
 
 The approved boundary is implemented in the local worktree. The full local matrix passes 310 Flutter tests, 69 Functions tests, 42 seed tests, 135 Java-backed Firestore rules assertions, scoped Flutter analysis, Functions and rules TypeScript compilation, and diff checks. Three deliberate red checks proved the page bound, pending-account rule denial, and pending app-gate precedence before restoration. The pending-state golden was visually inspected at 390 by 844.
 
-The completed record is `docs/changes/2026-08-25-v1-account-deletion-recovery.md`, and durable decision 011 preserves the architecture. Commit, push, clean-runner CI, external freeze review, native compilation, device walk, deployment, and release remain separate later states.
+The completed record is `docs/changes/2026-08-25-v1-account-deletion-recovery.md`, and durable decision 011 preserves the architecture. Implementation commit `98f2c9ee98d5feb7a901cb3e8907b056b340b05d` is published in draft PR 13, and all five jobs passed in clean-runner GitHub Actions run `32907722272`. External freeze review, native compilation, device walk, deployment, and release remain separate later states.

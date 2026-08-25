@@ -16,7 +16,7 @@ The path from code-complete to public launch, with concrete triggers on every ga
 - Basic share-out implemented and green-CI verified on stacked draft PR 9: current live chant text, honest trust wording, optional future HTTPS seam, duplicate-tap guard, iPad anchor, recoverable invocation failure, and no dead current URL. Native compilation, PR review, and the device destination walk remain pending.
 - Stacked v1 authority and integration remediation implemented and clean-CI verified on draft PR 10: exact direct-write schemas, server-owned vote and like stamps, authoritative moderation disappearance, current-live action gates, missing-parent vote-trigger tolerance, resilient comments and stale Player recovery, and deterministic CI analysis configuration. Review, native compilation, and the combined device walk remain pending.
 - V1 report and feedback abuse controls implemented and clean-CI verified on stacked draft PR 12: authenticated callable admission, atomic private anchored-window budgets, server-owned stored fields, deterministic duplicate preservation, direct-create denial, retained failure-state forms, and account-deletion cleanup. Independent review, native compilation, and the combined device walk remain pending.
-- V1 account-deletion recovery implemented and locally verified on the final stacked branch: durable private job acceptance, pending-account denial, bounded retry pages, Auth disable and finalization recovery, retained-contribution anonymization, user-report counter convergence, local Songbook compensation, sign-out, and a guarded pending screen. Packaging, clean-runner CI, external freeze review, native compilation, and the combined device walk remain pending.
+- V1 account-deletion recovery implemented and clean-runner verified on stacked draft PR 13: durable private job acceptance, pending-account denial, bounded retry pages, Auth disable and finalization recovery, retained-contribution anonymization, user-report counter convergence, local Songbook compensation, sign-out, and a guarded pending screen. External freeze review, native compilation, and the combined device walk remain pending.
 - Dedup matching engine (backend only): token-overlap matcher and operator `mergeChants` function with a partial audit payload, not a complete undo snapshot.
 - Visual identity: complete "matchnight, warmed with playful" redesign, tokenized, AA contrast proven.
 
@@ -27,7 +27,6 @@ The path from code-complete to public launch, with concrete triggers on every ga
 - Saved Matchday Songbook native client compilation and airplane-mode device walk.
 - Basic share-out native compilation, PR review, and device destination walk.
 - Review of stacked PR 10 and stacked PR 12.
-- Packaging and clean-runner CI for the implemented bounded account-deletion recovery job.
 - One external freeze review over `c57815c...<freeze-head>`, covering every runtime change since the last whole-stack engineering review.
 - Store launch prep.
 
@@ -63,11 +62,11 @@ V1 is a trusted songbook and a creator workshop. The work is sequenced as bounde
 4. **Build Saved Matchday Songbook.** Implemented and green-CI verified on draft PR 8. One chant or a club's current visible Songbook can be stored as a UID-scoped device snapshot, refreshed explicitly, read without live social dependencies, and removed locally. Native client compilation, review, and the airplane-mode force-stop and relaunch walk remain. Cross-device sync stays deferred.
 5. **Add basic share-out.** Implemented and green-CI verified on stacked draft PR 9. Live chant detail uses the platform share sheet with a complete text-only rendition and honest trust wording. Current builds emit no URL because no public resolver exists. Native compilation, review, and the device walk remain.
 6. **Close report and feedback velocity abuse.** Implemented and clean-CI verified on stacked draft PR 12. All report and feedback admission now uses authenticated callables with server-owned fields and atomic anchored-window budgets. Direct client creates are denied, existing moderation triggers remain compatible, and failed forms retain entered work. Independent review and the combined device walk remain.
-7. **Make account deletion recoverable.** Implemented and locally verified on the final stacked branch. Durable acceptance precedes local cleanup and sign-out; one retry-enabled server worker performs bounded idempotent cleanup while pending accounts lose active authority. Packaging, clean-runner CI, and the external freeze review remain.
+7. **Make account deletion recoverable.** Implemented and clean-runner verified on stacked draft PR 13. Durable acceptance precedes local cleanup and sign-out; one retry-enabled server worker performs bounded idempotent cleanup while pending accounts lose active authority. The external freeze review remains.
 
 The accepted product boundary is in `docs/decisions/004-songbook-and-chant-lab.md`. Each state-changing block gets the framework's Lane 2 change spec, execution log, tests, UI evidence, scoped rationale, and rollback plan. Unlimited nesting, notifications, scheduled challenges, collaborative lyric suggestions, creator follows, and hosted media remain later work.
 
-Before calling the v1 engineering stack frozen, package the implemented account-deletion recovery layer, require clean-runner CI, and commission one external review over the exact Git range `c57815c...<freeze-head>`. Commit `c57815c` contains the last whole-stack engineering-review versions of `ENGINEERING_OVERVIEW.md` and `docs/IMPLEMENTATION_RATIONALE.md`; the current files remain later milestone snapshots rather than the review baseline itself.
+The final feature layer is packaged and clean-runner green. Before calling the v1 engineering stack frozen, commission one external review over the exact Git range `c57815c...<final-pr-13-head>`. Commit `c57815c` contains the last whole-stack engineering-review versions of `ENGINEERING_OVERVIEW.md` and `docs/IMPLEMENTATION_RATIONALE.md`; the current files remain later milestone snapshots rather than the review baseline itself.
 
 **Trigger to exit:** The current device walk passes; provenance and promotion rules work end to end; Songbook and Chant Lab remain understandable on club and player screens; Saved Matchday Songbook survives airplane-mode relaunch; the dedup nudge works on the seeded archive; and share-out never produces a broken destination.
 
@@ -124,7 +123,7 @@ The implementation boundary and remaining verification gate live in `docs/CHANGE
 
 **Approved product contract:** Chants keeps Terrace Proven content in the trusted Songbook and gives original or not-yet-verified submissions a visible Chant Lab. Submission origin is required. Evidence is optional to post and required to promote a user submission to Terrace Proven. Votes rank ideas but never verify a factual claim.
 
-**Implementation status:** The provenance slice, browse split, Saved Matchday Songbook, Basic Share-Out, authority remediation, report/feedback abuse controls, and durable account deletion are implemented in the stack. The abuse-control base is clean-runner green on draft PR 12, and the deletion layer is locally green. Packaging, clean-runner CI for the final layer, native compilation, independent freeze review, and the combined device walk remain.
+**Implementation status:** The provenance slice, browse split, Saved Matchday Songbook, Basic Share-Out, authority remediation, report/feedback abuse controls, and durable account deletion are implemented in the stack. Draft PR 13 is clean-runner green on all five jobs. Native compilation, independent freeze review, and the combined device walk remain.
 
 **Source of truth:** `docs/decisions/004-songbook-and-chant-lab.md` and the interface contract in `docs/INTERFACE.md`.
 
