@@ -15,7 +15,7 @@ This is the chronological evidence trail for substantial engineering work. It re
 
 ### 2026-08-25T00:08:50Z Implement V1 basic share-out
 
-- **Status:** implemented and locally verified; clean-runner CI, native compilation, review, and device walk pending
+- **Status:** implemented and clean-runner verified; native compilation, review, and device walk pending
 - **Scope:** Specify and implement a stacked Lane 2 native text share from live chant detail with honest provenance, a no-dead-link fallback, bounded failure behavior, and no backend or analytics. No public route, Firebase, deployment, merge, or release change.
 - **Reference:** `docs/CHANGE_SPEC.md`, decision 004
 - **Operator:** Codex
@@ -35,6 +35,7 @@ This is the chronological evidence trail for substantial engineering work. It re
 | 00:41:42 | Removed native-project mutations created by the failed iOS attempt | Local repository | Restored every tracked iOS project file exactly to branch HEAD and deleted the generated SwiftPM resolution files. No unrelated Flutter migration or lockfile collapse remains in the share diff. Native compilation stays a release blocker, not a claimed pass. |
 | 00:48:21 | Opened stacked draft PR 9 and inspected the first clean-runner result | GitHub Actions run `32794917851` | Functions, seed, 117 Firestore rules assertions, and Flutter analysis passed. Of 271 Flutter tests, 270 passed and only the new golden failed at a measured 1.85% macOS-to-Ubuntu renderer difference against the shared 1.5% threshold. All new functional share tests passed. |
 | 00:48:21 | Applied the existing measured golden-drift control | Local repository | Set only the share-detail golden to 1.9%, 0.05 percentage points above its observed benign difference. The shared 1.5% default and known-bad comparator guard remain unchanged. Replacement clean-runner evidence is pending. |
+| 00:52:03 | Verified the bounded visual control in replacement clean-runner CI | GitHub Actions run `32795153302` | All five jobs passed: 271 Flutter tests, Flutter analysis, 35 Functions tests, 42 seed tests, and 117 Java-backed Firestore rules assertions. Draft PR 9 remains unreviewed and unmerged; native compilation and the device destination walk remain pending. |
 
 - **Files/artifacts:** Proposed `docs/CHANGE_SPEC.md` and this execution entry only.
 - **Skipped or blocked:** No public chant URL exists, so the approved current build remains text-only. Firebase access, website work, deployment, merge, release, and external-destination testing remain outside this implementation pass.

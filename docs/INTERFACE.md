@@ -34,7 +34,7 @@ This is the current design contract and decision history for Chants. Read the re
 - **Alternatives considered:** A guessed website link, which is broken; title-only promotional copy, which is not useful to the recipient; generated cards or direct social integrations, which add media, permissions, SDK, and platform-policy scope.
 - **Required states:** Current stream value, known or absent team, all provenance states, pending duplicate tap, dismissed or unavailable platform result, invocation failure, invalid source rectangle, and hidden or removed chant.
 - **Accessibility/responsive impact:** The control is labeled `Share this chant`, uses the native sheet, passes the button's laid-out global rectangle for iPad, and remains reachable with Save and Report at 390 by 844 and 1.8x text.
-- **Implementation evidence:** Pure payload and gateway tests, real-detail widget tests, a deliberate missing-lyrics red check, 271 passing Flutter tests, and an inspected launch-viewport golden. Native compilation, clean-runner CI, PR review, and device sharing remain pending.
+- **Implementation evidence:** Pure payload and gateway tests, real-detail widget tests, a deliberate missing-lyrics red check, 271 passing Flutter tests, an inspected launch-viewport golden, and green replacement CI on draft PR 9. Native compilation, PR review, and device sharing remain pending.
 - **Revisit when:** A stable HTTPS chant route exists, recipients need richer previews, device testing finds platform-specific payload loss, or direct publishing has evidence strong enough to justify its account and SDK surface.
 - **Related:** `docs/decisions/008-native-text-share-before-public-links.md`, `docs/CHANGE_SPEC.md`
 

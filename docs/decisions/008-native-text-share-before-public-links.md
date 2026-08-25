@@ -48,5 +48,5 @@ Current production wiring passes no URL. A later public-route change may supply 
 
 ## Validation and revisit trigger
 
-- **Evidence:** Exact payload and gateway tests, production-detail widget tests, a deliberate missing-lyrics red check, a visually inspected 390 by 844 golden, and the local repository verification matrix. Clean-runner CI, native compilation, independent review, and device destination tests remain pending.
+- **Evidence:** Exact payload and gateway tests, production-detail widget tests, a deliberate missing-lyrics red check, a visually inspected 390 by 844 golden, and green clean-runner CI on draft PR 9. Native compilation, independent review, and device destination tests remain pending.
 - **Revisit when:** A stable public resolver is live, sharing is a measured acquisition surface, users need branded previews, a receiving platform drops critical text, or package compatibility requires a build-tool upgrade.

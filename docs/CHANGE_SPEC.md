@@ -1,6 +1,6 @@
 # Change spec: V1 basic share-out
 
-**Status:** Implemented and locally verified; clean-runner CI, native compilation, review, and device walk pending
+**Status:** Implemented and clean-runner verified; native compilation, review, and device walk pending
 **Updated:** 2026-08-24
 **Risk lane:** Lane 2, user-triggered external platform side effect and future public-link contract
 **Stack base:** Draft PR 8, `codex/v1-saved-matchday-songbook`
