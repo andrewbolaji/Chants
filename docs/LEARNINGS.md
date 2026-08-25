@@ -60,10 +60,10 @@ This is durable, evidence-backed project memory. It prevents the same failure or
 
 - **Status:** promoted
 - **Scope:** Flutter widget goldens generated on one operating system and verified on another
-- **Observed:** The reply and operator-control goldens passed on macOS with Flutter 3.44.8 but failed on Ubuntu with Flutter 3.47.1 at 1.02% and 0.49% pixel difference. Later text-heavy full-screen Songbook and Chant Lab goldens differed by 2.09% and 1.94%. The Saved Songbook detail differed by 2.25% on the same platform pair while all 254 other Flutter tests passed.
-- **Evidence:** Draft PR 4 workflow run `32541324140`, draft PR 7 workflow run `32587305522`, draft PR 8 workflow run `32594555589`, and the focused local comparator test.
+- **Observed:** The reply and operator-control goldens passed on macOS with Flutter 3.44.8 but failed on Ubuntu with Flutter 3.47.1 at 1.02% and 0.49% pixel difference. Later text-heavy full-screen Songbook and Chant Lab goldens differed by 2.09% and 1.94%. The Saved Songbook detail differed by 2.25%, and the chant-detail share screen by 1.85%, on the same platform pair while their non-visual tests passed.
+- **Evidence:** Draft PR 4 workflow run `32541324140`, draft PR 7 workflow run `32587305522`, draft PR 8 workflow run `32594555589`, draft PR 9 workflow run `32794917851`, and the focused local comparator test.
 - **Learning:** Exact pixels are too strict across renderers, but removing visual checks would hide real regressions. Use a documented, measured tolerance with a known-bad test that proves the boundary still rejects material changes.
-- **Applied control:** `test/helpers/tolerant_golden_file_comparator.dart` keeps a 1.5% default. The measured full-screen browse test opts into 2.2% and the Saved Songbook test into 2.3%, while the comparator test proves a small synthetic difference passes and a fully changed image fails.
+- **Applied control:** `test/helpers/tolerant_golden_file_comparator.dart` keeps a 1.5% default. The measured share-detail test opts into 1.9%, the full-screen browse test into 2.2%, and the Saved Songbook test into 2.3%, while the comparator test proves a small synthetic difference passes and a fully changed image fails.
 - **Revisit when:** A pinned renderer or platform-specific baselines make exact comparison stable, or observed benign drift approaches a test's measured boundary.
 - **Related:** `.github/workflows/ci.yml`
 

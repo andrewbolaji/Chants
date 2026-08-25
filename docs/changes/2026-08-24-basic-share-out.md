@@ -40,6 +40,7 @@
 - The Java-backed Firestore emulator suite was not run locally because Java is unavailable. Rules and backend are untouched; clean-runner CI remains the independent emulator gate.
 - Red check: temporarily omitting main lyrics from the production payload made the exact builder test fail on the missing lyrics. Restoring the approved payload made the same focused test pass.
 - Visual evidence: `chant_detail_share.png` was generated at 390 by 844 and visually inspected. Save, Share, Report, provenance, title, lyrics, context, comments, composer, and voting remain legible without visible clipping. The detail action test also passes at 1.8x text.
+- First clean-runner evidence: Functions, seed, 117 Java-backed Firestore rules assertions, Flutter analysis, and all non-visual Flutter tests passed in run `32794917851`. Only the new share-detail golden failed at a measured 1.85% macOS-to-Ubuntu renderer difference against the shared 1.5% allowance. This test alone now uses 1.9%; the shared default and known-bad comparator guard are unchanged. Replacement CI is pending.
 - Android debug compilation was blocked before build because no Android SDK is configured locally.
 - The iOS simulator build reached Xcode and failed in inherited Cloud Firestore 6.4.1 Swift Package sources with unavailable Objective-C initializers. Flutter's attempted CocoaPods-to-SwiftPM project migration was fully removed from the diff after the failure. Native compilation remains an explicit release gate.
 
