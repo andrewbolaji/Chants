@@ -7,6 +7,12 @@ import {
   ChantTrustPlan,
   planChantTrustAction,
 } from "./chant_trust";
+import {
+  deleteSafetyRateState,
+  handleSubmitFeedback,
+  handleSubmitReport,
+  requireAuthenticatedUid,
+} from "./safety_submission";
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -17,6 +23,32 @@ const AUTO_HIDE_THRESHOLD = 3;
 // check in firestore.rules. Bump all three together, only for a substantive
 // policy text change (a bump re-gates every existing user on next open).
 const CURRENT_POLICY_VERSION = "v1";
+
+export const submitReport = onCall(
+  { region: "europe-west2" },
+  async (request) => {
+    const uid = requireAuthenticatedUid(request.auth);
+    return handleSubmitReport({
+      uid,
+      data: request.data,
+      firestore: db,
+      clock: () => admin.firestore.Timestamp.now(),
+    });
+  }
+);
+
+export const submitFeedback = onCall(
+  { region: "europe-west2" },
+  async (request) => {
+    const uid = requireAuthenticatedUid(request.auth);
+    return handleSubmitFeedback({
+      uid,
+      data: request.data,
+      firestore: db,
+      clock: () => admin.firestore.Timestamp.now(),
+    });
+  }
+);
 
 type ReportWriteResult = {
   flagCount: number;
@@ -549,6 +581,7 @@ export const deleteAccount = onCall(
     for (const fbDoc of feedback.docs) {
       await fbDoc.ref.delete();
     }
+    await deleteSafetyRateState(uid, db);
 
     // 4. Anonymize createdBy on all chants by this user
     const chants = await db.collection("chants").where("createdBy", "==", uid).get();

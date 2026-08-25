@@ -12,6 +12,17 @@ This is durable, evidence-backed project memory. It prevents the same failure or
 
 ## Entries
 
+### 2026-08-25T19:29:54Z Post-write triggers cannot enforce an admission budget
+
+- **Status:** promoted
+- **Scope:** Abuse controls for Firestore documents that cause storage, moderation, audit, counter, or Function work when created
+- **Observed:** Deterministic report IDs stopped one account from reporting the same target twice, and report triggers converged counters, but a raw authenticated client could still create reports across many targets or random-ID feedback without a velocity bound. A trigger can delete or react only after the write and its downstream work have already been admitted.
+- **Evidence:** The rule and client inspection reproduced all four direct create paths. The implemented Function tests now prove atomic accepted-row and budget writes, rejected non-consumption, deterministic duplicate preservation, anchored limits, and callback retry. The rules suite proves all direct creates are denied and passes 132 assertions.
+- **Learning:** If the product must reject a write before it consumes a shared budget, validation, budget read, budget increment, and accepted document creation must share one server-authoritative transaction. Post-write repair is for convergence, not admission.
+- **Applied control:** `submitReport` and `submitFeedback` use one private `safetyRateLimits/{uid}` row; direct client creates are denied; decision 010 preserves the boundary.
+- **Revisit when:** Firestore transaction contention is measured, a distributed rate service replaces the per-user row, or a write no longer causes meaningful abuse or operational load.
+- **Related:** `functions/src/safety_submission.ts`, `firestore.rules`, `docs/decisions/010-server-authoritative-safety-intake.md`
+
 ### 2026-08-25T10:25:44Z Rule-valid public writes must fit the shipped parser
 
 - **Status:** promoted

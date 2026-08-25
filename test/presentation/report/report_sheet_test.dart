@@ -1,243 +1,177 @@
+import 'package:chants/app/providers.dart';
+import 'package:chants/data/repositories/safety_submission_repository.dart';
+import 'package:chants/presentation/report/report_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:mockito/mockito.dart';
-import 'package:chants/app/providers.dart';
-import 'package:chants/data/repositories/comment_repository.dart';
-import 'package:chants/data/repositories/report_repository.dart';
-import 'package:chants/data/repositories/user_report_repository.dart';
-import 'package:chants/presentation/report/report_sheet.dart';
 
-// --- Fakes (write boundary only, no logic reimplementation) ---
-
-class _MockUser extends Mock implements User {
-  @override
-  String get uid => 'reporter-1';
-}
-
-class _FakeReportRepository implements ReportRepository {
-  String? lastChantId;
-  String? lastReportedBy;
+class _FakeSafetySubmissionRepository implements SafetySubmissionRepository {
+  SafetyReportTargetType? lastTargetType;
+  String? lastTargetId;
   String? lastReason;
+  Object? reportError;
 
   @override
   Future<void> submitReport({
-    required String chantId,
-    required String reportedBy,
+    required SafetyReportTargetType targetType,
+    required String targetId,
     required String reason,
   }) async {
-    lastChantId = chantId;
-    lastReportedBy = reportedBy;
+    lastTargetType = targetType;
+    lastTargetId = targetId;
     lastReason = reason;
-  }
-
-  @override
-  Future<bool> hasReported(
-      {required String userId, required String chantId}) async {
-    return false;
-  }
-}
-
-class _FakeCommentRepository implements CommentRepository {
-  String? lastCommentId;
-  String? lastReportedBy;
-  String? lastReason;
-
-  @override
-  Future<void> submitCommentReport({
-    required String commentId,
-    required String reportedBy,
-    required String reason,
-  }) async {
-    lastCommentId = commentId;
-    lastReportedBy = reportedBy;
-    lastReason = reason;
+    if (reportError case final error?) throw error;
   }
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-class _FakeUserReportRepository implements UserReportRepository {
-  String? lastReportedUserId;
-  String? lastReportedBy;
-  String? lastReason;
+Future<void> _pumpReportSheet(
+  WidgetTester tester, {
+  required ReportTarget target,
+  required SafetySubmissionRepository repository,
+}) async {
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        safetySubmissionRepositoryProvider.overrideWithValue(repository),
+      ],
+      child: MaterialApp(
+        home: Consumer(
+          builder: (context, ref, _) => Scaffold(
+            body: FilledButton(
+              onPressed: () =>
+                  showReportSheet(context: context, target: target, ref: ref),
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+  await tester.tap(find.text('open'));
+  await tester.pumpAndSettle();
+}
 
-  @override
-  Future<void> submitUserReport({
-    required String reportedUserId,
-    required String reportedBy,
-    required String reason,
-  }) async {
-    lastReportedUserId = reportedUserId;
-    lastReportedBy = reportedBy;
-    lastReason = reason;
+Future<void> _chooseAndSubmit(
+  WidgetTester tester, {
+  required String category,
+  required String buttonLabel,
+  String? note,
+}) async {
+  await tester.tap(find.text(category));
+  await tester.pump();
+  if (note != null) {
+    await tester.enterText(find.byType(TextField), note);
   }
-
-  @override
-  Future<bool> hasReportedUser(
-      {required String userId, required String reportedUserId}) async {
-    return false;
-  }
+  await tester.tap(find.widgetWithText(FilledButton, buttonLabel));
+  await tester.pump();
+  await tester.pump();
 }
 
 void main() {
-  final fakeUser = _MockUser();
-
   group('showReportSheet', () {
-    testWidgets('chant mode calls ReportRepository.submitReport',
-        (tester) async {
-      final reportRepo = _FakeReportRepository();
-      final commentRepo = _FakeCommentRepository();
-      final userReportRepo = _FakeUserReportRepository();
+    final targets =
+        <
+          ({
+            ReportTarget target,
+            String title,
+            SafetyReportTargetType type,
+            String id,
+          })
+        >[
+          (
+            target: const ReportChant('chant-1'),
+            title: 'Report this chant',
+            type: SafetyReportTargetType.chant,
+            id: 'chant-1',
+          ),
+          (
+            target: const ReportComment('comment-1'),
+            title: 'Report this comment',
+            type: SafetyReportTargetType.comment,
+            id: 'comment-1',
+          ),
+          (
+            target: const ReportUser('bad-actor-1'),
+            title: 'Report this user',
+            type: SafetyReportTargetType.user,
+            id: 'bad-actor-1',
+          ),
+        ];
 
-      await tester.pumpWidget(ProviderScope(
-        overrides: [
-          reportRepositoryProvider.overrideWithValue(reportRepo),
-          commentRepositoryProvider.overrideWithValue(commentRepo),
-          userReportRepositoryProvider.overrideWithValue(userReportRepo),
-          authStateProvider.overrideWith(
-            (ref) => Stream.value(fakeUser as User?),
-          ),
-        ],
-        child: MaterialApp(
-          home: Consumer(
-            builder: (context, ref, _) {
-              ref.watch(authStateProvider); // warm up before the sheet reads it
-              return Scaffold(
-                body: FilledButton(
-                  onPressed: () => showReportSheet(
-                    context: context,
-                    target: const ReportChant('chant-1'),
-                    ref: ref,
-                  ),
-                  child: const Text('open'),
-                ),
-              );
-            },
-          ),
+    for (final testCase in targets) {
+      testWidgets('submits ${testCase.type.name} through the safety boundary', (
+        tester,
+      ) async {
+        final repository = _FakeSafetySubmissionRepository();
+        await _pumpReportSheet(
+          tester,
+          target: testCase.target,
+          repository: repository,
+        );
+
+        await _chooseAndSubmit(
+          tester,
+          category: 'Hate speech or slurs',
+          buttonLabel: testCase.title,
+          note: 'extra context',
+        );
+
+        expect(repository.lastTargetType, testCase.type);
+        expect(repository.lastTargetId, testCase.id);
+        expect(repository.lastReason, 'Hate speech or slurs: extra context');
+        expect(find.text('Got it. We will take a look.'), findsOneWidget);
+      });
+    }
+
+    final failures = <({Object error, String copy})>[
+      (
+        error: const SafetySubmissionException(
+          SafetySubmissionFailure.duplicate,
         ),
-      ));
-
-      await tester.tap(find.text('open'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Report this chant'), findsWidgets);
-
-      await tester.tap(find.text('Hate speech or slurs'));
-      await tester.pump();
-      await tester.tap(find.widgetWithText(FilledButton, 'Report this chant'));
-      await tester.pump();
-      await tester.pump();
-
-      expect(reportRepo.lastChantId, 'chant-1');
-      expect(reportRepo.lastReportedBy, 'reporter-1');
-      expect(commentRepo.lastCommentId, null);
-      expect(userReportRepo.lastReportedUserId, null);
-    });
-
-    testWidgets('comment mode calls CommentRepository.submitCommentReport',
-        (tester) async {
-      final reportRepo = _FakeReportRepository();
-      final commentRepo = _FakeCommentRepository();
-      final userReportRepo = _FakeUserReportRepository();
-
-      await tester.pumpWidget(ProviderScope(
-        overrides: [
-          reportRepositoryProvider.overrideWithValue(reportRepo),
-          commentRepositoryProvider.overrideWithValue(commentRepo),
-          userReportRepositoryProvider.overrideWithValue(userReportRepo),
-          authStateProvider.overrideWith(
-            (ref) => Stream.value(fakeUser as User?),
-          ),
-        ],
-        child: MaterialApp(
-          home: Consumer(
-            builder: (context, ref, _) {
-              ref.watch(authStateProvider); // warm up before the sheet reads it
-              return Scaffold(
-                body: FilledButton(
-                  onPressed: () => showReportSheet(
-                    context: context,
-                    target: const ReportComment('comment-1'),
-                    ref: ref,
-                  ),
-                  child: const Text('open'),
-                ),
-              );
-            },
-          ),
+        copy: 'You already reported this.',
+      ),
+      (
+        error: const SafetySubmissionException(
+          SafetySubmissionFailure.rateLimited,
         ),
-      ));
+        copy: 'You have sent several reports recently. Try again later.',
+      ),
+      (
+        error: Exception('network'),
+        copy: 'Could not send your report. Try again.',
+      ),
+    ];
 
-      await tester.tap(find.text('open'));
-      await tester.pumpAndSettle();
+    for (final testCase in failures) {
+      testWidgets('shows ${testCase.copy} and retains entered report work', (
+        tester,
+      ) async {
+        final repository = _FakeSafetySubmissionRepository()
+          ..reportError = testCase.error;
+        await _pumpReportSheet(
+          tester,
+          target: const ReportChant('chant-1'),
+          repository: repository,
+        );
 
-      expect(find.text('Report this comment'), findsWidgets);
+        await _chooseAndSubmit(
+          tester,
+          category: 'Something else',
+          buttonLabel: 'Report this chant',
+          note: 'Please keep this note',
+        );
 
-      await tester.tap(find.text('Threats or targeting'));
-      await tester.pump();
-      await tester
-          .tap(find.widgetWithText(FilledButton, 'Report this comment'));
-      await tester.pump();
-      await tester.pump();
+        expect(find.text(testCase.copy), findsOneWidget);
+        expect(find.text('Please keep this note'), findsOneWidget);
+        final button = tester.widget<FilledButton>(
+          find.widgetWithText(FilledButton, 'Report this chant'),
+        );
+        expect(button.onPressed, isNotNull);
+      });
+    }
 
-      expect(commentRepo.lastCommentId, 'comment-1');
-      expect(commentRepo.lastReportedBy, 'reporter-1');
-      expect(reportRepo.lastChantId, null);
-      expect(userReportRepo.lastReportedUserId, null);
-    });
-
-    testWidgets('user mode calls UserReportRepository.submitUserReport',
-        (tester) async {
-      final reportRepo = _FakeReportRepository();
-      final commentRepo = _FakeCommentRepository();
-      final userReportRepo = _FakeUserReportRepository();
-
-      await tester.pumpWidget(ProviderScope(
-        overrides: [
-          reportRepositoryProvider.overrideWithValue(reportRepo),
-          commentRepositoryProvider.overrideWithValue(commentRepo),
-          userReportRepositoryProvider.overrideWithValue(userReportRepo),
-          authStateProvider.overrideWith(
-            (ref) => Stream.value(fakeUser as User?),
-          ),
-        ],
-        child: MaterialApp(
-          home: Consumer(
-            builder: (context, ref, _) {
-              ref.watch(authStateProvider); // warm up before the sheet reads it
-              return Scaffold(
-                body: FilledButton(
-                  onPressed: () => showReportSheet(
-                    context: context,
-                    target: const ReportUser('bad-actor-1'),
-                    ref: ref,
-                  ),
-                  child: const Text('open'),
-                ),
-              );
-            },
-          ),
-        ),
-      ));
-
-      await tester.tap(find.text('open'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Report this user'), findsWidgets);
-
-      await tester.tap(find.text('Something else'));
-      await tester.pump();
-      await tester.tap(find.widgetWithText(FilledButton, 'Report this user'));
-      await tester.pump();
-      await tester.pump();
-
-      expect(userReportRepo.lastReportedUserId, 'bad-actor-1');
-      expect(userReportRepo.lastReportedBy, 'reporter-1');
-      expect(reportRepo.lastChantId, null);
-      expect(commentRepo.lastCommentId, null);
-    });
   });
 }

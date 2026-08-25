@@ -1,170 +1,138 @@
-# Change spec: Stacked v1 authority and integration remediation
+# Change spec: V1 report and feedback abuse controls
 
-**Status:** Implemented and locally verified on 2026-08-25; independent review and clean-runner CI pending
+**Status:** Approved, implemented, and locally verified; packaging, clean-runner CI, and independent review pending
 **Updated:** 2026-08-25
-**Risk lane:** Lane 2, direct-write authorization, moderation lifecycle, asynchronous server triggers, and release gates
-**Stack base:** `b72f4abddea0cd8a3b201de2d4dda246c62a413c`, exact head of stacked draft PR 9
+**Risk lane:** Lane 2, moderation intake, server authority, persistent rate state, and client-to-Function migration
+**Stack base:** `625217940e9817d9801b90f28aa4025e48dfbd48`, exact head of stacked PR 10
+**Branch:** `codex/v1-abuse-controls`, stacked above PR 10
 
-This is the approved and implemented contract produced by the whole-project stacked engineering review. It replaces the completed Basic Share-Out spec, whose reasoning is retained in `docs/changes/2026-08-24-basic-share-out.md`. Andrew's exact implementation approval and the measured result are retained below and in `docs/EXECUTION.md`.
+This is the one active implementation proposal for the next v1 block. PR 10 is clean-runner green. Its completed authority-remediation reasoning remains in `docs/changes/2026-08-25-stacked-v1-authority-integration-remediation.md` and decision 009.
 
 ## Outcome
 
-- **Problem:** The stacked v1 features pass their existing suites, but adversarial integration review found a mismatch between Firestore write rules and Dart deserialization, stale Discover behavior after moderation revokes a read, a missing parent-existence guard in the vote trigger, two comment-state failures, a stale player-prefill assertion, and a CI analysis job that can pass without running.
-- **Desired behavior:** Every direct-client document accepted by rules fits the shipped model contract; server-only bookkeeping remains server-only; moderated content cannot remain actionable through a stale Discover snapshot; Share requires current visible confirmation; child triggers tolerate a deleted parent; comments contain lookup failure and enlarged text; stale player metadata fails soft; and a green analysis job proves analysis ran.
-- **Non-goals:** Report or feedback velocity limiting; redesigning moderation; rewriting `mergeChants` into a resumable job; making account deletion resumable; production signing credentials; changing the user's unstaged Gradle or lockfile work; writing the real content policy; native dependency upgrades; public URLs; deep links; hosted media; notifications; analytics; pagination; deployment; Firebase access; live seed preflight or writes; merge; release; device actions; dependency upgrades; or whole-tree formatter normalization.
-- **Review boundary:** Firestore rules and adversarial rules tests, focused Flutter state and layout fixes, one Functions parent guard and test, the CI analysis gate, factual current-document corrections, and the verification needed for those paths.
+- **Problem:** Report documents use deterministic one-per-target IDs and now have exact schemas, but a raw authenticated client can still report many different chants, comments, or users as quickly as writes can be issued. Feedback uses random IDs and can be created without a velocity bound. Post-write triggers cannot prevent storage, moderation-queue, audit-log, counter, and Function load that has already occurred.
+- **Desired behavior:** All report and feedback admission moves behind authenticated Cloud Functions that derive identity and server fields, validate the current target, enforce one atomic server-owned per-user budget, and create the accepted document in the same transaction. Direct clients can read only their existing allowed views and cannot create these documents. The UI distinguishes duplicate, rate-limited, and recoverable failures without losing entered work.
+- **Non-goals:** Changing report categories, auto-hide threshold, report resolution, moderation queue design, report or feedback deletion policy, operator tools, App Check enforcement state, account-deletion resumability, merge resumability, user appeals, notifications, analytics, pagination, hosted media, dependencies, indexes, deployment, Firebase access, live data, seed work, signing, merge, release, device actions, or formatter normalization.
+- **Stop boundary:** This block closes unauthenticated-shape and authenticated-velocity abuse at moderation intake. It does not turn the reporting system into a general trust-and-safety platform.
 
 ## Acceptance criteria and invariants
 
-### Exact direct-write schemas
+### Server-authoritative submission
 
-1. A user-created chant has an exact allowed key set. It contains the fields emitted by the current `Chant.toJson` submission path and no unknown field.
-2. Direct user chant creation requires string `sportId`, `competitionId`, and `teamId`; nullable string `playerId`, `coverImageUrl`, and `mediaUrl`; an empty `variations` list; and the existing valid title, lyrics, tune, context, subject, style, status, origin, evidence, counters, owner, visibility, and timestamps.
-3. Direct user creation pins v1 media to `mediaType == 'none'`, `coverImageUrl == null`, and `mediaUrl == null`. Seed and operator Admin SDK paths remain outside this direct-client rule and preserve current canonical media compatibility.
-4. The referenced Team must exist. Stored `sportId` and `competitionId` must match that Team. A player subject must name a non-null existing Player on that Team. A non-player subject must have `playerId == null`.
-5. Author chant updates preserve the exact stored schema and can change only the current user-editable text and classification fields: title, lyrics, tune, optional context, subject, style, optional valid Player, and `updatedAt`. Origin, evidence, identity, Team hierarchy, media, variations, ownership, status, counters, dates, and visibility remain immutable on the direct author path.
-6. Existing legacy chant reads are not migrated or rejected. Exact-schema enforcement applies to new direct writes and direct author updates. Operator compatibility remains governed by the current trust-state checks and gains safe type validation without forcing legacy untouched optional fields into existence.
-7. Vote create allows exactly `chantId`, `userId`, `value`, and `createdAt`. Vote update may change exactly `value`. Function-written `appliedValue` cannot be created, changed, or deleted by the owner.
-8. Comment-like create allows exactly `commentId`, `userId`, `value`, and `createdAt`. Comment-like update may change exactly `value`. Function-written `appliedValue` remains server-owned.
-9. Comment create permits only the current comment fields plus optional `parentCommentId`. Required strings, booleans, zero counters, relationship, body length, display-name equality, and recent timestamps stay enforced.
-10. Chant, comment, and user reports each permit only their current five fields. Target and reporter IDs are strings, status is `pending`, reason is a nonempty string of at most 250 characters, and creation time is recent. The 250-character stored boundary preserves the current category prefix plus the UI's 200-character optional note. Existing one-per-target IDs and visibility or existence checks stay enforced.
-11. Feedback permits only `userId`, `category`, `message`, `followUpOk`, `resolved`, and `createdAt`. Category is one of the model values, message is nonempty and at most 1,000 characters, booleans have the correct type, creation time is recent, and `resolved` starts false.
-12. Block rules retain their existing exact schema and relationship checks. Profile rules retain their existing exact schema and privileged-field pinning.
-13. Rules tests prove both accepted client payloads and hostile raw writes: unknown fields, malformed `variations`, wrong nullable types, forged media, mismatched Team hierarchy, wrong Player Team, `appliedValue` create/update/delete, oversized or nonstring reasons, invalid feedback category, and timestamp abuse.
+1. Add callable Functions `submitReport` and `submitFeedback` in `europe-west2`. Authentication is required. The actor UID is derived only from `request.auth.uid`.
+2. Both callables require an existing profile whose `banned` field is exactly false. A missing or malformed profile returns `failed-precondition`; a banned reporter returns `permission-denied`.
+3. `submitReport` accepts exactly `targetType`, `targetId`, and `reason`. `targetType` is one of `chant`, `comment`, or `user`; `targetId` is a trimmed string from 1 through 512 JavaScript characters; `reason` is trimmed, nonempty, and at most 250 characters. Unknown fields, wrong types, and client-supplied identity, time, status, or collection names are rejected as `invalid-argument`.
+4. Chant and comment targets must exist and currently have `hidden == false` and `removed == false`. A user target must have an existing profile and cannot equal the reporter. Missing targets return `not-found`; unavailable content returns `failed-precondition`.
+5. Accepted reports retain the current collection and deterministic ID contracts: `reports/{uid}_{chantId}`, `commentReports/{uid}_{commentId}`, and `userReports/{uid}_{reportedUserId}`. The server writes exactly the current five fields with `reportedBy` from auth, `createdAt` from server time, and `status == pending`.
+6. An existing deterministic report returns `already-exists` and does not consume rate budget, overwrite the original reason, reopen a resolved report, or produce another audit or counter event.
+7. `submitFeedback` accepts exactly `category`, `message`, and `followUpOk`. Category is one of `suggestion`, `bug`, `question`, or `other`; the trimmed message is nonempty and at most 1,000 characters; `followUpOk` is boolean. The server chooses the document ID and writes UID, server time, and `resolved == false`.
+8. Callable validation and accepted document construction live in testable handlers that receive their Firestore and clock boundaries rather than hiding all behavior inside exported wrappers.
 
-### Moderation and live-state behavior
+### Atomic velocity budgets
 
-14. Discover may render its initial visible query copy while a live card subscription is waiting or during an ordinary recoverable connection error.
-15. A single-document `permission-denied` error, an active null document, or a current hidden or removed document removes that card from Discover and prevents navigation from its stale route snapshot.
-16. Discover tests use a Firebase-shaped permission-denied error separately from an ordinary transient error so moderation disappearance does not destroy the intended fail-soft offline behavior.
-17. Live chant detail may retain readable route text through a connection failure, but Save, Share, Vote, Report, and Comment actions that require a live visible target are disabled until the stream has emitted a current visible chant. At minimum, Share must require `ConnectionState.active`, non-null current data, no error, and visible flags.
-18. A stale Discover card followed by a permission denial cannot invoke the native Share gateway. The regression test exercises the actual Discover-to-detail route or an equivalent shared live-availability state, not only an injected hidden `Chant` object.
-19. Current Team and Player retained-data behavior remains unchanged for ordinary errors. Query-authoritative removal still removes moderated content.
+9. Add one server-only `safetyRateLimits/{uid}` document per account. Firestore rules allow no direct client read or write. The document contains independent report and feedback window timestamps and counters plus server `updatedAt`; absent fields initialize safely.
+10. All three report target types share one anchored one-hour window. Accounts younger than 24 hours may create at most 5 accepted reports in that window. Older accounts may create at most 20. Classification uses the server-read profile `createdAt`; missing or malformed creation time takes the safer new-account limit.
+11. Feedback permits at most 3 accepted entries in one anchored 24-hour window for every account.
+12. The callable transaction reads the reporter profile, target, deterministic report when applicable, and rate document before writing. Budget increment and submission creation commit atomically. Concurrent calls cannot exceed the accepted count through a read-then-write race.
+13. Expired windows reset on the next accepted attempt. A rejected invalid, unavailable, duplicate, or over-limit submission consumes no budget.
+14. Limit rejection uses `resource-exhausted` with stable server messages. The response may return success and target type, but it never returns another user's state, exact budget history, or operator data.
+15. No scheduled cleanup or TTL is added. The bounded rate document remains one small server-only row per submitting UID and is deleted by `deleteAccount` with that user's other private data.
 
-### Comments and submission resilience
+### Client migration and interface behavior
 
-20. A failed `getUserLike` call is caught inside `CommentSection`, does not escape to `PlatformDispatcher` or Crashlytics as an unhandled error, preserves a usable unliked display, and removes the comment ID from the loaded set so a later comment emission can retry.
-21. The empty-comments state wraps or flexes at a 390-wide viewport with 1.8x text and has no overflow. Existing nonempty reply-thread layout remains unchanged.
-22. Block snackbar Undo awaits or otherwise contains `unblockUser` failure and shows bounded recovery copy instead of emitting an unhandled Future error.
-23. A player-prefilled submit route validates the loaded Player set before passing an initial dropdown value. A missing or moved Player clears the selection and shows a recoverable prompt instead of asserting or spinning forever. Player-stream failure renders a retry or explanatory state while the user can still switch the subject away from Player.
+16. Add one replaceable client repository boundary for safety submissions using `FirebaseFunctions.instanceFor(region: 'europe-west2')`. Report and feedback screens never send a reporter UID, timestamp, status, resolved value, or collection name.
+17. The report sheet sends one typed target plus reason through that boundary. Remove the three direct report-create methods from the production repository APIs. Existing Firestore repositories may retain read-only checks, but no direct report-create method or provider remains on a shipped path.
+18. Feedback uses the same server-authoritative boundary and returns `Future<void>` or a typed success result rather than exposing a Firestore `DocumentReference`.
+19. The client translates `already-exists` to `You already reported this.`, `resource-exhausted` to `You have sent several reports recently. Try again later.` or `You have sent several messages recently. Try again later.`, and other failures to the existing retry copy.
+20. A failed report keeps the sheet open with category and note intact and restores the submit control. A failed feedback attempt keeps category, message, and follow-up choice intact. Successful copy remains unchanged.
+21. Existing signed-out behavior remains fail-closed. Tests cover enlarged text only if the new error copy changes measured layout; no visual redesign or new golden is required otherwise.
 
-### Trigger lifecycle
+### Rules, triggers, deletion, and compatibility
 
-24. `handleVoteWritten` reads the parent chant before querying votes or staging a batch. If the chant no longer exists, it returns without a batch or vote `appliedValue` write.
-25. The new guard has a focused missing-parent test equivalent to `handleCommentLikeWritten`'s guard test. Existing create, update, delete, no-op, duplicate, and burst cases remain green.
-26. This block corrects source comments that call the merge audit payload full or undo-capable. It does not claim to make `mergeChants` atomic, resumable, or reversible.
+22. Firestore rules deny all direct client creates in `reports`, `commentReports`, `userReports`, and `feedback`. Existing allowed reads remain unchanged. Operators and Admin SDK Functions continue to use their current server authority.
+23. Existing report documents remain valid data. `onReportCreated`, `onCommentReportCreated`, and `onUserReportCreated` retain ground-truth counters, auto-hide behavior, and audit logging without a counter or schema migration.
+24. Existing feedback rows remain readable to their owner and operators. No stored document is rewritten.
+25. Account deletion removes `safetyRateLimits/{uid}`. Failure to find that document is a successful no-op. The broader sequential deletion redesign stays outside this block.
+26. No Firestore index, dependency, scheduled Function, or new client permission is introduced.
 
-### CI and current documentation
+### Verification and delivery
 
-27. Flutter analysis no longer exits successfully because `FIREBASE_OPTIONS_DART` is absent. CI copies the checked-in `lib/firebase_options.dart.example` for static analysis when the secret is missing, or uses another deterministic non-secret fixture that compiles the same source.
-28. The analysis job records one unambiguous outcome: analysis ran and passed, or the job failed. It never prints skip and exits zero.
-29. Formatter normalization remains separate because 56 committed files would change. This block does not add a format gate that the current tree cannot pass.
-30. `README.md` and `docs/ROADMAP.md` receive factual status corrections only: implemented Songbook/Lab, Saved Songbook, Share, duplicate nudge, current measured test counts, CI status, and remaining review/device gates. No product scope is expanded.
-31. `ENGINEERING_OVERVIEW.md`, `docs/IMPLEMENTATION_RATIONALE.md`, and `docs/EXECUTION.md` are refreshed after implementation with exact evidence. A completed record is added under `docs/changes/`. No ADR is added unless implementation requires a new durable tradeoff not already covered by existing decisions.
+27. Functions tests prove authentication, exact payload validation, banned and missing profiles, each target type, hidden and removed content, self-report rejection, deterministic deduplication, server-owned fields, new and established limits, feedback limit, window reset, malformed rate state, rejected-attempt non-consumption, and concurrent transaction retry behavior at the handler boundary.
+28. Rules tests replace prior valid direct-create expectations with denial for all four collections while preserving owner/operator read coverage and Admin-seeded compatibility fixtures.
+29. Flutter tests prove target mapping, no client identity fields, duplicate and limit copy, retained form state, success behavior, and generic retry behavior on the production report and feedback surfaces.
+30. Existing Flutter, Functions, seed, rules, and analysis suites remain green. New load-bearing tests receive a deliberate red check before restoration. `git diff --check` passes and only approved paths are staged.
+31. Planning, implementation, local verification, clean-runner verification, review, deployment, and observation remain separate states. This specification authorizes none of deployment, Firebase access, live data reads or writes, seed operations, merge, signing, release, or device actions.
 
 Invariants:
 
-- Rules are authoritative for direct client writes; client form validation is assistance, never authorization.
-- A rule-valid visible document must be safe for the shipped model parser.
-- Admin SDK seed and Function writes remain separately validated and do not depend on client rules.
-- Retaining public content during ordinary connectivity loss is distinct from retaining it after an authoritative moderation denial.
-- External share requires current visible authority and never claims delivery.
-- Function-owned counters and reconciliation stamps are not client-owned fields.
-- No production, staging, seed, deployment, merge, release, signing, or device action is authorized by this specification.
+- Reporting is available only to an authenticated, profiled, non-banned account.
+- The server, not the client, owns reporter identity, stored time, status, resolution state, collection routing, and velocity counters.
+- One reporter can contribute at most one report to one target document.
+- Duplicate and rejected attempts do not consume budget or alter accepted evidence.
+- Report counts remain ground-truth recomputations; rate budgets never become moderation evidence.
+- Popularity, reporting volume, and rate-limit state never change provenance or Terrace Proven status.
+- Existing client-visible report and feedback data is not migrated or deleted by this block.
 
 ## Design
 
-### Firestore rule helpers
+### Callable boundary
 
-Add small collection-specific helpers instead of one unreadable monolith. Expected helpers include exact key checks, nullable-string checks, Team hierarchy checks, Player relationship checks, and bounded report shape. Reuse `validRecentClientTimestamp`, `validOrigin`, `validOptionalEvidence`, and current visibility helpers.
+Introduce a small `SafetySubmissionRepository` used by both report and feedback UI. Its public API accepts domain values only. The repository maps those values to `submitReport` or `submitFeedback` callable payloads and translates `FirebaseFunctionsException.code` into a small typed failure enum. Widget code owns user-facing copy.
 
-For user-created chants, v1 intentionally pins variations empty and media absent. That avoids attempting to validate arbitrary nested variation maps in Firestore Rules and matches the current submission UI. Seeded canonical variations continue through the Admin SDK. A later user-variation feature requires its own schema and rules contract.
+Keep the server implementation explicit. A target descriptor maps `targetType` to the current collection, target field, and deterministic report collection. The server never accepts those storage names from the client. Validation happens before the transaction where possible, then the transaction re-reads every authoritative document used to approve and count the write.
 
-Author updates should use an allowlist that matches an actual edit capability. Keeping dormant media and cover fields author-writable creates authority without a shipped user job. Remove that dormant authority here; a future upload or evidence feature can add the exact field and moderation contract deliberately.
+### Rate state
 
-Rules changes must be backward compatible with existing reads. Do not add a condition that makes a legacy visible chant unreadable only because an optional historic field is absent. New create and changed-field validation can be strict without performing a live migration.
+Use one `safetyRateLimits/{uid}` document instead of queries over user-authored timestamps or counters on the public profile. The document is never client-readable, does not affect `UserProfile.fromJson`, and is deleted with the account. One document serializes concurrent report and feedback counters independently without a new index.
 
-### Live availability state
+An anchored window begins with the first accepted submission after expiry. It is not a calendar-hour bucket, so a user cannot receive a full fresh allowance merely by crossing an hour boundary. Rate counts are abuse controls, not product analytics or moderation evidence.
 
-Do not treat every stream error identically. Discover should keep its last safe content through a generic connectivity failure but remove it on Firestore `permission-denied`, current null, hidden, or removed. Implement the classification in a small pure helper or explicit widget state so tests do not rely on fragile timing.
+### Rollout compatibility
 
-Detail should separate readable fallback from actionable current state. The route snapshot may remain on screen, but controls that write, report, save fresh data, or share externally require a current active visible stream value. If applying this to every action creates an unexpected offline behavior conflict, Share and external evidence are the minimum fail-closed boundary and the remaining actions must be documented with server-rule rejection evidence.
-
-### Comment lookup retry
-
-`_loadUserLike` owns its read failure. Add the ID to `_likeLoadedFor` before the request to deduplicate concurrent loads, then remove it in `catch` so the next server comment emission can retry. No snackbar is required for background preference hydration; the heart remains usable and its explicit write path already reverts on failure.
-
-Undo is a user-triggered action and should surface failure. A small async helper can await the repository, restore or preserve the blocked state, and show `Could not unblock this user. Try again.` without throwing outside the widget.
-
-### Vote parent guard
-
-Mirror `handleCommentLikeWritten`: get `chants/{chantId}`, return if absent, then query votes and batch the chant plus live vote stamp. The guard intentionally drops work for deleted parents. It must not create a replacement chant or convert `update` to `set`.
-
-### CI analysis fixture
-
-Static analysis does not need a real Firebase project. CI can copy `lib/firebase_options.dart.example` to the ignored runtime path when the secret is absent, then always run `flutter analyze`. Same-repository protected runs may still use the secret, but secret absence cannot become success through an early exit.
+The safe later deployment order is Functions first, client second, then restrictive rules after supported clients use the callable. Because Chants is not publicly released, these may be coordinated in one release after review. Deploying restrictive rules before the callable client would temporarily break reporting and feedback, so rules-first rollout is explicitly wrong for this block.
 
 ## Failure and abuse analysis
 
 | Condition | Required behavior | Evidence |
 |---|---|---|
-| Raw user writes string or map into `variations` | Rules deny; no public query sees it | Adversarial rules test |
-| Raw user adds a 1 MiB unknown field | Rules deny exact key set | Adversarial rules test |
-| Raw user forges `appliedValue` | Vote and like create/update deny | Rules tests plus existing Function batch tests |
-| Raw user points Player chant at another Team | Rules deny relationship mismatch | Rules test with seeded Team and Player |
-| Existing legacy chant lacks origin or optional fields | Read remains available if visible | Compatibility rules test and Dart model test |
-| Moderator hides a Discover chant | Permission denial or null removes card; stale route cannot share | Discover and route widget tests |
-| Network drops while Discover is open | Last safe card may remain with no moderation claim | Transient-error widget test |
-| Comment-like preference read fails | No unhandled exception; later emission retries | Focused widget test |
-| Empty thread at 1.8x text | Copy wraps without overflow | 390 by 844 widget test |
-| Prefilled Player was removed | Selection clears, form remains usable | Submit widget test |
-| Vote delete trigger arrives after source chant deletion | Handler no-ops without commit | Functions missing-parent test |
-| CI secret is deleted | Analysis still runs using fixture | Workflow review and clean-runner CI |
+| Raw SDK creates a valid-looking report | Rules deny before storage | Rules test for each report collection |
+| Raw SDK creates feedback repeatedly | Rules deny before storage | Rules test |
+| Caller supplies another UID or `status: reviewed` | Callable rejects unknown fields; server derives fields | Functions payload tests |
+| Five new-account reports race simultaneously at the boundary | Transaction retries serialize the shared budget; accepted count cannot exceed 5 | Handler transaction test |
+| Duplicate report is retried after a timeout | Returns `already-exists`; original row and budget remain unchanged | Functions idempotency test |
+| Moderator resolved an earlier report | Reporter cannot overwrite or reopen it | Deterministic existing-document test |
+| Content is hidden between request and commit | Target read participates in transaction and retry; no report is accepted against unavailable current state | Functions transaction test |
+| Rate document has absent or malformed fields | Safer defaults apply; no unbounded admission or crash | Functions malformed-state test |
+| Feedback limit is reached | Form remains intact with specific retry-later copy | Repository and widget tests |
+| Account deletion runs after submissions | Private rate row is removed along with other user-private data | Deletion-focused test or handler proof |
+| Callable succeeds and trigger is redelivered | Existing ground-truth report handlers converge | Existing Functions tests |
 
-## Performance and cost
+## Performance, cost, and privacy
 
-- Exact key, type, and relationship checks add bounded Security Rules evaluation. Chant creation may read one Team and, for Player subjects, one Player. This is acceptable at a user-triggered submission boundary and should be covered by rules access-call limits.
-- No new Firestore query, Function, collection, index, background task, or persistent client state is introduced.
-- The vote parent guard adds one document read per meaningful vote trigger. It prevents repeated failed retries and is expected to reduce operational noise around deletion.
-- UI fixes are constant local state operations. No polling or retry timer is added.
-- CI analysis uses a checked-in fixture and adds no paid service dependency.
+- Each accepted report uses bounded document reads for reporter, target, deterministic report, and one rate row, then atomically writes the report and rate row. Feedback omits the deterministic-report read.
+- Rejected malformed calls stop before storage work where possible. Duplicate and rate-limited calls write nothing.
+- One private rate document per submitting UID is bounded state. No raw request history, device identifier, IP address, or third-party analytics data is stored.
+- Accepted report and feedback storage remains unchanged, so moderation queries and triggers need no new index.
+- Callable invocation and transaction cost are justified at a safety boundary and replace unbounded direct-write admission.
 
 ## Rollout and recovery
 
-1. Implement and prove Flutter/Functions logic locally, including deliberate red checks.
-2. Compile rules tests locally if Java becomes available; otherwise push only after TypeScript compilation and require clean-runner Java-backed rules success before review completion.
-3. Deploy order after later authorization: rules first, Functions second, client last. The rules must accept the current shipped client payload before the client reaches users.
-4. No data migration is expected. Existing documents remain readable; stricter checks apply to new or changed direct-client documents.
-5. Rollback is a prior rules and Functions deploy plus a client revert. Because a client rollback is store-latent, the fail-closed moderation and parser-safety tests are required before any release.
-6. Do not deploy, seed, merge, or release in this block without separate authorization.
+1. Implement pure validation and transaction handlers, then prove focused red and green tests.
+2. Migrate Flutter submission paths and failure copy.
+3. Deny direct creates in rules and run the Java-backed suite.
+4. Require the full local matrix and clean-runner CI before review completion.
+5. After separate deployment authorization, deploy Functions, then client, then restrictive rules. Confirm accepted report, duplicate, limit, trigger, and operator visibility in a non-production environment before production.
 
-Healthy signals are zero parser failures from public snapshots, immediate Discover disappearance on moderation denial, no unhandled comment hydration errors, no enlarged-text overflow, no missing-parent Function retries, and an analysis job that visibly runs.
+Rollback restores the prior direct-create rules and client repositories before removing the callables. The private rate collection may remain harmlessly if rollback occurs; a later approved cleanup may delete it. No accepted report or feedback migration is required.
 
-## Verification plan
-
-| Claim | Check | Expected evidence |
-|---|---|---|
-| Exact raw-write schema | Expanded `test_rules/firestore_rules.test.ts` hostile matrix | All malformed and unknown payloads fail; current client shapes succeed |
-| Legacy read compatibility | Admin-seeded legacy chant variations and absent provenance read | Visible legacy document still reads and renders |
-| Model/rule parity | Ledger comparing each `Chant.fromJson` cast to rule type or pin | No direct-client parser field remains unvalidated |
-| Moderation disappearance | Real `DiscoverySection` test with permission-denied stream | Card leaves and cannot navigate |
-| Fail-soft network state | Generic transient stream error | Last safe card remains according to documented policy |
-| Current share authority | Stale route plus no confirmed live data, then permission denial | Gateway call count stays zero; action enables after valid current emission |
-| Like read containment | Throwing fake `getUserLike`, then successful retry emission | No `tester.takeException`; persisted state later reconciles |
-| Enlarged empty state | 390 by 844 at 1.8x | No overflow; empty copy visible |
-| Stale Player | Prefilled ID absent from loaded list and stream error | No assertion or endless spinner; form can recover |
-| Missing parent | `handleVoteWritten` fake with absent chant | Zero batch commits and zero stamp writes |
-| CI actually analyzes | Clean runner without real Firebase options secret | Fixture is written and `flutter analyze` passes visibly |
-| Existing repository stays green | Flutter, Functions, seed, rules, analysis, diff check | All suites pass with exact counts recorded |
-| New tests can fail | Temporary removal of each load-bearing guard | Focused test fails for intended reason, then passes after restoration |
-| Scope remains bounded | Diff against `b72f4ab` and user-worktree inspection | Only approved rules, client, Functions, CI, tests, and current docs; user Gradle/lockfile changes unstaged |
+Healthy signals are callable success without direct writes, bounded `resource-exhausted` responses, no duplicate overwrites, unchanged ground-truth counters, no rate-state permission exposure, and no increase in trigger errors.
 
 ## Approval
 
-**Approved.** Andrew approved this exact specification with `approved stacked v1 authority and integration remediation spec` on 2026-08-25.
+**Approved.** Andrew approved this exact boundary with `approved v1 report and feedback abuse controls spec` on 2026-08-25.
 
-Approval authorized repository edits and proportionate local or clean-runner verification only. It did not authorize production or staging access, dependency disclosure, deployment, live preflight, seed writes, merge, signing credentials, store submission, release, or external device actions.
+Approval authorizes repository implementation, tests, and proportionate local or clean-runner verification on `codex/v1-abuse-controls`. It does not authorize Firebase access, deployment, live observation, seed operations, merge, signing, release, device actions, App Check enforcement changes, account-deletion redesign, or merge redesign.
 
 ## Open decisions
 
-None required before approval. The specification chooses exact direct-write parity, permission-denied moderation disappearance, readable-but-not-actionable detail fallback, retryable background like hydration, fail-soft stale Player handling, a missing-parent no-op, and deterministic static-analysis configuration. Production signing and real policy wording remain separate owner gates because their inputs are not present in the repository.
+None required before approval. This proposal chooses server callables, one private atomic budget row, 5 reports per anchored hour for accounts under 24 hours, 20 for older accounts, and 3 feedback entries per anchored 24 hours. These are conservative prelaunch defaults and can be revisited from observed non-production or beta usage through a separate approved change.

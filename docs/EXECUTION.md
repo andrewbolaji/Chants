@@ -13,6 +13,48 @@ This is the chronological evidence trail for substantial engineering work. It re
 
 ## Entries
 
+### 2026-08-25T18:46:20Z Specify and implement v1 report and feedback abuse controls
+
+- **Status:** Approved implementation locally complete and verified; packaging, clean-runner CI, and independent review pending
+- **Scope:** Inspect and replace the remaining direct report and feedback admission paths with a server-authoritative, atomically budgeted boundary on a branch stacked above PR 10. No Firebase, deployment, seed, merge, release, signing, or device action.
+- **Reference:** `docs/CHANGE_SPEC.md`
+- **Operator:** Codex
+
+| UTC time | Action | Target/environment | Result and evidence |
+|---|---|---|---|
+| 18:32:00 | Inspected report, comment-report, user-report, feedback, profile, rate-limit, account-deletion, rule, provider, UI, and test boundaries | Local repository at `6252179` | Confirmed exact schemas and deterministic per-target report IDs are present, but all four collections still accept direct client creates and have no cross-target velocity budget. Post-write triggers cannot prevent already-incurred storage, queue, audit, counter, and Function load. |
+| 18:40:00 | Chose the smallest enforceable admission boundary | Local design review | Selected authenticated callables plus one private per-UID rate document. Report creation and budget increment share a transaction; all target types share one report window; feedback has an independent window. Rejected client timestamps, query-count rate checks, profile parser expansion, and post-write deletion as forgeable or race-prone. |
+| 18:43:00 | Created `codex/v1-abuse-controls` from exact PR 10 head | Local Git | Branch created at `6252179`. Preserved the user's existing `android/app/build.gradle.kts`, `android/settings.gradle.kts`, and `pubspec.lock` modifications unstaged. |
+| 18:46:20 | Replaced the completed active contract with the exact PR 11 proposal | Local repository | Proposed two callables, atomic limits, client migration, direct-create denial, deletion cleanup, error behavior, rollout order, abuse cases, and verification. Runtime implementation remains absent pending Andrew's exact approval. |
+| 18:52:00 | Received Andrew's exact implementation approval and fixed the later whole-stack review anchor | Codex task and local Git history | Approved with `approved v1 report and feedback abuse controls spec`. The future freeze review will compare immutable review commit `c57815c` with the final freeze head; the milestone files at that commit remain retrievable even though their current paths are living snapshots. |
+| 19:03:00 | Implemented authenticated callable admission and atomic budgets | Functions and Flutter source | Added testable report and feedback handlers, one private per-UID rate document with independent anchored windows, exact profile and target validation, deterministic duplicate protection, server-owned stored fields, and one typed Flutter callable repository. Removed all shipped direct-create methods and client identity fields. |
+| 19:08:00 | Closed direct-write paths and extended lifecycle cleanup | Firestore rules and account deletion | Denied all direct creates for the three report collections and feedback, denied every client access to private rate rows, preserved existing read boundaries and post-write triggers, and deleted the caller's rate row during account deletion. |
+| 19:13:00 | Ran focused client, Functions, rules compilation, and emulator checks | Local macOS, Node 20, OpenJDK 26 | Focused Flutter tests passed. Functions reached 54 passing at the first boundary. Rules TypeScript compiled. The first two full emulator attempts each passed 131 assertions and timed out on a different inherited assertion at Mocha's 10-second limit, indicating local emulator stalls rather than a stable failed boundary. |
+| 19:23:00 | Proved the new guards can fail and restored production behavior | Local focused red checks | Raising the new-account report limit to 6 failed the five-report guard; mapping comment reports as chants failed the target-mapping guard; temporarily allowing direct report creates failed the exact report-schema denial guards. Restored all three production values afterward. |
+| 19:27:00 | Ran the complete local verification matrix | Local macOS, Node 20, OpenJDK 26 | PASS: 294 Flutter tests, scoped Flutter analysis, 56 Functions tests, 42 seed tests, rules TypeScript, and 132 Java-backed rules assertions. The rules suite passed in 15 seconds with a 30-second local test timeout. |
+| 19:29:54 | Inspected temporary error-state renders and refreshed durable records | Local Flutter renderer and repository docs | Report and feedback rate-limit captures showed stable forms, controls, and error presentation without clipping. Capture-only code and files remain outside the repository. Added decision 010, the completed-change record, interface memory, roadmap state, and the immutable freeze-review range. |
+
+- **Files/artifacts:** Functions handler and tests, Flutter safety repository and surface tests, Firestore rules and tests, decision 010, completed-change reasoning, interface and roadmap updates.
+- **Skipped or blocked:** No dependency, index, Firebase, deployment, live data, seed, merge, release, signing, native build, or device action. Repository-wide local analysis still traverses ignored iOS package sources from the earlier native attempt; `flutter analyze lib test` is clean.
+- **Final state:** Approved source block is locally complete and remains uncommitted and unpushed. The three preserved user changes remain outside scope.
+- **Follow-up:** After Andrew separately authorizes packaging, commit and push stacked PR 11 and run clean-runner CI. Then assess account-deletion recovery before the v1 freeze review from `c57815c...<freeze-head>`.
+
+### 2026-08-25T14:51:28Z Publish and clean-runner verify stacked PR 10
+
+- **Status:** Remediation packaged, pushed, and clean-runner verified; independent review and later device walk remain
+- **Scope:** Package the approved authority remediation as one commit, push its stacked review branch, open the draft pull request, and run the existing five-job clean CI matrix. No merge, deployment, seed, release, or device action.
+- **Reference:** PR 10, commit `625217940e9817d9801b90f28aa4025e48dfbd48`
+- **Operator:** Codex
+
+| UTC time | Action | Target/environment | Result and evidence |
+|---|---|---|---|
+| 14:48:54 | Committed the approved remediation while excluding user-owned work | Local Git | Created one remediation commit, `6252179 Harden v1 authority and integration boundaries`. Gradle and lockfile modifications remained unstaged. |
+| 14:49:00 | Pushed the stacked review branch and opened draft PR 10 against Basic Share-Out | GitHub | Published `codex/v1-stacked-engineering-review` and opened `Review and harden combined v1 feature stack`. |
+| 14:51:28 | Watched clean-runner CI to completion | GitHub Actions run `32861926202` | PASS: 282 Flutter tests, repository-wide Flutter analysis, 36 Functions tests, 42 seed tests, and 131 Java-backed Firestore rules assertions. This also proved the deterministic non-secret analysis fixture on a clean checkout. |
+
+- **Final state:** PR 10 is clean-runner green and is the seventh layer of the owner-created GitHub stack. No merge or release action occurred.
+- **Follow-up:** Independent review remains in a separate task. The combined device walk is deliberately deferred until the build reaches its v1 freeze point.
+
 ### 2026-08-25T10:25:44Z Implement stacked v1 authority and integration remediation
 
 - **Status:** Implemented and locally verified; independent review and clean-runner CI pending

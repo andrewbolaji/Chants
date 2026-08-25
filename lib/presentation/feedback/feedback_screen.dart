@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chants/app/providers.dart';
 import 'package:chants/app/spacing.dart';
+import 'package:chants/data/repositories/safety_submission_repository.dart';
 
 const _categories = ['suggestion', 'bug', 'question', 'other'];
 
@@ -36,27 +37,28 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
     final message = _messageController.text.trim();
     if (message.isEmpty) return;
 
-    final user = ref.read(authStateProvider).valueOrNull;
-    if (user == null) return;
-
     setState(() => _submitting = true);
 
     try {
-      await ref.read(feedbackRepositoryProvider).submitFeedback(
-            userId: user.uid,
+      await ref.read(safetySubmissionRepositoryProvider).submitFeedback(
             category: _category,
             message: message,
             followUpOk: _followUpOk,
           );
       if (!mounted) return;
       setState(() => _submitted = true);
-    } catch (e) {
+    } catch (error) {
       if (!mounted) return;
       setState(() => _submitting = false);
+      final message = switch (error) {
+        SafetySubmissionException(
+          failure: SafetySubmissionFailure.rateLimited,
+        ) =>
+          'You have sent several messages recently. Try again later.',
+        _ => 'Could not send your feedback. Try again.',
+      };
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not send your feedback. Try again.'),
-        ),
+        SnackBar(content: Text(message)),
       );
     }
   }

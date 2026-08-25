@@ -30,7 +30,7 @@ Chants is a mobile app where football fans find and learn terrace songs, contrib
 - **Songbook and Chant Lab.** Terrace Proven chants form the trusted archive. Original and already-sung community submissions compete separately in Chant Lab, with optional YouTube or X evidence and a soft duplicate warning before posting.
 - **Voting.** Upvote, downvote, or remove your vote. Score updates instantly (optimistic UI) and reconciles against the server.
 - **Comments with likes and direct replies.** Top-level comments sort by most liked, then newest; one chronological reply level sits below each parent. Users can block another account and manage their block list.
-- **Reporting and moderation.** Flag a chant or comment. Auto-hide at a configurable report threshold. Operator tools for hide, unhide, remove, and ban, with an audit log. Rate limits for new and established accounts.
+- **Reporting and moderation.** Flag a chant, comment, or user through server-authoritative, atomically rate-limited intake. Auto-hide at a configurable report threshold. Operator tools for hide, unhide, remove, ban, and unban, with an audit log.
 - **Discover.** A shuffled mix of chants across all clubs on the home screen, with live-updating scores.
 - **Search.** Filter chants by title, lyrics, tune name, or club name with results updating as you type.
 - **Saved Matchday Songbook.** Save one chant or a club's Songbook as a bounded device copy for quick offline reading at the ground.
@@ -102,10 +102,12 @@ Chants are stored in a single flat Firestore collection with denormalized IDs. T
 
 ### Cloud Functions
 
-Eleven Functions exports in source (all configured for `europe-west2`; live deployment state is verified separately):
+Thirteen Functions exports in source (all configured for `europe-west2`; live deployment state is verified separately):
 
 | Function | Trigger | Purpose |
 |----------|---------|---------|
+| `submitReport` | HTTPS callable | Validate the caller and current target, atomically enforce the shared report budget, and create a server-owned report |
+| `submitFeedback` | HTTPS callable | Validate feedback, atomically enforce its private budget, and create the server-owned feedback row |
 | `onVoteWritten` | Vote doc write | Recompute chant score, upvotes, downvotes from all vote docs |
 | `onChantCreated` | Chant doc create | Rate-limit enforcement (auto-hide excess) |
 | `onCommentWritten` | Comment doc write | Recompute commentCount on the parent chant; rate-limit on create |
@@ -126,11 +128,11 @@ Eleven Functions exports in source (all configured for `europe-west2`; live depl
 
 **Optimistic UI with server reconciliation.** Votes and comment likes update the display instantly, then reconcile when the server stream delivers the Cloud Function's recomputed value. A busy guard drops taps while a write is in flight, and a pending-intent latch collapses rapid taps into at most two writes, preventing the score drift that would otherwise occur from concurrent writes to the same document.
 
-**Security-first Firestore rules.** Rules start locked (deny by default). Privileged profile and counter fields are constrained against client writes, interaction targets must exist and be visible, reply depth and relationships are enforced server-side, and vote/like/profile reads are limited to their owner or an operator.
+**Security-first Firestore rules.** Rules start locked (deny by default). Privileged profile and counter fields are constrained against client writes, interaction targets must exist and be visible, reply depth and relationships are enforced server-side, report and feedback creates are callable-only, and vote/like/profile reads are limited to their owner or an operator.
 
 **Content integrity.** All seed content (lyrics, squads, cultural context) is externally sourced and verified by hand. The build process can only transform supplied data in place; it never generates or rewrites content. This is a standing rule with the highest priority in the project.
 
-**Test coverage across layers.** 282 Flutter tests, 131 Firestore security-rules assertions, 36 Cloud Functions tests, and 42 seed-pipeline tests. Regression guards cover timing-sensitive UI, moderation revocation, direct-write abuse, trigger deletion races, responsive comment states, stale Player recovery, reply grouping, and offline snapshot reconstruction.
+**Test coverage across layers.** 294 Flutter tests, 132 Firestore security-rules assertions, 56 Cloud Functions tests, and 42 seed-pipeline tests. Regression guards cover timing-sensitive UI, moderation revocation, atomic safety intake, direct-write abuse, trigger deletion races, responsive comment states, stale Player recovery, reply grouping, and offline snapshot reconstruction.
 
 ---
 
@@ -146,19 +148,21 @@ Eleven Functions exports in source (all configured for `europe-west2`; live depl
 
 1. Clone the repo.
 2. Create your own Firebase project and add your config files. `firebase_options.dart` and the platform-specific Google services files (`GoogleService-Info.plist`, `google-services.json`) are gitignored, so you need your own.
-3. Deploy Firestore rules and indexes:
-   ```
-   firebase deploy --only firestore
-   ```
-4. Deploy Cloud Functions:
+3. Deploy Cloud Functions:
    ```
    cd functions && npm install && npm run build && firebase deploy --only functions
+   ```
+4. Deploy Firestore rules and indexes:
+   ```
+   firebase deploy --only firestore
    ```
 5. Install Flutter dependencies and run:
    ```
    flutter pub get
    flutter run
    ```
+
+For an existing installation, follow the reviewed rollout contract: Functions first, a compatible client second, and the restrictive report and feedback rules last. Do not use a rules-first partial rollout with an older client.
 
 ### Running tests
 

@@ -1099,11 +1099,11 @@ describe("votes", () => {
 // ===================== REPORTS =====================
 
 describe("reports", () => {
-  it("allows auth user to create report with correct doc ID", async () => {
+  it("denies direct report creation even with the legacy valid shape", async () => {
     await seedUserProfile("user1");
     await seedVisibleChant("ch1", "someone");
     const db = testEnv.authenticatedContext("user1").firestore();
-    await assertSucceeds(setDoc(doc(db, "reports", "user1_ch1"), {
+    await assertFails(setDoc(doc(db, "reports", "user1_ch1"), {
       chantId: "ch1",
       reportedBy: "user1",
       reason: "Offensive content",
@@ -1211,9 +1211,9 @@ describe("auditLog", () => {
 // ===================== FEEDBACK =====================
 
 describe("feedback", () => {
-  it("allows auth user to create feedback with message <= 1000", async () => {
+  it("denies direct feedback creation even with the legacy valid shape", async () => {
     const db = testEnv.authenticatedContext("user1").firestore();
-    await assertSucceeds(addDoc(collection(db, "feedback"), {
+    await assertFails(addDoc(collection(db, "feedback"), {
       userId: "user1",
       category: "suggestion",
       message: "Great app!",
@@ -1345,6 +1345,31 @@ describe("feedback", () => {
   });
 });
 
+describe("safety rate limits", () => {
+  it("denies client reads and writes for users and operators", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), "safetyRateLimits", "user1"), {
+        reportCount: 1,
+        reportWindowStartedAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      });
+    });
+    await seedUserProfile("user1");
+    await seedOperator("op1");
+    const userDb = testEnv.authenticatedContext("user1").firestore();
+    const operatorDb = testEnv.authenticatedContext("op1").firestore();
+
+    await assertFails(getDoc(doc(userDb, "safetyRateLimits", "user1")));
+    await assertFails(setDoc(doc(userDb, "safetyRateLimits", "user1"), {
+      reportCount: 0,
+    }));
+    await assertFails(getDoc(doc(operatorDb, "safetyRateLimits", "user1")));
+    await assertFails(setDoc(doc(operatorDb, "safetyRateLimits", "user1"), {
+      reportCount: 0,
+    }));
+  });
+});
+
 describe("exact comment and comment-like schemas", () => {
   beforeEach(async () => {
     await seedUserProfile("user1");
@@ -1446,7 +1471,7 @@ describe("exact report schemas", () => {
     await seedComment("comment1", "ch1", "target");
   });
 
-  it("allows the current chant, comment, and user report shapes", async () => {
+  it("denies direct chant, comment, and user report creates", async () => {
     const db = testEnv.authenticatedContext("reporter").firestore();
     const common = {
       reportedBy: "reporter",
@@ -1455,15 +1480,15 @@ describe("exact report schemas", () => {
       status: "pending",
     };
 
-    await assertSucceeds(setDoc(doc(db, "reports", "reporter_ch1"), {
+    await assertFails(setDoc(doc(db, "reports", "reporter_ch1"), {
       ...common,
       chantId: "ch1",
     }));
-    await assertSucceeds(setDoc(
+    await assertFails(setDoc(
       doc(db, "commentReports", "reporter_comment1"),
       { ...common, commentId: "comment1" },
     ));
-    await assertSucceeds(setDoc(
+    await assertFails(setDoc(
       doc(db, "userReports", "reporter_target"),
       { ...common, reportedUserId: "target" },
     ));
@@ -1516,11 +1541,11 @@ describe("exact report schemas", () => {
 // ===================== REPORT WRITE CORRECTNESS (Fix D) =====================
 
 describe("report write correctness", () => {
-  it("allows well-formed report create with status pending and correct doc ID", async () => {
+  it("denies a well-formed direct report create", async () => {
     await seedUserProfile("user1");
     await seedVisibleChant("ch1", "someone");
     const db = testEnv.authenticatedContext("user1").firestore();
-    await assertSucceeds(setDoc(doc(db, "reports", "user1_ch1"), {
+    await assertFails(setDoc(doc(db, "reports", "user1_ch1"), {
       chantId: "ch1",
       reportedBy: "user1",
       reason: "Hate speech or slurs: offensive language",
@@ -1782,11 +1807,11 @@ describe("policy acceptance gate", () => {
 // ===================== USER REPORTS =====================
 
 describe("user reports", () => {
-  it("allows auth user to create a report with the correct doc ID", async () => {
+  it("denies direct user-report creation with the legacy valid shape", async () => {
     await seedUserProfile("reporter1");
     await seedUserProfile("baduser");
     const db = testEnv.authenticatedContext("reporter1").firestore();
-    await assertSucceeds(setDoc(doc(db, "userReports", "reporter1_baduser"), {
+    await assertFails(setDoc(doc(db, "userReports", "reporter1_baduser"), {
       reportedUserId: "baduser",
       reportedBy: "reporter1",
       reason: "Hate speech or slurs",
@@ -1807,22 +1832,18 @@ describe("user reports", () => {
     }));
   });
 
-  it("denies a second report from the same reporter against the same "
-      + "target (doc ID dedup, same mechanism as reports/commentReports)",
+  it("denies every direct user-report write at the client boundary",
       async () => {
     await seedUserProfile("reporter2");
     await seedUserProfile("baduser2");
     const db = testEnv.authenticatedContext("reporter2").firestore();
-    await assertSucceeds(setDoc(doc(db, "userReports", "reporter2_baduser2"), {
+    await assertFails(setDoc(doc(db, "userReports", "reporter2_baduser2"), {
       reportedUserId: "baduser2",
       reportedBy: "reporter2",
       reason: "Tragedy chanting",
       createdAt: Timestamp.now(),
       status: "pending",
     }));
-    // Second create attempt on the SAME doc ID: Firestore create semantics
-    // reject a write to a path that already exists, same as reports/
-    // commentReports today.
     await assertFails(setDoc(doc(db, "userReports", "reporter2_baduser2"), {
       reportedUserId: "baduser2",
       reportedBy: "reporter2",
@@ -2152,11 +2173,11 @@ describe("profile create pins banned", () => {
 // ===================== BLOCK 3: REPORT DEDUP (doc ID) =====================
 
 describe("report dedup", () => {
-  it("allows report with correct doc ID convention", async () => {
+  it("denies a direct report with the correct legacy doc ID convention", async () => {
     await seedUserProfile("user1");
     await seedVisibleChant("ch1", "someone");
     const db = testEnv.authenticatedContext("user1").firestore();
-    await assertSucceeds(setDoc(doc(db, "reports", "user1_ch1"), {
+    await assertFails(setDoc(doc(db, "reports", "user1_ch1"), {
       chantId: "ch1",
       reportedBy: "user1",
       reason: "Hate speech",

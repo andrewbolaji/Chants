@@ -14,7 +14,8 @@ The path from code-complete to public launch, with concrete triggers on every ga
 - Songbook and Chant Lab browse split in source and green draft-PR CI: status-only trust surfaces, deterministic Top and New order, non-verification Rising, stable vote-time order, cached and recoverable states, fail-soft player metadata, and player-scoped Start a chant. Draft PR 7 review and the device walk remain pending.
 - Saved Matchday Songbook implemented and green-CI verified on draft PR 8: UID-scoped device snapshots, individual and club ownership, explicit server refresh, atomic persistence, account-deletion cleanup, and read-only offline routes. Native client compilation, PR review, and the airplane-mode device walk remain pending.
 - Basic share-out implemented and green-CI verified on stacked draft PR 9: current live chant text, honest trust wording, optional future HTTPS seam, duplicate-tap guard, iPad anchor, recoverable invocation failure, and no dead current URL. Native compilation, PR review, and the device destination walk remain pending.
-- Stacked v1 authority and integration remediation implemented and locally verified: exact direct-write schemas, server-owned vote and like stamps, authoritative moderation disappearance, current-live action gates, missing-parent vote-trigger tolerance, resilient comments and stale Player recovery, and deterministic CI analysis configuration. Review, clean-runner CI, native compilation, and the combined device walk remain pending.
+- Stacked v1 authority and integration remediation implemented and clean-CI verified on draft PR 10: exact direct-write schemas, server-owned vote and like stamps, authoritative moderation disappearance, current-live action gates, missing-parent vote-trigger tolerance, resilient comments and stale Player recovery, and deterministic CI analysis configuration. Review, native compilation, and the combined device walk remain pending.
+- V1 report and feedback abuse controls implemented and locally verified: authenticated callable admission, atomic private anchored-window budgets, server-owned stored fields, deterministic duplicate preservation, direct-create denial, retained failure-state forms, and account-deletion cleanup. Packaging, clean-runner CI, review, native compilation, and the combined device walk remain pending.
 - Dedup matching engine (backend only): token-overlap matcher and operator `mergeChants` function with a partial audit payload, not a complete undo snapshot.
 - Visual identity: complete "matchnight, warmed with playful" redesign, tokenized, AA contrast proven.
 
@@ -24,7 +25,9 @@ The path from code-complete to public launch, with concrete triggers on every ga
 - The remaining verified club seed.
 - Saved Matchday Songbook native client compilation and airplane-mode device walk.
 - Basic share-out native compilation, PR review, and device destination walk.
-- Review and clean-runner CI for the stacked authority remediation.
+- Review of stacked PR 10 and packaging, review, and clean-runner CI for the abuse-control layer.
+- A bounded account-deletion recovery decision before the v1 engineering freeze.
+- One external freeze review over `c57815c...<freeze-head>`, covering every runtime change since the last whole-stack engineering review.
 - Store launch prep.
 
 ---
@@ -58,8 +61,11 @@ V1 is a trusted songbook and a creator workshop. The work is sequenced as bounde
 3. **Expose Songbook and Chant Lab.** Implemented and clean-CI verified in source on draft PR 7. Club and player journeys distinguish Terrace Proven content from community work. Chant Lab has Top and New order, a non-verification Rising signal, retained readable data through reconnect errors, and a Start a chant action for players who need one. PR review and the device walk remain.
 4. **Build Saved Matchday Songbook.** Implemented and green-CI verified on draft PR 8. One chant or a club's current visible Songbook can be stored as a UID-scoped device snapshot, refreshed explicitly, read without live social dependencies, and removed locally. Native client compilation, review, and the airplane-mode force-stop and relaunch walk remain. Cross-device sync stays deferred.
 5. **Add basic share-out.** Implemented and green-CI verified on stacked draft PR 9. Live chant detail uses the platform share sheet with a complete text-only rendition and honest trust wording. Current builds emit no URL because no public resolver exists. Native compilation, review, and the device walk remain.
+6. **Close report and feedback velocity abuse.** Implemented and locally verified above PR 10. All report and feedback admission now uses authenticated callables with server-owned fields and atomic anchored-window budgets. Direct client creates are denied, existing moderation triggers remain compatible, and failed forms retain entered work. Packaging, clean-runner CI, independent review, and the combined device walk remain.
 
 The accepted product boundary is in `docs/decisions/004-songbook-and-chant-lab.md`. Each state-changing block gets the framework's Lane 2 change spec, execution log, tests, UI evidence, scoped rationale, and rollback plan. Unlimited nesting, notifications, scheduled challenges, collaborative lyric suggestions, creator follows, and hosted media remain later work.
+
+Before calling the v1 engineering stack frozen, decide the bounded account-deletion recovery contract, package each remaining layer, and commission one external review over the exact Git range `c57815c...<freeze-head>`. Commit `c57815c` contains the last whole-stack engineering-review versions of `ENGINEERING_OVERVIEW.md` and `docs/IMPLEMENTATION_RATIONALE.md`; the current files remain later milestone snapshots rather than the review baseline itself.
 
 **Trigger to exit:** The current device walk passes; provenance and promotion rules work end to end; Songbook and Chant Lab remain understandable on club and player screens; Saved Matchday Songbook survives airplane-mode relaunch; the dedup nudge works on the seeded archive; and share-out never produces a broken destination.
 
@@ -78,7 +84,7 @@ The accepted product boundary is in `docs/decisions/004-songbook-and-chant-lab.m
 ## Cross-cutting risks (unchanged, tracked with triggers)
 
 ### Moderation and content safety (existential, addressed from v1)
-Shipped: content policy stub, report/flag flow, remove/ban, rate limits, fail-safe auto-hide, audit log. Open: Andrew writes the real content policy text. Trigger for the fuller moderation console: submission volume outgrows basic remove-and-ban.
+Shipped in source: content policy stub, server-authoritative report and feedback admission, atomic report and feedback budgets, remove, ban, unban, fail-safe auto-hide, and audit log. Open: Andrew writes the real content policy text. Trigger for the fuller moderation console: accepted submission volume outgrows basic remove-and-ban.
 
 ### Music and IP licensing (designed around, not a blocker)
 V1 posture: lyrics plus tune-name text is the core. Optional evidence links open on an allowlisted external platform. Chants does not host, download, extract, autoplay, or provide background playback for that media, and never streams licensed master recordings. Trigger to revisit hosted media: link engagement proves demand and written moderation, takedown, audio, privacy, cost, and operational controls are approved first.
@@ -116,7 +122,7 @@ The implementation boundary and remaining verification gate live in `docs/CHANGE
 
 **Approved product contract:** Chants keeps Terrace Proven content in the trusted Songbook and gives original or not-yet-verified submissions a visible Chant Lab. Submission origin is required. Evidence is optional to post and required to promote a user submission to Terrace Proven. Votes rank ideas but never verify a factual claim.
 
-**Implementation status:** The provenance slice, browse split, Saved Matchday Songbook, and Basic Share-Out are implemented in the stack. The follow-on authority remediation is locally green with 282 Flutter tests, 131 Java-backed Firestore rules assertions, 36 Functions tests, 42 seed tests, and clean Dart analysis. Native compilation, independent review, clean-runner CI for the remediation, and the combined device walk remain.
+**Implementation status:** The provenance slice, browse split, Saved Matchday Songbook, Basic Share-Out, authority remediation, and report/feedback abuse controls are implemented in the stack. The current abuse-control head is locally green with 294 Flutter tests, 132 Java-backed Firestore rules assertions, 56 Functions tests, 42 seed tests, and clean scoped Dart analysis. Native compilation, independent review, clean-runner CI for the newest layer, and the combined device walk remain.
 
 **Source of truth:** `docs/decisions/004-songbook-and-chant-lab.md` and the interface contract in `docs/INTERFACE.md`.
 
@@ -191,7 +197,7 @@ The implementation boundary and remaining verification gate live in `docs/CHANGE
 
 - Policy acceptance before posting. DONE. Sign up and the first submit or comment are gated on accepting the content policy, and the acceptance is recorded server side. Google user-content requirement. Merged and CI-enforced (flutter, functions, and rules jobs all green on main).
 - Age check at sign up. DONE. Date of birth entered at sign up, age computed locally, sign up blocked under 17. The date of birth itself is never stored, only the pass or fail result. Google age-screening requirement. The 17+ store rating is still the main lever, this is the in-app backup. Merged and CI-enforced.
-- Report a user. DONE. Reporting now covers a user account, not just a chant or comment. Google user-content requirement. Merged and CI-enforced. Known gaps, tracked not fixed: a user who only submits chants and never comments cannot be reported through this UI, since no screen shows a chant's author; and reports, commentReports, and userReports are not rate-limited the way chant and comment creation are.
+- Report a user. DONE. Reporting now covers a user account, not just a chant or comment. Google user-content requirement. All three report types share one server-authoritative atomic budget in the current stack. Known gap: a user who only submits chants and never comments cannot be reported through this UI, since no screen currently shows a chant's author.
 - User blocking. DONE in source and automated checks. Directional block records hide comment interactions in the client, rules deny reply and like interaction in either direction, and users can review and undo their blocks.
 - Content policy text. Not done. The real policy wording still needs writing and wiring into content_policy_screen.dart to replace the current placeholder. Required before store submission regardless of the feature gates above.
 
