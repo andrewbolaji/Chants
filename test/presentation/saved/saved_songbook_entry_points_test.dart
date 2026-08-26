@@ -132,10 +132,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('MATCHDAY SONGBOOK'), findsOneWidget);
-    expect(
-      find.text('Saved on this device, ready when the signal drops.'),
-      findsOneWidget,
-    );
+    expect(find.text('Saved on this device • ready offline'), findsOneWidget);
     expect(find.byIcon(Icons.bookmark_outline), findsOneWidget);
   });
 

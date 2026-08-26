@@ -6,6 +6,15 @@ on:
   pull_request:
 
 jobs:
+  project-governance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check project memory contract
+        run: ./scripts/check-project-memory.sh
+      - name: Check writing style
+        run: ./scripts/check-writing-style.sh
+
   flutter-test:
     runs-on: ubuntu-latest
     steps:

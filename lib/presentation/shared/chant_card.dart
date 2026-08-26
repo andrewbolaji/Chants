@@ -11,6 +11,9 @@ class ChantCard extends StatelessWidget {
   final String? playerName;
   final bool rising;
   final bool actionsEnabled;
+  final bool homePreview;
+  final EdgeInsetsGeometry? margin;
+  final Color risingColor;
   final VoidCallback onTap;
 
   const ChantCard({
@@ -20,6 +23,9 @@ class ChantCard extends StatelessWidget {
     this.playerName,
     this.rising = false,
     this.actionsEnabled = true,
+    this.homePreview = false,
+    this.margin,
+    this.risingColor = AppColors.success,
     required this.onTap,
   });
 
@@ -40,17 +46,29 @@ class ChantCard extends StatelessWidget {
     final subjectLabel = chant.subjectTag.toUpperCase();
 
     return Card(
-      margin: const EdgeInsets.symmetric(
-        horizontal: Spacing.sm,
-        vertical: Spacing.xs,
-      ),
+      margin:
+          margin ??
+          const EdgeInsets.symmetric(
+            horizontal: Spacing.sm,
+            vertical: Spacing.xs,
+          ),
+      shape: homePreview
+          ? RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(Radii.lg),
+              side: BorderSide(
+                color: chant.status == 'community'
+                    ? AppColors.chantLab.withValues(alpha: 0.32)
+                    : AppColors.outline,
+              ),
+            )
+          : null,
       child: InkWell(
         borderRadius: BorderRadius.circular(Radii.lg),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: Spacing.md,
-            vertical: Spacing.sm,
+          padding: EdgeInsets.symmetric(
+            horizontal: homePreview ? Spacing.lg : Spacing.md,
+            vertical: homePreview ? Spacing.md : Spacing.sm,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -76,6 +94,7 @@ class ChantCard extends StatelessWidget {
               Text(
                 chant.title.toUpperCase(),
                 style: textTheme.titleMedium?.copyWith(
+                  fontSize: homePreview ? 20 : null,
                   shadows: [
                     Shadow(
                       color: AppColors.gold.withValues(alpha: 0.30),
@@ -115,7 +134,10 @@ class ChantCard extends StatelessWidget {
                   fontSize: 14,
                 ),
               ),
-              const SizedBox(height: Spacing.sm),
+              if (homePreview)
+                const Divider(height: Spacing.lg, color: AppColors.outline)
+              else
+                const SizedBox(height: Spacing.sm),
 
               // Footer: subject tag (left) | comment count + vote chip (right)
               Row(
@@ -136,12 +158,12 @@ class ChantCard extends StatelessWidget {
                           ),
                         ),
                         if (rising)
-                          const Text(
+                          Text(
                             'RISING',
                             style: TextStyle(
                               fontFamily: 'SpaceMono',
                               fontSize: 9,
-                              color: AppColors.success,
+                              color: risingColor,
                               letterSpacing: 0.8,
                               fontWeight: FontWeight.w700,
                             ),

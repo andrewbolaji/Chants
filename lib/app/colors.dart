@@ -24,6 +24,10 @@ class AppColors extends ThemeExtension<AppColors> {
   static const goldBright = Color(0xFFFFD04D);
   static const goldOnDark = Color(0xFF060606);
 
+  // A restrained secondary accent for community creativity on Home.
+  // Trust state always remains explicit in text and badges.
+  static const chantLab = Color(0xFFE35A45);
+
   // Gold foil gradient for the verified sticker
   static const goldFoilStart = Color(0xFFFFC02E);
   static const goldFoilEnd = Color(0xFFFFD04D);
@@ -81,8 +85,11 @@ class AppColors extends ThemeExtension<AppColors> {
     return AppColors(
       accentColor: Color.lerp(accentColor, other.accentColor, t)!,
       surfaceColor: Color.lerp(surfaceColor, other.surfaceColor, t)!,
-      surfaceRaisedColor:
-          Color.lerp(surfaceRaisedColor, other.surfaceRaisedColor, t)!,
+      surfaceRaisedColor: Color.lerp(
+        surfaceRaisedColor,
+        other.surfaceRaisedColor,
+        t,
+      )!,
       textMutedColor: Color.lerp(textMutedColor, other.textMutedColor, t)!,
       textFaintColor: Color.lerp(textFaintColor, other.textFaintColor, t)!,
       dividerColor: Color.lerp(dividerColor, other.dividerColor, t)!,

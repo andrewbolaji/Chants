@@ -32,13 +32,13 @@ class CompetitionScreen extends ConsumerWidget {
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return const ErrorState(
-              message: 'Could not load clubs. Pull down to try again.',
+              message: 'Could not load clubs. Go back and try again.',
             );
           }
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
-          final teams = snapshot.data!;
+          final teams = snapshot.data!.toList();
           if (teams.isEmpty) {
             return const EmptyState(
               message: 'No clubs yet. Check back soon.',
@@ -49,18 +49,13 @@ class CompetitionScreen extends ConsumerWidget {
           return ListView.separated(
             padding: const EdgeInsets.symmetric(vertical: Spacing.sm),
             itemCount: teams.length,
-            separatorBuilder: (_, _) => const Divider(
-              indent: Spacing.lg,
-              endIndent: Spacing.lg,
-            ),
+            separatorBuilder: (_, _) =>
+                const Divider(indent: Spacing.lg, endIndent: Spacing.lg),
             itemBuilder: (context, index) {
               final team = teams[index];
               return ListTile(
                 title: Text(team.name, style: textTheme.titleMedium),
-                trailing: Icon(
-                  Icons.chevron_right,
-                  color: AppColors.textFaint,
-                ),
+                trailing: Icon(Icons.chevron_right, color: AppColors.textFaint),
                 onTap: () => Navigator.pushNamed(
                   context,
                   AppRouter.team,

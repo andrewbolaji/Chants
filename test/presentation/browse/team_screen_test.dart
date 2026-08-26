@@ -112,6 +112,26 @@ Future<void> _load(
 }
 
 void main() {
+  testWidgets('full error gives recovery guidance the screen supports', (
+    tester,
+  ) async {
+    final chants = _ChantRepository();
+    final players = _PlayerRepository();
+    addTearDown(chants.controller.close);
+    addTearDown(players.controller.close);
+
+    await tester.pumpWidget(_wrap(chants: chants, players: players));
+    await tester.pump();
+    chants.controller.addError(StateError('offline'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Could not load chants. Go back and try again.'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Pull down'), findsNothing);
+  });
+
   testWidgets('separates Songbook and Chant Lab with honest Rising copy', (
     tester,
   ) async {

@@ -175,7 +175,7 @@ class _TeamScreenState extends ConsumerState<TeamScreen>
       body = _chantError == null
           ? const Center(child: CircularProgressIndicator())
           : const ErrorState(
-              message: 'Could not load chants. Pull down to try again.',
+              message: 'Could not load chants. Go back and try again.',
             );
     } else {
       final projection = projectChants(browseSnapshot.chants);

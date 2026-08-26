@@ -4,6 +4,10 @@
 
 Chants is a Flutter (Dart) mobile app where football fans find, learn, and add the chants sung on the terraces, backed by Firebase (Auth, Firestore, Cloud Functions). The Dart app is most of the code; server logic lives in TypeScript Cloud Functions, and `firestore.rules` is the real access-control layer.
 
+## Start here
+
+Read `docs/PROJECT_PROFILE.md` before changing code. Search relevant active entries in `docs/LEARNINGS.md` before repeating a previously touched investigation. For UI work, read the relevant contract and decisions in `docs/INTERFACE.md`. For a whole-project or release review, read `docs/IMPLEMENTATION_RATIONALE.md`. For a feature, fix, PR, diff, or commit-range review, read the matching scoped rationale under `docs/changes/`.
+
 ## First 10 minutes
 
 ```bash
@@ -22,6 +26,10 @@ firebase emulators:exec --only firestore --project chants-f95b4 "cd test_rules &
 # To run the actual app you need your own Firebase project:
 cp lib/firebase_options.dart.example lib/firebase_options.dart   # then add real keys
 flutter run
+
+# Framework memory and writing checks.
+./scripts/check-project-memory.sh
+./scripts/check-writing-style.sh
 ```
 
 ## Architecture map
@@ -41,13 +49,15 @@ flutter run
 
 ## Documentation workflow
 
-- `docs/CHANGE_SPEC.md` is the one active implementation plan. Read it before non-trivial code. Product agreement alone does not approve a technical plan; its status must say `Approved`.
+- `docs/PROJECT_PROFILE.md` is the compact source of truth for architecture, commands, data, release, and project-specific risk escalation.
+- Lane 1 work needs a short recorded plan and checkable acceptance criteria. Lane 2 and Lane 3 work uses the one active `docs/CHANGE_SPEC.md`, and its status must say `Approved` before implementation. Approval is also required for unresolved product choices, hard-to-reverse decisions, or external cost.
 - `docs/EXECUTION.md` is the timestamped evidence trail for every Lane 1-3 change and other multi-step state-changing work. Keep implemented, locally verified, reviewed, merged, deployed, and observed states separate.
 - Search `docs/LEARNINGS.md` before repeating an investigation. Add only reusable lessons backed by a reproduced failure, measurement, incident, or verified correction.
 - Read `docs/INTERFACE.md` before material UI work and update it when hierarchy, interaction, content, accessibility, or responsive behavior changes materially.
 - `docs/changes/` records what a completed block changed, why, and how it was verified.
 - `docs/decisions/` records durable decisions, their reasons, consequences, and revisit triggers.
 - `docs/ROADMAP.md` owns product and release sequencing.
+- `docs/RUNBOOK.md` owns source-backed diagnosis and recovery guidance. It must state when production or dashboard evidence is missing.
 - `ENGINEERING_OVERVIEW.md` and `docs/IMPLEMENTATION_RATIONALE.md` are milestone review snapshots, not per-change ledgers.
 - `docs/DECISIONS.md`, `docs/BLOCK_RECAPS.md`, and `docs/KNOWN_ISSUES.md` are historical archives. Do not add parallel current records there.
 - `CLAUDE.md` is a compatibility pointer to this file. Keep this file canonical.
@@ -57,7 +67,7 @@ flutter run
 
 ## Definition of done
 
-A change is done only when: the plan was approved before any non-trivial code; tests pass and the new behavior has its own test (revert the change and that test should fail); `flutter analyze lib test` and every touched suite are clean; you have read your own diff; UI changes are verified by screenshot; the completed record is written under `docs/changes/`; and any durable decision is recorded under `docs/decisions/`. Prepare a clean commit handoff, but commit or push only when Andrew explicitly asks.
+A change is done only when: the required plan and approval for its risk lane are recorded; tests pass and changed behavior has evidence capable of failing on the prior implementation; `flutter analyze lib test` and every touched suite are clean; the resulting artifact and full diff were inspected; material UI changes are verified at representative viewport, state, accessibility, and runtime boundaries; `./scripts/check-project-memory.sh` and `./scripts/check-writing-style.sh` pass; the completed record is written under `docs/changes/`; and any durable decision is recorded under `docs/decisions/`. Prepare a clean commit handoff, but commit or push only when Andrew explicitly asks.
 
 ## House style
 
