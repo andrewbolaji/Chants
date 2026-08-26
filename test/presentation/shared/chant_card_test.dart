@@ -30,56 +30,76 @@ void main() {
 
   group('ChantCard', () {
     testWidgets('renders title and lyrics preview', (tester) async {
-      await tester.pumpWidget(wrap(
-        ChantCard(chant: testChant, onTap: () {}),
-      ));
+      await tester.pumpWidget(wrap(ChantCard(chant: testChant, onTap: () {})));
       expect(find.text('GLORY GLORY'), findsOneWidget);
       expect(find.textContaining('Glory glory Man United'), findsOneWidget);
     });
 
     testWidgets('renders team name when provided', (tester) async {
-      await tester.pumpWidget(wrap(
-        ChantCard(chant: testChant, teamName: 'Manchester United', onTap: () {}),
-      ));
+      await tester.pumpWidget(
+        wrap(
+          ChantCard(
+            chant: testChant,
+            teamName: 'Manchester United',
+            onTap: () {},
+          ),
+        ),
+      );
       expect(find.text('Manchester United'), findsOneWidget);
     });
 
     testWidgets('shows canonical badge', (tester) async {
-      await tester.pumpWidget(wrap(
-        ChantCard(chant: testChant, onTap: () {}),
-      ));
-      expect(find.text('VERIFIED'), findsOneWidget);
+      await tester.pumpWidget(wrap(ChantCard(chant: testChant, onTap: () {})));
+      expect(find.text('TERRACE PROVEN'), findsOneWidget);
+    });
+
+    testWidgets('shows original idea provenance for community work', (
+      tester,
+    ) async {
+      final community = testChant.copyWith(
+        status: 'community',
+        origin: ChantOrigin.originalIdea,
+      );
+      await tester.pumpWidget(wrap(ChantCard(chant: community, onTap: () {})));
+      expect(find.text('ORIGINAL IDEA'), findsOneWidget);
+      expect(find.text('TERRACE PROVEN'), findsNothing);
+    });
+
+    testWidgets('shows a neutral label for legacy community documents', (
+      tester,
+    ) async {
+      final legacy = testChant.copyWith(status: 'community');
+      await tester.pumpWidget(wrap(ChantCard(chant: legacy, onTap: () {})));
+      expect(find.text('COMMUNITY CHANT'), findsOneWidget);
     });
 
     testWidgets('shows subject tag label', (tester) async {
-      await tester.pumpWidget(wrap(
-        ChantCard(chant: testChant, onTap: () {}),
-      ));
+      await tester.pumpWidget(wrap(ChantCard(chant: testChant, onTap: () {})));
       expect(find.text('CLUB'), findsOneWidget);
     });
 
     testWidgets('parody pill is not shown on card', (tester) async {
       final noveltyChant = testChant.copyWith(chantType: 'novelty');
-      await tester.pumpWidget(wrap(
-        ChantCard(chant: noveltyChant, onTap: () {}),
-      ));
+      await tester.pumpWidget(
+        wrap(ChantCard(chant: noveltyChant, onTap: () {})),
+      );
       expect(find.text('PARODY'), findsNothing);
     });
 
     testWidgets('calls onTap when tapped', (tester) async {
       var tapped = false;
-      await tester.pumpWidget(wrap(
-        ChantCard(chant: testChant, onTap: () => tapped = true),
-      ));
+      await tester.pumpWidget(
+        wrap(ChantCard(chant: testChant, onTap: () => tapped = true)),
+      );
       await tester.tap(find.byType(ChantCard));
       expect(tapped, true);
     });
 
     testWidgets('displays score', (tester) async {
       final scoredChant = testChant.copyWith(score: 7);
-      await tester.pumpWidget(wrap(
-        ChantCard(chant: scoredChant, onTap: () {}),
-      ));
+      await tester.pumpWidget(
+        wrap(ChantCard(chant: scoredChant, onTap: () {})),
+      );
       expect(find.text('7'), findsOneWidget);
     });
   });

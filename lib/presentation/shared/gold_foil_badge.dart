@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:chants/app/colors.dart';
 import 'package:chants/app/spacing.dart';
 
-/// Gold sticker badge for verified chants. Slight rotation and hard offset
+/// Gold sticker badge for Terrace Proven chants. Slight rotation and hard offset
 /// shadow give the stuck-on fanzine feel. Community chants show no badge.
 class GoldFoilBadge extends StatelessWidget {
   const GoldFoilBadge({super.key});
@@ -34,7 +34,7 @@ class GoldFoilBadge extends StatelessWidget {
           ],
         ),
         child: const Text(
-          'VERIFIED',
+          'TERRACE PROVEN',
           style: TextStyle(
             fontFamily: 'SpaceMono',
             fontSize: 9,

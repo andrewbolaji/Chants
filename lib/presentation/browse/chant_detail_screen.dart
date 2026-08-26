@@ -4,8 +4,10 @@ import 'package:chants/app/colors.dart';
 import 'package:chants/app/providers.dart';
 import 'package:chants/app/spacing.dart';
 import 'package:chants/data/models/chant.dart';
+import 'package:chants/data/services/chant_evidence.dart';
 import 'package:chants/presentation/report/report_sheet.dart';
-import 'package:chants/presentation/shared/gold_foil_badge.dart';
+import 'package:chants/presentation/shared/chant_provenance_label.dart';
+import 'package:chants/presentation/shared/evidence_link_action.dart';
 import 'package:chants/presentation/shared/halftone_painter.dart';
 import 'package:chants/presentation/comments/comment_section.dart';
 import 'package:chants/presentation/shared/vote_controls.dart';
@@ -40,8 +42,7 @@ class ChantDetailScreen extends ConsumerWidget {
       initialData: chant,
       builder: (context, snap) {
         final live = snap.data ?? chant;
-        return _buildScaffold(
-          context, ref, live, isSignedIn, textTheme);
+        return _buildScaffold(context, ref, live, isSignedIn, textTheme);
       },
     );
   }
@@ -83,9 +84,7 @@ class ChantDetailScreen extends ConsumerWidget {
       // Stamped vote control pinned at bottom
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
-          border: Border(
-            top: BorderSide(color: AppColors.divider, width: 0.5),
-          ),
+          border: Border(top: BorderSide(color: AppColors.divider, width: 0.5)),
         ),
         padding: const EdgeInsets.symmetric(
           horizontal: Spacing.lg,
@@ -94,9 +93,7 @@ class ChantDetailScreen extends ConsumerWidget {
         child: SafeArea(
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              VoteControls(chant: live, large: true),
-            ],
+            children: [VoteControls(chant: live, large: true)],
           ),
         ),
       ),
@@ -118,15 +115,16 @@ class ChantDetailScreen extends ConsumerWidget {
                   ),
                 ),
                 padding: const EdgeInsets.fromLTRB(
-                  Spacing.xl, Spacing.lg, Spacing.xl, Spacing.xxl,
+                  Spacing.xl,
+                  Spacing.lg,
+                  Spacing.xl,
+                  Spacing.xxl,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (live.status == 'canonical') ...[
-                      const GoldFoilBadge(),
-                      const SizedBox(height: Spacing.xl),
-                    ],
+                    ChantProvenanceLabel(chant: live),
+                    const SizedBox(height: Spacing.xl),
 
                     // Title: Anton with 1.5px print-echo gold shadow
                     Text(
@@ -195,10 +193,7 @@ class ChantDetailScreen extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'CONTEXT',
-                            style: textTheme.labelMedium,
-                          ),
+                          Text('CONTEXT', style: textTheme.labelMedium),
                           const SizedBox(height: Spacing.xs),
                           Text(
                             live.contextNotes!,
@@ -212,12 +207,14 @@ class ChantDetailScreen extends ConsumerWidget {
                     const SizedBox(height: Spacing.xl),
                   ],
 
+                  if (ChantEvidenceParser.isCanonical(live.evidence)) ...[
+                    EvidenceLinkAction(evidence: live.evidence!),
+                    const SizedBox(height: Spacing.xl),
+                  ],
+
                   // Variations: "Also sung as"
                   if (live.variations.isNotEmpty) ...[
-                    Text(
-                      'ALSO SUNG AS',
-                      style: textTheme.labelMedium,
-                    ),
+                    Text('ALSO SUNG AS', style: textTheme.labelMedium),
                     const SizedBox(height: Spacing.md),
                     ...live.variations.map((v) {
                       final varAlign = _lyricsAlignment(v.lyric);
@@ -239,7 +236,9 @@ class ChantDetailScreen extends ConsumerWidget {
                                   vertical: 2,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AppColors.textMuted.withValues(alpha: 0.15),
+                                  color: AppColors.textMuted.withValues(
+                                    alpha: 0.15,
+                                  ),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
@@ -305,14 +304,10 @@ class ChantDetailScreen extends ConsumerWidget {
             ),
 
             // Comments section
-            CommentSection(
-              chantId: live.id,
-              commentCount: live.commentCount,
-            ),
+            CommentSection(chantId: live.id, commentCount: live.commentCount),
           ],
         ),
       ),
     );
   }
 }
-
