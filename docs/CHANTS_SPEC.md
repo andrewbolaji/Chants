@@ -189,11 +189,12 @@ Completed foundation:
 
 - Blocks 1 to 7: agnostic data model, archive, seed pipeline, submission, moderation, voting, feedback, visual system, and hardening.
 - Interaction block: comments, one reply level, blocking, lifecycle corrections, and audited unban are implemented and automated-test verified. The live-device release walk is still open.
+- Stable identity source block: seeded chants have explicit immutable IDs, collision preflight, and transactional ownership checks. Repository tests are green; the live read-only preflight remains separately gated.
 
 Remaining v1 blocks, each separately planned and reviewed:
 
 1. Close and archive the current interaction block.
-2. Stable identity slice: migrate title-derived seed IDs and every dependent reference before the remaining live seed and public chant URLs.
+2. Authorize and run the read-only live identity preflight before any remaining production seed write. A mismatch opens a separate migration plan.
 3. Provenance slice: origin-aware submit, optional evidence, soft duplicate nudge, honest detail labels, and evidence-gated operator promotion.
 4. Discovery slice: Songbook and Chant Lab on club and player journeys, Top and New, Rising, and Start a chant.
 5. Saved Matchday Songbook.

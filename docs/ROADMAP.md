@@ -9,12 +9,13 @@ The path from code-complete to public launch, with concrete triggers on every ga
 **Built and verified by automated checks:**
 - v1 feature set: auth, agnostic Sport/Competition/Team/Chant data model, browse and search, chant detail, user submission, moderation (report, remove, ban, unban, rate limits, audit log), voting with counter reconciliation, one-level comment replies with likes, user blocking, and suggestion box.
 - v1 hardening in source: account deletion, App Check client wiring, and Crashlytics wiring. Live enforcement and dashboard controls remain release-verification items.
+- Stable seeded chant identity in source: explicit immutable IDs, collision preflight, and transactional ownership checks. The separately authorized live preflight remains pending.
 - Dedup matching engine (backend only): token-overlap matcher and operator `mergeChants` function with a partial audit payload, not a complete undo snapshot.
 - Visual identity: complete "matchnight, warmed with playful" redesign, tokenized, AA contrast proven.
 
 **Not yet done:**
 - Visual sign-off on device and the v1 flow walk-through.
-- Stable, non-title-derived chant identity before public links and community engagement make renames costly.
+- The read-only live chant-identity preflight before the next production seed write.
 - The remaining verified club seed.
 - The Songbook and Chant Lab split, origin disclosure, evidence-gated Terrace Proven promotion, and creator ranking.
 - Saved Matchday Songbook.
@@ -34,13 +35,13 @@ Run on device, confirm font weights render bold and heavy, walk all core flows a
 
 ## Phase 2: Stable identity and seed
 
-Andrew can continue source and lyric verification without waiting on engineering. Before the remaining clubs are written to live Firestore or chant URLs are made public, replace title-derived seed document IDs with a stable identity contract and migrate the existing Arsenal references through an approved Lane 2 block.
+Andrew can continue source and lyric verification without waiting on engineering. The repository now uses explicit seeded chant IDs and freezes Arsenal to its expected legacy IDs. Before the remaining clubs are written to live Firestore or chant URLs are made public, run the separately authorized read-only preflight against the named project. If live state differs, stop and prepare a migration-specific plan instead of writing.
 
 Then seed around five verified, externally sourced, policy-checked chants per Premier League club for the 19 unseeded clubs, plus verifying the Arsenal placeholder set. Content-integrity rule applies: lyrics and squads are sourced and verified externally, never authored from model memory.
 
 Source verification in this phase and the application work in Phase 3 may run in parallel. The stable-ID gate applies to live data writes, not to Andrew's sourcing documents or club JSON preparation.
 
-**Trigger to exit:** Stable IDs preserve existing dependent records through a rename test, and all 20 clubs have a verified canonical primer set.
+**Trigger to exit:** The live identity preflight reports no collision, stable IDs preserve the document through a rename test, and all 20 clubs have a verified canonical primer set.
 
 ---
 
