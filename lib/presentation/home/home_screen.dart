@@ -32,7 +32,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('CHANTS'),
+        toolbarHeight: 64,
+        title: Text(
+          'CHANTS',
+          style: textTheme.headlineLarge?.copyWith(fontSize: 30),
+        ),
         actions: [
           // Operator-only moderation link
           StreamBuilder(
@@ -56,6 +60,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             },
           ),
           PopupMenuButton<String>(
+            tooltip: 'Account and settings',
+            icon: Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.outline),
+                color: AppColors.surface,
+              ),
+              child: const Icon(Icons.person_outline, size: 20),
+            ),
             onSelected: (value) {
               switch (value) {
                 case 'feedback':
@@ -120,35 +135,57 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ],
       ),
       body: ListView(
+        padding: const EdgeInsets.only(bottom: Spacing.xxl),
         children: [
-          // Search bar (compact, ~78% of original footprint)
           Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: Spacing.lg,
-              vertical: Spacing.xs,
+            padding: const EdgeInsets.fromLTRB(
+              Spacing.lg,
+              Spacing.xs,
+              Spacing.lg,
+              Spacing.md,
             ),
+            child: Semantics(
+              header: true,
+              child: Text(
+                'THE TERRACES, IN YOUR POCKET.',
+                style: TextStyle(
+                  fontFamily: 'SpaceMono',
+                  fontSize: 11,
+                  color: AppColors.textMuted,
+                  letterSpacing: 1.1,
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
             child: TextField(
               controller: _searchController,
-              style: const TextStyle(fontSize: 14),
+              style: const TextStyle(
+                fontFamily: 'Nunito',
+                fontSize: 15,
+                color: AppColors.textBody,
+              ),
               decoration: InputDecoration(
-                hintText: 'Search chants...',
+                hintText: 'Search chants, clubs or players',
                 hintStyle: const TextStyle(
                   fontFamily: 'Nunito',
-                  color: AppColors.textFaint,
-                  fontSize: 14,
+                  color: AppColors.textMuted,
+                  fontSize: 15,
                 ),
                 contentPadding: const EdgeInsets.symmetric(
-                  horizontal: Spacing.md,
-                  vertical: Spacing.smMd,
+                  horizontal: Spacing.lg,
+                  vertical: Spacing.md,
                 ),
-                prefixIcon: const Icon(Icons.search, size: 16),
+                prefixIcon: const Icon(Icons.search, size: 20),
                 prefixIconConstraints: const BoxConstraints(
-                  minWidth: 36,
-                  minHeight: 36,
+                  minWidth: 48,
+                  minHeight: 48,
                 ),
                 suffixIcon: _query.isNotEmpty
                     ? IconButton(
-                        icon: const Icon(Icons.close, size: 16),
+                        tooltip: 'Clear search',
+                        icon: const Icon(Icons.close, size: 20),
                         onPressed: () {
                           _searchController.clear();
                           setState(() => _query = '');
@@ -159,13 +196,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               onChanged: (v) => setState(() => _query = v.trim()),
             ),
           ),
-          const SizedBox(height: Spacing.sm),
+          const SizedBox(height: Spacing.md),
 
           if (_query.isEmpty && user != null) ...[
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
               child: Card(
+                margin: EdgeInsets.zero,
                 color: AppColors.surface,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(Radii.md),
+                  side: BorderSide(
+                    color: AppColors.gold.withValues(alpha: 0.72),
+                  ),
+                ),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(Radii.md),
                   onTap: () => Navigator.pushNamed(
@@ -174,18 +218,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     arguments: user.uid,
                   ),
                   child: Padding(
-                    padding: const EdgeInsets.all(Spacing.lg),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: Spacing.lg,
+                      vertical: Spacing.md,
+                    ),
                     child: Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.all(Spacing.md),
+                          width: 44,
+                          height: 44,
                           decoration: BoxDecoration(
                             color: AppColors.gold.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(Radii.sm),
                           ),
-                          child: const Icon(
-                            Icons.bookmark_outline,
-                            color: AppColors.gold,
+                          child: const Center(
+                            child: Icon(
+                              Icons.bookmark_outline,
+                              color: AppColors.gold,
+                            ),
                           ),
                         ),
                         const SizedBox(width: Spacing.md),
@@ -195,11 +245,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             children: [
                               Text(
                                 'MATCHDAY SONGBOOK',
-                                style: textTheme.titleMedium,
+                                style: textTheme.titleMedium?.copyWith(
+                                  fontSize: 19,
+                                ),
                               ),
                               const SizedBox(height: Spacing.xs),
                               const Text(
-                                'Saved on this device, ready when the signal drops.',
+                                'Saved on this device • ready offline',
                                 style: TextStyle(
                                   fontFamily: 'Nunito',
                                   fontSize: 13,
@@ -226,45 +278,56 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           if (_query.isEmpty) ...[
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(Radii.md),
-                onTap: () => Navigator.pushNamed(
-                  context,
-                  AppRouter.competition,
-                  arguments: {'id': 'premier-league', 'name': 'Premier League'},
+              child: Card(
+                margin: EdgeInsets.zero,
+                color: AppColors.surface,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(Radii.md),
+                  side: const BorderSide(color: AppColors.outline),
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: Spacing.lg,
-                    vertical: Spacing.lg,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(Radii.md),
+                  onTap: () => Navigator.pushNamed(
+                    context,
+                    AppRouter.competition,
+                    arguments: {
+                      'id': 'premier-league',
+                      'name': 'Premier League',
+                    },
                   ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'PREMIER LEAGUE',
-                              style: textTheme.titleMedium,
-                            ),
-                            const SizedBox(height: Spacing.xs),
-                            const SectionEyebrow(text: 'All 20 clubs'),
-                          ],
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: Spacing.lg,
+                      vertical: Spacing.md,
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'PREMIER LEAGUE',
+                                style: textTheme.titleMedium?.copyWith(
+                                  fontSize: 18,
+                                ),
+                              ),
+                              const SizedBox(height: Spacing.xs),
+                              const SectionEyebrow(text: '20 clubs'),
+                            ],
+                          ),
                         ),
-                      ),
-                      Icon(Icons.chevron_right, color: AppColors.textFaint),
-                    ],
+                        Icon(Icons.chevron_right, color: AppColors.textFaint),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-            const Divider(indent: Spacing.lg, endIndent: Spacing.lg),
-            const SizedBox(height: Spacing.sm),
+            const SizedBox(height: Spacing.md),
           ],
 
-          // Discovery shuffle (or search results)
-          DiscoverySection(searchQuery: _query),
+          DiscoverySection(searchQuery: _query, groupByTrust: true),
         ],
       ),
     );

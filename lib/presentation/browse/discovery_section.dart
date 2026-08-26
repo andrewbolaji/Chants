@@ -31,8 +31,13 @@ bool isChantPermissionDenied(Object? error) {
 
 class DiscoverySection extends ConsumerWidget {
   final String searchQuery;
+  final bool groupByTrust;
 
-  const DiscoverySection({super.key, this.searchQuery = ''});
+  const DiscoverySection({
+    super.key,
+    this.searchQuery = '',
+    this.groupByTrust = false,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -45,7 +50,7 @@ class DiscoverySection extends ConsumerWidget {
         child: Center(child: CircularProgressIndicator()),
       ),
       error: (_, _) => ErrorState(
-        message: 'Could not load chants. Pull down to try again.',
+        message: 'Could not load chants. Try again.',
         onRetry: () => ref.invalidate(discoveryProvider),
       ),
       data: (chants) {
@@ -77,6 +82,72 @@ class DiscoverySection extends ConsumerWidget {
             message:
                 'Try a different word or browse the clubs to find what you want.',
             icon: Icons.search_off,
+          );
+        }
+
+        if (groupByTrust && !isSearching) {
+          final terraceProven = filtered
+              .where((chant) => chant.status == 'canonical')
+              .take(1)
+              .toList();
+          final chantLab = filtered
+              .where((chant) => chant.status == 'community')
+              .take(1)
+              .toList();
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _HomeSectionHeader(
+                label: 'Terrace Proven',
+                accent: AppColors.gold,
+                onShuffle: () => ref.invalidate(discoveryProvider),
+              ),
+              if (terraceProven.isEmpty)
+                _HomeGroupEmpty(
+                  message: 'No Terrace Proven chant in this mix.',
+                  actionLabel: 'SHUFFLE',
+                  onAction: () => ref.invalidate(discoveryProvider),
+                )
+              else
+                ...terraceProven.map(
+                  (chant) => _LiveChantCard(
+                    key: ValueKey(chant.id),
+                    initialChant: chant,
+                    teamName: teamNames[chant.teamId],
+                    homePreview: true,
+                  ),
+                ),
+              const SizedBox(height: Spacing.md),
+              const _HomeSectionHeader(
+                label: 'Chant Lab',
+                accent: AppColors.chantLab,
+                icon: Icons.bolt_rounded,
+              ),
+              if (chantLab.isEmpty)
+                _HomeGroupEmpty(
+                  message: 'No new ideas in this mix. Choose a club to start.',
+                  actionLabel: 'BROWSE CLUBS',
+                  onAction: () => Navigator.pushNamed(
+                    context,
+                    AppRouter.competition,
+                    arguments: const {
+                      'id': 'premier-league',
+                      'name': 'Premier League',
+                    },
+                  ),
+                )
+              else
+                ...chantLab.map(
+                  (chant) => _LiveChantCard(
+                    key: ValueKey(chant.id),
+                    initialChant: chant,
+                    teamName: teamNames[chant.teamId],
+                    rising: true,
+                    homePreview: true,
+                  ),
+                ),
+            ],
           );
         }
 
@@ -115,6 +186,7 @@ class DiscoverySection extends ConsumerWidget {
                     key: ValueKey(chant.id),
                     initialChant: chant,
                     teamName: teamNames[chant.teamId],
+                    homePreview: groupByTrust,
                   ),
                 ),
           ],
@@ -129,8 +201,16 @@ class DiscoverySection extends ConsumerWidget {
 class _LiveChantCard extends ConsumerWidget {
   final Chant initialChant;
   final String? teamName;
+  final bool rising;
+  final bool homePreview;
 
-  const _LiveChantCard({super.key, required this.initialChant, this.teamName});
+  const _LiveChantCard({
+    super.key,
+    required this.initialChant,
+    this.teamName,
+    this.rising = false,
+    this.homePreview = false,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -161,7 +241,16 @@ class _LiveChantCard extends ConsumerWidget {
         return ChantCard(
           chant: live,
           teamName: teamName,
+          rising: rising,
           actionsEnabled: hasAuthoritativeValue,
+          homePreview: homePreview,
+          margin: homePreview
+              ? const EdgeInsets.symmetric(
+                  horizontal: Spacing.lg,
+                  vertical: Spacing.xs,
+                )
+              : null,
+          risingColor: homePreview ? AppColors.chantLab : AppColors.success,
           onTap: () => Navigator.pushNamed(
             context,
             AppRouter.chantDetail,
@@ -169,6 +258,114 @@ class _LiveChantCard extends ConsumerWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _HomeSectionHeader extends StatelessWidget {
+  final String label;
+  final Color accent;
+  final IconData? icon;
+  final VoidCallback? onShuffle;
+
+  const _HomeSectionHeader({
+    required this.label,
+    required this.accent,
+    this.icon,
+    this.onShuffle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        Spacing.lg,
+        Spacing.md,
+        Spacing.sm,
+        Spacing.sm,
+      ),
+      child: Row(
+        children: [
+          if (icon != null) ...[
+            Icon(icon, color: accent, size: 18),
+            const SizedBox(width: Spacing.sm),
+          ],
+          Expanded(
+            child: Semantics(
+              header: true,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label.toUpperCase(),
+                    style: const TextStyle(
+                      fontFamily: 'SpaceMono',
+                      fontSize: 12,
+                      color: AppColors.textHeadline,
+                      letterSpacing: 1.0,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: Spacing.xs),
+                  Container(width: 56, height: 2, color: accent),
+                ],
+              ),
+            ),
+          ),
+          if (onShuffle != null)
+            IconButton(
+              tooltip: 'Shuffle Home chants',
+              onPressed: onShuffle,
+              icon: const Icon(Icons.shuffle_rounded, size: 20),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HomeGroupEmpty extends StatelessWidget {
+  final String message;
+  final String actionLabel;
+  final VoidCallback onAction;
+
+  const _HomeGroupEmpty({
+    required this.message,
+    required this.actionLabel,
+    required this.onAction,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(Radii.md),
+          border: Border.all(color: AppColors.outline),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            Spacing.lg,
+            Spacing.md,
+            Spacing.sm,
+            Spacing.sm,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  message,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ),
+              const SizedBox(width: Spacing.sm),
+              TextButton(onPressed: onAction, child: Text(actionLabel)),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

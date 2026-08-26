@@ -66,6 +66,7 @@ Widget _wrap({
   required _ChantRepository repository,
   User? user,
   ValueChanged<RouteSettings>? onRoute,
+  double textScale = 1,
 }) {
   return ProviderScope(
     overrides: [
@@ -75,6 +76,12 @@ Widget _wrap({
     ],
     child: MaterialApp(
       theme: ChantTheme.dark,
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(
+          context,
+        ).copyWith(textScaler: TextScaler.linear(textScale)),
+        child: child!,
+      ),
       home: const PlayerScreen(
         player: _player,
         sportId: 'football',
@@ -107,6 +114,7 @@ void main() {
       ),
     );
     await tester.pump();
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
     repository.controller.add(
       ChantBrowseSnapshot(
         chants: [
@@ -148,6 +156,9 @@ void main() {
     repository.controller.add(ChantBrowseSnapshot(chants: const []));
     await tester.pumpAndSettle();
 
+    expect(find.text('NO SONGBOOK CHANT YET'), findsOneWidget);
+    expect(find.text('EXPLORE CHANT LAB'), findsOneWidget);
+
     await tester.tap(find.text('CHANT LAB'));
     await tester.pumpAndSettle();
 
@@ -170,6 +181,11 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('SOMETHING WENT WRONG'), findsOneWidget);
+    expect(
+      find.text('Could not load chants. Go back and try again.'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Pull down'), findsNothing);
     expect(find.text('SONGBOOK'), findsOneWidget);
   });
 
@@ -193,5 +209,30 @@ void main() {
     expect(find.text('SAKA PROVEN'), findsOneWidget);
     expect(find.text('LAST LOADED CHANTS'), findsOneWidget);
     expect(find.text('SOMETHING WENT WRONG'), findsNothing);
+  });
+
+  testWidgets('cache state stays explicit and layout survives enlarged text', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final repository = _ChantRepository();
+    addTearDown(repository.controller.close);
+
+    await tester.pumpWidget(
+      _wrap(repository: repository, user: _User(), textScale: 1.8),
+    );
+    await tester.pump();
+    repository.controller.add(
+      ChantBrowseSnapshot(
+        chants: [_chant(id: 'proven', status: 'canonical')],
+        isFromCache: true,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('DEVICE CACHE'), findsOneWidget);
+    expect(find.text('START A CHANT'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }

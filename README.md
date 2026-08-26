@@ -117,7 +117,7 @@ Fifteen Functions exports in source (all configured for `europe-west2`; live dep
 | `onModerationAction` | HTTPS callable | Operator hide/unhide/remove/ban and promote/demote actions with audit log |
 | `deleteAccount` | HTTPS callable | Durably accept account deletion and mark the profile pending |
 | `onAccountDeletionJobWritten` | AccountDeletionJob doc write | Advance one bounded retryable cleanup phase or page |
-| `mergeChants` | HTTPS callable | Operator duplicate merge that moves votes, reports, comments, and replies |
+| `mergeChants` | HTTPS callable | Disabled operator boundary that exits before request parsing or mutation until resumable recovery and privacy-safe audit design are approved |
 | `acceptPolicy` | HTTPS callable | Validate and record acceptance of the current content policy |
 | `onUserReportCreated` | UserReport doc create | Recompute the reported user's distinct-report count |
 | `onUserReportDeleted` | UserReport doc delete | Repair a surviving reported user's count after cleanup |
@@ -134,7 +134,7 @@ Fifteen Functions exports in source (all configured for `europe-west2`; live dep
 
 **Content integrity.** All seed content (lyrics, squads, cultural context) is externally sourced and verified by hand. The build process can only transform supplied data in place; it never generates or rewrites content. This is a standing rule with the highest priority in the project.
 
-**Test coverage across layers.** 343 Flutter tests, 136 Firestore security-rules assertions, 78 Cloud Functions tests, and 42 seed-pipeline tests pass locally on the final freeze closure. Regression guards cover late deletion responses after Home disposal, prepared and unknown deletion recovery, classified audit privacy and operator provenance, exactly-once completion, accepted-last local cleanup, cache-local Songbook actions, timing-sensitive UI, chant-ID reuse, moderation revocation, atomic safety intake, transactional counter overlap, direct-write abuse, pending-target closure, responsive states, reply grouping, and offline snapshot reconstruction. PR 14 head `fe93e20` is clean-runner green; replacement CI for the final closure remains pending.
+**Test coverage across layers.** The current interface and Home-hierarchy branch passes 353 Flutter tests locally and in clean-runner CI. The final freeze baseline also passes 136 Firestore security-rules assertions, 78 Cloud Functions tests, and 42 seed-pipeline tests. Regression guards cover core Home hierarchy and routes at normal and enlarged text, competition and player states, immutable browse inputs, late deletion responses after Home disposal, prepared and unknown deletion recovery, classified audit privacy and operator provenance, exactly-once completion, accepted-last local cleanup, cache-local Songbook actions, timing-sensitive UI, chant-ID reuse, moderation revocation, atomic safety intake, transactional counter overlap, direct-write abuse, pending-target closure, responsive states, reply grouping, and offline snapshot reconstruction. Final merged `main` at `2df9fa0` passed the original five jobs in GitHub Actions run `32993748570`. Draft PR 15 replacement run `33011936510` passed all six jobs, including the new governance gate.
 
 ---
 
@@ -189,6 +189,7 @@ cd seed && npm install && npm test
 This project uses one documentation lifecycle:
 
 - **[CHANGE_SPEC.md](docs/CHANGE_SPEC.md)** - the one active proposed or approved implementation block.
+- **[PROJECT_PROFILE.md](docs/PROJECT_PROFILE.md)** - compact architecture, command, trust, release, and risk source of truth.
 - **[EXECUTION.md](docs/EXECUTION.md)** - timestamped evidence and state transitions for substantial current work.
 - **[LEARNINGS.md](docs/LEARNINGS.md)** - reusable lessons backed by reproduced or verified evidence.
 - **[INTERFACE.md](docs/INTERFACE.md)** - the current UI contract and durable interaction decisions.
@@ -197,9 +198,12 @@ This project uses one documentation lifecycle:
 - **[ROADMAP.md](docs/ROADMAP.md)** - product sequencing and release gates.
 - **[ENGINEERING_OVERVIEW.md](ENGINEERING_OVERVIEW.md)** and **[IMPLEMENTATION_RATIONALE.md](docs/IMPLEMENTATION_RATIONALE.md)** - milestone review snapshots.
 - **[HANDBOOK.md](docs/HANDBOOK.md)** - plain-language manual for shipped features.
+- **[RUNBOOK.md](docs/RUNBOOK.md)** - source-backed diagnosis and recovery guidance plus explicit operational gaps.
 - **[CHANTS_SPEC.md](docs/CHANTS_SPEC.md)** - the product specification.
 
 `docs/DECISIONS.md` and `docs/BLOCK_RECAPS.md` remain as historical archives for work completed before the current framework.
+
+Run `./scripts/check-project-memory.sh` and `./scripts/check-writing-style.sh` before handing off substantial work.
 
 ---
 

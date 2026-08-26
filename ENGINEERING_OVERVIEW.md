@@ -1,16 +1,16 @@
 # Chants engineering overview
 
-This is the current whole-project map for Chants. It describes clean-runner PR 14 head `fe93e20ed81c3f1aed2a20d49f7b3badf3c89354` plus the approved final freeze closure in the `codex/v1-freeze-remediation` working tree. Claude independently reviewed `c57815c...f5cb748`, `f5cb748...c893cd0`, and `c893cd0...fe93e20`; the current block corrects the final verified findings. Every material claim names the implementation path and symbol that supports it.
+This is the current whole-project map for Chants. It describes final merged `main` at `2df9fa04a839f88a19fe43c2bcc8ed9a583627c3` plus the locally verified `codex/framework-ui-readiness` and bounded Home hierarchy changes. Claude independently reviewed `c57815c...f5cb748`, `f5cb748...c893cd0`, and `c893cd0...fe93e20`; the final closure at `0b64dcf` was then reviewed with both prior findings closed and no new defect. Every material claim names the implementation path and symbol that supports it.
 
-This document is descriptive, not an approval record. `docs/CHANGE_SPEC.md` contains the approved and implemented remediation contract. `docs/EXECUTION.md` records review and implementation evidence. `docs/IMPLEMENTATION_RATIONALE.md` is the companion coverage ledger and verification record. Completed reasoning lives in `docs/changes/`, and durable decisions live in `docs/decisions/`.
+This document is descriptive, not an approval record. `docs/CHANGE_SPEC.md` contains the approved Home hierarchy contract. `docs/EXECUTION.md` records review and implementation evidence. `docs/IMPLEMENTATION_RATIONALE.md` is the companion coverage ledger and verification record. Completed reasoning lives in `docs/changes/`, and durable decisions live in `docs/decisions/`.
 
-Three unrelated working-tree changes predated this review and remain unstaged: `android/app/build.gradle.kts`, `android/settings.gradle.kts`, and `pubspec.lock`. The review did not overwrite or stage them.
+The framework and interface-readiness change is isolated in a clean worktree from final `main`. Andrew's older Gradle, settings, lockfile, and private freeze-note work remains untouched in its original worktree.
 
 ## Review outcome
 
 The stacked product work is coherent and unusually well tested for a pre-v1 mobile app. The combined client, Functions, seed, and rules design supports one-level replies, blocking, audited unban, stable seeded chant IDs, explicit provenance and evidence, separate Songbook and Chant Lab browse surfaces, device-local Saved Matchday Songbook, native plain-text share-out, server-authoritative report and feedback budgets, and durable account deletion.
 
-The V1 freeze review found concurrency, acknowledgement, storage-identity, and cache-provenance cases that the earlier automated matrix did not model. The first independent follow-up found that unknown acknowledgement was only transiently explained and that audit rows retained reporter identity and text. Its correction passed clean-runner CI at `c893cd0`. The second narrow follow-up found that actor-wide audit flattening removed useful operator provenance, the copy overstated target-side deletion, and prepared recovery required relaunch. That correction passed clean-runner CI at `fe93e20`. The final review found one disposed-Home error path and one dormant merge audit documentation defect. The current local closure addresses both:
+The V1 freeze review found concurrency, acknowledgement, storage-identity, and cache-provenance cases that the earlier automated matrix did not model. The first independent follow-up found that unknown acknowledgement was only transiently explained and that audit rows retained reporter identity and text. Its correction passed clean-runner CI at `c893cd0`. The second narrow follow-up found that actor-wide audit flattening removed useful operator provenance, the copy overstated target-side deletion, and prepared recovery required relaunch. That correction passed clean-runner CI at `fe93e20`. The final review found one disposed-Home error path and one dormant merge audit documentation defect. The merged final closure addresses both:
 
 1. **Destructive acknowledgement.** `SavedSongbookRepository`, `savedSongbookDeletionStateProvider`, and `FileSongbookStorage` preserve prepared, unknown, and accepted local states. Prepared state actively retries artifact recovery in the same process, unknown gates Home behind a persistent deletion retry screen, and a positive pending marker can advance accepted local cleanup.
 2. **Audit privacy and provenance.** `auditRedactionForDeletedActor` retains generated detail only for known operator actions under `deleted-operator`, replaces report and unknown detail, and redacts self-target policy acceptance. `writePrivacySafeReportAuditEntry` transactionally redacts delayed report audits for a pending or missing reporter. The non-identifying completion audit is exactly once because its write and phase advancement share one transaction.
@@ -20,6 +20,8 @@ The V1 freeze review found concurrency, acknowledgement, storage-identity, and c
 6. **Live authority and widget identity.** `ChantRepository.chantStream` carries Firestore cache provenance. Detail and Discover keep cache text readable, and only already-saved local navigation or removal remains available without server confirmation. Vote and comment state reset on chant-ID change and discard callbacks from older generations.
 7. **Unsafe merge stop.** `requireMergeChantsEnabled` returns failed-precondition after operator authorization, so the sequential non-resumable merge path cannot mutate data before a separately approved recovery design exists.
 8. **Late deletion response.** Both deletion error handlers check that Home remains mounted before accessing Riverpod or scaffold state. A pending profile can therefore replace Home while an older request completes without producing an unhandled disposed-consumer error.
+9. **Core interface readiness.** Home, competition, and player have current 390 by 844 baselines and focused state evidence. Competition copies an immutable snapshot before sorting; browse failures no longer promise a nonexistent pull-down gesture; and Home search exposes a stable clear-control label.
+10. **Bounded Home hierarchy.** `HomeScreen`, Home-mode `DiscoverySection`, and the optional Home presentation in `ChantCard` surface signed-in matchday utility, Premier League browse, one Terrace Proven chant, and one Chant Lab idea without changing provider, route, current-live authority, persistence, or backend contracts. Search remains one combined result list.
 
 The disabled merge's legacy audit detail is not wholly generated moderation text. It includes source title, lyrics, context, tune, and raw `createdBy`. Any future re-enable must pair resumable mutation design with a privacy-safe audit payload and a fresh retained-action allowlist review.
 
@@ -33,7 +35,7 @@ The prior fail-open analysis path is also closed. `.github/workflows/ci.yml :: f
 
 Two later stacked blocks closed risks that the earlier review identified. `functions/src/safety_submission.ts` and decision 010 move report and feedback admission behind atomic private budgets. `functions/src/account_deletion.ts` and decision 011 replace synchronous deletion with a private bounded retry job, pending-account authority, and recoverable Auth finalization. Decisions 012 through 016 record the additional freeze corrections and audit-retention boundary.
 
-The stack is still not release-ready. This local correction needs packaging and clean-runner CI. Signing credentials, final policy wording, native compilation, live deployment, and device actions require separate owner input or authorization.
+The engineering stack is merged and exact-main clean-runner green. It is still not release-ready: signing credentials, final policy wording, native compilation, live deployment, operational configuration, seed completion, and the combined device walk require separate owner input or authorization.
 
 ## What the product is now
 
@@ -74,7 +76,7 @@ Historical `docs/DECISIONS.md` and `docs/BLOCK_RECAPS.md` explain earlier work b
 | Crash reporting | Firebase Crashlytics for Flutter and platform-dispatched errors | `lib/main.dart` |
 | Local persistence | One schema-versioned JSON Saved Songbook per lowercase SHA-256 UID key | `lib/data/repositories/songbook_storage.dart`, `saved_songbook_repository.dart` |
 | Seeding | Admin SDK CLI with explicit chant IDs and read-only preflight mode | `seed/seed.ts`, `seed/chant_identity.ts`, `seed/seed_plan.ts` |
-| CI | Flutter test, Flutter analysis, Functions, seed, and Java-backed rules jobs | `.github/workflows/ci.yml` |
+| CI | Project governance, Flutter test, Flutter analysis, Functions, seed, and Java-backed rules jobs on the readiness branch | `.github/workflows/ci.yml` |
 
 The repository declares Flutter SDK `^3.10.8` and Node 20. This review ran on Flutter 3.44.8 and Dart 3.12.2. CI follows unpinned Flutter `stable`, which makes the runner version movable without a repository change.
 
@@ -163,8 +165,8 @@ Local verification on 2026-08-26:
 
 | Check | Result |
 |---|---|
-| `flutter test` | PASS, 343 tests |
-| `flutter analyze lib test` | PASS, no issues |
+| `flutter test` | PASS, 353 tests on the interface and Home-hierarchy branch |
+| scoped `flutter analyze` over the Home change boundary | PASS, no issues |
 | `cd functions && npm test` | PASS, 78 tests |
 | `cd seed && npm test` | PASS, 42 tests |
 | `cd seed && npx tsc --noEmit` | PASS |
@@ -172,11 +174,13 @@ Local verification on 2026-08-26:
 | `cd test_rules && npx tsc --noEmit` | PASS |
 | Java-backed Firestore emulator | PASS, 136 rules assertions |
 | focused final closure regressions | RED before fix at both disposed-Consumer invalidations; PASS after fix, 19 app-gate tests including both late error classes |
-| PR 14 GitHub Actions run `32977725542` at `fe93e20` | Prior exact-head PASS: Flutter tests, analysis, Functions, seed, and 136 rules assertions |
+| focused core-journey and inherited authority suites | RED before fix on immutable competition input; PASS, 24 tests after correction |
+| focused Home hierarchy, route, enlarged-text, Songbook-entry, card, and inherited authority suites | PASS, including the inspected updated 390 by 844 Home golden |
+| final `main` GitHub Actions run `32993748570` at `2df9fa0` | Exact merged-head PASS: Flutter tests, analysis, Functions, seed, and 136 rules assertions |
 
-The earlier remediation first proved its affected boundaries red. The final closure also captures direct red evidence for both late deletion error classes after Home disposal, then passes those guards with the pending screen still authoritative. The complete local Flutter, Functions, seed, and rules suites pass. Clean-runner CI has not run against the current working tree.
+The earlier remediation first proved its affected boundaries red. The final closure also captures direct red evidence for both late deletion error classes after Home disposal, then passes those guards with the pending screen still authoritative. The interface block reproduced the immutable-list crash before correction and proved both governance gates against known-bad fixtures. The approved Home hierarchy then passed exact-route, signed-state, search, enlarged-text, authority, and visual evidence without a new data or navigation boundary. The current local Flutter suite and exact merged baseline suites pass. Exact merged `main` passed all five original clean-runner jobs. PR 15 run `33011415224` measured a 2.40 percent Linux Home render difference against a 2.20 percent golden ceiling while its other five jobs passed. After a scoped 3.00 percent calibration, replacement run `33011936510` passed all six jobs.
 
-The first independent review recorded that 46 of 142 Dart files would change. The current read-only `dart format --output=none --set-exit-if-changed lib test` check identifies 42 of 142 after the intervening touched-file formatting. It made no files writable because output was disabled. Formatting is not a CI gate today; this correction formats only its touched files and keeps the larger mechanical rewrite separate.
+The first independent review recorded that 46 of 142 Dart files would change. The current read-only `dart format --output=none --set-exit-if-changed lib test` check identifies 41 of 143 after intervening touched-file formatting and the two new Dart test files. It made no files writable because output was disabled. Formatting is not a CI gate today; this correction formats only its touched files and keeps the larger mechanical rewrite separate.
 
 An attempted current npm production advisory audit was not completed. The sandboxed attempt could not reach the registry, and the elevated request was rejected because it would disclose the dependency manifest to the public npm advisory service without separate explicit authorization. Current advisory status is therefore unverified.
 
@@ -189,13 +193,13 @@ Safe deployment order for the final deletion-aware stack is backward-compatible 
 Recovery is uneven:
 
 - A bad app release requires another store release.
-- Rules and Functions can be redeployed from an earlier commit, but no rollback runbook exists.
+- Rules and Functions can be redeployed from a reviewed compatible commit. `docs/RUNBOOK.md` now records the source-backed response and recovery boundary, while deployed parity still requires operator verification.
 - Seeded canonical content is reproducible from reviewed JSON.
 - User submissions and interaction data depend on unverified Firestore backup and point-in-time-recovery settings.
 - `mergeChants` is not safely undoable from its partial audit payload and is now disabled after operator authorization. Its legacy payload also needs privacy redesign before re-enable.
 - Account deletion has durable repository recovery, but no operational alert, dead-letter path, or operator console for a permanently retained job.
 
-Crashlytics is wired, but there is no repository-defined alerting, function-error dashboard, deployment smoke test, or incident runbook. App Check enforcement, billing alerts, backup settings, authentication templates, and live indexes are dashboard state that this review did not inspect.
+Crashlytics is wired, and `docs/RUNBOOK.md` now records first response and known recovery paths. There is still no repository-defined alerting, function-error dashboard, or deployment smoke test. App Check enforcement, billing alerts, backup settings, authentication templates, and live indexes are dashboard state that this review did not inspect.
 
 ## Where I most want your eyes
 
@@ -211,8 +215,8 @@ Crashlytics is wired, but there is no repository-defined alerting, function-erro
 - No live stable-ID preflight or seed write ran.
 - No Android build succeeded locally because the Android SDK is unavailable. No iOS build succeeded because inherited Cloud Firestore Swift Package sources failed compilation in the prior native check. No native file mutation from that attempt remains.
 - No iPhone, Android, or iPad walkthrough ran in this review.
-- Clean-runner CI passed all five jobs for PR 14 head `fe93e20` in run `32977725542`. It has not run against the current uncommitted final closure.
+- Clean-runner CI passed all five original jobs for final merged `main` at `2df9fa0` in run `32993748570`. Draft PR 15 replacement run `33011936510` passed all six jobs, including the new governance gate, 353 Flutter tests, analysis, Functions, seed, and 136 rules assertions.
 - Android release signing remains debug-only in the tracked configuration.
 - The content policy remains placeholder copy.
 - Dependency freshness and current security-advisory state are unverified.
-- Formatter conformance is unverified as a passing repository gate; the current read-only check identified 42 of 142 files needing normalization.
+- Formatter conformance is unverified as a passing repository gate; the current read-only check identified 41 of 143 files needing normalization.
