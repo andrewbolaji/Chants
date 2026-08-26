@@ -54,7 +54,7 @@ Chants is the home for football chants. Fans use it to find the songs, learn the
 
 **Limits and gotchas.**
 - Most players have no chants yet. The empty state says "No chants for [player] yet." This is expected, not an error.
-- Cover images and media are placeholders until Storage goes live.
+- Hosted media does not ship in v1. The approved v1 direction is an optional allowlisted external evidence link, opened outside Chants; Storage remains locked.
 - Voting is live. The score updates immediately when you tap (optimistic update). If the network write fails, it reverts. Tapping the same vote again removes it. Switching from up to down (or vice versa) swings the score by 2.
 
 **Where it shows up.** Home screen (discovery shuffle and PL entry), Competition screen, Club screen, Player screen, Chant detail screen.

@@ -29,8 +29,8 @@ class CommentRepository {
   }
 
   /// Post a new comment.
-  Future<DocumentReference> createComment(Comment comment) async {
-    return _comments.add(comment.toJson());
+  Future<void> createComment(Comment comment) async {
+    await _comments.add(comment.toJson());
   }
 
   /// Soft-delete the author's own comment (sets removed: true).

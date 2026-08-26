@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chants/data/models/user_profile.dart';
+import 'package:chants/data/models/blocked_user.dart';
 import 'package:chants/data/repositories/auth_repository.dart';
 import 'package:chants/data/repositories/profile_repository.dart';
 import 'package:chants/data/repositories/sport_repository.dart';
@@ -13,6 +14,7 @@ import 'package:chants/data/repositories/report_repository.dart';
 import 'package:chants/data/repositories/user_report_repository.dart';
 import 'package:chants/data/repositories/feedback_repository.dart';
 import 'package:chants/data/repositories/comment_repository.dart';
+import 'package:chants/data/repositories/block_repository.dart';
 import 'package:chants/data/repositories/moderation_repository.dart';
 
 // Repositories
@@ -64,6 +66,10 @@ final commentRepositoryProvider = Provider<CommentRepository>(
   (ref) => CommentRepository(),
 );
 
+final blockRepositoryProvider = Provider<BlockRepository>(
+  (ref) => BlockRepository(),
+);
+
 final moderationRepositoryProvider = Provider<ModerationRepository>(
   (ref) => ModerationRepository(),
 );
@@ -79,4 +85,16 @@ final authStateProvider = StreamProvider<User?>((ref) {
 final userProfileProvider =
     StreamProvider.family<UserProfile?, String>((ref, uid) {
   return ref.watch(profileRepositoryProvider).profileStream(uid);
+});
+
+final blockedUsersProvider =
+    StreamProvider.family<List<BlockedUser>, String>((ref, blockerId) {
+  return ref.watch(blockRepositoryProvider).blockedUsersStream(blockerId);
+});
+
+final blockedUserIdsProvider =
+    StreamProvider.family<Set<String>, String>((ref, blockerId) {
+  return ref.watch(blockRepositoryProvider).blockedUsersStream(blockerId).map(
+        (users) => users.map((user) => user.blockedUserId).toSet(),
+      );
 });

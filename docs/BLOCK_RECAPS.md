@@ -1,4 +1,6 @@
-# Block Recaps
+# Legacy block recap archive
+
+This file preserves work completed under the original block system. New completed change records live in `docs/changes/`. Do not add parallel entries here. See `docs/changes/README.md` for the canonical format.
 
 Running log of completed Blocks with deliverables, decisions, and closure status.
 

@@ -2,9 +2,9 @@
 
 [![CI](https://github.com/andrewbolaji/Chants/actions/workflows/ci.yml/badge.svg)](https://github.com/andrewbolaji/Chants/actions/workflows/ci.yml)
 
-**The songbook of the terraces.**
+**The songbook of the terraces and the workshop for what gets sung next.**
 
-Chants is a mobile app where football fans find, learn, and contribute the chants sung on the terraces. Every chant has its lyrics, the tune it is sung to, and the story behind it. Fans vote the good ones up, comment on them, and submit the ones that are missing.
+Chants is a mobile app where football fans find and learn terrace songs, contribute the ones that are missing, and back new ideas that deserve to be sung next. Every chant has its lyrics, the tune it is sung to, and the story behind it. Fans can already vote, comment, and create; the remaining v1 work makes the trusted Songbook and community Chant Lab distinction explicit.
 
 > **Status:** In active development. App Store submission is in progress; not yet live on the stores. Arsenal is fully seeded; the remaining Premier League clubs are being added.
 
@@ -28,11 +28,11 @@ Chants is a mobile app where football fans find, learn, and contribute the chant
 - **Learn-focused chant detail.** Lyrics, tune name, context notes explaining the history, and an "Also sung as" section for alternate versions when they exist.
 - **Community submission.** Any signed-in user can add a chant. Submissions enter as community content; operators can verify them.
 - **Voting.** Upvote, downvote, or remove your vote. Score updates instantly (optimistic UI) and reconciles against the server.
-- **Comments with likes.** Flat comment threads on every chant. One like per person per comment. Comments sort by most liked, then newest.
-- **Reporting and moderation.** Flag a chant or comment. Auto-hide at a configurable report threshold. Operator tools for hide, remove, ban, and unban, with a full audit log. Rate limits for new and established accounts.
+- **Comments with likes and direct replies.** Top-level comments sort by most liked, then newest; one chronological reply level sits below each parent. Users can block another account and manage their block list.
+- **Reporting and moderation.** Flag a chant or comment. Auto-hide at a configurable report threshold. Operator tools for hide, unhide, remove, and ban, with an audit log. Rate limits for new and established accounts.
 - **Discover.** A shuffled mix of chants across all clubs on the home screen, with live-updating scores.
 - **Search.** Filter chants by title, lyrics, tune name, or club name with results updating as you type.
-- **Account management.** Email/password auth, password reset, and full in-app account deletion (anonymizes contributions, removes personal data, reconciles counters).
+- **Account management.** Email/password auth, password reset, and in-app account deletion with contribution anonymization and counter reconciliation. Remaining lifecycle gaps are tracked in the engineering review documents.
 
 ---
 
@@ -66,6 +66,7 @@ lib/
     auth/         # Sign in, sign up, password reset
     browse/       # Home, competition, club, player, chant detail
     comments/     # Comment section and card
+    settings/     # Blocked-user management
     moderation/   # Operator moderation screen
     report/       # Report bottom sheet (shared by chants and comments)
     shared/       # Reusable widgets (vote controls, chant card, empty/error states)
@@ -86,16 +87,19 @@ Sport
         └── Team
               └── Chant (flat top-level collection, denormalized teamId/playerId)
                     ├── Vote      (one per user per chant)
-                    ├── Comment   (flat, no nesting)
-                    │     └── CommentLike (one per user per comment)
+                    ├── Comment   (top-level or one direct reply)
+                    │     ├── CommentLike (one per user per comment)
+                    │     └── parentCommentId (null/missing for top-level)
                     └── Report / CommentReport
+
+Block (directional, one per blocker/blocked-user pair)
 ```
 
 Chants are stored in a single flat Firestore collection with denormalized IDs. This gives cheap drill-down queries (all chants for a team) and cheap cross-club queries (the discover shuffle) without joins or collectionGroup queries.
 
 ### Cloud Functions
 
-Nine deployed functions (all `europe-west2`):
+Eleven Functions exports in source (all configured for `europe-west2`; live deployment state is verified separately):
 
 | Function | Trigger | Purpose |
 |----------|---------|---------|
@@ -103,25 +107,27 @@ Nine deployed functions (all `europe-west2`):
 | `onChantCreated` | Chant doc create | Rate-limit enforcement (auto-hide excess) |
 | `onCommentWritten` | Comment doc write | Recompute commentCount on the parent chant; rate-limit on create |
 | `onCommentLikeWritten` | CommentLike doc write | Recompute likeCount on the comment |
-| `onReportCreated` | Report doc create | Increment flagCount, auto-hide at threshold |
-| `onCommentReportCreated` | CommentReport doc create | Increment flagCount on comment, auto-hide at threshold |
-| `onModerationAction` | HTTPS callable | Operator hide/unhide/remove/ban/unban with audit log |
-| `deleteAccount` | HTTPS callable | Full account deletion with data cleanup and counter reconciliation |
-| `mergeChants` | HTTPS callable | Operator duplicate merge with source-payload snapshot for undo |
+| `onReportCreated` | Report doc write | Recompute pending-report flagCount, auto-hide at threshold |
+| `onCommentReportCreated` | CommentReport doc write | Recompute pending-report flagCount on comment, auto-hide at threshold |
+| `onModerationAction` | HTTPS callable | Operator hide/unhide/remove/ban and promote/demote actions with audit log |
+| `deleteAccount` | HTTPS callable | Account deletion, data cleanup, anonymization, and counter reconciliation |
+| `mergeChants` | HTTPS callable | Operator duplicate merge that moves votes, reports, comments, and replies |
+| `acceptPolicy` | HTTPS callable | Validate and record acceptance of the current content policy |
+| `onUserReportCreated` | UserReport doc create | Recompute the reported user's distinct-report count |
 
 ---
 
 ## Engineering Highlights
 
-**Counters recomputed from ground truth.** Vote tallies, comment counts, and comment like counts are never blindly incremented. Each Cloud Function queries the actual stored documents and sets an absolute value. This makes every counter function idempotent under at-least-once delivery, duplicate triggers, and out-of-order events. If a counter ever drifts, the next write self-corrects it.
+**Core interaction counters recomputed from ground truth.** Vote tallies, comment counts, comment like counts, user-report counts, and chant/comment flag counts are recomputed from stored documents. The report counters use transactions around their ground-truth query and target write, so duplicate and racing trigger deliveries converge without blind increments.
 
 **Optimistic UI with server reconciliation.** Votes and comment likes update the display instantly, then reconcile when the server stream delivers the Cloud Function's recomputed value. A busy guard drops taps while a write is in flight, and a pending-intent latch collapses rapid taps into at most two writes, preventing the score drift that would otherwise occur from concurrent writes to the same document.
 
-**Security-first Firestore rules.** Rules start locked (deny by default). Every privileged field (role, banned, counters, flags, hidden, removed) is pinned on create and blocked from self-update. This prevents a user from self-promoting to operator via a crafted SDK write, a class of privilege-escalation bug that was caught and fixed during review. Queries must include visibility filters or Firestore rejects them entirely. Field-length limits are enforced server-side, not just in the client.
+**Security-first Firestore rules.** Rules start locked (deny by default). Privileged profile and counter fields are constrained against client writes, interaction targets must exist and be visible, reply depth and relationships are enforced server-side, and vote/like/profile reads are limited to their owner or an operator.
 
 **Content integrity.** All seed content (lyrics, squads, cultural context) is externally sourced and verified by hand. The build process can only transform supplied data in place; it never generates or rewrites content. This is a standing rule with the highest priority in the project.
 
-**Test coverage across layers.** 141 Flutter tests (models, services, widgets, and screen-level tests including controllable-async rapid-tap scenarios), Firestore security-rules tests, and Cloud Functions unit tests. Regression guards for timing-sensitive UI (vote reconciliation, comment like crashes) are widget-level tests against the real widget, verified by reintroducing the bug and confirming the test fails.
+**Test coverage across layers.** 182 Flutter tests (including phone-sized reply-thread and operator-access goldens), 106 Firestore security-rules assertions, 26 Cloud Functions tests, and 23 seed-pipeline tests. Regression guards for timing-sensitive UI and reply grouping run against the real widgets; reply ordering was also proven red against a deliberate production mutation and green after restoration.
 
 ---
 
@@ -171,12 +177,20 @@ cd seed && npm install && npm test
 
 ## Documentation
 
-This project is planned and documented in detail:
+This project uses one documentation lifecycle:
 
-- **[ROADMAP.md](docs/ROADMAP.md)** — launch phases, current status, and gated triggers for each phase.
-- **[DECISIONS.md](docs/DECISIONS.md)** — every architectural decision with its date, reasoning, and trigger to revisit.
-- **[HANDBOOK.md](docs/HANDBOOK.md)** — plain-language manual for every shipped feature, written at a 9th-grade reading level.
-- **[CHANTS_SPEC.md](docs/CHANTS_SPEC.md)** — the full product specification.
+- **[CHANGE_SPEC.md](docs/CHANGE_SPEC.md)** - the one active proposed or approved implementation block.
+- **[EXECUTION.md](docs/EXECUTION.md)** - timestamped evidence and state transitions for substantial current work.
+- **[LEARNINGS.md](docs/LEARNINGS.md)** - reusable lessons backed by reproduced or verified evidence.
+- **[INTERFACE.md](docs/INTERFACE.md)** - the current UI contract and durable interaction decisions.
+- **[Completed changes](docs/changes/README.md)** - what changed, why, and how it was verified.
+- **[Durable decisions](docs/decisions/README.md)** - accepted decisions, reasons, consequences, and revisit triggers.
+- **[ROADMAP.md](docs/ROADMAP.md)** - product sequencing and release gates.
+- **[ENGINEERING_OVERVIEW.md](ENGINEERING_OVERVIEW.md)** and **[IMPLEMENTATION_RATIONALE.md](docs/IMPLEMENTATION_RATIONALE.md)** - milestone review snapshots.
+- **[HANDBOOK.md](docs/HANDBOOK.md)** - plain-language manual for shipped features.
+- **[CHANTS_SPEC.md](docs/CHANTS_SPEC.md)** - the product specification.
+
+`docs/DECISIONS.md` and `docs/BLOCK_RECAPS.md` remain as historical archives for work completed before the current framework.
 
 ---
 

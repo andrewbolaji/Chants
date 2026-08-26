@@ -19,6 +19,8 @@ class _FakeModerationRepository implements ModerationRepository {
   @override
   Future<void> banUser(String userId) async {}
   @override
+  Future<void> unbanUser(String userId) async {}
+  @override
   Future<void> deleteAccount() async {}
   @override
   Future<void> demoteChant(String chantId) async {}

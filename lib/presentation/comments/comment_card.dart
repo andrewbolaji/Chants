@@ -120,15 +120,18 @@ class CommentLikeState {
   }
 }
 
-enum _ReportChoice { comment, user }
+enum _MoreChoice { comment, user, block }
 
 class CommentCard extends StatelessWidget {
   final Comment comment;
   final CommentLikeState likeState;
   final bool isAuthor;
+  final bool isReply;
   final VoidCallback? onToggleLike;
+  final VoidCallback? onReply;
   final VoidCallback? onReportComment;
   final VoidCallback? onReportUser;
+  final VoidCallback? onBlockUser;
   final VoidCallback? onDelete;
 
   const CommentCard({
@@ -136,9 +139,12 @@ class CommentCard extends StatelessWidget {
     required this.comment,
     required this.likeState,
     required this.isAuthor,
+    this.isReply = false,
     this.onToggleLike,
+    this.onReply,
     this.onReportComment,
     this.onReportUser,
+    this.onBlockUser,
     this.onDelete,
   });
 
@@ -157,9 +163,11 @@ class CommentCard extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Container(
-      margin: const EdgeInsets.symmetric(
-        horizontal: Spacing.lg,
-        vertical: Spacing.xs,
+      margin: EdgeInsets.only(
+        left: isReply ? Spacing.xxxl : Spacing.lg,
+        right: Spacing.lg,
+        top: Spacing.xs,
+        bottom: Spacing.xs,
       ),
       padding: const EdgeInsets.all(Spacing.md),
       decoration: BoxDecoration(
@@ -234,6 +242,18 @@ class CommentCard extends StatelessWidget {
                   ],
                 ),
               ),
+              if (onReply != null && !isReply) ...[
+                const SizedBox(width: Spacing.lg),
+                TextButton(
+                  onPressed: onReply,
+                  style: TextButton.styleFrom(
+                    minimumSize: Size.zero,
+                    padding: EdgeInsets.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: const Text('Reply'),
+                ),
+              ],
               const Spacer(),
               // Report (if not author) or delete (if author)
               if (isAuthor)
@@ -246,8 +266,8 @@ class CommentCard extends StatelessWidget {
                   ),
                 )
               else
-                PopupMenuButton<_ReportChoice>(
-                  tooltip: 'Report',
+                PopupMenuButton<_MoreChoice>(
+                  tooltip: 'More actions',
                   icon: Icon(
                     Icons.flag_outlined,
                     size: 16,
@@ -255,21 +275,28 @@ class CommentCard extends StatelessWidget {
                   ),
                   onSelected: (choice) {
                     switch (choice) {
-                      case _ReportChoice.comment:
+                      case _MoreChoice.comment:
                         onReportComment?.call();
-                      case _ReportChoice.user:
+                      case _MoreChoice.user:
                         onReportUser?.call();
+                      case _MoreChoice.block:
+                        onBlockUser?.call();
                     }
                   },
-                  itemBuilder: (context) => const [
-                    PopupMenuItem(
-                      value: _ReportChoice.comment,
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: _MoreChoice.comment,
                       child: Text('Report this comment'),
                     ),
-                    PopupMenuItem(
-                      value: _ReportChoice.user,
+                    const PopupMenuItem(
+                      value: _MoreChoice.user,
                       child: Text('Report this user'),
                     ),
+                    if (onBlockUser != null)
+                      const PopupMenuItem(
+                        value: _MoreChoice.block,
+                        child: Text('Block this user'),
+                      ),
                   ],
                 ),
             ],

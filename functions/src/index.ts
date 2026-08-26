@@ -13,57 +13,161 @@ const AUTO_HIDE_THRESHOLD = 3;
 // policy text change (a bump re-gates every existing user on next open).
 const CURRENT_POLICY_VERSION = "v1";
 
-// --- onReportCreated ---
-// Increments flagCount on the reported chant.
-// Auto-hides the chant if flagCount reaches the threshold.
-export const onReportCreated = onDocumentCreated(
+type ReportWriteResult = {
+  flagCount: number;
+  autoHidden: boolean;
+  targetExists: boolean;
+};
+
+async function recomputeReportCount(
+  beforeData: admin.firestore.DocumentData | undefined,
+  afterData: admin.firestore.DocumentData | undefined,
+  targetIdField: "chantId" | "commentId",
+  reportsCollection: "reports" | "commentReports",
+  targetCollection: "chants" | "comments",
+  firestore: admin.firestore.Firestore
+): Promise<ReportWriteResult> {
+  const targetId = (afterData?.[targetIdField] || beforeData?.[targetIdField]) as string;
+  if (!targetId) {
+    return { flagCount: 0, autoHidden: false, targetExists: false };
+  }
+
+  const reportsQuery = firestore
+    .collection(reportsCollection)
+    .where(targetIdField, "==", targetId);
+  const targetRef = firestore.collection(targetCollection).doc(targetId);
+  return firestore.runTransaction(async (transaction) => {
+    // Every invocation writes the same target document. If deliveries race,
+    // that shared write forces a retry and a fresh query before commit.
+    const reportsSnap = await transaction.get(reportsQuery);
+    const targetSnap = await transaction.get(targetRef);
+    let flagCount = 0;
+    for (const report of reportsSnap.docs) {
+      if (report.data().status === "pending") flagCount++;
+    }
+
+    if (!targetSnap.exists) {
+      return { flagCount, autoHidden: false, targetExists: false };
+    }
+
+    const autoHidden =
+      flagCount >= AUTO_HIDE_THRESHOLD && targetSnap.data()?.hidden === false;
+    transaction.update(targetRef, {
+      flagCount,
+      ...(autoHidden ? { hidden: true } : {}),
+    });
+
+    return { flagCount, autoHidden, targetExists: true };
+  });
+}
+
+export async function handleChantReportWritten(
+  beforeData: admin.firestore.DocumentData | undefined,
+  afterData: admin.firestore.DocumentData | undefined,
+  firestore: admin.firestore.Firestore
+): Promise<ReportWriteResult> {
+  return recomputeReportCount(
+    beforeData,
+    afterData,
+    "chantId",
+    "reports",
+    "chants",
+    firestore
+  );
+}
+
+export async function handleCommentReportWritten(
+  beforeData: admin.firestore.DocumentData | undefined,
+  afterData: admin.firestore.DocumentData | undefined,
+  firestore: admin.firestore.Firestore
+): Promise<ReportWriteResult> {
+  return recomputeReportCount(
+    beforeData,
+    afterData,
+    "commentId",
+    "commentReports",
+    "comments",
+    firestore
+  );
+}
+
+// Recomputes flagCount from pending report documents. An absolute count makes
+// duplicate, out-of-order, status-change, and delete deliveries converge.
+export const onReportCreated = onDocumentWritten(
   { document: "reports/{reportId}", region: "europe-west2" },
   async (event) => {
-    const reportData = event.data?.data();
-    if (!reportData) return;
+    const beforeData = event.data?.before?.data();
+    const afterData = event.data?.after?.data();
+    const result = await handleChantReportWritten(beforeData, afterData, db);
+    const chantId = (afterData?.chantId || beforeData?.chantId) as string;
 
-    const chantId = reportData.chantId as string;
-    const chantRef = db.collection("chants").doc(chantId);
+    if (result.autoHidden) {
+      await writeAuditEntry({
+        actorId: "system",
+        action: "auto-hide",
+        targetType: "chant",
+        targetId: chantId,
+        detail: `Auto-hidden: flagCount reached ${result.flagCount} (threshold ${AUTO_HIDE_THRESHOLD}).`,
+      });
+    }
 
-    await db.runTransaction(async (txn) => {
-      const chantSnap = await txn.get(chantRef);
-      if (!chantSnap.exists) return;
-
-      const chantData = chantSnap.data()!;
-      const newFlagCount = (chantData.flagCount || 0) + 1;
-
-      const update: Record<string, unknown> = {
-        flagCount: admin.firestore.FieldValue.increment(1),
-      };
-
-      if (newFlagCount >= AUTO_HIDE_THRESHOLD && chantData.hidden === false) {
-        update.hidden = true;
-        await writeAuditEntry({
-          actorId: "system",
-          action: "auto-hide",
-          targetType: "chant",
-          targetId: chantId,
-          detail: `Auto-hidden: flagCount reached ${newFlagCount} (threshold ${AUTO_HIDE_THRESHOLD}).`,
-        });
-      }
-
-      txn.update(chantRef, update);
-    });
-
-    await writeAuditEntry({
-      actorId: reportData.reportedBy as string,
-      action: "report",
-      targetType: "chant",
-      targetId: chantId,
-      detail: `Reason: ${reportData.reason}`,
-    });
+    if (!beforeData && afterData) {
+      await writeAuditEntry({
+        actorId: afterData.reportedBy as string,
+        action: "report",
+        targetType: "chant",
+        targetId: chantId,
+        detail: `Reason: ${afterData.reason}`,
+      });
+    }
   }
 );
 
 // --- onModerationAction (callable) ---
-// Operator-only. Actions: hide, unhide, remove, ban.
+// Operator-only. Actions include hide, unhide, remove, ban, and unban.
 // Actor UID derived from auth context, never from client parameter.
 // Fix 4: resolves associated reports and resets flagCount on unhide.
+type UserBanAction = "ban" | "unban";
+
+type UserProfileDocument = {
+  get: () => Promise<{ exists: boolean }>;
+  update: (data: { banned: boolean }) => Promise<unknown>;
+};
+
+type AuditWriter = (params: {
+  actorId: string;
+  action: string;
+  targetType: string;
+  targetId: string;
+  detail: string;
+}) => Promise<void>;
+
+export async function handleUserBanAction(params: {
+  action: UserBanAction;
+  actorUid: string;
+  targetId: string;
+  profileDocument: UserProfileDocument;
+  auditWriter: AuditWriter;
+}): Promise<{ success: true }> {
+  const targetProfile = await params.profileDocument.get();
+  if (!targetProfile.exists) {
+    throw new HttpsError("not-found", "User profile not found.");
+  }
+
+  const banned = params.action === "ban";
+  await params.profileDocument.update({ banned });
+  await params.auditWriter({
+    actorId: params.actorUid,
+    action: params.action,
+    targetType: "user",
+    targetId: params.targetId,
+    detail: banned
+      ? "User banned by operator."
+      : "User unbanned by operator.",
+  });
+  return { success: true };
+}
+
 export const onModerationAction = onCall(
   { region: "europe-west2" },
   async (request) => {
@@ -134,21 +238,17 @@ export const onModerationAction = onCall(
         return { success: true };
       }
 
-      case "ban": {
-        // targetId is the user's profile UID
-        const targetProfile = await db.collection("profiles").doc(targetId).get();
-        if (!targetProfile.exists) {
-          throw new HttpsError("not-found", "User profile not found.");
-        }
-        await db.collection("profiles").doc(targetId).update({ banned: true });
-        await writeAuditEntry({
-          actorId: actorUid,
-          action: "ban",
-          targetType: "user",
+      case "ban":
+      case "unban": {
+        // targetId is the user's profile UID. The Admin SDK write remains
+        // behind the operator role check above; clients cannot edit banned.
+        return handleUserBanAction({
+          action,
+          actorUid,
           targetId,
-          detail: "User banned by operator.",
+          profileDocument: db.collection("profiles").doc(targetId),
+          auditWriter: writeAuditEntry,
         });
-        return { success: true };
       }
 
       case "promote": {
@@ -255,7 +355,10 @@ export const onModerationAction = onCall(
 const NEW_ACCOUNT_LIMIT = 2;
 const PROVEN_ACCOUNT_LIMIT = 5;
 const NEW_ACCOUNT_AGE_MS = 24 * 60 * 60 * 1000; // 24 hours
-const NEW_ACCOUNT_MIN_SUBMISSIONS = 3;
+
+export function isNewAccount(accountAgeMs: number): boolean {
+  return accountAgeMs < NEW_ACCOUNT_AGE_MS;
+}
 
 export const onChantCreated = onDocumentCreated(
   { document: "chants/{chantId}", region: "europe-west2" },
@@ -282,8 +385,7 @@ export const onChantCreated = onDocumentCreated(
       .get();
 
     const totalSubmissions = recentChants.size;
-    const isNew =
-      accountAge < NEW_ACCOUNT_AGE_MS || totalSubmissions <= NEW_ACCOUNT_MIN_SUBMISSIONS;
+    const isNew = isNewAccount(accountAge);
     const limit = isNew ? NEW_ACCOUNT_LIMIT : PROVEN_ACCOUNT_LIMIT;
 
     if (totalSubmissions > limit) {
@@ -406,10 +508,15 @@ export const deleteAccount = onCall(
       await reconcileChantCounters(chantId);
     }
 
-    // 2. Delete all reports by this user
+    // 2. Delete all chant reports by this user and reconcile flag counters
     const reports = await db.collection("reports").where("reportedBy", "==", uid).get();
+    const reportedChantIds = new Set<string>();
     for (const reportDoc of reports.docs) {
+      reportedChantIds.add(reportDoc.data().chantId as string);
       await reportDoc.ref.delete();
+    }
+    for (const chantId of reportedChantIds) {
+      await handleChantReportWritten({ chantId }, undefined, db);
     }
 
     // 3. Delete all feedback by this user
@@ -446,26 +553,64 @@ export const deleteAccount = onCall(
       await recomputeCommentLikeCount(commentId);
     }
 
-    // 7. Delete comment reports by this user
+    // 7. Delete comment reports by this user and reconcile flag counters
     const commentReports = await db.collection("commentReports").where("reportedBy", "==", uid).get();
+    const reportedCommentIds = new Set<string>();
     for (const crDoc of commentReports.docs) {
+      reportedCommentIds.add(crDoc.data().commentId as string);
       await crDoc.ref.delete();
     }
+    for (const commentId of reportedCommentIds) {
+      await handleCommentReportWritten({ commentId }, undefined, db);
+    }
 
-    // 8. Delete profile
-    await db.collection("profiles").doc(uid).delete();
+    // 8. Delete user reports filed by or against this user. Recompute the
+    // surviving targets' counters from ground truth.
+    const userReportsBy = await db.collection("userReports")
+      .where("reportedBy", "==", uid).get();
+    const userReportsAgainst = await db.collection("userReports")
+      .where("reportedUserId", "==", uid).get();
+    const userReportDocs = new Map<string, admin.firestore.QueryDocumentSnapshot>();
+    const affectedReportedUsers = new Set<string>();
+    for (const reportDoc of userReportsBy.docs) {
+      userReportDocs.set(reportDoc.ref.path, reportDoc);
+      affectedReportedUsers.add(reportDoc.data().reportedUserId as string);
+    }
+    for (const reportDoc of userReportsAgainst.docs) {
+      userReportDocs.set(reportDoc.ref.path, reportDoc);
+    }
+    for (const reportDoc of userReportDocs.values()) {
+      await reportDoc.ref.delete();
+    }
+    affectedReportedUsers.delete(uid);
+    for (const reportedUserId of affectedReportedUsers) {
+      await handleUserReportCreated(reportedUserId, db);
+    }
 
-    // 9. Audit log
+    // 9. Delete both directions of block relationships involving this user.
+    const blocksBy = await db.collection("blocks").where("blockerId", "==", uid).get();
+    const blocksAgainst = await db.collection("blocks").where("blockedUserId", "==", uid).get();
+    const blockRefs = new Map<string, admin.firestore.DocumentReference>();
+    for (const blockDoc of [...blocksBy.docs, ...blocksAgainst.docs]) {
+      blockRefs.set(blockDoc.ref.path, blockDoc.ref);
+    }
+    for (const blockRef of blockRefs.values()) {
+      await blockRef.delete();
+    }
+
+    // 10. Audit before deleting Auth so the actor remains attributable.
     await writeAuditEntry({
       actorId: uid,
       action: "delete-account",
       targetType: "user",
       targetId: uid,
-      detail: `User deleted their own account. ${votes.size} votes removed, ${chants.size} chants anonymized, ${comments.size} comments anonymized, ${commentLikes.size} comment likes removed.`,
+      detail: `User deleted their own account. ${votes.size} votes removed, ${chants.size} chants anonymized, ${comments.size} comments anonymized, ${commentLikes.size} comment likes removed, ${userReportDocs.size} user reports removed, ${blockRefs.size} blocks removed.`,
     });
 
-    // 10. Delete Firebase Auth account
+    // 11. Delete Auth before the profile. If Auth deletion fails, the user
+    // can still sign in and retry instead of being stranded without a profile.
     await admin.auth().deleteUser(uid);
+    await db.collection("profiles").doc(uid).delete();
 
     return { success: true };
   }
@@ -651,13 +796,24 @@ export const mergeChants = onCall(
       }
     }
 
-    // Step 3: Delete the source chant
+    // Step 3: Move all comments, including replies, to the target. Parent IDs
+    // remain stable because every comment in the source thread moves together.
+    const sourceComments = await db.collection("comments")
+      .where("chantId", "==", sourceId).get();
+    let commentsMoved = 0;
+    for (const commentDoc of sourceComments.docs) {
+      await commentDoc.ref.update({ chantId: targetId });
+      commentsMoved++;
+    }
+
+    // Step 4: Delete the source chant
     await db.collection("chants").doc(sourceId).delete();
 
-    // Step 4: Reconcile target counters from ground truth (safety net)
+    // Step 5: Reconcile target counters from ground truth (safety net)
     await reconcileChantCounters(targetId);
+    await recomputeCommentCount(targetId);
 
-    // Step 5: Audit log with full source payload (Addition A)
+    // Step 6: Audit log with full source payload (Addition A)
     await writeAuditEntry({
       actorId: actorUid,
       action: "merge_chants",
@@ -669,6 +825,7 @@ export const mergeChants = onCall(
         votesMoved,
         votesSkipped,
         reportsMoved,
+        commentsMoved,
         sourcePayload,
       }),
     });
@@ -678,6 +835,7 @@ export const mergeChants = onCall(
       votesMoved,
       votesSkipped,
       reportsMoved,
+      commentsMoved,
     };
   }
 );
@@ -791,8 +949,7 @@ export const onCommentWritten = onDocumentWritten(
       .get();
 
     const totalComments = recentComments.size;
-    const isNew =
-      accountAge < NEW_ACCOUNT_AGE_MS || totalComments <= NEW_ACCOUNT_MIN_SUBMISSIONS;
+    const isNew = isNewAccount(accountAge);
     const limit = isNew ? COMMENT_NEW_ACCOUNT_LIMIT : COMMENT_PROVEN_ACCOUNT_LIMIT;
 
     if (totalComments > limit) {
@@ -814,52 +971,38 @@ export const onCommentWritten = onDocumentWritten(
   }
 );
 
-// --- onCommentReportCreated ---
-// Mirrors onReportCreated: increments flagCount on the comment,
-// auto-hides at threshold 3.
-export const onCommentReportCreated = onDocumentCreated(
+// Mirrors the chant report handler with ground-truth recomputation.
+export const onCommentReportCreated = onDocumentWritten(
   { document: "commentReports/{reportId}", region: "europe-west2" },
   async (event) => {
-    const reportData = event.data?.data();
-    if (!reportData) return;
+    const beforeData = event.data?.before?.data();
+    const afterData = event.data?.after?.data();
+    const result = await handleCommentReportWritten(beforeData, afterData, db);
+    const commentId = (afterData?.commentId || beforeData?.commentId) as string;
 
-    const commentId = reportData.commentId as string;
-    const commentRef = db.collection("comments").doc(commentId);
-
-    await db.runTransaction(async (txn) => {
-      const commentSnap = await txn.get(commentRef);
-      if (!commentSnap.exists) return;
-
-      const commentData = commentSnap.data()!;
-      const newFlagCount = (commentData.flagCount || 0) + 1;
-
-      const update: Record<string, unknown> = {
-        flagCount: admin.firestore.FieldValue.increment(1),
-      };
-
-      if (newFlagCount >= AUTO_HIDE_THRESHOLD && commentData.hidden === false) {
-        update.hidden = true;
-        await writeAuditEntry({
-          actorId: "system",
-          action: "auto-hide",
-          targetType: "comment",
-          targetId: commentId,
-          detail: `Auto-hidden: flagCount reached ${newFlagCount} (threshold ${AUTO_HIDE_THRESHOLD}).`,
-        });
-        // Recompute commentCount on parent chant since comment is now hidden
-        await recomputeCommentCount(commentData.chantId as string);
+    if (result.autoHidden) {
+      const commentSnap = await db.collection("comments").doc(commentId).get();
+      if (commentSnap.exists) {
+        await recomputeCommentCount(commentSnap.data()!.chantId as string);
       }
+      await writeAuditEntry({
+        actorId: "system",
+        action: "auto-hide",
+        targetType: "comment",
+        targetId: commentId,
+        detail: `Auto-hidden: flagCount reached ${result.flagCount} (threshold ${AUTO_HIDE_THRESHOLD}).`,
+      });
+    }
 
-      txn.update(commentRef, update);
-    });
-
-    await writeAuditEntry({
-      actorId: reportData.reportedBy as string,
-      action: "report",
-      targetType: "comment",
-      targetId: commentId,
-      detail: `Reason: ${reportData.reason}`,
-    });
+    if (!beforeData && afterData) {
+      await writeAuditEntry({
+        actorId: afterData.reportedBy as string,
+        action: "report",
+        targetType: "comment",
+        targetId: commentId,
+        detail: `Reason: ${afterData.reason}`,
+      });
+    }
   }
 );
 
