@@ -5,13 +5,13 @@
 ## Document identity and completeness
 
 - **Product:** Chants, a Flutter and Firebase mobile app for learning trusted football chants and publishing new chant ideas.
-- **External review boundary:** Claude independently reviewed `c57815c...f5cb748` and then `f5cb748...c893cd0`. The approved follow-up corrections are local and uncommitted.
-- **Current stack head:** Clean-runner PR 14 head `c893cd00477daf4626b599448ab09b083f5375d9` plus the approved post-review audit and recovery corrections on `codex/v1-freeze-remediation`.
-- **Review type:** Current whole-project milestone snapshot after the independent freeze reviews and local follow-up correction, before replacement clean-runner CI and the combined device walk. It is not a release sign-off.
+- **External review boundary:** Claude independently reviewed `c57815c...f5cb748`, `f5cb748...c893cd0`, and `c893cd0...fe93e20`. The approved final closure is local and uncommitted.
+- **Current stack head:** Clean-runner PR 14 head `fe93e20ed81c3f1aed2a20d49f7b3badf3c89354` plus the approved final freeze closure on `codex/v1-freeze-remediation`.
+- **Review type:** Current whole-project milestone snapshot after the independent freeze reviews and locally verified final closure, before replacement clean-runner CI and the combined device walk. It is not a release sign-off.
 - **Coverage:** Flutter client, Cloud Functions, Firestore rules and tests, seed pipeline, native configuration, CI, framework docs, and release boundaries.
 - **Excluded:** Vendored `node_modules`, generated Flutter and TypeScript output, live Firebase data and dashboard state, deployed artifacts, store dashboards, and operating-system device behavior.
 - **Preserved unrelated work:** `android/app/build.gradle.kts`, `android/settings.gradle.kts`, and `pubspec.lock` were already modified and remain unstaged.
-- **Current status:** The post-review audit and recovery corrections selected in `docs/CHANGE_SPEC.md` are implemented and locally green. Packaging, replacement clean-runner CI, native compilation, and the combined device walk remain pending.
+- **Current status:** The final closure selected in `docs/CHANGE_SPEC.md` is implemented and locally green. Packaging, replacement clean-runner CI, native compilation, and the combined device walk remain pending.
 
 ## Repository coverage ledger
 
@@ -28,12 +28,12 @@
 | Comments and replies | Ranked parents, one chronological reply level, likes, report, delete, block in `comment_section.dart` and `comment_card.dart` | Visible same-chant top-level parent; both block directions; background hydration and Undo failures contained; stream generation cannot cross chant IDs | Model, identity, enlarged-text, golden, Functions, and rules tests | No open v1 correctness gap in this reviewed boundary |
 | Reports and feedback | Callable-only admission, one report per reporter/target, shared anchored report budget, independent feedback budget, content auto-hide at 3 pending reports | Server owns identity, time, state, bounded ID, and atomic admission; pending profiles or deletion jobs reject new against-user rows; deleting or missing reporters receive redacted audit rows | Functions, Flutter failure-state, and hostile rules tests | Limits need closed-beta tuning; App Check enforcement remains live configuration |
 | Moderation | Hide, unhide, remove, promote, demote, evidence removal, ban, unban in callable and operator screen | Callable derives actor from auth and re-reads operator role; audit is Admin-written | Pure trust and ban handlers, rules operator reads | Full callable and `mergeChants` lack end-to-end tests; queue query remains narrow |
-| Merge | `mergeChants` retains the old sequential implementation behind a failed-precondition stop after operator authorization | No merge mutation is permitted until resumable recovery has a separate approved design | Freeze-guard test, TypeScript compilation, and source review | Existing implementation is sequential, non-resumable, and only partially audited |
-| Account deletion | Durable request plus 17-phase bounded worker in `functions/src/account_deletion.ts`; prepared recovery plus pending and unknown app gates; three-state local acknowledgement; classified audit cleanup | Prepared local state actively recovers; unknown response locks local data and persistently gates Home; only callable success or positive pending state advances cleanup; known operator actions retain generated detail under `deleted-operator`; report and unknown text is removed | Functions failure injection and mixed audit-page tests, 136-case rules suite, Flutter same-process lifecycle and reconstruction tests, and two inspected goldens | Target-side safety history may retain the account ID; no operator recovery console or retained-job alert; no undo by design; no time-based audit retention policy |
+| Merge | `mergeChants` retains the old sequential implementation behind a failed-precondition stop after operator authorization | No merge mutation is permitted until resumable recovery and a privacy-safe audit payload have a separate approved design | Freeze-guard test, TypeScript compilation, and source review | Existing implementation is sequential and non-resumable; legacy audit detail embeds authored source fields and raw `createdBy` |
+| Account deletion | Durable request plus 17-phase bounded worker in `functions/src/account_deletion.ts`; prepared recovery plus pending and unknown app gates; three-state local acknowledgement; classified audit cleanup | Prepared local state actively recovers; unknown response locks local data and persistently gates Home; only callable success or positive pending state advances cleanup; reachable operator writers retain reviewed generated detail under `deleted-operator`; report and unknown text is removed; disposed Home is never touched by a late deletion error | Functions failure injection and mixed audit-page tests, 136-case rules suite, Flutter same-process lifecycle, disposed-Home, and reconstruction tests, and two inspected goldens | Target-side safety history may retain the account ID; disabled legacy merge detail is a re-enable privacy gate; no operator recovery console or retained-job alert; no undo by design; no time-based audit retention policy |
 | Saved Matchday Songbook | UID-isolated bounded local JSON snapshots, explicit refresh, offline read-only routes | Maximum 500 unique chants and 2 MiB; active matching UID; case-safe SHA-256 path; unknown deletion state unreadable; accepted marker removed after every other artifact | Model, repository, migration, service, widget, lifecycle, SHA-boundary, and golden tests | Physical force-stop/airplane-mode persistence unverified; no cross-device sync by design |
 | Share-out | Plain-text native sheet from live detail in `chant_share.dart` and `chant_detail_screen.dart` | No public URL or delivery claim; every live-target action requires server-confirmed non-cache visible authority | Payload, gateway, cache authority, enlarged-text, and golden tests | Native device destination behavior unverified |
 | Seed | Explicit stable chant IDs, read-only preflight, transaction ownership recheck, validation, orphan report | Source content is human supplied; seed may transform but never invent lyrics or context | 42 seed tests plus TypeScript | Only Arsenal JSON exists; no live preflight or remaining club write ran |
-| CI | Five GitHub Actions jobs in `.github/workflows/ci.yml` | Tests, rules, and analysis must fail closed before merge | PR 14 run `32970254587` at `c893cd0` passed all jobs; deterministic analysis fixture active | Current local follow-up has not run yet; Flutter version is unpinned; no format gate |
+| CI | Five GitHub Actions jobs in `.github/workflows/ci.yml` | Tests, rules, and analysis must fail closed before merge | PR 14 run `32977725542` at `fe93e20` passed all jobs; deterministic analysis fixture active | Current final closure has not run yet; Flutter version is unpinned; no format gate |
 | Native release | Flutter Android/iOS shells and plugin registration | Store signing and native compilation are separate release gates | Source inspection and prior attempted builds | Android uses debug signing; Android SDK unavailable locally; inherited iOS Firestore Swift sources failed compile |
 
 ## System overview and architecture
@@ -86,10 +86,10 @@ No Firestore document, Function, rule, index, background task, or cloud sync is 
 
 1. `AccountDeletionService` prepares the active UID's local Songbook, then marks it unknown before awaiting the request.
 2. `deleteAccount` transactionally creates `accountDeletionJobs/{uid}` and marks an existing profile pending, then returns durable acceptance.
-3. Explicit callable success moves local state to accepted, permits cleanup, and signs out. A thrown response remains unknown, locked, signed in, and retryable because it does not prove rejection.
+3. Explicit callable success moves local state to accepted, permits cleanup, and signs out. A thrown response remains unknown, locked, signed in, and retryable because it does not prove rejection. If a positive pending profile replaces Home before that response arrives, both error paths stop at the mounted guard before touching Riverpod or scaffold state.
 4. `onAccountDeletionJobWritten` advances one bounded phase or 200-row page per retry-enabled event.
 5. Auth is disabled first. Private interactions are deleted, retained contributions are anonymized, and existing triggers converge counters from ground truth.
-6. Audit rows authored by the user are classified in bounded pages. Known generated operator actions keep their detail under `deleted-operator`; report and unknown text is replaced; self-target policy acceptance loses its target UID. Delayed report triggers also redact against pending or missing profile state.
+6. Audit rows authored by the user are classified in bounded pages. Reachable generated operator actions keep their detail under `deleted-operator`; report and unknown text is replaced; self-target policy acceptance loses its target UID. Delayed report triggers also redact against pending or missing profile state. The disabled legacy merge detail is documented separately because it contains authored source fields and raw creator identity.
 7. One non-identifying completion audit is written in the same transaction that advances the job phase, Auth is deleted, and the profile plus job are deleted atomically. Missing Auth or duplicate delivery is a successful no-op.
 8. Prepared local state actively recovers before Home without relaunch. Local recovery failure remains behind a real retry action. Unknown state gates Home behind deletion retry; a positive pending profile can advance local accepted cleanup, while a negative observation never restores uncertain data.
 
@@ -107,7 +107,7 @@ No Firestore document, Function, rule, index, background task, or cloud sync is 
 | Fail-soft cached browse without cache authority | Ordinary network errors should not erase readable chants, but cache cannot prove moderation state | Clear all data or trust every active stream | Decision 015; metadata, transient-error, action-gate, and existing-local-save tests |
 | Callable-only safety intake | Abuse must be rejected before storage and trigger cost | Post-write rate repair | Decision 010; atomic budget and rejected-non-consumption tests |
 | Durable bounded deletion job plus three-state client acknowledgement | Auth cannot remain the retry token, and a lost response cannot prove request rejection | One long callable, restart-from-zero retry, restore-on-throw, or restore-on-false-profile | Decisions 011 and 012; page, race, failure, persistent unknown, positive reconciliation, and retry tests |
-| Classified audit cleanup during deletion | Report rows were deleted but audit retained reporter identity and text; uniform cleanup later erased operator provenance | Delete all audit history, preserve raw operator UID, or flatten every actor row | Decision 016; mixed bounded-page, delayed-trigger, and completion retry tests |
+| Classified audit cleanup during deletion | Report rows were deleted but audit retained reporter identity and text; uniform cleanup later erased operator provenance | Delete all audit history, preserve raw operator UID, or flatten every actor row | Decision 016; mixed bounded-page, delayed-trigger, and completion retry tests; future merge detail remains fail-closed behind a privacy re-review gate |
 | Lowercase SHA-256 UID storage key | Base64 case distinctions can collapse on case-insensitive filesystems | Raw or lowercased reversible UID encoding | Decision 014; vector, collision-pair, and migration tests |
 
 Decision 009 records exact parser-safe direct writes and server-owned reconciliation stamps. Decisions 012 through 015 refine destructive acknowledgement, transactional aggregates, local UID identity, and cache-provenance authority.
@@ -183,7 +183,7 @@ No current dependency advisory conclusion is claimed. The audit request was bloc
 | `share_plus ^11.1.0` | Native share sheet | Plain-text operating-system handoff | Gateway and widgets pass; native compile/device gate pending |
 | Functions Node 20 | `firebase-admin ^13`, `firebase-functions ^6.3` | Server authority | 78 local tests pass |
 | Seed Node | `firebase-admin ^13` | Manual Admin writes | 42 tests and `tsc --noEmit` pass |
-| Rules test | Firebase emulator, Java in CI and local Homebrew runtime | Authorization assertions | 136 passed locally and at PR 14 head `c893cd0` |
+| Rules test | Firebase emulator, Java in CI and local Homebrew runtime | Authorization assertions | 136 passed locally and at PR 14 head `fe93e20` |
 | Android Gradle | AGP 8.11.1, Kotlin 2.2.20 | Android build | User has unstaged Crashlytics plugin changes; release signs debug |
 | iOS | deployment target 15.0, CocoaPods scaffold | iOS build | Prior simulator compilation failed in inherited Cloud Firestore Swift package sources |
 
@@ -205,26 +205,26 @@ Before public volume, establish query/read budgets for Discover and counters, Fu
 
 | Command or probe | Environment | Result | Claim supported |
 |---|---|---|---|
-| `flutter test` | Local macOS, Flutter 3.44.8 | PASS, 341 | Current combined Flutter suite, including same-process prepared recovery, persistent unknown state, cache-local actions, identity, and goldens |
+| `flutter test` | Local macOS, Flutter 3.44.8 | PASS, 343 | Current combined Flutter suite, including both disposed-Home error classes, same-process prepared recovery, persistent unknown state, cache-local actions, identity, and goldens |
 | `flutter analyze lib test` | Same | PASS | Project Dart source has no analyzer issue |
 | `cd functions && npm test` | Node 20.20.2 | PASS, 78 | Extracted handlers compile and pass, including classified audit cleanup, duplicate completion delivery, delayed audit privacy, target job denial, counter overlap, merge stop, deletion, and safety boundaries |
 | `cd seed && npm test` | Node 20.20.2 | PASS, 42 | Seed identity, plan, validation, reconciliation |
 | `cd seed && npx tsc --noEmit` | Node 20.20.2 | PASS | Full seed TypeScript type check |
 | `git diff --check` | Git | PASS after final documentation refresh | Current worktree diff has no whitespace error |
 | `firebase emulators:exec --only firestore ...` | Local OpenJDK 26, emulator 1.21.0 | PASS, 136 | Current shapes accepted; pending target block is denied |
-| post-review Flutter regressions | Local Flutter renderer | PASS, 45 focused | Prepared same-process recovery, pre-network restoration, real retry, recovery gate, copy, golden, and SHA boundaries hold |
+| final closure Flutter regressions | Local Flutter renderer | RED at both disposed-Consumer invalidations, then PASS, 19 app-gate tests | Both late error classes leave the pending screen authoritative and never touch disposed Home state |
 | post-review Functions regressions | Local Node | PASS, 15 focused | Classified audit pages, duplicate completion delivery, and delayed audit privacy hold |
 | scoped formatting over touched Dart files | Dart 3.12.2 | PASS, no changes required | Correction Dart files are formatted without normalizing inherited files |
 | repository formatter measurement | Dart 3.12.2, read-only output | Expected nonzero, 42 of 142 | Current residual measured without writing files; earlier 46-of-142 result remains historical |
-| PR 14 clean-runner CI | GitHub Actions run `32970254587` on `c893cd0` | PASS: Flutter, analysis, Functions, seed, and 136 rules | Clean Linux and Java evidence for the exact independently reviewed base; current local follow-up awaits replacement CI |
+| PR 14 clean-runner CI | GitHub Actions run `32977725542` on `fe93e20` | PASS: Flutter, analysis, Functions, seed, and 136 rules | Clean Linux and Java evidence for the exact independently reviewed base; current final closure awaits replacement CI |
 
-The earlier freeze blocks captured red evidence before their implementations. This follow-up was driven by independently verified code paths and adds permanent guards for operator audit classification, report and unknown text removal, self-target policy acceptance, duplicate completion delivery, same-process prepared recovery, remote-not-called staging failure, real app-gate retry, and direct empty-message SHA input. The worktree contains only the approved correction plus the same three pre-existing user modifications and the untracked external freeze report.
+The earlier freeze blocks captured red evidence before their implementations. The final closure also proved both disposed-Home error paths red before moving the mounted guard, then passed the focused and complete matrix. The worktree contains only the approved correction plus the same three pre-existing user modifications and the untracked external freeze report.
 
 Skipped or blocked:
 
 - Android build: no Android SDK.
 - iOS build: prior inherited Cloud Firestore Swift package compile failure.
-- Independent freeze reviews: completed against `c57815c...f5cb748` and `f5cb748...c893cd0`; the current verified follow-up awaits packaging and replacement CI.
+- Independent freeze reviews: completed against `c57815c...f5cb748`, `f5cb748...c893cd0`, and `c893cd0...fe93e20`; the current verified final closure awaits packaging and replacement CI.
 - Live Firebase, deploy, seed, merge, release, and device actions: not authorized.
 - npm production advisory audit: network failed in sandbox and elevated disclosure was rejected.
 
@@ -240,7 +240,7 @@ Recovery paths:
 - Seed content: reproduce canonical source from reviewed JSON.
 - Counter drift: `seed/reconcile.ts` repairs chant vote counters.
 - Wrong hide/ban: operator unhide/unban paths exist and audit.
-- Merge: callable is disabled; no complete undo snapshot or resumable marker exists.
+- Merge: callable is disabled; no complete undo snapshot or resumable marker exists, and its legacy audit payload must be redesigned before re-enable.
 - Account deletion: durable bounded retry exists; permanently retained jobs still need alerting and an operator runbook.
 - User data: no repository-backed backup restoration or export procedure.
 
@@ -248,18 +248,18 @@ Recovery paths:
 
 | Document or claim | Current source reality | Action |
 |---|---|---|
-| README test counts and feature status | Current local counts are 341 Flutter, 136 rules, 78 Functions, and 42 seed | Updated for local state; replacement clean-runner evidence remains pending |
-| Roadmap freeze state | Two review ranges completed; approved final corrections are locally green but uncommitted | Corrected in this block |
-| CI analysis state | Five jobs exist and analysis runs with secret or deterministic fixture | PR 14 run `32970254587` green at `c893cd0`; local follow-up has no CI yet |
+| README test counts and feature status | Current local counts are 343 Flutter, 136 rules, 78 Functions, and 42 seed | Updated for local state; replacement clean-runner evidence remains pending |
+| Roadmap freeze state | Three review ranges completed; approved final closure is locally green but uncommitted | Corrected in this block |
+| CI analysis state | Five jobs exist and analysis runs with secret or deterministic fixture | PR 14 run `32977725542` green at `fe93e20`; final closure has no CI yet |
 | Function merge comments | Audit payload is bounded and cannot reverse the operation | Corrected source comments; historical archive retained |
 | `docs/KNOWN_ISSUES.md` | Clearly labels itself a legacy snapshot | No longer an authority defect |
-| `docs/CHANGE_SPEC.md` | Post-review audit and recovery contract is approved, implemented, and locally verified | Retain through packaging and replacement CI |
+| `docs/CHANGE_SPEC.md` | Final freeze closure contract is approved, implemented, and locally verified | Retain through packaging and replacement CI |
 
 ## Known compromises, gaps, and uncertainty
 
 | Item | Consequence | Owner | Revisit trigger |
 |---|---|---|---|
-| Disabled sequential merge | Duplicate merge is unavailable until recovery is designed | Andrew | Separately approve a resumable merge before enabling |
+| Disabled sequential merge and unsafe legacy audit detail | Duplicate merge is unavailable until recovery and privacy-safe audit retention are designed | Andrew | Separately approve a resumable merge and re-review its audit allowlist before enabling |
 | No retained-deletion-job alert or console | A permanent worker failure depends on manual investigation | Andrew | Before public beta or first observed retained job |
 | Android debug signing | Store release blocked | Andrew | Before production build |
 | Placeholder policy | User consent and store compliance incomplete | Andrew | Before any public submission release |

@@ -1,6 +1,6 @@
 # Chants engineering overview
 
-This is the current whole-project map for Chants. It describes clean-runner PR 14 head `c893cd00477daf4626b599448ab09b083f5375d9` plus the approved post-review audit and recovery corrections in the `codex/v1-freeze-remediation` working tree. Claude independently reviewed `c57815c...f5cb748` and then `f5cb748...c893cd0`; the current block corrects the verified follow-up findings. Every material claim names the implementation path and symbol that supports it.
+This is the current whole-project map for Chants. It describes clean-runner PR 14 head `fe93e20ed81c3f1aed2a20d49f7b3badf3c89354` plus the approved final freeze closure in the `codex/v1-freeze-remediation` working tree. Claude independently reviewed `c57815c...f5cb748`, `f5cb748...c893cd0`, and `c893cd0...fe93e20`; the current block corrects the final verified findings. Every material claim names the implementation path and symbol that supports it.
 
 This document is descriptive, not an approval record. `docs/CHANGE_SPEC.md` contains the approved and implemented remediation contract. `docs/EXECUTION.md` records review and implementation evidence. `docs/IMPLEMENTATION_RATIONALE.md` is the companion coverage ledger and verification record. Completed reasoning lives in `docs/changes/`, and durable decisions live in `docs/decisions/`.
 
@@ -10,7 +10,7 @@ Three unrelated working-tree changes predated this review and remain unstaged: `
 
 The stacked product work is coherent and unusually well tested for a pre-v1 mobile app. The combined client, Functions, seed, and rules design supports one-level replies, blocking, audited unban, stable seeded chant IDs, explicit provenance and evidence, separate Songbook and Chant Lab browse surfaces, device-local Saved Matchday Songbook, native plain-text share-out, server-authoritative report and feedback budgets, and durable account deletion.
 
-The V1 freeze review found concurrency, acknowledgement, storage-identity, and cache-provenance cases that the earlier automated matrix did not model. The first independent follow-up found that unknown acknowledgement was only transiently explained and that audit rows retained reporter identity and text. Its correction passed clean-runner CI at `c893cd0`. The second narrow follow-up found that actor-wide audit flattening removed useful operator provenance, the copy overstated target-side deletion, and prepared recovery required relaunch. The current local correction closes those verified findings:
+The V1 freeze review found concurrency, acknowledgement, storage-identity, and cache-provenance cases that the earlier automated matrix did not model. The first independent follow-up found that unknown acknowledgement was only transiently explained and that audit rows retained reporter identity and text. Its correction passed clean-runner CI at `c893cd0`. The second narrow follow-up found that actor-wide audit flattening removed useful operator provenance, the copy overstated target-side deletion, and prepared recovery required relaunch. That correction passed clean-runner CI at `fe93e20`. The final review found one disposed-Home error path and one dormant merge audit documentation defect. The current local closure addresses both:
 
 1. **Destructive acknowledgement.** `SavedSongbookRepository`, `savedSongbookDeletionStateProvider`, and `FileSongbookStorage` preserve prepared, unknown, and accepted local states. Prepared state actively retries artifact recovery in the same process, unknown gates Home behind a persistent deletion retry screen, and a positive pending marker can advance accepted local cleanup.
 2. **Audit privacy and provenance.** `auditRedactionForDeletedActor` retains generated detail only for known operator actions under `deleted-operator`, replaces report and unknown detail, and redacts self-target policy acceptance. `writePrivacySafeReportAuditEntry` transactionally redacts delayed report audits for a pending or missing reporter. The non-identifying completion audit is exactly once because its write and phase advancement share one transaction.
@@ -19,6 +19,9 @@ The V1 freeze review found concurrency, acknowledgement, storage-identity, and c
 5. **Storage identity.** `songbookStorageKeyForUid` uses lowercase SHA-256 over UTF-8 UID bytes, with active-UID lazy migration from the old base64url names.
 6. **Live authority and widget identity.** `ChantRepository.chantStream` carries Firestore cache provenance. Detail and Discover keep cache text readable, and only already-saved local navigation or removal remains available without server confirmation. Vote and comment state reset on chant-ID change and discard callbacks from older generations.
 7. **Unsafe merge stop.** `requireMergeChantsEnabled` returns failed-precondition after operator authorization, so the sequential non-resumable merge path cannot mutate data before a separately approved recovery design exists.
+8. **Late deletion response.** Both deletion error handlers check that Home remains mounted before accessing Riverpod or scaffold state. A pending profile can therefore replace Home while an older request completes without producing an unhandled disposed-consumer error.
+
+The disabled merge's legacy audit detail is not wholly generated moderation text. It includes source title, lyrics, context, tune, and raw `createdBy`. Any future re-enable must pair resumable mutation design with a privacy-safe audit payload and a fresh retained-action allowlist review.
 
 Release gates also remain outside those defects:
 
@@ -142,9 +145,9 @@ This design has strong unit and widget coverage. Its remaining evidence boundary
 
 `functions/src/account_deletion.ts :: requestAccountDeletion` creates one `accountDeletionJobs/{uid}` cursor and sets `profiles/{uid}.deletionPending` in the same transaction. Duplicate requests preserve the stored phase. `functions/src/index.ts :: onAccountDeletionJobWritten` uses Eventarc retry and advances one Auth operation, audit operation, finalization, or page of at most 200 rows per event.
 
-The 17 ordered phases disable Auth, delete private interactions and rate state, anonymize retained chants and comments, classify audit rows written by the user, write one non-identifying completion audit, delete Auth, and atomically delete profile plus job. Known generated operator actions retain detail under `deleted-operator`; reports and unknown actions lose their text. The completion audit and phase advancement share one transaction, so duplicate delivery after advancement writes no second row. Page writes include the heartbeat; empty-page transitions compare the current phase transactionally. Duplicate delivery, missing Auth, and partial failure therefore retain forward-only recovery state.
+The 17 ordered phases disable Auth, delete private interactions and rate state, anonymize retained chants and comments, classify audit rows written by the user, write one non-identifying completion audit, delete Auth, and atomically delete profile plus job. Reachable generated operator actions retain detail under `deleted-operator`; reports and unknown actions lose their text. The disabled legacy merge detail is documented as a privacy re-enable gate rather than treated as safe generated text. The completion audit and phase advancement share one transaction, so duplicate delivery after advancement writes no second row. Page writes include the heartbeat; empty-page transitions compare the current phase transactionally. Duplicate delivery, missing Auth, and partial failure therefore retain forward-only recovery state.
 
-`firestore.rules :: isNotBanned` and `isOperator` require both no job and an absent-or-false pending marker. The app gate checks both `UserProfile.deletionPending` and device-local deletion state before policy or Home. Unknown acknowledgement shows a persistent retry and Sign out surface; positive pending state advances local cleanup and shows the queued screen. This protects already-issued credentials while Auth disable blocks new sign-in. There is no undo, progress dashboard, retained-job alert, or operator recovery console in v1.
+`firestore.rules :: isNotBanned` and `isOperator` require both no job and an absent-or-false pending marker. The app gate checks both `UserProfile.deletionPending` and device-local deletion state before policy or Home. Unknown acknowledgement shows a persistent retry and Sign out surface; positive pending state advances local cleanup and shows the queued screen. Home's async deletion handlers verify that their widget is still mounted before any provider invalidation, so a late request failure cannot reach a disposed Consumer after the pending gate takes over. This protects already-issued credentials while Auth disable blocks new sign-in. There is no undo, progress dashboard, retained-job alert, or operator recovery console in v1.
 
 ## Seed pipeline and content integrity
 
@@ -160,7 +163,7 @@ Local verification on 2026-08-26:
 
 | Check | Result |
 |---|---|
-| `flutter test` | PASS, 341 tests |
+| `flutter test` | PASS, 343 tests |
 | `flutter analyze lib test` | PASS, no issues |
 | `cd functions && npm test` | PASS, 78 tests |
 | `cd seed && npm test` | PASS, 42 tests |
@@ -168,10 +171,10 @@ Local verification on 2026-08-26:
 | `git diff --check` | PASS after the local correction |
 | `cd test_rules && npx tsc --noEmit` | PASS |
 | Java-backed Firestore emulator | PASS, 136 rules assertions |
-| focused post-review regressions | PASS: classified audit cleanup, duplicate completion delivery, prepared same-process recovery, pre-network failure, real retry, exact copy, and empty-message SHA |
-| PR 14 GitHub Actions run `32970254587` at `c893cd0` | Prior exact-head PASS: Flutter tests, analysis, Functions, seed, and 136 rules assertions |
+| focused final closure regressions | RED before fix at both disposed-Consumer invalidations; PASS after fix, 19 app-gate tests including both late error classes |
+| PR 14 GitHub Actions run `32977725542` at `fe93e20` | Prior exact-head PASS: Flutter tests, analysis, Functions, seed, and 136 rules assertions |
 
-The earlier remediation first proved its affected boundaries red. This follow-up adds direct regressions for operator audit classification, report and unknown text removal, self-target policy acceptance, duplicate completion delivery, same-process prepared recovery, pre-network restoration, real app-gate retry, accurate copy, and the empty SHA input. The complete local Flutter, Functions, seed, and rules suites pass. Clean-runner CI has not run against the current working tree.
+The earlier remediation first proved its affected boundaries red. The final closure also captures direct red evidence for both late deletion error classes after Home disposal, then passes those guards with the pending screen still authoritative. The complete local Flutter, Functions, seed, and rules suites pass. Clean-runner CI has not run against the current working tree.
 
 The first independent review recorded that 46 of 142 Dart files would change. The current read-only `dart format --output=none --set-exit-if-changed lib test` check identifies 42 of 142 after the intervening touched-file formatting. It made no files writable because output was disabled. Formatting is not a CI gate today; this correction formats only its touched files and keeps the larger mechanical rewrite separate.
 
@@ -189,7 +192,7 @@ Recovery is uneven:
 - Rules and Functions can be redeployed from an earlier commit, but no rollback runbook exists.
 - Seeded canonical content is reproducible from reviewed JSON.
 - User submissions and interaction data depend on unverified Firestore backup and point-in-time-recovery settings.
-- `mergeChants` is not safely undoable from its partial audit payload and is now disabled after operator authorization.
+- `mergeChants` is not safely undoable from its partial audit payload and is now disabled after operator authorization. Its legacy payload also needs privacy redesign before re-enable.
 - Account deletion has durable repository recovery, but no operational alert, dead-letter path, or operator console for a permanently retained job.
 
 Crashlytics is wired, but there is no repository-defined alerting, function-error dashboard, deployment smoke test, or incident runbook. App Check enforcement, billing alerts, backup settings, authentication templates, and live indexes are dashboard state that this review did not inspect.
@@ -199,7 +202,7 @@ Crashlytics is wired, but there is no repository-defined alerting, function-erro
 1. **The strict author-update boundary.** Review exact current-schema enforcement against any real legacy documents before rollout; legacy reads remain compatible, but invalid legacy documents cannot use direct author editing until normalized.
 2. **Moderation and offline semantics.** Confirm on device that readable route fallback, Discover disappearance, Saved Songbook copies, and disabled live actions communicate their different authority clearly.
 3. **Release configuration.** The real policy, Android release signing, native compilation, App Check dashboard state, and device walk are release blockers even though local and clean-runner suites are green.
-4. **Remaining destructive workflow.** `mergeChants` is disabled because its implementation is sequential, partially audited, and non-resumable. Account deletion is bounded and resumable, but retained-job operations still need production alerting.
+4. **Remaining destructive workflow.** `mergeChants` is disabled because its implementation is sequential, partially audited, non-resumable, and retains authored source fields plus raw creator identity in its legacy audit detail. Account deletion is bounded and resumable, but retained-job operations still need production alerting.
 5. **Scale boundaries.** Discover's full fetch and ground-truth counter scans need measured budgets before community volume makes linear reads material.
 
 ## Unverified
@@ -208,7 +211,7 @@ Crashlytics is wired, but there is no repository-defined alerting, function-erro
 - No live stable-ID preflight or seed write ran.
 - No Android build succeeded locally because the Android SDK is unavailable. No iOS build succeeded because inherited Cloud Firestore Swift Package sources failed compilation in the prior native check. No native file mutation from that attempt remains.
 - No iPhone, Android, or iPad walkthrough ran in this review.
-- Clean-runner CI passed all five jobs for PR 14 head `c893cd0` in run `32970254587`. It has not run against the current uncommitted follow-up.
+- Clean-runner CI passed all five jobs for PR 14 head `fe93e20` in run `32977725542`. It has not run against the current uncommitted final closure.
 - Android release signing remains debug-only in the tracked configuration.
 - The content policy remains placeholder copy.
 - Dependency freshness and current security-advisory state are unverified.

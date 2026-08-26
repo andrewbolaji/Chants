@@ -13,6 +13,25 @@ This is the chronological evidence trail for substantial engineering work. It re
 
 ## Entries
 
+### 2026-08-26T14:18:08Z Close the final freeze review findings
+
+- **Status:** Implemented and locally verified; one correction commit, push, and replacement clean-runner CI pending
+- **Scope:** Correct the final independent review's disposed-Home deletion race and record the dormant merge audit privacy re-enable gate. Add two direct widget regressions, reconcile current engineering records, package one correction commit, push PR 14, and run replacement clean-runner CI. No runtime merge, Functions, rules, seed, dependency, native, device, Firebase, deployment, PR merge, signing, release, or production action.
+- **Reference:** `docs/CHANGE_SPEC.md`, independent review of `c893cd0...fe93e20`
+- **Approval:** Andrew explicitly approved `final freeze closure spec` on 2026-08-26.
+- **Operator:** Codex
+
+| UTC time | Action | Target/environment | Result and evidence |
+|---|---|---|---|
+| 14:18:08 | Verified the final review against the clean PR 14 head and framework boundary | Local repository at `fe93e20` | Confirmed both Home error handlers access `ref` before checking `context.mounted`. Riverpod 2.6.1 asserts that a Consumer element is not disposed before invalidation. Confirmed `mergeChants` stops before request parsing or mutation, while its legacy retained audit detail includes source-authored content and raw `createdBy`. The separately noted active-plus-prepared loop remains latent and unreachable under current writers. |
+| 14:18:08 | Replaced the completed prior contract with the exact approved final closure | Local repository | Recorded mounted-guard dominance, two delayed-response regressions, merge's audit privacy re-enable condition, complete verification, one-commit packaging, PR 14 publication, and the external-action stop boundary before implementation. |
+| 14:24:00 | Proved and corrected both disposed-Home response paths | Flutter app gate and Home | RED: unconfirmed and generic delayed failures each threw Riverpod's disposed-Consumer `StateError` at provider invalidation after the pending profile replaced Home. Moved the mounted guard before provider and scaffold access. GREEN: all 19 focused app-gate tests passed with the pending screen retained and Home absent. |
+| 14:30:05 | Ran the complete local matrix and reconciled durable records | Local macOS, Flutter 3.44.8, Dart 3.12.2, Node 20, OpenJDK 26, Firestore emulator | PASS: 343 Flutter tests, scoped analysis, 78 Functions tests and build, 42 seed tests, seed and rules TypeScript, and 136 Java-backed rules assertions. Both touched Dart files are formatted; the read-only repository measurement remains 42 of 142 residual files. The governing decision now records the legacy merge payload as a privacy re-enable gate. |
+
+- **Files/artifacts:** `lib/presentation/home/home_screen.dart`, `test/app/app_gate_test.dart`, decision 016, current overview and rationale, roadmap, interface and learning memory, README, active contract, execution evidence, and `docs/changes/2026-08-26-final-freeze-closure.md`.
+- **Skipped or blocked:** The first rules attempt could not locate macOS Java; the replacement used the installed Homebrew OpenJDK path and passed 136 assertions. Runtime merge, Firebase, seed writes, native build, device walk, deployment, PR merge, signing, release, and production observation remain outside this approval.
+- **Current state:** Approved Lane 2 final closure is locally complete and green on `codex/v1-freeze-remediation`. One correction commit, push to PR 14, and replacement CI remain. Owner-owned worktree files remain outside the correction.
+
 ### 2026-08-26T13:34:53Z Correct the post-review audit and recovery findings
 
 - **Status:** Implemented and locally verified; packaging and replacement clean-runner CI pending

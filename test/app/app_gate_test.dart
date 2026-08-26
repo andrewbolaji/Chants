@@ -39,11 +39,17 @@ class _FakeAuthRepository extends Mock implements AuthRepository {
 class _FakeAccountDeletionService extends Mock
     implements AccountDeletionService {
   Object? error;
+  Completer<void>? pendingRequest;
   int calls = 0;
 
   @override
   Future<void> deleteAccount(String uid) async {
     calls += 1;
+    final request = pendingRequest;
+    if (request != null) {
+      await request.future;
+      return;
+    }
     if (error != null) throw error!;
   }
 }
@@ -541,5 +547,67 @@ void main() {
         expect(find.textContaining('locked for safety'), findsOneWidget);
       },
     );
+
+    for (final scenario in <({String name, Object error})>[
+      (
+        name: 'unconfirmed response',
+        error: const AccountDeletionRequestUnconfirmedException(
+          'response lost',
+        ),
+      ),
+      (name: 'generic error', error: StateError('request start failed')),
+    ]) {
+      testWidgets('late ${scenario.name} does not access disposed Home state', (
+        tester,
+      ) async {
+        final profiles = StreamController<UserProfile?>.broadcast();
+        final pendingRequest = Completer<void>();
+        final deletionService = _FakeAccountDeletionService()
+          ..pendingRequest = pendingRequest;
+        addTearDown(profiles.close);
+
+        await tester.pumpWidget(
+          wrap(
+            authStream: Stream.value(fakeUser as User?),
+            makeProfileStream: () => profiles.stream,
+            accountDeletionService: deletionService,
+          ),
+        );
+        await tester.pump();
+
+        profiles.add(
+          _makeProfile(acceptedPolicyVersion: kCurrentPolicyVersion),
+        );
+        await tester.pumpAndSettle();
+        expect(find.byType(HomeScreen), findsOneWidget);
+
+        await tester.tap(find.byType(PopupMenuButton<String>));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Delete account'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('DELETE MY ACCOUNT'));
+        await tester.pump();
+        expect(deletionService.calls, 1);
+
+        profiles.add(
+          _makeProfile(
+            acceptedPolicyVersion: kCurrentPolicyVersion,
+            deletionPending: true,
+          ),
+        );
+        await tester.pump();
+        await tester.pump();
+        expect(find.byType(AccountDeletionPendingScreen), findsOneWidget);
+        expect(find.byType(HomeScreen), findsNothing);
+
+        pendingRequest.completeError(scenario.error);
+        await tester.pump();
+        await tester.pump();
+
+        expect(tester.takeException(), isNull);
+        expect(find.byType(AccountDeletionPendingScreen), findsOneWidget);
+        expect(find.byType(HomeScreen), findsNothing);
+      });
+    }
   });
 }

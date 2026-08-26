@@ -12,6 +12,17 @@ This is durable, evidence-backed project memory. It prevents the same failure or
 
 ## Entries
 
+### 2026-08-26T14:18:08Z Mounted guards must dominate Consumer ref access
+
+- **Status:** promoted
+- **Scope:** Async Flutter callbacks owned by a Riverpod Consumer widget
+- **Observed:** Both account-deletion error handlers invalidated a provider before checking whether Home still existed. A positive pending-profile update could replace and dispose Home while the request was in flight, after which either late error threw `Bad state: Cannot use "ref" after the widget was disposed`.
+- **Evidence:** Two widget regressions start deletion from active Home, advance the profile to pending while the request remains unresolved, and then complete with an unconfirmed or generic error. Both failed at Riverpod invalidation before the correction and pass with the pending screen still authoritative afterward.
+- **Learning:** A mounted check must dominate every Consumer `ref` access and every context-derived UI lookup after an `await`. Guarding only the scaffold call is too late because the provider container boundary is already disposed with the widget.
+- **Applied control:** Both deletion catch paths return on an unmounted context before invalidating local deletion state or resolving the scaffold messenger.
+- **Revisit when:** Async work moves into a longer-lived controller, Riverpod lifecycle ownership changes, or another widget callback retains `ref` across an external await.
+- **Related:** `lib/presentation/home/home_screen.dart`, `test/app/app_gate_test.dart`, final freeze closure
+
 ### 2026-08-26T13:34:53Z Privacy cleanup must classify provenance before flattening detail
 
 - **Status:** promoted

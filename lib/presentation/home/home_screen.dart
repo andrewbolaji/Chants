@@ -310,8 +310,8 @@ Future<void> _showDeleteAccountDialog(
   try {
     await ref.read(accountDeletionServiceProvider).deleteAccount(uid);
   } on AccountDeletionRequestUnconfirmedException {
-    ref.invalidate(savedSongbookDeletionStateProvider);
     if (!context.mounted) return;
+    ref.invalidate(savedSongbookDeletionStateProvider);
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text(
@@ -321,8 +321,8 @@ Future<void> _showDeleteAccountDialog(
       ),
     );
   } catch (_) {
-    ref.invalidate(savedSongbookDeletionStateProvider);
     if (!context.mounted) return;
+    ref.invalidate(savedSongbookDeletionStateProvider);
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Deletion could not start. Try again.')),
     );
