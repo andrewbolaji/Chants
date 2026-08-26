@@ -11,6 +11,7 @@ import 'package:chants/app/providers.dart';
 import 'package:chants/data/models/user_profile.dart';
 import 'package:chants/data/repositories/auth_repository.dart';
 import 'package:chants/data/repositories/profile_repository.dart';
+import 'package:chants/data/repositories/saved_songbook_repository.dart';
 import 'package:chants/data/services/account_deletion_service.dart';
 import 'package:chants/presentation/auth/account_deletion_pending_screen.dart';
 import 'package:chants/presentation/auth/policy_acceptance_gate_screen.dart';
@@ -276,9 +277,7 @@ void main() {
       );
       await tester.pump();
 
-      profiles.add(
-        _makeProfile(acceptedPolicyVersion: kCurrentPolicyVersion),
-      );
+      profiles.add(_makeProfile(acceptedPolicyVersion: kCurrentPolicyVersion));
       await tester.pump();
       await tester.pump();
       expect(find.byType(HomeScreen), findsOneWidget);
@@ -323,43 +322,43 @@ void main() {
       expect(find.byType(HomeScreen), findsNothing);
     });
 
-    testWidgets('account deletion explains background work and failed start', (
-      tester,
-    ) async {
-      final deletionService = _FakeAccountDeletionService()
-        ..error = StateError('request failed');
-      await tester.pumpWidget(
-        wrap(
-          authStream: Stream.value(fakeUser as User?),
-          makeProfileStream: () => Stream.value(
-            _makeProfile(acceptedPolicyVersion: kCurrentPolicyVersion),
+    testWidgets(
+      'account deletion explains background work and unknown result',
+      (tester) async {
+        final deletionService = _FakeAccountDeletionService()
+          ..error = const AccountDeletionRequestUnconfirmedException(
+            'response lost',
+          );
+        await tester.pumpWidget(
+          wrap(
+            authStream: Stream.value(fakeUser as User?),
+            makeProfileStream: () => Stream.value(
+              _makeProfile(acceptedPolicyVersion: kCurrentPolicyVersion),
+            ),
+            accountDeletionService: deletionService,
           ),
-          accountDeletionService: deletionService,
-        ),
-      );
-      await tester.pump();
-      await tester.pump();
+        );
+        await tester.pump();
+        await tester.pump();
 
-      await tester.tap(find.byType(PopupMenuButton<String>));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Delete account'));
-      await tester.pumpAndSettle();
+        await tester.tap(find.byType(PopupMenuButton<String>));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Delete account'));
+        await tester.pumpAndSettle();
 
-      expect(
-        find.textContaining('Cleanup may continue briefly'),
-        findsOneWidget,
-      );
-      expect(find.textContaining('This cannot be undone'), findsOneWidget);
+        expect(
+          find.textContaining('Cleanup may continue briefly'),
+          findsOneWidget,
+        );
+        expect(find.textContaining('This cannot be undone'), findsOneWidget);
 
-      await tester.tap(find.text('DELETE MY ACCOUNT'));
-      await tester.pumpAndSettle();
+        await tester.tap(find.text('DELETE MY ACCOUNT'));
+        await tester.pumpAndSettle();
 
-      expect(deletionService.calls, 1);
-      expect(find.textContaining('Deletion did not start'), findsOneWidget);
-      expect(
-        find.textContaining('Saved Songbook are still available'),
-        findsOneWidget,
-      );
-    });
+        expect(deletionService.calls, 1);
+        expect(find.textContaining('could not confirm'), findsOneWidget);
+        expect(find.textContaining('locked for safety'), findsOneWidget);
+      },
+    );
   });
 }

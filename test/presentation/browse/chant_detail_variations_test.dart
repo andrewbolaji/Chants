@@ -14,7 +14,8 @@ import 'package:mockito/mockito.dart';
 
 class _MockChantRepository extends Mock implements ChantRepository {
   @override
-  Stream<Chant?> chantStream(String id) => Stream.value(null);
+  Stream<LiveChantSnapshot> chantStream(String id) =>
+      Stream.value(const LiveChantSnapshot(chant: null, isFromCache: false));
 }
 
 class _MockCommentRepository extends Mock implements CommentRepository {

@@ -12,6 +12,39 @@ This is durable, evidence-backed project memory. It prevents the same failure or
 
 ## Entries
 
+### 2026-08-26T04:40:55Z A transport exception is not negative acknowledgement
+
+- **Status:** promoted
+- **Scope:** Client compensation after a server transaction starts a destructive workflow
+- **Observed:** The account-deletion callable commits its durable job before responding. A response can be lost after that commit, so restoring local data on every thrown request can reverse the privacy boundary after server acceptance.
+- **Evidence:** Lifecycle tests force an ambiguous remote exception, reconstruct storage across prepared, unknown, and accepted states, and prove that only prepared data restores while unknown data remains locked and retryable.
+- **Learning:** Once a destructive request may have reached its commit point, classify a missing acknowledgement as unknown. Compensate only with positive rejection evidence and finalize only with positive acceptance evidence.
+- **Applied control:** Saved Songbook deletion uses prepared, unknown, and accepted artifacts; the UI reports that the request could not be confirmed; decision 012 preserves the boundary.
+- **Revisit when:** The server exposes a durable status receipt or a stronger acknowledgement protocol removes the ambiguous state.
+- **Related:** `lib/data/repositories/saved_songbook_repository.dart`, `lib/data/repositories/songbook_storage.dart`, decision 012
+
+### 2026-08-26T04:40:55Z Absolute recomputation still needs a serialization point
+
+- **Status:** promoted
+- **Scope:** Firestore triggers that derive a parent aggregate from child documents
+- **Observed:** Querying child ground truth and writing an absolute count survives duplicate delivery, but two handlers can still read different snapshots and let the slower older batch overwrite the newer value.
+- **Evidence:** A controlled vote test lets an older transaction read one vote, commits a newer two-vote aggregate, and proves the older transaction retries to finish at two. Duplicate, burst, delete, and missing-parent cases remain green.
+- **Learning:** Idempotency and concurrency safety are separate properties. Put the parent read, child query, and parent write in one transaction so every aggregate writer conflicts on the shared parent and reruns its query.
+- **Applied control:** Vote, like, visible-comment, user-report, and explicit chant reconciliation now use parent-serialized Firestore transactions; decision 013 records the invariant.
+- **Revisit when:** Measured volume makes transactional scans or retries material enough to justify a deduplicated event ledger or another aggregation service.
+- **Related:** `functions/src/index.ts`, decision 013
+
+### 2026-08-26T04:40:55Z Encoded identifiers can still collide at the filesystem boundary
+
+- **Status:** promoted
+- **Scope:** UID-derived local filenames on mobile filesystems
+- **Observed:** Base64url preserves case distinctions, but common filesystems may not. Distinct Firebase UIDs whose encoded keys differ only by case can therefore resolve to one path.
+- **Evidence:** The regression pair produces distinct lowercase SHA-256 keys, the known vector fixes digest behavior, and the file test proves active legacy migration to the bounded hash path.
+- **Learning:** Storage identity must match the comparison semantics of the storage layer. Use a fixed lowercase digest rather than a case-sensitive reversible encoding when filenames may be case-insensitive.
+- **Applied control:** Saved Songbook paths use SHA-256 of UTF-8 UID bytes and active-UID-only lazy legacy migration; decision 014 records the choice.
+- **Revisit when:** Local state moves to an account-namespaced database or platform storage provides a stronger keyed identity primitive.
+- **Related:** `lib/data/repositories/songbook_storage.dart`, decision 014
+
 ### 2026-08-25T21:22:57Z Authentication cannot be the retry token for account deletion
 
 - **Status:** promoted
@@ -50,11 +83,11 @@ This is durable, evidence-backed project memory. It prevents the same failure or
 - **Status:** promoted
 - **Scope:** Public content screens that retain route or stream data through connectivity failure while exposing local or external side effects
 - **Observed:** Discover restored its initial card for every document-stream error, including a Firebase permission denial. Route `initialData` then made live-target controls available before a current visible document had been confirmed.
-- **Evidence:** Review probes reproduced the stale moderated Discover card. The production regression tests now separate Firebase-shaped permission denial from transient failure, exercise the Discover-to-detail route, and prove Save, Share, Report, Vote, and Comment remain unavailable until an active current visible chant arrives. The full Flutter suite passes 282 tests.
+- **Evidence:** Review probes reproduced the stale moderated Discover card. The production regression tests now separate Firebase-shaped permission denial from transient failure, preserve Firestore cache provenance, exercise the Discover-to-detail route, and prove Save, Share, Report, Vote, and Comment remain unavailable until a server-confirmed current visible chant arrives.
 - **Learning:** Stale public text may be safe and useful to read, but it cannot authorize a save, report, vote, comment, or external share. Classify authoritative revocation separately from ordinary transport failure and derive actions only from current visible state.
-- **Applied control:** `_LiveChantCard` fails closed on permission denial, current absence, hidden, or removed data. `ChantDetailScreen` keeps route text readable while gating every live-target action through one current-authority predicate.
+- **Applied control:** `ChantRepository.chantStream` retains `isFromCache`; `_LiveChantCard` and `ChantDetailScreen` keep cached text readable while gating every live-target action through one server-confirmed authority predicate. Decision 015 preserves the cache boundary.
 - **Revisit when:** An approved offline mutation queue defines its own target version and revocation semantics, or a shared live-availability abstraction replaces these widget-local controls.
-- **Related:** `lib/presentation/browse/discovery_section.dart`, `lib/presentation/browse/chant_detail_screen.dart`, decision 009
+- **Related:** `lib/presentation/browse/discovery_section.dart`, `lib/presentation/browse/chant_detail_screen.dart`, decisions 009 and 015
 
 ### 2026-08-25T00:41:42Z Native verification can mutate project scaffolding before it fails
 

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:chants/data/models/chant.dart';
@@ -37,6 +38,17 @@ Chant chant(String id, {String status = 'canonical'}) {
 }
 
 void main() {
+  test('UID storage keys are lowercase SHA-256 and case-collision safe', () {
+    expect(
+      songbookStorageKeyForUid('abc'),
+      'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad',
+    );
+    final first = songbookStorageKeyForUid('AAGxxxxxxxxxxxxxxxxxxxxxxxxx');
+    final second = songbookStorageKeyForUid('AAaxxxxxxxxxxxxxxxxxxxxxxxxx');
+    expect(first, isNot(equalsIgnoringCase(second)));
+    expect(first, matches(RegExp(r'^[0-9a-f]{64}$')));
+  });
+
   test('file snapshot survives repository reconstruction', () async {
     final directory = await Directory.systemTemp.createTemp(
       'chants-songbook-test-',
@@ -64,6 +76,30 @@ void main() {
     expect((await reconstructed.load('fan-b')).uniqueChantIds, isEmpty);
   });
 
+  test('active UID lazily migrates its legacy base64 filename', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'chants-songbook-migration-test-',
+    );
+    addTearDown(() => directory.delete(recursive: true));
+    final songbookDirectory = Directory('${directory.path}/matchday_songbook');
+    await songbookDirectory.create(recursive: true);
+    const uid = 'fan-a';
+    final legacyKey = base64Url.encode(utf8.encode(uid)).replaceAll('=', '');
+    final legacyFile = File('${songbookDirectory.path}/$legacyKey.json');
+    await legacyFile.writeAsString('{"schemaVersion":1}');
+
+    final storage = FileSongbookStorage(
+      supportDirectory: () async => directory,
+    );
+    expect(await storage.read(uid), '{"schemaVersion":1}');
+
+    final hashedFile = File(
+      '${songbookDirectory.path}/${songbookStorageKeyForUid(uid)}.json',
+    );
+    expect(await hashedFile.exists(), isTrue);
+    expect(await legacyFile.exists(), isFalse);
+  });
+
   test('different UIDs cannot read each other snapshots', () async {
     final storage = MemorySongbookStorage();
     final repository = SavedSongbookRepository(storage: storage);
@@ -76,6 +112,74 @@ void main() {
 
     expect((await repository.load('fan-a')).individualSnapshots, isNotEmpty);
     expect((await repository.load('fan-b')).individualSnapshots, isEmpty);
+  });
+
+  test(
+    'prepared deletion artifact restores after repository reconstruction',
+    () async {
+      final encoded = jsonEncode(SavedSongbook.empty().toJson());
+      final storage = MemorySongbookStorage()..active['fan-a'] = encoded;
+      await storage.stageForAccountDeletion('fan-a');
+      expect(storage.preparedTombstones['fan-a'], encoded);
+
+      final reconstructed = SavedSongbookRepository(storage: storage);
+      await reconstructed.load('fan-a');
+
+      expect(storage.active['fan-a'], encoded);
+      expect(storage.preparedTombstones, isEmpty);
+    },
+  );
+
+  test(
+    'unknown deletion artifact is preserved and remains unreadable',
+    () async {
+      final storage = MemorySongbookStorage()..active['fan-a'] = '{}';
+      await storage.stageForAccountDeletion('fan-a');
+      await storage.markAccountDeletionRequestStarted('fan-a');
+
+      final reconstructed = SavedSongbookRepository(storage: storage);
+      expect((await reconstructed.load('fan-a')).uniqueChantIds, isEmpty);
+      expect(storage.active, isEmpty);
+      expect(storage.unknownTombstones['fan-a'], '{}');
+    },
+  );
+
+  test('unknown file state outranks a conflicting active artifact', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'chants-songbook-unknown-test-',
+    );
+    addTearDown(() => directory.delete(recursive: true));
+    final storage = FileSongbookStorage(
+      supportDirectory: () async => directory,
+    );
+    const uid = 'fan-a';
+    await storage.writeAtomically(uid, '{"original":true}');
+    await storage.stageForAccountDeletion(uid);
+    await storage.markAccountDeletionRequestStarted(uid);
+
+    final songbookDirectory = Directory('${directory.path}/matchday_songbook');
+    final active = File(
+      '${songbookDirectory.path}/${songbookStorageKeyForUid(uid)}.json',
+    );
+    await active.writeAsString('{"conflict":true}');
+
+    expect(await storage.read(uid), isNull);
+    await expectLater(
+      storage.writeAtomically(uid, '{"replacement":true}'),
+      throwsStateError,
+    );
+  });
+
+  test('accepted deletion artifact is removed after reconstruction', () async {
+    final storage = MemorySongbookStorage()..active['fan-a'] = '{}';
+    await storage.stageForAccountDeletion('fan-a');
+    await storage.markAccountDeletionRequestStarted('fan-a');
+    await storage.markAccountDeletionAccepted('fan-a');
+    expect(storage.acceptedTombstones['fan-a'], '{}');
+
+    final reconstructed = SavedSongbookRepository(storage: storage);
+    expect((await reconstructed.load('fan-a')).uniqueChantIds, isEmpty);
+    expect(storage.acceptedTombstones, isEmpty);
   });
 
   test('access guard rejects a stale UID after account switching', () async {

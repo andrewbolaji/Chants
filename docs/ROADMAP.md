@@ -17,7 +17,8 @@ The path from code-complete to public launch, with concrete triggers on every ga
 - Stacked v1 authority and integration remediation implemented and clean-CI verified on draft PR 10: exact direct-write schemas, server-owned vote and like stamps, authoritative moderation disappearance, current-live action gates, missing-parent vote-trigger tolerance, resilient comments and stale Player recovery, and deterministic CI analysis configuration. Review, native compilation, and the combined device walk remain pending.
 - V1 report and feedback abuse controls implemented and clean-CI verified on stacked draft PR 12: authenticated callable admission, atomic private anchored-window budgets, server-owned stored fields, deterministic duplicate preservation, direct-create denial, retained failure-state forms, and account-deletion cleanup. Independent review, native compilation, and the combined device walk remain pending.
 - V1 account-deletion recovery implemented and clean-runner verified on stacked draft PR 13: durable private job acceptance, pending-account denial, bounded retry pages, Auth disable and finalization recovery, retained-contribution anonymization, user-report counter convergence, local Songbook compensation, sign-out, and a guarded pending screen. External freeze review, native compilation, and the combined device walk remain pending.
-- Dedup matching engine (backend only): token-overlap matcher and operator `mergeChants` function with a partial audit payload, not a complete undo snapshot.
+- V1 freeze remediation implemented and locally green on `codex/v1-freeze-remediation`: unknown deletion acknowledgement remains locked and retryable, aggregate counters serialize through parents, pending targets reject reports and blocks, local UID paths are case-safe, cache-only chants cannot authorize live actions, and stateful interactions cannot cross chant IDs. Packaging, clean-runner CI, and independent review remain pending.
+- Dedup matching engine (backend only): token-overlap matcher exists. Operator `mergeChants` is disabled because its retained sequential implementation has no resumable cursor or complete undo snapshot.
 - Visual identity: complete "matchnight, warmed with playful" redesign, tokenized, AA contrast proven.
 
 **Not yet done:**
@@ -27,7 +28,7 @@ The path from code-complete to public launch, with concrete triggers on every ga
 - Saved Matchday Songbook native client compilation and airplane-mode device walk.
 - Basic share-out native compilation, PR review, and device destination walk.
 - Review of stacked PR 10 and stacked PR 12.
-- One external freeze review over `c57815c...<freeze-head>`, covering every runtime change since the last whole-stack engineering review.
+- One independent freeze review over `c57815c...<remediation-head>`, covering every runtime change since the last whole-stack engineering review.
 - Store launch prep.
 
 ---
@@ -66,7 +67,7 @@ V1 is a trusted songbook and a creator workshop. The work is sequenced as bounde
 
 The accepted product boundary is in `docs/decisions/004-songbook-and-chant-lab.md`. Each state-changing block gets the framework's Lane 2 change spec, execution log, tests, UI evidence, scoped rationale, and rollback plan. Unlimited nesting, notifications, scheduled challenges, collaborative lyric suggestions, creator follows, and hosted media remain later work.
 
-The final feature layer is packaged and clean-runner green. Before calling the v1 engineering stack frozen, commission one external review over the exact Git range `c57815c...<final-pr-13-head>`. Commit `c57815c` contains the last whole-stack engineering-review versions of `ENGINEERING_OVERVIEW.md` and `docs/IMPLEMENTATION_RATIONALE.md`; the current files remain later milestone snapshots rather than the review baseline itself.
+The final feature layer is packaged and its PR 13 baseline is clean-runner green. The follow-up freeze remediation is locally green but not yet packaged. Before calling the v1 engineering stack frozen, run clean CI on its eventual head and commission one independent review over the exact Git range `c57815c...<remediation-head>`. Commit `c57815c` contains the last whole-stack engineering-review versions of `ENGINEERING_OVERVIEW.md` and `docs/IMPLEMENTATION_RATIONALE.md`; the current files remain later milestone snapshots rather than the review baseline itself.
 
 **Trigger to exit:** The current device walk passes; provenance and promotion rules work end to end; Songbook and Chant Lab remain understandable on club and player screens; Saved Matchday Songbook survives airplane-mode relaunch; the dedup nudge works on the seeded archive; and share-out never produces a broken destination.
 

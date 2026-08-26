@@ -224,6 +224,9 @@ export async function handleSubmitReport(params: {
   if (payload.targetType === "user" && payload.targetId === params.uid) {
     throw new HttpsError("invalid-argument", "You cannot report your own account.");
   }
+  if (Buffer.byteLength(`${params.uid}_${payload.targetId}`, "utf8") > 1500) {
+    throw new HttpsError("invalid-argument", "Invalid report request.");
+  }
 
   const targetConfig = REPORT_TARGET_CONFIG[payload.targetType];
   const profileRef = params.firestore.collection("profiles").doc(params.uid);
@@ -249,7 +252,14 @@ export async function handleSubmitReport(params: {
     if (!targetSnapshot.exists) {
       throw new HttpsError("not-found", "Report target not found.");
     }
-    if (payload.targetType !== "user") {
+    if (payload.targetType === "user") {
+      if (targetSnapshot.data()?.deletionPending === true) {
+        throw new HttpsError(
+          "failed-precondition",
+          "Report target is unavailable."
+        );
+      }
+    } else {
       const target = targetSnapshot.data()!;
       if (target.hidden !== false || target.removed !== false) {
         throw new HttpsError("failed-precondition", "Report target is unavailable.");

@@ -31,8 +31,8 @@ class _User extends Mock implements User {
 
 class _ChantRepository extends Mock implements ChantRepository {
   @override
-  Stream<Chant?> chantStream(String id) async* {
-    yield _chant;
+  Stream<LiveChantSnapshot> chantStream(String id) async* {
+    yield LiveChantSnapshot(chant: _chant, isFromCache: false);
     await Completer<void>().future;
   }
 }

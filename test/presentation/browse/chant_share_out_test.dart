@@ -7,8 +7,12 @@ import 'package:chants/data/models/comment.dart';
 import 'package:chants/data/models/comment_like.dart';
 import 'package:chants/data/models/saved_songbook.dart';
 import 'package:chants/data/models/team.dart';
+import 'package:chants/data/models/user_profile.dart';
+import 'package:chants/data/models/vote.dart';
 import 'package:chants/data/repositories/chant_repository.dart';
 import 'package:chants/data/repositories/comment_repository.dart';
+import 'package:chants/data/repositories/profile_repository.dart';
+import 'package:chants/data/repositories/vote_repository.dart';
 import 'package:chants/data/services/chant_share.dart';
 import 'package:chants/presentation/browse/chant_detail_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -18,24 +22,31 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 
 class _ChantRepository extends Mock implements ChantRepository {
-  final StreamController<Chant?> controller =
-      StreamController<Chant?>.broadcast();
+  final StreamController<LiveChantSnapshot> controller =
+      StreamController<LiveChantSnapshot>.broadcast();
   Chant? current;
   bool emitCurrentOnListen = true;
 
   @override
-  Stream<Chant?> chantStream(String id) => Stream<Chant?>.multi((events) {
-    if (emitCurrentOnListen && current != null) events.add(current);
-    final subscription = controller.stream.listen(
-      (chant) {
-        current = chant;
-        events.add(chant);
-      },
-      onError: events.addError,
-      onDone: events.close,
-    );
-    events.onCancel = subscription.cancel;
-  });
+  Stream<LiveChantSnapshot> chantStream(String id) =>
+      Stream<LiveChantSnapshot>.multi((events) {
+        if (emitCurrentOnListen && current != null) {
+          events.add(LiveChantSnapshot(chant: current, isFromCache: false));
+        }
+        final subscription = controller.stream.listen(
+          (snapshot) {
+            current = snapshot.chant;
+            events.add(snapshot);
+          },
+          onError: events.addError,
+          onDone: events.close,
+        );
+        events.onCancel = subscription.cancel;
+      });
+
+  void emit(Chant? chant, {bool isFromCache = false}) {
+    controller.add(LiveChantSnapshot(chant: chant, isFromCache: isFromCache));
+  }
 }
 
 class _User extends Mock implements User {
@@ -58,6 +69,19 @@ class _CommentRepository extends Mock implements CommentRepository {
     required String userId,
     required String commentId,
   }) async => null;
+}
+
+class _VoteRepository extends Mock implements VoteRepository {
+  @override
+  Future<Vote?> getUserVote({
+    required String userId,
+    required String chantId,
+  }) async => null;
+}
+
+class _ProfileRepository extends Mock implements ProfileRepository {
+  @override
+  Stream<UserProfile?> profileStream(String userId) => Stream.value(null);
 }
 
 class _ShareGateway implements ChantShareGateway {
@@ -125,10 +149,13 @@ Widget _app({
       authStateProvider.overrideWith((ref) => Stream<User?>.value(user)),
       chantRepositoryProvider.overrideWithValue(repository),
       commentRepositoryProvider.overrideWithValue(_CommentRepository(comments)),
+      voteRepositoryProvider.overrideWithValue(_VoteRepository()),
+      profileRepositoryProvider.overrideWithValue(_ProfileRepository()),
       chantShareGatewayProvider.overrideWithValue(gateway),
       blockedUserIdsProvider.overrideWith(
         (ref, uid) => Stream.value(const <String>{}),
       ),
+      userProfileProvider.overrideWith((ref, uid) => Stream.value(null)),
       savedSongbookProvider.overrideWith(
         (ref, uid) async => SavedSongbook.empty(),
       ),
@@ -214,7 +241,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    repository.controller.add(
+    repository.emit(
       _chant(title: 'Updated terrace song', lyrics: 'The current words'),
     );
     await tester.pumpAndSettle();
@@ -285,7 +312,7 @@ void main() {
       );
       expect(shareButton.onPressed, isNull);
 
-      repository.controller.add(_chant());
+      repository.emit(_chant());
       await tester.pump();
       shareButton = tester.widget<IconButton>(
         find.widgetWithIcon(IconButton, Icons.ios_share_outlined),
@@ -347,6 +374,47 @@ void main() {
       findsOneWidget,
     );
     expect(gateway.payloads, isEmpty);
+  });
+
+  testWidgets('cached detail stays readable with every action disabled', (
+    tester,
+  ) async {
+    final repository = _ChantRepository()..emitCurrentOnListen = false;
+    final gateway = _ShareGateway();
+    addTearDown(repository.controller.close);
+
+    await tester.pumpWidget(
+      _app(
+        chant: _chant(),
+        repository: repository,
+        gateway: gateway,
+        user: _User(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    repository.emit(_chant(), isFromCache: true);
+    await tester.pump();
+
+    expect(find.text('NORTH BANK SONG'), findsOneWidget);
+    for (final icon in <IconData>[
+      Icons.bookmark_border,
+      Icons.ios_share_outlined,
+      Icons.flag_outlined,
+      Icons.arrow_drop_up,
+      Icons.arrow_drop_down,
+    ]) {
+      final button = tester.widget<IconButton>(
+        find.widgetWithIcon(IconButton, icon).first,
+      );
+      expect(button.onPressed, isNull, reason: '$icon must wait for server');
+    }
+
+    repository.emit(_chant());
+    await tester.pump();
+    final share = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.ios_share_outlined),
+    );
+    expect(share.onPressed, isNotNull);
   });
 
   testWidgets('detail actions remain usable with enlarged text', (

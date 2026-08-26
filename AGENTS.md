@@ -12,11 +12,11 @@ flutter pub get
 flutter test                              # models, services, widgets. Needs no Firebase config.
 
 # Backend suites (Node 20), each self-contained. Verified green here:
-cd functions && npm install && npm test   # Cloud Functions, 69 tests
+cd functions && npm install && npm test   # Cloud Functions, 73 tests
 cd seed && npm install && npm test        # seed validation, 42 tests
 
 # Firestore rules tests need the emulator (Java plus firebase-tools):
-cd test_rules && npm install && npm test  # 135 assertions, runs against 127.0.0.1:8080
+cd test_rules && npm install && npm test  # 136 assertions, runs against 127.0.0.1:8080
 
 # To run the actual app you need your own Firebase project:
 cp lib/firebase_options.dart.example lib/firebase_options.dart   # then add real keys
@@ -27,7 +27,7 @@ flutter run
 
 - `lib/app/` theme, colors, spacing, router, Riverpod providers. `lib/data/` models, repositories (one per Firestore collection), and pure services (chant matching, ranking).
 - `lib/presentation/` screens and widgets grouped by feature (auth, browse, comments, moderation, submit, feedback, shared).
-- `functions/src/` Cloud Functions for counters, rate limits, moderation, and durable account deletion. Vote, comment, like, content-report, and user-report counters are recomputed from stored docs so they self-correct.
+- `functions/src/` Cloud Functions for counters, rate limits, moderation, and durable account deletion. Vote, comment, like, content-report, and user-report counters are recomputed from stored docs inside parent-serialized transactions so duplicates and overlapping delivery converge.
 - `firestore.rules` denies by default. `seed/` writes canonical content via the Admin SDK. Tests live in `test/`, `functions/test/`, and `test_rules/`.
 
 ## Gotchas

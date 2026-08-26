@@ -465,11 +465,9 @@ export const onChantCreated = onDocumentCreated(
 
 // --- onVoteWritten ---
 // Maintains upvotes, downvotes, and score on the chant by recomputing from
-// the actual vote docs (ground truth). This makes the function fully
-// idempotent: duplicate deliveries, bursts of rapid writes, and out-of-order
-// events all converge to the correct count.
-// The chant counter set and the appliedValue stamp are committed in one
-// WriteBatch so they land atomically (preserving the -2 flash fix).
+// the actual vote docs (ground truth). The parent read, child query, counter
+// write, and surviving vote stamp share one transaction. Concurrent handlers
+// therefore conflict on the parent and retry with current ground truth.
 /// Core handler logic, extracted so it can be unit-tested with a fake db.
 export async function handleVoteWritten(
   beforeData: admin.firestore.DocumentData | undefined,
@@ -497,49 +495,44 @@ export async function handleVoteWritten(
 
   if (upDelta === 0 && downDelta === 0) return;
 
-  // The parent may already be gone when a delayed vote event arrives after
-  // an account cleanup or duplicate merge. Do not recreate it or retry a
-  // batch that can never succeed.
   const chantRef = firestore.collection("chants").doc(chantId);
-  const chantSnap = await chantRef.get();
-  if (!chantSnap.exists) return;
-
-  // Recompute counters from the actual vote docs (ground truth).
-  const votesSnap = await firestore
+  const votesQuery = firestore
     .collection("votes")
-    .where("chantId", "==", chantId)
-    .get();
-  let upvotes = 0;
-  let downvotes = 0;
-  for (const doc of votesSnap.docs) {
-    if (doc.data().value === 1) upvotes++;
-    else if (doc.data().value === -1) downvotes++;
-  }
+    .where("chantId", "==", chantId);
+  const voteRef = firestore.collection("votes").doc(voteId);
 
-  // Batch the chant counter set and the appliedValue stamp so they become
-  // visible atomically. Without this, a reader can see the updated score
-  // before appliedValue is written and double-count the delta (-2 flash).
-  const batch = firestore.batch();
+  await firestore.runTransaction(async (transaction) => {
+    const chantSnap = await transaction.get(chantRef);
+    if (!chantSnap.exists) return;
 
-  batch.update(chantRef, {
-    upvotes,
-    downvotes,
-    score: upvotes - downvotes,
-  });
+    const votesSnap = await transaction.get(votesQuery);
+    const currentVoteSnap = afterData
+      ? await transaction.get(voteRef)
+      : null;
+    let upvotes = 0;
+    let downvotes = 0;
+    for (const doc of votesSnap.docs) {
+      if (doc.data().value === 1) upvotes++;
+      else if (doc.data().value === -1) downvotes++;
+    }
 
-  // Write appliedValue back to the vote doc so the client can tell whether
-  // the chant score already includes this vote on a cold load.
-  // Skip on delete (afterData is undefined, doc is gone).
-  // The write triggers onVoteWritten again, but that re-trigger is a no-op:
-  // value is unchanged, so upDelta and downDelta are both 0, hitting the
-  // early return above.
-  if (afterData) {
-    batch.update(firestore.collection("votes").doc(voteId), {
-      appliedValue: afterData.value,
+    transaction.update(chantRef, {
+      upvotes,
+      downvotes,
+      score: upvotes - downvotes,
     });
-  }
 
-  await batch.commit();
+    // An older delivery may run after the same vote changed again. Stamp only
+    // when the surviving document still represents this event's value.
+    if (
+      afterData &&
+      currentVoteSnap?.exists &&
+      currentVoteSnap.data()?.chantId === chantId &&
+      currentVoteSnap.data()?.value === afterData.value
+    ) {
+      transaction.update(voteRef, { appliedValue: afterData.value });
+    }
+  });
 }
 
 export const onVoteWritten = onDocumentWritten(
@@ -647,6 +640,13 @@ export const acceptPolicy = onCall(
 // Moves votes and reports, deletes the source, reconciles target counters,
 // and logs a bounded source summary for investigation. The operation is not
 // atomic, resumable, or automatically reversible.
+export function requireMergeChantsEnabled(): void {
+  throw new HttpsError(
+    "failed-precondition",
+    "Chant merging is unavailable until resumable recovery is implemented."
+  );
+}
+
 export const mergeChants = onCall(
   { region: "europe-west2" },
   async (request) => {
@@ -664,6 +664,8 @@ export const mergeChants = onCall(
     ) {
       throw new HttpsError("permission-denied", "Operator access required.");
     }
+
+    requireMergeChantsEnabled();
 
     const { sourceId, targetId } = request.data as {
       sourceId: string;
@@ -820,10 +822,9 @@ export const mergeChants = onCall(
 );
 
 // --- onCommentLikeWritten ---
-// Maintains likeCount on the comment by recomputing from the actual like docs
-// (ground truth). Fully idempotent: duplicate deliveries, bursts, and
-// out-of-order events all converge. The likeCount set and appliedValue stamp
-// are committed in one WriteBatch so they land atomically.
+// Maintains likeCount on the comment by recomputing from the actual like docs.
+// Parent, query, count, and surviving like stamp share one transaction so a
+// stale concurrent invocation cannot overwrite a newer aggregate.
 export async function handleCommentLikeWritten(
   beforeData: admin.firestore.DocumentData | undefined,
   afterData: admin.firestore.DocumentData | undefined,
@@ -839,33 +840,35 @@ export async function handleCommentLikeWritten(
   const afterVal = afterData?.value as number | undefined;
   if (beforeVal === afterVal) return;
 
-  // Guard: if the comment doc no longer exists (racing with a delete), no-op.
   const commentRef = firestore.collection("comments").doc(commentId);
-  const commentSnap = await commentRef.get();
-  if (!commentSnap.exists) return;
-
-  // Recompute likeCount from all like docs (ground truth).
-  const likesSnap = await firestore
+  const likesQuery = firestore
     .collection("commentLikes")
-    .where("commentId", "==", commentId)
-    .get();
-  let likeCount = 0;
-  for (const doc of likesSnap.docs) {
-    if (doc.data().value === 1) likeCount++;
-  }
+    .where("commentId", "==", commentId);
+  const likeRef = firestore.collection("commentLikes").doc(likeId);
 
-  const batch = firestore.batch();
-  batch.update(commentRef, { likeCount });
+  await firestore.runTransaction(async (transaction) => {
+    const commentSnap = await transaction.get(commentRef);
+    if (!commentSnap.exists) return;
 
-  // Stamp appliedValue on the like doc so the client can reconcile on cold load.
-  // Skip on delete (afterData is undefined, doc is gone).
-  if (afterData) {
-    batch.update(firestore.collection("commentLikes").doc(likeId), {
-      appliedValue: afterData.value,
-    });
-  }
+    const likesSnap = await transaction.get(likesQuery);
+    const currentLikeSnap = afterData
+      ? await transaction.get(likeRef)
+      : null;
+    let likeCount = 0;
+    for (const doc of likesSnap.docs) {
+      if (doc.data().value === 1) likeCount++;
+    }
 
-  await batch.commit();
+    transaction.update(commentRef, { likeCount });
+    if (
+      afterData &&
+      currentLikeSnap?.exists &&
+      currentLikeSnap.data()?.commentId === commentId &&
+      currentLikeSnap.data()?.value === afterData.value
+    ) {
+      transaction.update(likeRef, { appliedValue: afterData.value });
+    }
+  });
 }
 
 export const onCommentLikeWritten = onDocumentWritten(
@@ -1000,21 +1003,19 @@ export async function handleUserReportCreated(
   reportedUserId: string,
   firestore: admin.firestore.Firestore
 ): Promise<{ userReportCount: number }> {
-  const reportsSnap = await firestore
+  const reportsQuery = firestore
     .collection("userReports")
-    .where("reportedUserId", "==", reportedUserId)
-    .get();
-  const userReportCount = reportsSnap.size;
-
-  // Guard: if the reported user's profile no longer exists (e.g. they
-  // deleted their account), skip the write rather than erroring.
+    .where("reportedUserId", "==", reportedUserId);
   const profileRef = firestore.collection("profiles").doc(reportedUserId);
-  const profileSnap = await profileRef.get();
-  if (!profileSnap.exists) return { userReportCount };
+  return firestore.runTransaction(async (transaction) => {
+    const profileSnap = await transaction.get(profileRef);
+    if (!profileSnap.exists) return { userReportCount: 0 };
 
-  await profileRef.update({ userReportCount });
-
-  return { userReportCount };
+    const reportsSnap = await transaction.get(reportsQuery);
+    const userReportCount = reportsSnap.size;
+    transaction.update(profileRef, { userReportCount });
+    return { userReportCount };
+  });
 }
 
 export const onUserReportCreated = onDocumentCreated(
@@ -1056,15 +1057,21 @@ export const onUserReportDeleted = onDocumentDeleted(
 );
 
 // --- Helper: recompute commentCount on a chant from ground truth ---
-async function recomputeCommentCount(chantId: string): Promise<void> {
-  const commentsSnap = await db
+async function recomputeCommentCount(
+  chantId: string,
+  firestore: admin.firestore.Firestore = db
+): Promise<void> {
+  const chantRef = firestore.collection("chants").doc(chantId);
+  const commentsQuery = firestore
     .collection("comments")
     .where("chantId", "==", chantId)
     .where("hidden", "==", false)
-    .where("removed", "==", false)
-    .get();
-  await db.collection("chants").doc(chantId).update({
-    commentCount: commentsSnap.size,
+    .where("removed", "==", false);
+  await firestore.runTransaction(async (transaction) => {
+    const chantSnap = await transaction.get(chantRef);
+    if (!chantSnap.exists) return;
+    const commentsSnap = await transaction.get(commentsQuery);
+    transaction.update(chantRef, { commentCount: commentsSnap.size });
   });
 }
 
@@ -1092,17 +1099,23 @@ async function reconcileChantCounters(
   chantId: string,
   firestore: admin.firestore.Firestore = db
 ): Promise<void> {
-  const votesSnap = await firestore.collection("votes").where("chantId", "==", chantId).get();
-  let upvotes = 0;
-  let downvotes = 0;
-  for (const doc of votesSnap.docs) {
-    if (doc.data().value === 1) upvotes++;
-    else if (doc.data().value === -1) downvotes++;
-  }
-  await firestore.collection("chants").doc(chantId).update({
-    upvotes,
-    downvotes,
-    score: upvotes - downvotes,
+  const chantRef = firestore.collection("chants").doc(chantId);
+  const votesQuery = firestore.collection("votes").where("chantId", "==", chantId);
+  await firestore.runTransaction(async (transaction) => {
+    const chantSnap = await transaction.get(chantRef);
+    if (!chantSnap.exists) return;
+    const votesSnap = await transaction.get(votesQuery);
+    let upvotes = 0;
+    let downvotes = 0;
+    for (const doc of votesSnap.docs) {
+      if (doc.data().value === 1) upvotes++;
+      else if (doc.data().value === -1) downvotes++;
+    }
+    transaction.update(chantRef, {
+      upvotes,
+      downvotes,
+      score: upvotes - downvotes,
+    });
   });
 }
 

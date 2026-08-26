@@ -86,37 +86,59 @@ class VoteControls extends ConsumerStatefulWidget {
 
 class _VoteControlsState extends ConsumerState<VoteControls> {
   bool _loaded = false;
-  late final OptimisticVoteState _vote;
+  late OptimisticVoteState _vote;
   bool _hasPendingChange = false;
+  int _chantGeneration = 0;
 
   @override
   void initState() {
     super.initState();
+    _resetForCurrentChant(loadVote: widget.enabled);
+  }
+
+  void _resetForCurrentChant({required bool loadVote}) {
+    _chantGeneration += 1;
     _vote = OptimisticVoteState(serverScore: widget.chant.score);
-    if (widget.enabled) _loadUserVote();
+    _loaded = false;
+    _hasPendingChange = false;
+    if (loadVote) {
+      _loadUserVote(_chantGeneration, widget.chant.id);
+    }
   }
 
   @override
   void didUpdateWidget(VoteControls old) {
     super.didUpdateWidget(old);
+    if (old.chant.id != widget.chant.id) {
+      _resetForCurrentChant(loadVote: widget.enabled);
+      return;
+    }
     if (old.chant.score != widget.chant.score) {
       _vote.reconcileServerScore(widget.chant.score);
     }
     if (!old.enabled && widget.enabled && !_loaded) {
-      _loadUserVote();
+      _loadUserVote(_chantGeneration, widget.chant.id);
     }
   }
 
-  Future<void> _loadUserVote() async {
+  bool _isCurrentOperation(int generation, String chantId) {
+    return mounted &&
+        generation == _chantGeneration &&
+        chantId == widget.chant.id;
+  }
+
+  Future<void> _loadUserVote(int generation, String chantId) async {
     final user = ref.read(authStateProvider).valueOrNull;
     if (user == null) {
-      setState(() => _loaded = true);
+      if (_isCurrentOperation(generation, chantId)) {
+        setState(() => _loaded = true);
+      }
       return;
     }
     final vote = await ref
         .read(voteRepositoryProvider)
-        .getUserVote(userId: user.uid, chantId: widget.chant.id);
-    if (!mounted) return;
+        .getUserVote(userId: user.uid, chantId: chantId);
+    if (!_isCurrentOperation(generation, chantId)) return;
     setState(() {
       if (vote != null) {
         _vote.userVote = vote.value;
@@ -147,41 +169,44 @@ class _VoteControlsState extends ConsumerState<VoteControls> {
       ).showSnackBar(const SnackBar(content: Text('Sign in to vote.')));
       return;
     }
+    final chantId = widget.chant.id;
+    final generation = _chantGeneration;
+    final voteState = _vote;
 
     // In-flight guard: if a write is pending, record that the user changed
     // their mind. applyVote updates userVote and optimisticDelta immediately
     // so the UI never looks frozen, but only one Firestore write is in flight
     // at a time. After the current write completes, the follow-up writes the
     // settled intent (userVote) directly, without re-calling applyVote.
-    if (_vote.busy) {
+    if (voteState.busy) {
       _hasPendingChange = true;
-      _vote.applyVote(value);
+      voteState.applyVote(value);
       setState(() {});
       return;
     }
 
-    final previousVote = _vote.userVote;
-    final previousConfirmed = _vote.confirmedVote;
+    final previousVote = voteState.userVote;
+    final previousConfirmed = voteState.confirmedVote;
 
-    final newVote = _vote.applyVote(value);
+    final newVote = voteState.applyVote(value);
     setState(() {});
 
     try {
       final voteRepo = ref.read(voteRepositoryProvider);
       if (newVote == null) {
-        await voteRepo.removeVote(userId: user.uid, chantId: widget.chant.id);
+        await voteRepo.removeVote(userId: user.uid, chantId: chantId);
       } else {
         await voteRepo.castVote(
           userId: user.uid,
-          chantId: widget.chant.id,
+          chantId: chantId,
           value: newVote,
         );
       }
-      if (!mounted) return;
-      setState(() => _vote.confirmWrite());
+      if (!_isCurrentOperation(generation, chantId)) return;
+      setState(voteState.confirmWrite);
     } catch (e) {
-      if (!mounted) return;
-      setState(() => _vote.revertWrite(previousVote, previousConfirmed));
+      if (!mounted || !_isCurrentOperation(generation, chantId)) return;
+      setState(() => voteState.revertWrite(previousVote, previousConfirmed));
       _hasPendingChange = false;
       if (e.toString().contains('PERMISSION_DENIED')) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -201,9 +226,16 @@ class _VoteControlsState extends ConsumerState<VoteControls> {
     // the intent, causing drift.
     if (_hasPendingChange) {
       _hasPendingChange = false;
-      final settledVote = _vote.userVote;
+      final settledVote = voteState.userVote;
       if (settledVote != newVote) {
-        await _writeSettledIntent(user.uid, settledVote, newVote);
+        await _writeSettledIntent(
+          user.uid,
+          settledVote,
+          newVote,
+          chantId,
+          generation,
+          voteState,
+        );
       }
     }
   }
@@ -215,26 +247,32 @@ class _VoteControlsState extends ConsumerState<VoteControls> {
     String userId,
     int? settledVote,
     int? fallbackVote,
+    String chantId,
+    int generation,
+    OptimisticVoteState voteState,
   ) async {
-    _vote.busy = true;
+    if (!_isCurrentOperation(generation, chantId)) return;
+    voteState.busy = true;
     setState(() {});
 
     try {
       final voteRepo = ref.read(voteRepositoryProvider);
       if (settledVote == null) {
-        await voteRepo.removeVote(userId: userId, chantId: widget.chant.id);
+        await voteRepo.removeVote(userId: userId, chantId: chantId);
       } else {
         await voteRepo.castVote(
           userId: userId,
-          chantId: widget.chant.id,
+          chantId: chantId,
           value: settledVote,
         );
       }
-      if (!mounted) return;
-      setState(() => _vote.confirmWrite());
+      if (!_isCurrentOperation(generation, chantId)) return;
+      setState(voteState.confirmWrite);
     } catch (e) {
-      if (!mounted) return;
-      setState(() => _vote.revertWrite(fallbackVote, _vote.confirmedVote));
+      if (!_isCurrentOperation(generation, chantId)) return;
+      setState(
+        () => voteState.revertWrite(fallbackVote, voteState.confirmedVote),
+      );
       _hasPendingChange = false;
       return;
     }
@@ -242,9 +280,16 @@ class _VoteControlsState extends ConsumerState<VoteControls> {
     // Handle further taps during this follow-up write
     if (_hasPendingChange) {
       _hasPendingChange = false;
-      final furtherSettled = _vote.userVote;
+      final furtherSettled = voteState.userVote;
       if (furtherSettled != settledVote) {
-        await _writeSettledIntent(userId, furtherSettled, settledVote);
+        await _writeSettledIntent(
+          userId,
+          furtherSettled,
+          settledVote,
+          chantId,
+          generation,
+          voteState,
+        );
       }
     }
   }

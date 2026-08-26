@@ -44,6 +44,7 @@ class _CommentSectionState extends ConsumerState<CommentSection> {
   List<Comment> _comments = [];
   bool _commentsLoading = true;
   bool _commentsError = false;
+  int _commentsGeneration = 0;
 
   @override
   void initState() {
@@ -58,6 +59,7 @@ class _CommentSectionState extends ConsumerState<CommentSection> {
       _commentsSub?.cancel();
       _likeStates.clear();
       _likeLoadedFor.clear();
+      _comments = [];
       _commentsLoading = true;
       _commentsError = false;
       _replyingTo = null;
@@ -66,13 +68,19 @@ class _CommentSectionState extends ConsumerState<CommentSection> {
   }
 
   void _subscribeToComments() {
+    final generation = ++_commentsGeneration;
+    final chantId = widget.chantId;
     final stream = ref
         .read(commentRepositoryProvider)
-        .commentsForChantStream(chantId: widget.chantId);
+        .commentsForChantStream(chantId: chantId);
 
     _commentsSub = stream.listen(
       (comments) {
-        if (!mounted) return;
+        if (!mounted ||
+            generation != _commentsGeneration ||
+            chantId != widget.chantId) {
+          return;
+        }
 
         // Reconcile like states outside of build.
         final authState = ref.read(authStateProvider);
@@ -81,7 +89,7 @@ class _CommentSectionState extends ConsumerState<CommentSection> {
           _initLikeState(c);
           _reconcileServerCount(c.id, c.likeCount);
           if (user != null) {
-            _loadUserLike(c.id, user.uid);
+            _loadUserLike(c.id, user.uid, generation);
           }
         }
 
@@ -96,7 +104,11 @@ class _CommentSectionState extends ConsumerState<CommentSection> {
         });
       },
       onError: (_) {
-        if (!mounted) return;
+        if (!mounted ||
+            generation != _commentsGeneration ||
+            chantId != widget.chantId) {
+          return;
+        }
         setState(() {
           _commentsError = true;
           _commentsLoading = false;
@@ -107,6 +119,7 @@ class _CommentSectionState extends ConsumerState<CommentSection> {
 
   @override
   void dispose() {
+    _commentsGeneration += 1;
     _commentsSub?.cancel();
     _bodyController.dispose();
     _composerFocus.dispose();
@@ -120,7 +133,11 @@ class _CommentSectionState extends ConsumerState<CommentSection> {
     );
   }
 
-  Future<void> _loadUserLike(String commentId, String userId) async {
+  Future<void> _loadUserLike(
+    String commentId,
+    String userId,
+    int generation,
+  ) async {
     if (_likeLoadedFor.contains(commentId)) return;
     _likeLoadedFor.add(commentId);
 
@@ -130,11 +147,13 @@ class _CommentSectionState extends ConsumerState<CommentSection> {
           .read(commentRepositoryProvider)
           .getUserLike(userId: userId, commentId: commentId);
     } catch (_) {
-      _likeLoadedFor.remove(commentId);
+      if (generation == _commentsGeneration) {
+        _likeLoadedFor.remove(commentId);
+      }
       return;
     }
 
-    if (!mounted) return;
+    if (!mounted || generation != _commentsGeneration) return;
     final persistedLike = like;
     if (persistedLike != null) {
       setState(() {

@@ -2234,6 +2234,19 @@ describe("blocks and interaction privacy", () => {
     }));
   });
 
+  it("denies a new block against a deletion-pending target", async () => {
+    await seedUserProfile("blocker");
+    await seedDeletionPendingUser("deleting-target");
+    const db = testEnv.authenticatedContext("blocker").firestore();
+
+    await assertFails(setDoc(doc(db, "blocks", "blocker_deleting-target"), {
+      blockerId: "blocker",
+      blockedUserId: "deleting-target",
+      blockedDisplayName: "Deleting user",
+      createdAt: Timestamp.now(),
+    }));
+  });
+
   it("prevents replies and likes in either direction after a block", async () => {
     await seedUserProfile("blocker");
     await seedUserProfile("target");

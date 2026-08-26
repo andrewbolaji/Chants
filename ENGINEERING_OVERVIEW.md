@@ -1,6 +1,6 @@
 # Chants engineering overview
 
-This is the current whole-project map for Chants. It describes the combined stacked application through durable account-deletion implementation commit `98f2c9ee98d5feb7a901cb3e8907b056b340b05d` in draft PR 13, plus this CI-evidence refresh. The immutable baseline for the coming external freeze review remains `c57815c`; that review must use the Git range `c57815c...<final-pr-13-head>`. Every material claim names the implementation path and symbol that supports it.
+This is the current whole-project map for Chants. It describes the combined stacked application through reviewed PR 13 head `267afa216ccf05ba88a928e93d4ee30a2334ea4c` plus the uncommitted V1 freeze remediation on `codex/v1-freeze-remediation`. The immutable baseline for the next independent review remains `c57815c`; after this block is committed, that review must use `c57815c...<remediation-head>`. Every material claim names the implementation path and symbol that supports it.
 
 This document is descriptive, not an approval record. `docs/CHANGE_SPEC.md` contains the approved and implemented remediation contract. `docs/EXECUTION.md` records review and implementation evidence. `docs/IMPLEMENTATION_RATIONALE.md` is the companion coverage ledger and verification record. Completed reasoning lives in `docs/changes/`, and durable decisions live in `docs/decisions/`.
 
@@ -8,14 +8,16 @@ Three unrelated working-tree changes predated this review and remain unstaged: `
 
 ## Review outcome
 
-The stacked product work is coherent and unusually well tested for a pre-v1 mobile app. The combined client, Functions, seed, and rules design now supports one-level replies, blocking, audited unban, stable seeded chant IDs, explicit provenance and evidence, separate Songbook and Chant Lab browse surfaces, device-local Saved Matchday Songbook, native plain-text share-out, server-authoritative report and feedback budgets, and durable account deletion.
+The stacked product work is coherent and unusually well tested for a pre-v1 mobile app. The combined client, Functions, seed, and rules design supports one-level replies, blocking, audited unban, stable seeded chant IDs, explicit provenance and evidence, separate Songbook and Chant Lab browse surfaces, device-local Saved Matchday Songbook, native plain-text share-out, server-authoritative report and feedback budgets, and durable account deletion.
 
-The approved remediation closes the four material implementation defects found by the review:
+The V1 freeze review found concurrency, acknowledgement, storage-identity, and cache-provenance cases that the earlier automated matrix did not model. The current remediation closes the locally reproducible findings:
 
-1. **Direct-write parser parity.** `firestore.rules :: validUserChantSchema` and the collection match blocks now enforce exact typed client shapes, Team and Player relationships, v1 media and variations limits, and server ownership of `appliedValue`. Report and feedback creates later moved behind callables. `test_rules/firestore_rules.test.ts` proves the current client payloads, private lifecycle state, and hostile raw writes in a 135-assertion emulator suite.
-2. **Moderation revocation and live actions.** `lib/presentation/browse/discovery_section.dart :: _LiveChantCard` keeps a safe card through a transient error but removes it on permission denial, current absence, hidden, or removed data. `lib/presentation/browse/chant_detail_screen.dart` keeps route text readable while Save, Share, Report, Vote, and Comment wait for a current visible live chant.
-3. **Missing-parent trigger tolerance.** `functions/src/index.ts :: handleVoteWritten` now reads and validates the parent before the vote query or batch. The missing-parent test proves zero query, batch, or child stamp write after deletion. Source comments no longer call the partial merge audit summary full or undo-capable.
-4. **Comments and Player resilience.** `CommentSection` contains and retries failed like hydration, contains failed Undo, and lays out the empty state at 390 by 844 and 1.8x text. `SubmitChantScreen` clears a stale prefilled Player with recovery copy and remains usable after Player-stream failure.
+1. **Destructive acknowledgement.** `SavedSongbookRepository.runAccountDeletion` and `FileSongbookStorage` preserve prepared, unknown, and accepted local states. A lost response no longer restores or deletes local data without proof, and retry reuses the unknown state.
+2. **Counter serialization.** `functions/src/index.ts` recomputes vote, like, visible-comment, user-report, and explicit chant aggregates in parent-serialized transactions. The controlled overlap test proves an older vote aggregation retries after a newer commit.
+3. **Target and input closure.** `handleSubmitReport` rejects deletion-pending user targets and oversized UTF-8 document IDs. `firestore.rules :: isActiveProfile` denies a new block against a pending target.
+4. **Storage identity.** `songbookStorageKeyForUid` uses lowercase SHA-256 over UTF-8 UID bytes, with active-UID lazy migration from the old base64url names.
+5. **Live authority and widget identity.** `ChantRepository.chantStream` carries Firestore cache provenance. Detail and Discover keep cache text readable but disable live actions until server confirmation. Vote and comment state reset on chant-ID change and discard callbacks from older generations.
+6. **Unsafe merge stop.** `requireMergeChantsEnabled` returns failed-precondition after operator authorization, so the sequential non-resumable merge path cannot mutate data before a separately approved recovery design exists.
 
 Release gates also remain outside those defects:
 
@@ -25,7 +27,7 @@ Release gates also remain outside those defects:
 
 The prior fail-open analysis path is also closed. `.github/workflows/ci.yml :: flutter-analyze` now uses the secret when present or copies `lib/firebase_options.dart.example`, then always runs analysis.
 
-Two later stacked blocks close risks that the review identified. `functions/src/safety_submission.ts` and decision 010 move report and feedback admission behind atomic private budgets. `functions/src/account_deletion.ts` and decision 011 replace synchronous deletion with a private bounded retry job, pending-account authority, and recoverable Auth finalization.
+Two later stacked blocks closed risks that the earlier review identified. `functions/src/safety_submission.ts` and decision 010 move report and feedback admission behind atomic private budgets. `functions/src/account_deletion.ts` and decision 011 replace synchronous deletion with a private bounded retry job, pending-account authority, and recoverable Auth finalization. Decisions 012 through 015 record the additional freeze corrections.
 
 The stack is still not release-ready. Signing credentials, final policy wording, independent freeze review, native compilation, live deployment, and device actions require separate owner input or authorization.
 
@@ -66,7 +68,7 @@ Historical `docs/DECISIONS.md` and `docs/BLOCK_RECAPS.md` explain earlier work b
 | Server | Fifteen Cloud Functions v2 exports, Node 20, TypeScript, `europe-west2` | `functions/src/index.ts`, `functions/package.json` |
 | Integrity | App Check with Apple App Attest/DeviceCheck fallback and Android Play Integrity in release | `lib/main.dart` |
 | Crash reporting | Firebase Crashlytics for Flutter and platform-dispatched errors | `lib/main.dart` |
-| Local persistence | One schema-versioned JSON Saved Songbook per encoded Firebase UID | `lib/data/repositories/songbook_storage.dart`, `saved_songbook_repository.dart` |
+| Local persistence | One schema-versioned JSON Saved Songbook per lowercase SHA-256 UID key | `lib/data/repositories/songbook_storage.dart`, `saved_songbook_repository.dart` |
 | Seeding | Admin SDK CLI with explicit chant IDs and read-only preflight mode | `seed/seed.ts`, `seed/chant_identity.ts`, `seed/seed_plan.ts` |
 | CI | Flutter test, Flutter analysis, Functions, seed, and Java-backed rules jobs | `.github/workflows/ci.yml` |
 
@@ -93,19 +95,19 @@ Direct-client authority now includes exact shapes for profiles, blocks, chants, 
 
 Chant vote totals, comment like totals, visible comment counts, and report-derived counts are denormalized for live reads. Their ground truth remains the child collections.
 
-`functions/src/index.ts :: handleVoteWritten`, `handleCommentLikeWritten`, `recomputeCommentCount`, `handleChantReportWritten`, `handleCommentReportWritten`, `handleUserReportCreated`, and `handleUserReportDeleted` recompute absolute totals instead of blindly incrementing. This is the correct response to at-least-once trigger delivery: duplicate and out-of-order events converge on stored ground truth.
+`functions/src/index.ts :: handleVoteWritten`, `handleCommentLikeWritten`, `recomputeCommentCount`, `handleChantReportWritten`, `handleCommentReportWritten`, `handleUserReportCreated`, and `handleUserReportDeleted` recompute absolute totals instead of blindly incrementing. Each path reads and writes its parent inside the same Firestore transaction as the child query. Duplicate delivery is idempotent, and overlapping delivery conflicts on the shared parent so a stale transaction retries against current stored truth.
 
-Votes and comment likes also write `appliedValue` in the same batch as the parent counter. `OptimisticVoteState` and `CommentLikeState` use that stamp to distinguish a local write that the server count has already absorbed from one still waiting for its trigger. The no-op guards in both Functions prevent the `appliedValue` write-back from looping.
+Votes and comment likes also write `appliedValue` in the parent transaction when the surviving interaction still has the event's identity and value. `OptimisticVoteState` and `CommentLikeState` use that stamp to distinguish a local write that the server count has already absorbed from one still waiting for its trigger. The no-op guards in both Functions prevent the stamp write-back from looping.
 
-Both vote and comment-like handlers now check parent existence before aggregate work. The vote missing-parent regression test proves a delayed trigger after deletion makes no query, opens no batch, and writes no reconciliation stamp.
+Both vote and comment-like handlers check parent existence inside their transaction before aggregate work. A delayed trigger after deletion makes no child query, parent write, or reconciliation stamp.
 
 ## Browse, moderation, and live state
 
 `lib/data/repositories/chant_repository.dart :: _visibleChants` applies `hidden == false` and `removed == false` to list queries. `TeamScreen` and `PlayerScreen` subscribe to query snapshots, preserve their last usable result through ordinary connection errors, and remove a chant when the query authoritatively removes it.
 
-Discover performs a one-shot visible fetch and shuffles it, then each card listens to its document. `_LiveChantCard` classifies Firebase permission denial separately from ordinary connection failure: transient failure retains the last safe card, while denial, current absence, hidden, or removed state removes it.
+Discover performs a one-shot visible fetch and shuffles it, then each keyed card listens to its document. `_LiveChantCard` classifies Firebase permission denial separately from ordinary connection failure: transient failure retains the last safe card, while denial, server-confirmed absence, hidden, or removed state removes it. A cache-only card remains readable and navigable but cannot vote.
 
-`ChantDetailScreen` receives a route snapshot for readable fallback. It now derives a separate current-authority state from an active, error-free, visible live document. Save, Share, Report, Vote, and Comment are unavailable until that state exists. This keeps useful lyrics readable without letting a stale route authorize an external or mutating action.
+`ChantDetailScreen` receives a route snapshot for readable fallback. `ChantRepository.chantStream` includes metadata changes and preserves `isFromCache`. The screen derives current authority only from an active, error-free, non-cache visible document. Save, Share, Report, Vote, and Comment are unavailable until that state exists. This keeps useful lyrics readable without letting route or cache data authorize an external or mutating action.
 
 Discover currently reads all visible chants with no page size in `ChantRepository.discoveryChants()`. Saved club refresh also reads the complete visible Team set from the server. Both are acceptable at the current 12-chant seed, but Discover must paginate or adopt a server-supported random-selection strategy when content volume grows.
 
@@ -125,13 +127,13 @@ Comments are flat Firestore documents. A nullable or absent `parentCommentId` me
 
 Blocking is directional for storage and private visibility, but reply and like rules check both directions. The client filters blocked authors from the rendered thread. Block snackbar Undo now contains repository failure and shows `Could not unblock this user. Try again.`
 
-Report counters are computed from pending report rows inside a Firestore transaction. Chant and comment content auto-hide at three pending reports and never auto-remove. User reports only increase an operator-review count. `submitReport` and `submitFeedback` validate typed payloads, current targets, profile state, and private anchored-window budgets before storing server-owned rows. Direct creates are denied. Report and feedback velocity is therefore bounded before storage, while App Check enforcement remains a separate live configuration question.
+Report counters are computed from pending report rows inside a Firestore transaction. Chant and comment content auto-hide at three pending reports and never auto-remove. User reports only increase an operator-review count. `submitReport` and `submitFeedback` validate typed payloads, current targets, profile state, bounded UTF-8 path identity, and private anchored-window budgets before storing server-owned rows. User reports and direct blocks reject deletion-pending targets. Direct report and feedback creates are denied. App Check enforcement remains a separate live configuration question.
 
 ## Saved Matchday Songbook
 
-Saved Matchday Songbook is local-only by design. `SavedSongbookRepository` stores at most 500 unique chants and 2 MiB of encoded JSON, isolates files by base64url-encoded Firebase UID, serializes mutations, and writes through a temporary file plus atomic replacement. It refuses future schema versions and malformed shapes.
+Saved Matchday Songbook is local-only by design. `SavedSongbookRepository` stores at most 500 unique chants and 2 MiB of encoded JSON, isolates files by a lowercase SHA-256 digest of the UTF-8 Firebase UID, serializes mutations, and writes through a temporary file plus atomic replacement. It refuses future schema versions and malformed shapes. The active UID lazily migrates its matching legacy base64url files.
 
-Fresh save and refresh paths use explicit server reads in `SavedSongbookService`. Saved detail is read-only and excludes votes, comments, reports, evidence, media, and share. Account deletion stages the local file behind a tombstone, requests durable remote acceptance, restores exact bytes on request failure, finalizes the unreadable local deletion after acceptance, and signs out even if tombstone cleanup must be retried later.
+Fresh save and refresh paths use explicit server reads in `SavedSongbookService`. Saved detail is read-only and excludes votes, comments, reports, evidence, media, and share. Account deletion moves the local file from prepared to unknown before the remote await. Prepared data can recover before a request starts; an unknown response remains locked and retryable; explicit acceptance permits local cleanup and sign-out. Deferred accepted cleanup never restores the snapshot.
 
 This design has strong unit and widget coverage. Its remaining evidence boundary is physical-device force-stop and relaunch in airplane mode. No test renderer can prove operating-system filesystem survival or real background lifecycle behavior.
 
@@ -153,24 +155,22 @@ The seed updates only content allowlists and preserves engagement counters and o
 
 ## CI and verification
 
-Local verification on 2026-08-25:
+Local verification on 2026-08-26:
 
 | Check | Result |
 |---|---|
-| `flutter test` | PASS, 310 tests |
+| `flutter test` | PASS, 322 tests |
 | `flutter analyze lib test` | PASS, no issues |
-| `flutter analyze` | FAIL only in ignored `build/ios/SourcePackages` third-party examples from prior native attempt; clean checkout pending |
-| `cd functions && npm test` | PASS, 69 tests |
+| `cd functions && npm test` | PASS, 73 tests |
 | `cd seed && npm test` | PASS, 42 tests |
 | `cd seed && npx tsc --noEmit` | PASS |
 | `git diff --check main...HEAD` | PASS |
-| `PATH=/usr/local/opt/openjdk/bin:$PATH firebase emulators:exec ...` | PASS, 135 rules assertions |
-| focused moderation and live-action tests | PASS: denial removes Discover card; stale detail actions remain unavailable |
-| focused comments resilience tests | PASS: read retry, Undo failure, and 1.8x empty state are contained |
-| focused stale Player tests and goldens | PASS: missing and failed Player data recover without assertion or clipping |
-| draft PR 13 GitHub Actions run `32907722272` | PASS: Flutter test, Flutter analysis, Functions, seed, and 135 Java-backed rules assertions |
+| `cd test_rules && npx tsc --noEmit` | PASS |
+| Java-backed Firestore emulator | PASS, 136 rules assertions |
+| focused freeze regressions | PASS: ambiguous deletion, UID migration, counter overlap, pending targets, cache authority, and chant-ID swaps |
+| draft PR 13 GitHub Actions run `32907722272` | Prior baseline PASS: 310 Flutter tests, analysis, 69 Functions, 42 seed, and 135 rules assertions |
 
-The earlier review probes supplied red evidence for stale Discover retention, escaping like-read failure, and the enlarged-text overflow. The final deletion block supplied deliberate red evidence for its 200-row bound, pending-account block denial, and app-gate precedence. All production behavior was restored, the complete local matrix passes, and all five draft PR 13 jobs passed on a clean runner.
+This remediation first proved its affected boundaries red: ambiguous deletion restored local data, cache-only detail enabled actions, vote and comment state crossed chant IDs, deletion-pending target writes succeeded, path-sized report input reached Firestore, and the old transaction fakes exposed non-transactional counter writers. The permanent regressions and complete local matrix now pass. Clean-runner CI has not run against the remediation worktree.
 
 `dart format --output=none --set-exit-if-changed lib test` reported during review that 56 committed Dart files would change. It made no files writable because output was disabled. Formatting is not a CI gate today; this remediation keeps the large mechanical rewrite separate and proposes adding an enforceable gate only after the current tree is normalized in its own reviewable commit.
 
@@ -188,7 +188,7 @@ Recovery is uneven:
 - Rules and Functions can be redeployed from an earlier commit, but no rollback runbook exists.
 - Seeded canonical content is reproducible from reviewed JSON.
 - User submissions and interaction data depend on unverified Firestore backup and point-in-time-recovery settings.
-- `mergeChants` is not safely undoable from its partial audit payload.
+- `mergeChants` is not safely undoable from its partial audit payload and is now disabled after operator authorization.
 - Account deletion has durable repository recovery, but no operational alert, dead-letter path, or operator console for a permanently retained job.
 
 Crashlytics is wired, but there is no repository-defined alerting, function-error dashboard, deployment smoke test, or incident runbook. App Check enforcement, billing alerts, backup settings, authentication templates, and live indexes are dashboard state that this review did not inspect.
@@ -198,7 +198,7 @@ Crashlytics is wired, but there is no repository-defined alerting, function-erro
 1. **The strict author-update boundary.** Review exact current-schema enforcement against any real legacy documents before rollout; legacy reads remain compatible, but invalid legacy documents cannot use direct author editing until normalized.
 2. **Moderation and offline semantics.** Confirm on device that readable route fallback, Discover disappearance, Saved Songbook copies, and disabled live actions communicate their different authority clearly.
 3. **Release configuration.** The real policy, Android release signing, native compilation, App Check dashboard state, and device walk are release blockers even though local and clean-runner suites are green.
-4. **Remaining destructive workflow.** `mergeChants` is still sequential, partially audited, and non-resumable. Account deletion is now bounded and resumable, but retained-job operations still need production alerting.
+4. **Remaining destructive workflow.** `mergeChants` is disabled because its implementation is sequential, partially audited, and non-resumable. Account deletion is bounded and resumable, but retained-job operations still need production alerting.
 5. **Scale boundaries.** Discover's full fetch and ground-truth counter scans need measured budgets before community volume makes linear reads material.
 
 ## Unverified
@@ -207,7 +207,7 @@ Crashlytics is wired, but there is no repository-defined alerting, function-erro
 - No live stable-ID preflight or seed write ran.
 - No Android build succeeded locally because the Android SDK is unavailable. No iOS build succeeded because inherited Cloud Firestore Swift Package sources failed compilation in the prior native check. No native file mutation from that attempt remains.
 - No iPhone, Android, or iPad walkthrough ran in this review.
-- Clean-runner CI has not yet run against the final account-deletion worktree.
+- Clean-runner CI has not run against the uncommitted V1 freeze remediation.
 - Android release signing remains debug-only in the tracked configuration.
 - The content policy remains placeholder copy.
 - Dependency freshness and current security-advisory state are unverified.

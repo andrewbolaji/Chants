@@ -13,6 +13,30 @@ This is the chronological evidence trail for substantial engineering work. It re
 
 ## Entries
 
+### 2026-08-26T04:06:54Z Start V1 freeze correctness remediation
+
+- **Status:** Implemented and locally verified; packaging and independent review pending
+- **Scope:** Implement the locally reproducible correctness fixes from `docs/CODE_REVIEW_FREEZE_2026-08.md`: deletion acknowledgement and tombstone states, transaction-safe counters, deletion-pending target closure, UID-safe local paths, cache-aware live authority, chant-identity lifecycle, report path validation, and a safe stop on non-resumable merge. Production policy copy, signing, native builds, device actions, dependency disclosure, Firebase, seed, deployment, merge, and release remain outside scope.
+- **Reference:** `docs/CHANGE_SPEC.md`, reviewed range `c57815c...267afa2`
+- **Approval:** Andrew directed Codex to "make the fixes you think make logical sense" on 2026-08-25, explicitly delegating the bounded technical choices recorded in the active spec.
+- **Operator:** Codex
+
+| UTC time | Action | Target/environment | Result and evidence |
+|---|---|---|---|
+| 04:06:54 | Created a stacked remediation branch from the exact reviewed head | Local Git | Created `codex/v1-freeze-remediation` at `267afa2`. Preserved the untracked freeze review and the owner's three existing Gradle and lockfile modifications. |
+| 04:06:54 | Replaced the completed prior active contract with the bounded remediation contract | Local repository | Marked the exact technical scope approved under Andrew's delegated instruction. Runtime implementation begins only after this record. |
+| 04:14:00 | Captured red evidence at the affected boundaries | Focused Flutter, Functions, and rules tests | Reproduced ambiguous deletion restoration, cache-only action enablement, chant-ID state reuse, pending-target acceptance, oversized report identity, and non-transactional counter writers before implementing fixes. |
+| 04:24:00 | Implemented deletion acknowledgement and UID-safe storage | Local Flutter repositories and UI | Added prepared, unknown, and accepted artifacts; retryable unconfirmed response; lowercase SHA-256 UID keys; active legacy migration; truthful uncertainty copy; and reconstruction coverage without a dependency or lockfile change. |
+| 04:29:00 | Implemented transactional aggregation and safety target closure | Local Functions and Firestore rules | Parent-serialized vote, like, visible-comment, user-report, content-report, and explicit chant reconciliation now converge under overlap. Pending report and block targets and path-sized report IDs fail closed. |
+| 04:33:00 | Implemented cache provenance, chant identity isolation, and merge stop | Local Flutter and Functions source | Cache text stays readable while live actions wait for server authority. Vote and comment async work cannot cross chant IDs. Operator merge stops before target parsing or mutation. |
+| 04:36:00 | Ran backend and authorization verification | Local Node 20, OpenJDK 26, Firestore emulator | PASS: 73 Functions tests and build, 42 seed tests, rules TypeScript compilation, and 136 Java-backed rules assertions. The first rules cold start exceeded the inherited 10-second setup timeout; the same suite passed with a 30-second hook allowance. |
+| 04:40:55 | Ran full client verification and refreshed durable records | Local Flutter and repository | PASS: 322 Flutter tests, scoped analysis with no issues, 21 touched Dart files formatted, and focused lifecycle, cache, migration, and identity regressions. Added decisions 012 through 015, completed record, interface and learning updates, overview, rationale, roadmap, README, and handbook truth. |
+| 04:53:09 | Hardened conflicting local artifact recovery and completed the ownership and diff audit | Local Flutter, Git, and repository | Unknown and accepted deletion markers now outrank conflicting active files. The added regression passes, the complete Flutter suite remains 322 of 322, scoped analysis is clean, `git diff --check` passes, new files have no trailing whitespace, and the Git index is empty. |
+
+- **Files/artifacts:** Runtime and regression paths named in `docs/changes/2026-08-26-v1-freeze-correctness-remediation.md`; decisions 012 through 015; active contract; current overview and rationale; this execution entry; and the preserved untracked external freeze report.
+- **Skipped or blocked:** Final policy text, production signing, native builds, physical-device review, advisory lookup, cloud alert creation, Firebase access, seed reads or writes, deployment, commit, push, PR, merge, and release. Clean-runner CI awaits packaging authorization.
+- **Current state:** Approved remediation is locally complete and green on `codex/v1-freeze-remediation`. No external or repository-publication state changed. The owner's three pre-existing modifications remain unstaged and untouched.
+
 ### 2026-08-25T20:25:22Z Package abuse controls and implement account deletion recovery
 
 - **Status:** Abuse-control PR and account-deletion PR packaged and clean-runner green; external freeze review pending

@@ -5,6 +5,7 @@ import 'package:chants/app/providers.dart';
 import 'package:chants/app/router.dart';
 import 'package:chants/app/spacing.dart';
 import 'package:chants/data/models/chant.dart';
+import 'package:chants/data/repositories/chant_repository.dart';
 import 'package:chants/presentation/shared/chant_card.dart';
 import 'package:chants/presentation/shared/empty_state.dart';
 import 'package:chants/presentation/shared/error_state.dart';
@@ -114,6 +115,7 @@ class DiscoverySection extends ConsumerWidget {
                 .take(20)
                 .map(
                   (chant) => _LiveChantCard(
+                    key: ValueKey(chant.id),
                     initialChant: chant,
                     teamName: teamNames[chant.teamId],
                   ),
@@ -131,7 +133,7 @@ class _LiveChantCard extends ConsumerWidget {
   final Chant initialChant;
   final String? teamName;
 
-  const _LiveChantCard({required this.initialChant, this.teamName});
+  const _LiveChantCard({super.key, required this.initialChant, this.teamName});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -139,25 +141,30 @@ class _LiveChantCard extends ConsumerWidget {
         .watch(chantRepositoryProvider)
         .chantStream(initialChant.id);
 
-    return StreamBuilder<Chant?>(
+    return StreamBuilder<LiveChantSnapshot>(
       stream: stream,
-      initialData: initialChant,
+      initialData: LiveChantSnapshot(chant: initialChant, isFromCache: true),
       builder: (context, snap) {
         final permissionDenied = isChantPermissionDenied(snap.error);
+        final currentSnapshot = snap.data;
         final hasAuthoritativeValue =
-            snap.connectionState == ConnectionState.active && !snap.hasError;
-        final current = snap.data;
+            snap.connectionState == ConnectionState.active &&
+            !snap.hasError &&
+            currentSnapshot != null &&
+            !currentSnapshot.isFromCache;
+        final current = currentSnapshot?.chant;
         if (permissionDenied ||
             (hasAuthoritativeValue &&
                 (current == null || current.hidden || current.removed))) {
           return const SizedBox.shrink();
         }
 
-        final live = snap.data ?? initialChant;
+        final live = current ?? initialChant;
         if (live.hidden || live.removed) return const SizedBox.shrink();
         return ChantCard(
           chant: live,
           teamName: teamName,
+          actionsEnabled: hasAuthoritativeValue,
           onTap: () => Navigator.pushNamed(
             context,
             AppRouter.chantDetail,

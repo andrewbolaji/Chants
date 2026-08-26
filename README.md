@@ -134,7 +134,7 @@ Fifteen Functions exports in source (all configured for `europe-west2`; live dep
 
 **Content integrity.** All seed content (lyrics, squads, cultural context) is externally sourced and verified by hand. The build process can only transform supplied data in place; it never generates or rewrites content. This is a standing rule with the highest priority in the project.
 
-**Test coverage across layers.** 310 Flutter tests, 135 Firestore security-rules assertions, 69 Cloud Functions tests, and 42 seed-pipeline tests. Regression guards cover timing-sensitive UI, moderation revocation, atomic safety intake, durable account deletion, direct-write abuse, trigger deletion races, responsive comment states, stale Player recovery, reply grouping, and offline snapshot reconstruction.
+**Test coverage across layers.** 322 Flutter tests, 136 Firestore security-rules assertions, 73 Cloud Functions tests, and 42 seed-pipeline tests pass locally on the V1 freeze remediation. Regression guards cover timing-sensitive UI, cache-only authority, chant-ID reuse, moderation revocation, atomic safety intake, ambiguous account-deletion acknowledgement, transactional counter overlap, direct-write abuse, pending-target closure, responsive comment states, stale Player recovery, reply grouping, and offline snapshot reconstruction. Clean-runner CI for this uncommitted remediation remains pending.
 
 ---
 

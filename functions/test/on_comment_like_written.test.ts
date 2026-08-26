@@ -22,26 +22,7 @@ let commentStore: Record<string, Record<string, unknown>> = {};
 
 function makeFakeFirestore(): admin.firestore.Firestore {
   const fakeDocRefWithPath = (path: string) => {
-    const docId = path.split("/")[1];
-    const collection = path.split("/")[0];
     return {
-      update: (data: Record<string, unknown>) => {
-        // Apply the update to the in-memory store
-        if (collection === "comments" && commentStore[docId]) {
-          Object.assign(commentStore[docId], data);
-        }
-        return Promise.resolve();
-      },
-      get: () => {
-        if (collection === "comments") {
-          const data = commentStore[docId];
-          return Promise.resolve({
-            exists: !!data,
-            data: () => data ? { ...data } : undefined,
-          });
-        }
-        return Promise.resolve({ exists: false, data: () => undefined });
-      },
       __path: path,
     };
   };
@@ -49,35 +30,56 @@ function makeFakeFirestore(): admin.firestore.Firestore {
   const fakeCollectionWithPath = (name: string) => ({
     doc: (id: string) => fakeDocRefWithPath(`${name}/${id}`),
     where: (field: string, _op: string, value: unknown) => ({
-      get: () => {
-        const store = name === "commentLikes" ? likeStore : commentStore;
-        const docs = Object.entries(store)
-          .filter(([, data]) => data[field] === value)
-          .map(([id, data]) => ({
-            id,
-            data: () => ({ ...data }),
-          }));
-        return Promise.resolve({ docs });
-      },
+      __query: { name, field, value },
     }),
   });
 
-  const fakeBatch = () => {
+  const runTransaction = async (
+    handler: (transaction: {
+      get: (target: Record<string, unknown>) => Promise<unknown>;
+      update: (ref: Record<string, unknown>, data: Record<string, unknown>) => void;
+    }) => Promise<unknown>
+  ) => {
     const staged: StagedWrite[] = [];
-    return {
+    const result = await handler({
+      get: async (target: Record<string, unknown>) => {
+        const query = target.__query as {
+          name: string;
+          field: string;
+          value: unknown;
+        } | undefined;
+        if (query) {
+          const store = query.name === "commentLikes" ? likeStore : commentStore;
+          const docs = Object.entries(store)
+            .filter(([, data]) => data[query.field] === query.value)
+            .map(([id, data]) => ({ id, data: () => ({ ...data }) }));
+          return { docs };
+        }
+        const path = target.__path as string;
+        const [collection, id] = path.split("/");
+        const store = collection === "comments" ? commentStore : likeStore;
+        const data = store[id];
+        return {
+          exists: data !== undefined,
+          data: () => data === undefined ? undefined : { ...data },
+        };
+      },
       update: (ref: Record<string, unknown>, data: Record<string, unknown>) => {
         staged.push({ path: ref.__path as string, data });
       },
-      commit: () => {
-        batchCommits.push({ writes: [...staged] });
-        return Promise.resolve();
-      },
-    };
+    });
+    if (staged.length > 0) batchCommits.push({ writes: [...staged] });
+    for (const write of staged) {
+      const [collection, id] = write.path.split("/");
+      const store = collection === "comments" ? commentStore : likeStore;
+      if (store[id]) Object.assign(store[id], write.data);
+    }
+    return result;
   };
 
   return {
     collection: fakeCollectionWithPath,
-    batch: fakeBatch,
+    runTransaction,
   } as unknown as admin.firestore.Firestore;
 }
 

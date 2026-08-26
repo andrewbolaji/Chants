@@ -256,6 +256,38 @@ describe("handleSubmitReport", () => {
     }), "not-found");
   });
 
+  it("rejects a user target whose deletion is already pending", async () => {
+    const harness = makeHarness();
+    seedReporter(harness);
+    harness.seed("profiles", "deleting-target", {
+      banned: false,
+      deletionPending: true,
+    });
+
+    await expectCode(handleSubmitReport({
+      uid: "reporter",
+      data: reportData("user", "deleting-target"),
+      firestore: harness.firestore,
+      clock: () => NOW,
+    }), "failed-precondition");
+    assert.strictEqual(harness.count("userReports"), 0);
+    assert.strictEqual(harness.count("safetyRateLimits"), 0);
+  });
+
+  it("rejects a target ID whose UTF-8 path would exceed the stored ID budget", async () => {
+    const harness = makeHarness();
+    seedReporter(harness);
+    const targetId = "界".repeat(512);
+
+    await expectCode(handleSubmitReport({
+      uid: "reporter",
+      data: reportData("user", targetId),
+      firestore: harness.firestore,
+      clock: () => NOW,
+    }), "invalid-argument");
+    assert.strictEqual(harness.count("userReports"), 0);
+  });
+
   it("writes each legacy report shape with server-owned identity, time, and status", async () => {
     const cases = [
       ["chant", "chants", "reports", "chantId"],

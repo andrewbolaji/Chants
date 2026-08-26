@@ -4,6 +4,7 @@ import 'package:chants/app/colors.dart';
 import 'package:chants/app/providers.dart';
 import 'package:chants/app/router.dart';
 import 'package:chants/app/spacing.dart';
+import 'package:chants/data/repositories/saved_songbook_repository.dart';
 import 'package:chants/presentation/browse/discovery_section.dart';
 import 'package:chants/presentation/shared/section_eyebrow.dart';
 
@@ -305,15 +306,20 @@ Future<void> _showDeleteAccountDialog(
 
   try {
     await ref.read(accountDeletionServiceProvider).deleteAccount(uid);
-  } catch (e) {
+  } on AccountDeletionRequestUnconfirmedException {
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text(
-          'Deletion did not start. Your account and Saved Songbook are still '
-          'available. Try again.',
+          'We could not confirm whether deletion started. Your Saved Songbook '
+          'is locked for safety. Try again to confirm the request.',
         ),
       ),
+    );
+  } catch (_) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Deletion could not start. Try again.')),
     );
   }
 }
