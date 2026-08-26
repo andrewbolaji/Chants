@@ -10,6 +10,8 @@ String songbookStorageKeyForUid(String uid) {
   return sha256Hex(utf8.encode(uid));
 }
 
+enum SongbookAccountDeletionState { none, prepared, unknown, accepted }
+
 abstract class SongbookStorage {
   Future<String?> read(String uid);
 
@@ -26,6 +28,8 @@ abstract class SongbookStorage {
   Future<void> finishAccountDeletion(String uid);
 
   Future<void> recoverAccountDeletionArtifacts(String uid);
+
+  Future<SongbookAccountDeletionState> accountDeletionState(String uid);
 }
 
 class _UidFiles {
@@ -199,8 +203,23 @@ class FileSongbookStorage implements SongbookStorage {
 
   @override
   Future<void> finishAccountDeletion(String uid) async {
-    final file = (await _uidFiles(uid)).accepted;
-    if (await file.exists()) await file.delete();
+    final files = await _uidFiles(uid);
+    await _finishAcceptedDeletion(files);
+  }
+
+  Future<void> _finishAcceptedDeletion(_UidFiles files) async {
+    if (!await files.accepted.exists()) return;
+    for (final file in [
+      files.active,
+      files.temporary,
+      files.prepared,
+      files.unknown,
+    ]) {
+      if (await file.exists()) await file.delete();
+    }
+    // Keep the accepted marker until every potentially readable artifact is
+    // gone. A partial failure therefore remains locked and retryable.
+    await files.accepted.delete();
   }
 
   @override
@@ -208,17 +227,7 @@ class FileSongbookStorage implements SongbookStorage {
     final files = await _uidFiles(uid);
     if (await files.accepted.exists()) {
       try {
-        for (final file in [
-          files.active,
-          files.temporary,
-          files.prepared,
-          files.unknown,
-        ]) {
-          if (await file.exists()) await file.delete();
-        }
-        // Delete the accepted marker last. If any earlier cleanup fails, the
-        // marker remains and continues to keep every other artifact unreadable.
-        await files.accepted.delete();
+        await _finishAcceptedDeletion(files);
       } catch (_) {
         // Accepted data remains unreadable and cleanup retries next time.
       }
@@ -231,5 +240,20 @@ class FileSongbookStorage implements SongbookStorage {
     }
     // Unknown means the server may already own destructive completion. It is
     // intentionally neither restored nor deleted without another acceptance.
+  }
+
+  @override
+  Future<SongbookAccountDeletionState> accountDeletionState(String uid) async {
+    final files = await _uidFiles(uid);
+    if (await files.accepted.exists()) {
+      return SongbookAccountDeletionState.accepted;
+    }
+    if (await files.unknown.exists()) {
+      return SongbookAccountDeletionState.unknown;
+    }
+    if (await files.prepared.exists()) {
+      return SongbookAccountDeletionState.prepared;
+    }
+    return SongbookAccountDeletionState.none;
   }
 }

@@ -5,13 +5,13 @@
 ## Document identity and completeness
 
 - **Product:** Chants, a Flutter and Firebase mobile app for learning trusted football chants and publishing new chant ideas.
-- **External review baseline:** `c57815c`, the last whole-stack engineering-review commit. The next independent review must compare that commit to the eventual V1 freeze remediation head.
-- **Current stack head:** Reviewed PR 13 head `267afa216ccf05ba88a928e93d4ee30a2334ea4c` plus the uncommitted remediation on `codex/v1-freeze-remediation`.
-- **Review type:** Current whole-project milestone snapshot after local freeze remediation and before independent review and the combined device walk. It is not a release sign-off.
+- **External review boundary:** Claude independently reviewed `c57815c...f5cb748`. The approved corrections in the current working tree require a narrower follow-up review after packaging.
+- **Current stack head:** PR 14 head `f5cb748a8e5fbc0bc36eec5f686729e9b1c0f4bc` plus the approved post-freeze corrections on `codex/v1-freeze-remediation`.
+- **Review type:** Current whole-project milestone snapshot after independent freeze review and local request-change correction, before clean-runner CI and the combined device walk. It is not a release sign-off.
 - **Coverage:** Flutter client, Cloud Functions, Firestore rules and tests, seed pipeline, native configuration, CI, framework docs, and release boundaries.
 - **Excluded:** Vendored `node_modules`, generated Flutter and TypeScript output, live Firebase data and dashboard state, deployed artifacts, store dashboards, and operating-system device behavior.
 - **Preserved unrelated work:** `android/app/build.gradle.kts`, `android/settings.gradle.kts`, and `pubspec.lock` were already modified and remain unstaged.
-- **Current status:** The freeze findings selected in `docs/CHANGE_SPEC.md` are implemented and locally green. Packaging, clean-runner CI, independent review, native compilation, and the combined device walk remain pending.
+- **Current status:** The post-freeze corrections selected in `docs/CHANGE_SPEC.md` are implemented and locally green. Packaging, clean-runner CI, correction-range review, native compilation, and the combined device walk remain pending.
 
 ## Repository coverage ledger
 
@@ -26,14 +26,14 @@
 | Duplicate nudge | Advisory token matcher and explicit continue/view/back flow in `SubmitChantScreen :: _reviewLikelyDuplicates` | Failure of an advisory read cannot block posting | Matcher and submit widget tests | No open implementation gap in v1 boundary |
 | Voting | Optimistic up/down/clear with transactional Function recompute in `vote_controls.dart`, `vote_repository.dart`, `handleVoteWritten` | Deterministic vote ID; client changes only intent; Function owns `appliedValue`; parent serializes overlapping aggregates; widget work stays with captured chant ID | Vote widget identity, repository, concurrency, duplicate, burst, and hostile rules cases | Transactional aggregate query cost grows with popularity |
 | Comments and replies | Ranked parents, one chronological reply level, likes, report, delete, block in `comment_section.dart` and `comment_card.dart` | Visible same-chant top-level parent; both block directions; background hydration and Undo failures contained; stream generation cannot cross chant IDs | Model, identity, enlarged-text, golden, Functions, and rules tests | No open v1 correctness gap in this reviewed boundary |
-| Reports and feedback | Callable-only admission, one report per reporter/target, shared anchored report budget, independent feedback budget, content auto-hide at 3 pending reports | Server owns identity, time, state, bounded ID, and atomic admission; pending targets reject new against-user rows; transactional counters hide only | Functions, Flutter failure-state, and hostile rules tests | Limits need closed-beta tuning; App Check enforcement remains live configuration |
+| Reports and feedback | Callable-only admission, one report per reporter/target, shared anchored report budget, independent feedback budget, content auto-hide at 3 pending reports | Server owns identity, time, state, bounded ID, and atomic admission; pending profiles or deletion jobs reject new against-user rows; deleting or missing reporters receive redacted audit rows | Functions, Flutter failure-state, and hostile rules tests | Limits need closed-beta tuning; App Check enforcement remains live configuration |
 | Moderation | Hide, unhide, remove, promote, demote, evidence removal, ban, unban in callable and operator screen | Callable derives actor from auth and re-reads operator role; audit is Admin-written | Pure trust and ban handlers, rules operator reads | Full callable and `mergeChants` lack end-to-end tests; queue query remains narrow |
 | Merge | `mergeChants` retains the old sequential implementation behind a failed-precondition stop after operator authorization | No merge mutation is permitted until resumable recovery has a separate approved design | Freeze-guard test, TypeScript compilation, and source review | Existing implementation is sequential, non-resumable, and only partially audited |
-| Account deletion | Durable request plus 16-phase bounded worker in `functions/src/account_deletion.ts`; pending app gate and three-state local acknowledgement | Explicit acceptance precedes sign-out; unknown response locks local data; pending account loses write authority; retry survives Auth deletion | Functions failure injection, 136-case rules suite, Flutter lifecycle and reconstruction tests, and inspected golden | No operator recovery console or retained-job alert; no undo by design |
-| Saved Matchday Songbook | UID-isolated bounded local JSON snapshots, explicit refresh, offline read-only routes | Maximum 500 unique chants and 2 MiB; active matching UID; case-safe SHA-256 path; unknown deletion state unreadable | Model, repository, migration, service, widget, lifecycle, and golden tests | Physical force-stop/airplane-mode persistence unverified; no cross-device sync by design |
+| Account deletion | Durable request plus 17-phase bounded worker in `functions/src/account_deletion.ts`; pending and unknown app gates; three-state local acknowledgement; audit actor and detail redaction | Unknown response locks local data and persistently gates Home; only callable success or positive pending state advances cleanup; pending account loses write authority; retained audit no longer links actor UID or report text | Functions failure injection, 136-case rules suite, Flutter lifecycle and reconstruction tests, and two inspected goldens | No operator recovery console or retained-job alert; no undo by design; no time-based audit retention policy |
+| Saved Matchday Songbook | UID-isolated bounded local JSON snapshots, explicit refresh, offline read-only routes | Maximum 500 unique chants and 2 MiB; active matching UID; case-safe SHA-256 path; unknown deletion state unreadable; accepted marker removed after every other artifact | Model, repository, migration, service, widget, lifecycle, SHA-boundary, and golden tests | Physical force-stop/airplane-mode persistence unverified; no cross-device sync by design |
 | Share-out | Plain-text native sheet from live detail in `chant_share.dart` and `chant_detail_screen.dart` | No public URL or delivery claim; every live-target action requires server-confirmed non-cache visible authority | Payload, gateway, cache authority, enlarged-text, and golden tests | Native device destination behavior unverified |
 | Seed | Explicit stable chant IDs, read-only preflight, transaction ownership recheck, validation, orphan report | Source content is human supplied; seed may transform but never invent lyrics or context | 42 seed tests plus TypeScript | Only Arsenal JSON exists; no live preflight or remaining club write ran |
-| CI | Five GitHub Actions jobs in `.github/workflows/ci.yml` | Tests, rules, and analysis must fail closed before merge | Draft PR 13 run `32907722272` passed all jobs; deterministic analysis fixture active | Flutter version is unpinned; no format gate |
+| CI | Five GitHub Actions jobs in `.github/workflows/ci.yml` | Tests, rules, and analysis must fail closed before merge | PR 14 run `32932769393` at `f5cb748` passed all jobs; deterministic analysis fixture active | Post-review correction head has not run yet; Flutter version is unpinned; no format gate |
 | Native release | Flutter Android/iOS shells and plugin registration | Store signing and native compilation are separate release gates | Source inspection and prior attempted builds | Android uses debug signing; Android SDK unavailable locally; inherited iOS Firestore Swift sources failed compile |
 
 ## System overview and architecture
@@ -66,11 +66,12 @@ The absolute recompute is idempotent under duplicate trigger delivery. The paren
 ### Critical path: report and moderate
 
 1. The client sends domain-only report or feedback fields to `submitReport` or `submitFeedback`.
-2. `functions/src/safety_submission.ts` validates the current profile and target, rejects pending user targets and path-sized IDs, applies a private anchored-window budget transactionally, and stores server-owned identity, time, and state.
+2. `functions/src/safety_submission.ts` validates the current profile and target, rejects a pending user profile or existing deletion job plus path-sized IDs, applies a private anchored-window budget transactionally, and stores server-owned identity, time, and state.
 3. `recomputeReportCount` counts pending rows in a transaction and updates the target absolute `flagCount`.
 4. Crossing three pending reports auto-hides, never auto-removes.
-5. Operators call `onModerationAction`; the Function rechecks Firestore role and deletion state, applies the action, resolves reports where required, and writes `auditLog`.
-6. Visible query streams remove the content. Discover distinguishes permission denial from transient failure, and detail actions require a server-confirmed non-cache current visible value even when route or cache text remains readable.
+5. Report triggers transactionally classify the reporter as active or deleting before writing `auditLog`; pending or missing reporters receive no UID or report text.
+6. Operators call `onModerationAction`; the Function rechecks Firestore role and deletion state, applies the action, resolves reports where required, and writes `auditLog`.
+7. Visible query streams remove the content. Discover distinguishes permission denial from transient failure, and detail actions require a server-confirmed non-cache current visible value even when route or cache text remains readable.
 
 ### Critical path: save for matchday
 
@@ -85,10 +86,12 @@ No Firestore document, Function, rule, index, background task, or cloud sync is 
 
 1. `AccountDeletionService` prepares the active UID's local Songbook, then marks it unknown before awaiting the request.
 2. `deleteAccount` transactionally creates `accountDeletionJobs/{uid}` and marks an existing profile pending, then returns durable acceptance.
-3. Explicit durable acceptance moves local state to accepted, permits cleanup, and signs out. A thrown response remains unknown, locked, signed in, and retryable because it does not prove rejection.
+3. Explicit callable success moves local state to accepted, permits cleanup, and signs out. A thrown response remains unknown, locked, signed in, and retryable because it does not prove rejection.
 4. `onAccountDeletionJobWritten` advances one bounded phase or 200-row page per retry-enabled event.
 5. Auth is disabled first. Private interactions are deleted, retained contributions are anonymized, and existing triggers converge counters from ground truth.
-6. One deterministic audit is written, Auth is deleted, and the profile plus job are deleted atomically. Missing Auth or duplicate delivery is a successful no-op.
+6. Audit rows authored by the user are redacted in bounded pages. Delayed report triggers also redact against pending or missing profile state.
+7. One non-identifying completion audit is written, Auth is deleted, and the profile plus job are deleted atomically. Missing Auth or duplicate delivery is a successful no-op.
+8. On later launch, local unknown state gates Home behind persistent retry. A positive pending profile can advance local accepted cleanup; a negative observation never restores uncertain data.
 
 ## Feature and subsystem implementation choices
 
@@ -101,9 +104,10 @@ No Firestore document, Function, rule, index, background task, or cloud sync is 
 | One direct reply level | Retention benefit without a deep moderation graph | Unlimited nesting or flat comments only | `docs/decisions/002-comment-reply-depth-and-retention.md`; reply rules and goldens |
 | Device-local saved snapshots | Stadium connectivity is unreliable; v1 does not need cloud sync complexity | Generic favorites or Firestore sync | `docs/decisions/003-saved-matchday-songbook-offline-v1.md`; persistence tests |
 | Native text share with no current URL | A useful chant can be sent now without a dead web destination | Guessed URL, direct social SDK, generated image | `docs/changes/2026-08-24-basic-share-out.md`; payload and gateway tests |
-| Fail-soft cached browse without cache authority | Ordinary network errors should not erase readable chants, but cache cannot prove moderation state | Clear all data or trust every active stream | Decision 015; metadata, transient-error, and action-gate tests |
+| Fail-soft cached browse without cache authority | Ordinary network errors should not erase readable chants, but cache cannot prove moderation state | Clear all data or trust every active stream | Decision 015; metadata, transient-error, action-gate, and existing-local-save tests |
 | Callable-only safety intake | Abuse must be rejected before storage and trigger cost | Post-write rate repair | Decision 010; atomic budget and rejected-non-consumption tests |
-| Durable bounded deletion job plus three-state client acknowledgement | Auth cannot remain the retry token, and a lost response cannot prove request rejection | One long callable, restart-from-zero retry, or restore-on-throw | Decisions 011 and 012; page, race, failure, unknown, and retry tests |
+| Durable bounded deletion job plus three-state client acknowledgement | Auth cannot remain the retry token, and a lost response cannot prove request rejection | One long callable, restart-from-zero retry, restore-on-throw, or restore-on-false-profile | Decisions 011 and 012; page, race, failure, persistent unknown, positive reconciliation, and retry tests |
+| Audit actor and report-text redaction during deletion | Report rows were deleted but audit retained the reporter UID and submitted reason | Delete all audit history or disclose identifying retention | Decision 016; bounded-page and delayed-trigger tests |
 | Lowercase SHA-256 UID storage key | Base64 case distinctions can collapse on case-insensitive filesystems | Raw or lowercased reversible UID encoding | Decision 014; vector, collision-pair, and migration tests |
 
 Decision 009 records exact parser-safe direct writes and server-owned reconciliation stamps. Decisions 012 through 015 refine destructive acknowledgement, transactional aggregates, local UID identity, and cache-provenance authority.
@@ -123,13 +127,13 @@ No media bytes are hosted. `storage.rules` denies all access. External evidence 
 
 ### Lifecycle and deletion
 
-Remote account deletion intentionally retains anonymized chants and comments as community content. A durable private job disables Auth, deletes votes, likes, reports, feedback, blocks, private safety state, Auth, and profile, then removes itself. Local deletion removes the matching UID's Saved Songbook only after explicit durable acceptance; an unconfirmed response preserves unreadable unknown state for retry. The user-facing dialog and snackbar in `lib/presentation/home/home_screen.dart` state the retained, removed, and uncertain boundaries, and `AccountDeletionPendingScreen` is the fail-closed fallback for a retained session.
+Remote account deletion intentionally retains anonymized chants and comments as community content. A durable private job disables Auth, deletes votes, likes, reports, feedback, blocks, and private safety state, redacts audit rows authored by the user, deletes Auth and profile, then removes itself. Audit rows about the deleted account may remain when another actor created them. Local deletion removes the matching UID's Saved Songbook only after positive acceptance; an unconfirmed response preserves unreadable unknown state for persistent retry. The dialog, `AccountDeletionRecoveryScreen`, and `AccountDeletionPendingScreen` state the retained, removed, and uncertain boundaries.
 
 Merge is a separate destructive content lifecycle. The retained implementation rekeys child interactions sequentially, then deletes the source; its audit data cannot reverse target dedup decisions. The callable now stops with failed-precondition before target parsing or mutation, after operator authorization, until a resumable design is approved.
 
 ### Retention and export
 
-No repository retention job exists for audit or feedback. No user-data export exists. No backup or restore configuration is checked in. Those are operational and regulatory gaps, not hidden implementation features.
+No time-based repository retention job exists for audit or feedback. Deleted-user audit actor identity and report text are redacted, but target-side safety history may remain. No user-data export exists. No backup or restore configuration is checked in. Those are operational and regulatory gaps, not hidden implementation features.
 
 ## Invariants and failure behavior
 
@@ -146,11 +150,12 @@ No repository retention job exists for audit or feedback. No user-data export ex
 | Failed network reads do not escape as unhandled UI errors | Like hydration retries after contained failure; failed Undo shows recovery copy | PASS in focused widget tests |
 | Launch viewport and enlarged text do not overflow | Empty comments pass at 390 by 844 and 1.8x; stale Player golden inspected | PASS for remediated states |
 | Saved content is UID-isolated and bounded | Access callback, SHA-256 filename, schema, count, and byte bounds | PASS in repository and migration tests |
-| Ambiguous deletion acknowledgement cannot restore or discard local data | Prepared, unknown, and accepted storage states | PASS across repository reconstruction and retry |
+| Ambiguous deletion acknowledgement cannot restore or discard local data | Prepared, unknown, and accepted storage states plus local-state app gate | PASS across repository reconstruction, relaunch, positive reconciliation, and retry |
 | Accepted deletion no longer depends on client auth or uptime | Durable job, pending marker, retry-enabled worker, Auth-missing tolerance, atomic finalization | PASS in Functions failure-injection and Flutter lifecycle tests |
-| Pending deletion cannot create new active or against-user data | Rules require no job and absent-or-false pending state; touched callables and targets check pending; app gate precedes Home | PASS in rules, Functions, and app-gate tests |
+| Pending deletion cannot create new active or against-user data | Rules require no job and absent-or-false pending state; user-report admission checks both target sources; app gate precedes Home | PASS in rules, Functions, and app-gate tests |
+| Deleted reporters do not remain linked to audit reason text | Bounded audit phase plus transactional pending or missing reporter classification | PASS in page and delayed-audit tests |
 | Stable seed identity survives title edits | Explicit source ID plus preflight and transaction recheck | PASS locally; live preflight unverified |
-| A green analysis job means analysis ran | CI writes secret or deterministic example, then always invokes analysis | PASS by workflow inspection and PR 13 clean-runner result |
+| A green analysis job means analysis ran | CI writes secret or deterministic example, then always invokes analysis | PASS by workflow inspection and PR 14 clean-runner result |
 | Store release uses production signing | Android release explicitly selects debug signing | **FAIL, release gate** |
 
 ## Security and privacy
@@ -175,9 +180,9 @@ No current dependency advisory conclusion is claimed. The audit request was bloc
 | `url_launcher ^6.3.2` | External evidence | Opens normalized provider URL | Failure translated in UI tests |
 | `path_provider ^2.1.6` | Local Songbook | Application-support directory | Physical lifecycle unverified |
 | `share_plus ^11.1.0` | Native share sheet | Plain-text operating-system handoff | Gateway and widgets pass; native compile/device gate pending |
-| Functions Node 20 | `firebase-admin ^13`, `firebase-functions ^6.3` | Server authority | 73 local tests pass |
+| Functions Node 20 | `firebase-admin ^13`, `firebase-functions ^6.3` | Server authority | 77 local tests pass |
 | Seed Node | `firebase-admin ^13` | Manual Admin writes | 42 tests and `tsc --noEmit` pass |
-| Rules test | Firebase emulator, Java in CI and local Homebrew runtime | Authorization assertions | 136 passed locally; prior PR 13 clean-runner baseline passed 135 |
+| Rules test | Firebase emulator, Java in CI and local Homebrew runtime | Authorization assertions | 136 passed locally and at PR 14 head `f5cb748` |
 | Android Gradle | AGP 8.11.1, Kotlin 2.2.20 | Android build | User has unstaged Crashlytics plugin changes; release signs debug |
 | iOS | deployment target 15.0, CocoaPods scaffold | iOS build | Prior simulator compilation failed in inherited Cloud Firestore Swift package sources |
 
@@ -199,25 +204,25 @@ Before public volume, establish query/read budgets for Discover and counters, Fu
 
 | Command or probe | Environment | Result | Claim supported |
 |---|---|---|---|
-| `flutter test --machine` | Local macOS, Flutter 3.44.8 | PASS, 322 | Current combined Flutter suite, including deletion, cache, identity, and existing goldens |
+| `flutter test` | Local macOS, Flutter 3.44.8 | PASS, 336 | Current combined Flutter suite, including profile-independent persistent deletion recovery, cache-local actions, identity, and goldens |
 | `flutter analyze lib test` | Same | PASS | Project Dart source has no analyzer issue |
-| `cd functions && npm test` | Node 20.20.2 | PASS, 73 | Extracted handlers compile and pass, including counter overlap, merge stop, deletion, and safety boundaries |
+| `cd functions && npm test` | Node 20.20.2 | PASS, 77 | Extracted handlers compile and pass, including audit redaction, delayed audit privacy, target job denial, counter overlap, merge stop, deletion, and safety boundaries |
 | `cd seed && npm test` | Node 20.20.2 | PASS, 42 | Seed identity, plan, validation, reconciliation |
 | `cd seed && npx tsc --noEmit` | Node 20.20.2 | PASS | Full seed TypeScript type check |
 | `git diff --check` | Git | PASS before final documentation refresh | Current worktree diff has no whitespace error |
 | `firebase emulators:exec --only firestore ...` | Local OpenJDK 26, emulator 1.21.0 | PASS, 136 | Current shapes accepted; pending target block is denied |
-| freeze-focused Flutter regressions | Local Flutter renderer | PASS | Cache actions, chant identity, unknown deletion, and UID migration hold |
-| freeze-focused Functions regressions | Local Node | PASS | Concurrent aggregate retry, pending target report, UTF-8 ID bound, and merge stop hold |
-| scoped `dart format` over 21 touched Dart files | Dart 3.12.2 | PASS, no changes required | Remediation Dart files are formatted without normalizing inherited files |
-| draft PR 13 implementation CI | GitHub Actions run `32907722272` on `98f2c9e` | PASS: 310 Flutter, analysis, 69 Functions, 42 seed, 135 rules | Clean Linux and Java evidence for the final runtime layer |
+| post-freeze Flutter regressions | Local Flutter renderer | PASS | Persistent unknown and status-check gates, positive reconciliation, accepted-last cleanup, cached local saved actions, typed permission classification, and SHA boundaries hold |
+| post-freeze Functions regressions | Local Node | PASS | Audit redaction pages, delayed report audit privacy, target deletion-job denial, and existing freeze behavior hold |
+| scoped `dart format` over 16 present touched Dart files | Dart 3.12.2 | PASS, no changes required | Remediation Dart files are formatted without normalizing inherited files; two additional affected Dart files were deleted as dead code |
+| PR 14 clean-runner CI | GitHub Actions run `32932769393` on `f5cb748` | PASS: 322 Flutter, analysis, 73 Functions, 42 seed, 136 rules | Clean Linux and Java evidence for the exact independently reviewed head; current corrections await replacement CI |
 
-This block captured red evidence before implementation for ambiguous deletion restoration, cache-only action enablement, chant-ID state reuse, deletion-pending target writes, path-sized report IDs, and non-transactional counter fakes. Permanent regression coverage and the complete local matrix pass. The worktree contains the approved remediation plus the same three pre-existing user modifications and the untracked external freeze report.
+The earlier freeze block captured red evidence before its implementation. This correction was driven by independently reproduced code paths and adds permanent guards for process-relaunch recovery, conflicting local artifacts, transient initialization, delayed report audits, target job existence, cached local save branches, typed permission errors, and SHA padding boundaries. The worktree contains only the approved correction plus the same three pre-existing user modifications and the untracked external freeze report.
 
 Skipped or blocked:
 
 - Android build: no Android SDK.
 - iOS build: prior inherited Cloud Firestore Swift package compile failure.
-- Independent review: pending against `c57815c...<remediation-head>` after packaging.
+- Independent freeze review: completed against `c57815c...f5cb748`; a narrow correction-range re-review remains after packaging.
 - Live Firebase, deploy, seed, merge, release, and device actions: not authorized.
 - npm production advisory audit: network failed in sandbox and elevated disclosure was rejected.
 
@@ -241,9 +246,9 @@ Recovery paths:
 
 | Document or claim | Current source reality | Action |
 |---|---|---|
-| README test counts and feature status | Current local counts are 322 Flutter, 136 rules, 73 Functions, and 42 seed | Update after remediation is packaged and clean-runner verified |
-| Roadmap freeze state | Freeze remediation is locally green but uncommitted; clean-runner, review, and release gates remain | Corrected in this block |
-| CI analysis state | Five jobs exist and analysis runs with secret or deterministic fixture | PR 13 run `32907722272` green |
+| README test counts and feature status | Current local counts are 336 Flutter, 136 rules, 77 Functions, and 42 seed | Updated for local state; replacement clean-runner evidence remains pending |
+| Roadmap freeze state | Independent review completed; approved corrections are locally green but uncommitted | Corrected in this block |
+| CI analysis state | Five jobs exist and analysis runs with secret or deterministic fixture | PR 14 run `32932769393` green at the pre-correction head |
 | Function merge comments | Audit payload is bounded and cannot reverse the operation | Corrected source comments; historical archive retained |
 | `docs/KNOWN_ISSUES.md` | Clearly labels itself a legacy snapshot | No longer an authority defect |
 | `docs/CHANGE_SPEC.md` | V1 freeze correctness contract is approved, implemented, and locally verified | Retain through packaging and independent review |
@@ -256,7 +261,7 @@ Recovery paths:
 | No retained-deletion-job alert or console | A permanent worker failure depends on manual investigation | Andrew | Before public beta or first observed retained job |
 | Android debug signing | Store release blocked | Andrew | Before production build |
 | Placeholder policy | User consent and store compliance incomplete | Andrew | Before any public submission release |
-| 56 files not formatter-normalized | Mechanical churn and inconsistent style | Andrew | Separate normalization commit before adding format gate |
+| 46 of 142 Dart files not formatter-normalized | Mechanical churn and inconsistent style | Andrew | Separate normalization commit before adding format gate |
 | No staging, runbook, backup proof, or data export | Incident and regulatory recovery depend on manual console work | Andrew | Before public beta or real irreproducible content |
 | Discover full fetch and ground-truth counter scans | Linear reads and write amplification | Andrew | When closed-beta metrics show meaningful volume |
 | Dependency advisories unverified | Current supply-chain risk is unknown | Andrew | Separately authorize registry audit before release |
@@ -284,7 +289,7 @@ Recovery paths:
 - `lib/presentation/comments/comment_section.dart`, `comment_card.dart`
 - `lib/presentation/submit/submit_chant_screen.dart`
 - `lib/presentation/moderation/moderation_screen.dart`
-- `lib/presentation/auth/account_deletion_pending_screen.dart`
+- `lib/presentation/auth/account_deletion_recovery_screen.dart`, `account_deletion_pending_screen.dart`
 
 **Seed and tests**
 

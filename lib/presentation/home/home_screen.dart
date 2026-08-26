@@ -285,8 +285,10 @@ Future<void> _showDeleteAccountDialog(
         'This starts permanent deletion of your account, votes, likes, '
         'reports, feedback, and blocks. Your submitted chants, comments, and '
         'replies stay as community content with your name removed. Your '
-        'Saved Matchday Songbook on this device is also removed. Cleanup may '
-        'continue briefly in the background. This cannot be undone.',
+        'Saved Matchday Songbook is locked immediately and removed once the '
+        'request is confirmed. Anonymous safety audit records may be kept, '
+        'without your account ID or report text. Cleanup may continue briefly '
+        'in the background. This cannot be undone.',
       ),
       actions: [
         TextButton(

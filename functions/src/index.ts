@@ -5,7 +5,7 @@ import {
   onDocumentWritten,
 } from "firebase-functions/v2/firestore";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
-import { writeAuditEntry } from "./audit";
+import { writeAuditEntry, writePrivacySafeReportAuditEntry } from "./audit";
 import {
   ChantTrustAction,
   ChantTrustPlan,
@@ -156,12 +156,13 @@ export const onReportCreated = onDocumentWritten(
     }
 
     if (!beforeData && afterData) {
-      await writeAuditEntry({
-        actorId: afterData.reportedBy as string,
+      await writePrivacySafeReportAuditEntry({
+        reporterId: afterData.reportedBy as string,
         action: "report",
         targetType: "chant",
         targetId: chantId,
-        detail: `Reason: ${afterData.reason}`,
+        reason: afterData.reason as string,
+        firestore: db,
       });
     }
   }
@@ -977,12 +978,13 @@ export const onCommentReportCreated = onDocumentWritten(
     }
 
     if (!beforeData && afterData) {
-      await writeAuditEntry({
-        actorId: afterData.reportedBy as string,
+      await writePrivacySafeReportAuditEntry({
+        reporterId: afterData.reportedBy as string,
         action: "report",
         targetType: "comment",
         targetId: commentId,
-        detail: `Reason: ${afterData.reason}`,
+        reason: afterData.reason as string,
+        firestore: db,
       });
     }
   }
@@ -1027,12 +1029,13 @@ export const onUserReportCreated = onDocumentCreated(
     const reportedUserId = reportData.reportedUserId as string;
     await handleUserReportCreated(reportedUserId, db);
 
-    await writeAuditEntry({
-      actorId: reportData.reportedBy as string,
+    await writePrivacySafeReportAuditEntry({
+      reporterId: reportData.reportedBy as string,
       action: "report-user",
       targetType: "user",
       targetId: reportedUserId,
-      detail: `Reason: ${reportData.reason}`,
+      reason: reportData.reason as string,
+      firestore: db,
     });
   }
 );

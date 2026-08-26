@@ -14,9 +14,6 @@ class CommentRepository {
   CollectionReference<Map<String, dynamic>> get _commentLikes =>
       _firestore.collection('commentLikes');
 
-  CollectionReference<Map<String, dynamic>> get _commentReports =>
-      _firestore.collection('commentReports');
-
   /// Stream of visible comments for a chant (hidden == false, removed == false).
   /// The security rules enforce visibility; the query must match.
   Stream<List<Comment>> commentsForChantStream({required String chantId}) {
@@ -91,15 +88,5 @@ class CommentRepository {
         .doc(commentId)
         .snapshots()
         .map((doc) => doc.exists ? Comment.fromFirestore(doc) : null);
-  }
-
-  /// Check if user already reported this comment.
-  Future<bool> hasReportedComment({
-    required String userId,
-    required String commentId,
-  }) async {
-    final docId = '${userId}_$commentId';
-    final doc = await _commentReports.doc(docId).get();
-    return doc.exists;
   }
 }

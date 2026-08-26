@@ -42,9 +42,38 @@ class SavedSongbookRepository {
   }
 
   Future<void> _ensureInitialized(String uid) {
-    return _initializations[uid] ??= _storage.recoverAccountDeletionArtifacts(
-      uid,
-    );
+    final existing = _initializations[uid];
+    if (existing != null) return existing;
+
+    late final Future<void> tracked;
+    tracked = _storage
+        .recoverAccountDeletionArtifacts(uid)
+        .then<void>(
+          (_) {},
+          onError: (Object error, StackTrace stackTrace) {
+            if (identical(_initializations[uid], tracked)) {
+              _initializations.remove(uid);
+            }
+            Error.throwWithStackTrace(error, stackTrace);
+          },
+        );
+    _initializations[uid] = tracked;
+    return tracked;
+  }
+
+  Future<SongbookAccountDeletionState> accountDeletionState(String uid) async {
+    _requireAccess(uid);
+    await _ensureInitialized(uid);
+    return _storage.accountDeletionState(uid);
+  }
+
+  Future<void> confirmAccountDeletionAccepted(String uid) {
+    return _enqueue(() async {
+      _requireAccess(uid);
+      await _ensureInitialized(uid);
+      await _storage.markAccountDeletionAccepted(uid);
+      await _storage.finishAccountDeletion(uid);
+    });
   }
 
   Future<SavedSongbook> load(String uid) async {

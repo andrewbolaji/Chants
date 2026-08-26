@@ -12,8 +12,10 @@ import 'package:chants/data/models/user_profile.dart';
 import 'package:chants/data/repositories/auth_repository.dart';
 import 'package:chants/data/repositories/profile_repository.dart';
 import 'package:chants/data/repositories/saved_songbook_repository.dart';
+import 'package:chants/data/repositories/songbook_storage.dart';
 import 'package:chants/data/services/account_deletion_service.dart';
 import 'package:chants/presentation/auth/account_deletion_pending_screen.dart';
+import 'package:chants/presentation/auth/account_deletion_recovery_screen.dart';
 import 'package:chants/presentation/auth/policy_acceptance_gate_screen.dart';
 import 'package:chants/presentation/auth/sign_in_screen.dart';
 import 'package:chants/presentation/home/home_screen.dart';
@@ -43,6 +45,25 @@ class _FakeAccountDeletionService extends Mock
   Future<void> deleteAccount(String uid) async {
     calls += 1;
     if (error != null) throw error!;
+  }
+}
+
+class _FakeSavedSongbookRepository extends Mock
+    implements SavedSongbookRepository {
+  SongbookAccountDeletionState state = SongbookAccountDeletionState.none;
+  Object? stateError;
+  int confirmationCalls = 0;
+
+  @override
+  Future<SongbookAccountDeletionState> accountDeletionState(String uid) async {
+    if (stateError != null) throw stateError!;
+    return state;
+  }
+
+  @override
+  Future<void> confirmAccountDeletionAccepted(String uid) async {
+    confirmationCalls += 1;
+    state = SongbookAccountDeletionState.none;
   }
 }
 
@@ -101,15 +122,19 @@ void main() {
     required Stream<UserProfile?> Function() makeProfileStream,
     AuthRepository? authRepository,
     AccountDeletionService? accountDeletionService,
+    _FakeSavedSongbookRepository? savedSongbookRepository,
   }) {
     final fakeProfileRepo = _FakeProfileRepository()
       ..makeStream = makeProfileStream;
+    final fakeAuthRepository = authRepository ?? _FakeAuthRepository();
+    final fakeSavedRepository =
+        savedSongbookRepository ?? _FakeSavedSongbookRepository();
     return ProviderScope(
       overrides: [
         authStateProvider.overrideWith((ref) => authStream),
         profileRepositoryProvider.overrideWithValue(fakeProfileRepo),
-        if (authRepository != null)
-          authRepositoryProvider.overrideWithValue(authRepository),
+        savedSongbookRepositoryProvider.overrideWithValue(fakeSavedRepository),
+        authRepositoryProvider.overrideWithValue(fakeAuthRepository),
         if (accountDeletionService != null)
           accountDeletionServiceProvider.overrideWithValue(
             accountDeletionService,
@@ -178,8 +203,7 @@ void main() {
                 Stream.value(_makeProfile(acceptedPolicyVersion: null)),
           ),
         );
-        await tester.pump();
-        await tester.pump();
+        await tester.pumpAndSettle();
 
         expect(find.byType(PolicyAcceptanceGateScreen), findsOneWidget);
       },
@@ -196,8 +220,7 @@ void main() {
                 Stream.value(_makeProfile(acceptedPolicyVersion: 'v0-old')),
           ),
         );
-        await tester.pump();
-        await tester.pump();
+        await tester.pumpAndSettle();
 
         expect(find.byType(PolicyAcceptanceGateScreen), findsOneWidget);
       },
@@ -216,8 +239,7 @@ void main() {
           authRepository: authRepository,
         ),
       );
-      await tester.pump();
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       expect(find.byType(AccountDeletionPendingScreen), findsOneWidget);
       expect(find.byType(PolicyAcceptanceGateScreen), findsNothing);
@@ -226,6 +248,108 @@ void main() {
       await tester.tap(find.text('SIGN OUT'));
       await tester.pump();
       expect(authRepository.signOutCalls, 1);
+    });
+
+    testWidgets(
+      'unknown local deletion state blocks Home and offers durable retry',
+      (tester) async {
+        final savedRepository = _FakeSavedSongbookRepository()
+          ..state = SongbookAccountDeletionState.unknown;
+        final deletionService = _FakeAccountDeletionService()
+          ..error = const AccountDeletionRequestUnconfirmedException(
+            'response lost again',
+          );
+        await tester.pumpWidget(
+          wrap(
+            authStream: Stream.value(fakeUser as User?),
+            makeProfileStream: () => Stream.value(
+              _makeProfile(acceptedPolicyVersion: kCurrentPolicyVersion),
+            ),
+            accountDeletionService: deletionService,
+            savedSongbookRepository: savedRepository,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byType(AccountDeletionRecoveryScreen), findsOneWidget);
+        expect(find.byType(HomeScreen), findsNothing);
+        expect(find.text('REQUEST NOT CONFIRMED'), findsOneWidget);
+
+        await tester.tap(find.text('TRY DELETION AGAIN'));
+        await tester.pumpAndSettle();
+
+        expect(deletionService.calls, 1);
+        expect(find.textContaining('still could not confirm'), findsOneWidget);
+        expect(find.byType(HomeScreen), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'unknown local deletion state offers recovery before a profile arrives',
+      (tester) async {
+        final savedRepository = _FakeSavedSongbookRepository()
+          ..state = SongbookAccountDeletionState.unknown;
+        await tester.pumpWidget(
+          wrap(
+            authStream: Stream.value(fakeUser as User?),
+            makeProfileStream: () => Stream.error('profile unavailable'),
+            accountDeletionService: _FakeAccountDeletionService(),
+            savedSongbookRepository: savedRepository,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byType(AccountDeletionRecoveryScreen), findsOneWidget);
+        expect(find.text('REQUEST NOT CONFIRMED'), findsOneWidget);
+        expect(find.text('SIGN OUT'), findsOneWidget);
+        expect(find.byType(HomeScreen), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'positive pending profile reconciles unknown local deletion state',
+      (tester) async {
+        final savedRepository = _FakeSavedSongbookRepository()
+          ..state = SongbookAccountDeletionState.unknown;
+        await tester.pumpWidget(
+          wrap(
+            authStream: Stream.value(fakeUser as User?),
+            makeProfileStream: () => Stream.value(
+              _makeProfile(
+                acceptedPolicyVersion: kCurrentPolicyVersion,
+                deletionPending: true,
+              ),
+            ),
+            authRepository: _FakeAuthRepository(),
+            savedSongbookRepository: savedRepository,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(savedRepository.confirmationCalls, 1);
+        expect(find.byType(AccountDeletionPendingScreen), findsOneWidget);
+        expect(find.byType(HomeScreen), findsNothing);
+      },
+    );
+
+    testWidgets('local deletion status failure blocks Home', (tester) async {
+      final savedRepository = _FakeSavedSongbookRepository()
+        ..stateError = StateError('disk unavailable');
+      await tester.pumpWidget(
+        wrap(
+          authStream: Stream.value(fakeUser as User?),
+          makeProfileStream: () => Stream.value(
+            _makeProfile(acceptedPolicyVersion: kCurrentPolicyVersion),
+          ),
+          authRepository: _FakeAuthRepository(),
+          savedSongbookRepository: savedRepository,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AccountDeletionRecoveryScreen), findsOneWidget);
+      expect(find.text('STATUS CHECK NEEDED'), findsOneWidget);
+      expect(find.byType(HomeScreen), findsNothing);
     });
 
     testWidgets(
@@ -239,8 +363,7 @@ void main() {
             ),
           ),
         );
-        await tester.pump();
-        await tester.pump();
+        await tester.pumpAndSettle();
 
         expect(find.byType(HomeScreen), findsOneWidget);
         expect(find.byType(PolicyAcceptanceGateScreen), findsNothing);
@@ -278,13 +401,11 @@ void main() {
       await tester.pump();
 
       profiles.add(_makeProfile(acceptedPolicyVersion: kCurrentPolicyVersion));
-      await tester.pump();
-      await tester.pump();
+      await tester.pumpAndSettle();
       expect(find.byType(HomeScreen), findsOneWidget);
 
       profiles.addError('transient read failure');
-      await tester.pump();
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       expect(find.byType(HomeScreen), findsOneWidget);
       expect(find.byType(PolicyAcceptanceGateScreen), findsNothing);
@@ -338,8 +459,7 @@ void main() {
             accountDeletionService: deletionService,
           ),
         );
-        await tester.pump();
-        await tester.pump();
+        await tester.pumpAndSettle();
 
         await tester.tap(find.byType(PopupMenuButton<String>));
         await tester.pumpAndSettle();

@@ -39,6 +39,7 @@ Chant chant(String id, {String status = 'canonical'}) {
 
 void main() {
   test('UID storage keys are lowercase SHA-256 and case-collision safe', () {
+    expect(() => songbookStorageKeyForUid(''), throwsArgumentError);
     expect(
       songbookStorageKeyForUid('abc'),
       'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad',
@@ -47,6 +48,27 @@ void main() {
     final second = songbookStorageKeyForUid('AAaxxxxxxxxxxxxxxxxxxxxxxxxx');
     expect(first, isNot(equalsIgnoringCase(second)));
     expect(first, matches(RegExp(r'^[0-9a-f]{64}$')));
+  });
+
+  test('SHA-256 storage keys cover multi-block and padding boundaries', () {
+    expect(
+      songbookStorageKeyForUid(
+        'abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq',
+      ),
+      '248d6a61d20638b8e5c026930c3e6039a33ce45964ff2167f6ecedd419db06c1',
+    );
+    expect(
+      songbookStorageKeyForUid('a' * 55),
+      '9f4390f8d30c2dd92ec9f095b65e2b9ae9b0a925a5258e241c9f1e910f734318',
+    );
+    expect(
+      songbookStorageKeyForUid('a' * 56),
+      'b35439a4ac6f0948b6d6f9e3c6af0f5f590ce20f1bde7090ef7970686ec6738a',
+    );
+    expect(
+      songbookStorageKeyForUid('a' * 64),
+      'ffe054fe7ae0cb6dc65c3af9b61d5209f439851db43d0ba5997337df154668eb',
+    );
   });
 
   test('file snapshot survives repository reconstruction', () async {
@@ -139,6 +161,10 @@ void main() {
 
       final reconstructed = SavedSongbookRepository(storage: storage);
       expect((await reconstructed.load('fan-a')).uniqueChantIds, isEmpty);
+      expect(
+        await reconstructed.accountDeletionState('fan-a'),
+        SongbookAccountDeletionState.unknown,
+      );
       expect(storage.active, isEmpty);
       expect(storage.unknownTombstones['fan-a'], '{}');
     },
@@ -168,6 +194,15 @@ void main() {
       storage.writeAtomically(uid, '{"replacement":true}'),
       throwsStateError,
     );
+
+    await storage.markAccountDeletionAccepted(uid);
+    await storage.finishAccountDeletion(uid);
+
+    expect(await active.exists(), isFalse);
+    expect(
+      await storage.accountDeletionState(uid),
+      SongbookAccountDeletionState.none,
+    );
   });
 
   test('accepted deletion artifact is removed after reconstruction', () async {
@@ -180,6 +215,35 @@ void main() {
     final reconstructed = SavedSongbookRepository(storage: storage);
     expect((await reconstructed.load('fan-a')).uniqueChantIds, isEmpty);
     expect(storage.acceptedTombstones, isEmpty);
+  });
+
+  test(
+    'confirmed deletion removes conflicting artifacts accepted-marker last',
+    () async {
+      final storage = MemorySongbookStorage()
+        ..active['fan-a'] = '{"conflict":true}'
+        ..unknownTombstones['fan-a'] = '{"original":true}';
+      final repository = SavedSongbookRepository(storage: storage);
+
+      await repository.confirmAccountDeletionAccepted('fan-a');
+
+      expect(storage.active, isEmpty);
+      expect(storage.preparedTombstones, isEmpty);
+      expect(storage.unknownTombstones, isEmpty);
+      expect(storage.acceptedTombstones, isEmpty);
+      expect(
+        await repository.accountDeletionState('fan-a'),
+        SongbookAccountDeletionState.none,
+      );
+    },
+  );
+
+  test('a transient initialization failure can be retried', () async {
+    final storage = MemorySongbookStorage()..failRecoveryOnce = true;
+    final repository = SavedSongbookRepository(storage: storage);
+
+    await expectLater(repository.load('fan-a'), throwsStateError);
+    expect((await repository.load('fan-a')).uniqueChantIds, isEmpty);
   });
 
   test('access guard rejects a stale UID after account switching', () async {

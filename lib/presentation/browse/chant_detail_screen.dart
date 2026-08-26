@@ -187,6 +187,7 @@ class _ChantDetailScreenState extends ConsumerState<ChantDetailScreen> {
             ? null
             : _clubContaining(songbook, live.id);
         final isSaved = isIndividual || club != null;
+        final saveActionEnabled = isSaved || actionsEnabled;
         final savedTooltip = _saving
             ? 'Saving for matchday'
             : club != null && !isIndividual
@@ -213,7 +214,7 @@ class _ChantDetailScreenState extends ConsumerState<ChantDetailScreen> {
                             isSaved ? Icons.bookmark : Icons.bookmark_border,
                           ),
                     tooltip: savedTooltip,
-                    onPressed: _saving || songbook == null || !actionsEnabled
+                    onPressed: _saving || songbook == null || !saveActionEnabled
                         ? null
                         : () => _toggleSaved(
                             uid: user.uid,

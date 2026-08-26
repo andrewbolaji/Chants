@@ -274,6 +274,28 @@ describe("handleSubmitReport", () => {
     assert.strictEqual(harness.count("safetyRateLimits"), 0);
   });
 
+  it("rejects a user target with a deletion job before the profile marker is visible", async () => {
+    const harness = makeHarness();
+    seedReporter(harness);
+    harness.seed("profiles", "deleting-target", {
+      banned: false,
+      deletionPending: false,
+    });
+    harness.seed("accountDeletionJobs", "deleting-target", {
+      schemaVersion: 1,
+      phase: "disable-auth",
+    });
+
+    await expectCode(handleSubmitReport({
+      uid: "reporter",
+      data: reportData("user", "deleting-target"),
+      firestore: harness.firestore,
+      clock: () => NOW,
+    }), "failed-precondition");
+    assert.strictEqual(harness.count("userReports"), 0);
+    assert.strictEqual(harness.count("safetyRateLimits"), 0);
+  });
+
   it("rejects a target ID whose UTF-8 path would exceed the stored ID budget", async () => {
     const harness = makeHarness();
     seedReporter(harness);

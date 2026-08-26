@@ -18,6 +18,7 @@ export const ACCOUNT_DELETION_PHASES = [
   "delete-user-reports-against",
   "delete-blocks-by",
   "delete-blocks-against",
+  "anonymize-audit-by",
   "write-audit",
   "delete-auth",
   "finalize",
@@ -98,6 +99,14 @@ const PAGE_PHASES: Partial<Record<AccountDeletionPhase, PagePhase>> = {
   "delete-blocks-against": {
     collection: "blocks",
     field: "blockedUserId",
+  },
+  "anonymize-audit-by": {
+    collection: "auditLog",
+    field: "actorId",
+    update: {
+      actorId: "deleted-user",
+      detail: "Details removed during account deletion.",
+    },
   },
 };
 
@@ -284,9 +293,7 @@ async function processAudit(
   const phase: AccountDeletionPhase = "write-audit";
   const following = nextPhase(phase)!;
   const jobRef = params.firestore.collection("accountDeletionJobs").doc(params.uid);
-  const auditRef = params.firestore
-    .collection("auditLog")
-    .doc(`delete-account-${params.uid}`);
+  const auditRef = params.firestore.collection("auditLog").doc();
 
   const advanced = await params.firestore.runTransaction(async (transaction) => {
     const jobSnap = await transaction.get(jobRef);
@@ -295,11 +302,11 @@ async function processAudit(
     if (current.phase !== phase) return false;
     const timestamp = params.now();
     transaction.set(auditRef, {
-      actorId: params.uid,
+      actorId: "system",
       action: "delete-account",
       targetType: "user",
-      targetId: params.uid,
-      detail: "Durable account cleanup completed; Auth and profile finalization queued.",
+      targetId: "deleted-user",
+      detail: "Anonymous account cleanup completed; Auth and profile finalization queued.",
       createdAt: timestamp,
     });
     transaction.update(jobRef, { phase: following, updatedAt: timestamp });

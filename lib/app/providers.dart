@@ -15,6 +15,7 @@ import 'package:chants/data/repositories/block_repository.dart';
 import 'package:chants/data/repositories/moderation_repository.dart';
 import 'package:chants/data/repositories/safety_submission_repository.dart';
 import 'package:chants/data/repositories/saved_songbook_repository.dart';
+import 'package:chants/data/repositories/songbook_storage.dart';
 import 'package:chants/data/services/account_deletion_service.dart';
 import 'package:chants/data/services/chant_share.dart';
 import 'package:chants/data/services/saved_songbook_service.dart';
@@ -100,6 +101,24 @@ final savedSongbookProvider = FutureProvider.autoDispose
       return ref.watch(savedSongbookRepositoryProvider).load(uid);
     });
 
+typedef SongbookDeletionGateInput = ({String uid, bool serverDeletionPending});
+
+final savedSongbookDeletionStateProvider = FutureProvider.autoDispose
+    .family<SongbookAccountDeletionState, SongbookDeletionGateInput>((
+      ref,
+      input,
+    ) async {
+      final repository = ref.watch(savedSongbookRepositoryProvider);
+      var state = await repository.accountDeletionState(input.uid);
+      if (input.serverDeletionPending &&
+          (state == SongbookAccountDeletionState.unknown ||
+              state == SongbookAccountDeletionState.accepted)) {
+        await repository.confirmAccountDeletionAccepted(input.uid);
+        state = await repository.accountDeletionState(input.uid);
+      }
+      return state;
+    });
+
 // Auth state stream
 final authStateProvider = StreamProvider<User?>((ref) {
   return ref.watch(authRepositoryProvider).authStateChanges;
@@ -108,19 +127,26 @@ final authStateProvider = StreamProvider<User?>((ref) {
 // Live profile stream for a given user ID. AsyncValue.loading before the
 // first snapshot, AsyncValue.data(null) if the profile doc does not exist
 // yet (e.g. briefly after sign-up, before createProfile's write lands).
-final userProfileProvider =
-    StreamProvider.family<UserProfile?, String>((ref, uid) {
+final userProfileProvider = StreamProvider.family<UserProfile?, String>((
+  ref,
+  uid,
+) {
   return ref.watch(profileRepositoryProvider).profileStream(uid);
 });
 
-final blockedUsersProvider =
-    StreamProvider.family<List<BlockedUser>, String>((ref, blockerId) {
+final blockedUsersProvider = StreamProvider.family<List<BlockedUser>, String>((
+  ref,
+  blockerId,
+) {
   return ref.watch(blockRepositoryProvider).blockedUsersStream(blockerId);
 });
 
-final blockedUserIdsProvider =
-    StreamProvider.family<Set<String>, String>((ref, blockerId) {
-  return ref.watch(blockRepositoryProvider).blockedUsersStream(blockerId).map(
-        (users) => users.map((user) => user.blockedUserId).toSet(),
-      );
+final blockedUserIdsProvider = StreamProvider.family<Set<String>, String>((
+  ref,
+  blockerId,
+) {
+  return ref
+      .watch(blockRepositoryProvider)
+      .blockedUsersStream(blockerId)
+      .map((users) => users.map((user) => user.blockedUserId).toSet());
 });

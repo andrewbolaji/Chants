@@ -237,15 +237,27 @@ export async function handleSubmitReport(params: {
     .collection(targetConfig.reportCollection)
     .doc(`${params.uid}_${payload.targetId}`);
   const rateRef = params.firestore.collection("safetyRateLimits").doc(params.uid);
+  const targetDeletionJobRef = payload.targetType === "user"
+    ? params.firestore.collection("accountDeletionJobs").doc(payload.targetId)
+    : null;
   const now = params.clock();
 
   await params.firestore.runTransaction(async (transaction) => {
-    const [profileSnapshot, targetSnapshot, reportSnapshot, rateSnapshot] =
+    const [
+      profileSnapshot,
+      targetSnapshot,
+      reportSnapshot,
+      rateSnapshot,
+      targetDeletionJobSnapshot,
+    ] =
       await Promise.all([
         transaction.get(profileRef),
         transaction.get(targetRef),
         transaction.get(reportRef),
         transaction.get(rateRef),
+        targetDeletionJobRef === null
+          ? Promise.resolve(null)
+          : transaction.get(targetDeletionJobRef),
       ]);
 
     const profile = validateReporterProfile(profileSnapshot);
@@ -253,7 +265,10 @@ export async function handleSubmitReport(params: {
       throw new HttpsError("not-found", "Report target not found.");
     }
     if (payload.targetType === "user") {
-      if (targetSnapshot.data()?.deletionPending === true) {
+      if (
+        targetSnapshot.data()?.deletionPending === true ||
+        targetDeletionJobSnapshot?.exists === true
+      ) {
         throw new HttpsError(
           "failed-precondition",
           "Report target is unavailable."

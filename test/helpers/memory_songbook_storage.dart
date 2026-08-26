@@ -13,6 +13,7 @@ class MemorySongbookStorage implements SongbookStorage {
   bool failStart = false;
   bool failAccept = false;
   bool failFinish = false;
+  bool failRecoveryOnce = false;
 
   @override
   Future<String?> read(String uid) async {
@@ -71,14 +72,43 @@ class MemorySongbookStorage implements SongbookStorage {
   @override
   Future<void> finishAccountDeletion(String uid) async {
     if (failFinish) throw StateError('finish failed');
+    if (!acceptedTombstones.containsKey(uid)) return;
+    active.remove(uid);
+    preparedTombstones.remove(uid);
+    unknownTombstones.remove(uid);
     acceptedTombstones.remove(uid);
   }
 
   @override
   Future<void> recoverAccountDeletionArtifacts(String uid) async {
-    acceptedTombstones.remove(uid);
+    if (failRecoveryOnce) {
+      failRecoveryOnce = false;
+      throw StateError('recovery failed');
+    }
+    if (acceptedTombstones.containsKey(uid)) {
+      if (failFinish) return;
+      active.remove(uid);
+      preparedTombstones.remove(uid);
+      unknownTombstones.remove(uid);
+      acceptedTombstones.remove(uid);
+      return;
+    }
     final prepared = preparedTombstones.remove(uid);
     if (prepared != null && !active.containsKey(uid)) active[uid] = prepared;
+  }
+
+  @override
+  Future<SongbookAccountDeletionState> accountDeletionState(String uid) async {
+    if (acceptedTombstones.containsKey(uid)) {
+      return SongbookAccountDeletionState.accepted;
+    }
+    if (unknownTombstones.containsKey(uid)) {
+      return SongbookAccountDeletionState.unknown;
+    }
+    if (preparedTombstones.containsKey(uid)) {
+      return SongbookAccountDeletionState.prepared;
+    }
+    return SongbookAccountDeletionState.none;
   }
 }
 

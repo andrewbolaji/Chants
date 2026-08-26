@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:chants/app/providers.dart';
+import 'package:chants/app/router.dart';
 import 'package:chants/app/theme.dart';
 import 'package:chants/data/models/chant.dart';
 import 'package:chants/data/models/comment.dart';
@@ -12,6 +13,7 @@ import 'package:chants/data/models/vote.dart';
 import 'package:chants/data/repositories/chant_repository.dart';
 import 'package:chants/data/repositories/comment_repository.dart';
 import 'package:chants/data/repositories/profile_repository.dart';
+import 'package:chants/data/repositories/saved_songbook_repository.dart';
 import 'package:chants/data/repositories/vote_repository.dart';
 import 'package:chants/data/services/chant_share.dart';
 import 'package:chants/presentation/browse/chant_detail_screen.dart';
@@ -102,6 +104,19 @@ class _ShareGateway implements ChantShareGateway {
   }
 }
 
+class _SavedRepository extends Mock implements SavedSongbookRepository {
+  int removeCalls = 0;
+
+  @override
+  Future<SavedSongbook> removeIndividual({
+    required String uid,
+    required String chantId,
+  }) async {
+    removeCalls += 1;
+    return SavedSongbook.empty();
+  }
+}
+
 const _team = Team(
   id: 'arsenal',
   sportId: 'football',
@@ -135,6 +150,34 @@ Chant _chant({
   );
 }
 
+SavedSongbook _savedIndividually(Chant chant) {
+  final timestamp = DateTime.utc(2026, 8, 26);
+  return SavedSongbook(
+    individualSnapshots: {
+      chant.id: SavedIndividualChant(
+        team: SavedTeamIdentity.fromTeam(_team),
+        savedAt: timestamp,
+        refreshedAt: timestamp,
+        chant: SavedChantSnapshot.fromChant(chant),
+      ),
+    },
+  );
+}
+
+SavedSongbook _savedWithClub(Chant chant) {
+  final timestamp = DateTime.utc(2026, 8, 26);
+  return SavedSongbook(
+    clubSnapshots: {
+      _team.id: SavedClubSongbook(
+        team: SavedTeamIdentity.fromTeam(_team),
+        savedAt: timestamp,
+        refreshedAt: timestamp,
+        chants: [SavedChantSnapshot.fromChant(chant)],
+      ),
+    },
+  );
+}
+
 Widget _app({
   required Chant chant,
   required _ChantRepository repository,
@@ -142,6 +185,8 @@ Widget _app({
   double textScale = 1,
   List<Comment> comments = const [],
   User? user,
+  SavedSongbook? songbook,
+  SavedSongbookRepository? savedRepository,
 }) {
   repository.current = chant;
   return ProviderScope(
@@ -156,8 +201,10 @@ Widget _app({
         (ref, uid) => Stream.value(const <String>{}),
       ),
       userProfileProvider.overrideWith((ref, uid) => Stream.value(null)),
+      if (savedRepository != null)
+        savedSongbookRepositoryProvider.overrideWithValue(savedRepository),
       savedSongbookProvider.overrideWith(
-        (ref, uid) async => SavedSongbook.empty(),
+        (ref, uid) async => songbook ?? SavedSongbook.empty(),
       ),
     ],
     child: MaterialApp(
@@ -168,6 +215,10 @@ Widget _app({
         ).copyWith(textScaler: TextScaler.linear(textScale)),
         child: child!,
       ),
+      routes: {
+        AppRouter.savedClub: (_) =>
+            const Scaffold(body: Center(child: Text('SAVED CLUB ROUTE'))),
+      },
       home: ChantDetailScreen(chant: chant, team: _team),
     ),
   );
@@ -415,6 +466,73 @@ void main() {
       find.widgetWithIcon(IconButton, Icons.ios_share_outlined),
     );
     expect(share.onPressed, isNotNull);
+  });
+
+  testWidgets('cached detail can remove an existing individual save', (
+    tester,
+  ) async {
+    final repository = _ChantRepository()..emitCurrentOnListen = false;
+    final savedRepository = _SavedRepository();
+    final gateway = _ShareGateway();
+    final chant = _chant();
+    addTearDown(repository.controller.close);
+
+    await tester.pumpWidget(
+      _app(
+        chant: chant,
+        repository: repository,
+        gateway: gateway,
+        user: _User(),
+        songbook: _savedIndividually(chant),
+        savedRepository: savedRepository,
+      ),
+    );
+    await tester.pumpAndSettle();
+    repository.emit(chant, isFromCache: true);
+    await tester.pump();
+
+    final bookmark = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.bookmark),
+    );
+    expect(bookmark.onPressed, isNotNull);
+    await tester.tap(find.byTooltip('Saved individually'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('REMOVE FROM DEVICE'));
+    await tester.pumpAndSettle();
+
+    expect(savedRepository.removeCalls, 1);
+    expect(find.textContaining('Removed the individual save'), findsOneWidget);
+  });
+
+  testWidgets('cached detail can open a club-owned saved chant', (
+    tester,
+  ) async {
+    final repository = _ChantRepository()..emitCurrentOnListen = false;
+    final gateway = _ShareGateway();
+    final chant = _chant();
+    addTearDown(repository.controller.close);
+
+    await tester.pumpWidget(
+      _app(
+        chant: chant,
+        repository: repository,
+        gateway: gateway,
+        user: _User(),
+        songbook: _savedWithClub(chant),
+      ),
+    );
+    await tester.pumpAndSettle();
+    repository.emit(chant, isFromCache: true);
+    await tester.pump();
+
+    final bookmark = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.bookmark),
+    );
+    expect(bookmark.onPressed, isNotNull);
+    await tester.tap(find.byTooltip('Saved with club'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('SAVED CLUB ROUTE'), findsOneWidget);
   });
 
   testWidgets('detail actions remain usable with enlarged text', (

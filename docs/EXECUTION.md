@@ -13,6 +13,27 @@ This is the chronological evidence trail for substantial engineering work. It re
 
 ## Entries
 
+### 2026-08-26T12:06:39Z Correct the post-freeze independent review findings
+
+- **Status:** Implemented and locally verified; packaging, clean-runner CI, and narrow re-review pending
+- **Scope:** Correct the verified review findings at PR 14 head `f5cb748`: persistent unknown-deletion recovery, audit actor and free-text privacy, confirmed local cleanup, local saved-action availability, initialization retry, typed permission classification, deleting-target report closure, dead report lookup code, SHA boundary coverage, and exact freeze documentation. No job monitor, aggregate redesign, dependency, Firebase, seed, native, device, deployment, merge, or release action.
+- **Reference:** `docs/CHANGE_SPEC.md`, independent review range `c57815c...f5cb748`
+- **Approval:** Andrew explicitly approved `post-freeze independent review correction spec` on 2026-08-26.
+- **Operator:** Codex
+
+| UTC time | Action | Target/environment | Result and evidence |
+|---|---|---|---|
+| 12:06:39 | Verified branch, user-owned worktree boundary, framework requirements, and independent-review evidence | Local repository at `f5cb748` | Confirmed PR 14 head is unchanged and pushed. Preserved the owner's two Gradle files, `pubspec.lock`, and untracked freeze report. Reproduced the formatter observation as 46 of 142 files with read-only output. Confirmed the review's suggested restore-on-false-profile approach is unsafe because negative state can be stale or race a late commit. |
+| 12:06:39 | Replaced the completed freeze spec with the approved bounded correction contract | Local repository | Recorded positive-only reconciliation, persistent recovery UI, accepted-marker-last cleanup, audit redaction, local-action authority split, bounded hardening, evidence corrections, rollout limits, and explicit non-goals before implementation. |
+| 12:36:47 | Implemented persistent positive-only deletion recovery and accepted-last local cleanup | Flutter app gate, Saved Songbook repository and storage, deletion UI | Unknown state now presents Retry and Sign out before Home even when the first profile read is unavailable. Only callable success or a positive pending profile advances cleanup. Initialization retries after transient failure, and accepted cleanup removes every conflicting artifact before its marker. |
+| 12:36:47 | Closed audit privacy and deleting-target admission | Cloud Functions | Added a 200-row audit redaction phase, non-identifying completion audit, transactional delayed-report audit guard, and same-transaction user-report denial when the target deletion job exists. No Functions deployment or live data access occurred. |
+| 12:36:47 | Completed bounded authority, dead-code, SHA, copy, and regression corrections | Flutter, Functions, tests, goldens, and durable records | Existing device-local Songbook navigation and removal work from cached detail while new saves and live actions stay gated. Permission denial is typed, unused report lookup paths are removed, SHA padding vectors are fixed, deletion retention copy is accurate, and decisions 011, 012, 015, and 016 preserve the architecture. |
+| 12:36:47 | Ran the complete local verification matrix and inspected both deletion goldens | Local macOS, Flutter 3.44.8, Node 20, OpenJDK 26, Firestore emulator | PASS: 336 Flutter tests, scoped analysis, 77 Functions tests and build, 42 seed tests and TypeScript, rules TypeScript, 136 Java-backed assertions, 16-file Dart format check, project-memory and writing checks, caller searches, and final diff checks. The 390 by 844 pending and recovery goldens are unclipped and truthful. |
+
+- **Files/artifacts:** Runtime, tests, and goldens named in `docs/changes/2026-08-26-post-freeze-independent-review-corrections.md`; decision 016; refinements to decisions 011, 012, and 015; current overview, rationale, interface, learning, roadmap, README, setup, active contract, and this execution record.
+- **Skipped or blocked:** Firebase, seed writes, native build, device walk, deployment, commit, push, clean-runner CI, merge, release, deletion-job monitoring, and aggregate redesign remain outside this approved local block.
+- **Current state:** Approved Lane 2 correction is locally complete and green on `codex/v1-freeze-remediation`. No external state changed. The owner-owned Gradle and lockfile changes plus untracked freeze report remain outside the correction.
+
 ### 2026-08-26T04:06:54Z Start V1 freeze correctness remediation
 
 - **Status:** Implemented and locally verified; packaging and independent review pending

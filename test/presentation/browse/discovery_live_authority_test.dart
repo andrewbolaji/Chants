@@ -95,6 +95,16 @@ Widget _app({
 }
 
 void main() {
+  test('permission denial requires a typed Firebase error', () {
+    expect(isChantPermissionDenied(StateError('permission-denied')), isFalse);
+    expect(
+      isChantPermissionDenied(
+        FirebaseException(plugin: 'cloud_firestore', code: 'permission_denied'),
+      ),
+      isTrue,
+    );
+  });
+
   testWidgets('permission denial removes a stale Discover card', (
     tester,
   ) async {

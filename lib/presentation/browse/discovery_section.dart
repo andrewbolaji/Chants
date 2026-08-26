@@ -24,12 +24,9 @@ final allTeamsProvider = StreamProvider<Map<String, String>>((ref) {
 });
 
 bool isChantPermissionDenied(Object? error) {
-  if (error is FirebaseException) {
-    final code = error.code.toLowerCase().replaceAll('_', '-');
-    if (code == 'permission-denied') return true;
-  }
-  final description = error.toString().toLowerCase().replaceAll('_', '-');
-  return description.contains('permission-denied');
+  if (error is! FirebaseException) return false;
+  final code = error.code.toLowerCase().replaceAll('_', '-');
+  return code == 'permission-denied';
 }
 
 class DiscoverySection extends ConsumerWidget {

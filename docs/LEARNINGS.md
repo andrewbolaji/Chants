@@ -12,14 +12,25 @@ This is durable, evidence-backed project memory. It prevents the same failure or
 
 ## Entries
 
+### 2026-08-26T12:06:39Z Lifecycle cleanup must constrain late writers
+
+- **Status:** promoted
+- **Scope:** Privacy cleanup for asynchronously written audit or derived records
+- **Observed:** Redacting every existing audit row authored by a deleting account did not close the boundary. A delayed report-create trigger could run after the deletion worker's audit scan and write the reporter UID and reason again.
+- **Evidence:** Functions tests cover the bounded 201-row redaction path and separately deliver report audit work after the reporter becomes pending or its profile disappears. The writer produces the anonymous sentinel and generic detail in both cases.
+- **Learning:** Historical cleanup and future-write prevention are separate requirements. When asynchronous writers can outlive a lifecycle transition, cleanup must pair a bounded backfill with a writer-side check committed atomically with the new record.
+- **Applied control:** Account deletion redacts actor-owned audit pages, while report audit writers read reporter lifecycle state in the same transaction as the audit write; decision 016 records the retention boundary.
+- **Revisit when:** Audit intake moves behind one synchronous service, a general privacy ledger replaces profile-state checks, or approved retention policy changes which fields may survive deletion.
+- **Related:** `functions/src/account_deletion.ts`, `functions/src/audit.ts`, decision 016
+
 ### 2026-08-26T04:40:55Z A transport exception is not negative acknowledgement
 
 - **Status:** promoted
 - **Scope:** Client compensation after a server transaction starts a destructive workflow
-- **Observed:** The account-deletion callable commits its durable job before responding. A response can be lost after that commit, so restoring local data on every thrown request can reverse the privacy boundary after server acceptance.
-- **Evidence:** Lifecycle tests force an ambiguous remote exception, reconstruct storage across prepared, unknown, and accepted states, and prove that only prepared data restores while unknown data remains locked and retryable.
-- **Learning:** Once a destructive request may have reached its commit point, classify a missing acknowledgement as unknown. Compensate only with positive rejection evidence and finalize only with positive acceptance evidence.
-- **Applied control:** Saved Songbook deletion uses prepared, unknown, and accepted artifacts; the UI reports that the request could not be confirmed; decision 012 preserves the boundary.
+- **Observed:** The account-deletion callable commits its durable job before responding. A response can be lost after that commit, so restoring local data on every thrown request can reverse the privacy boundary after server acceptance. A transient snackbar also disappeared on process death while the durable unknown marker remained.
+- **Evidence:** Lifecycle tests force an ambiguous remote exception, reconstruct storage across prepared, unknown, and accepted states, and prove that only prepared data restores while unknown data remains locked and retryable. App-gate tests reconstruct the signed-in state and prove unknown or unreadable local status cannot expose Home.
+- **Learning:** Once a destructive request may have reached its commit point, classify a missing acknowledgement as unknown. Compensate only with positive rejection evidence and finalize only with positive acceptance evidence. A persistent uncertainty state also requires a persistent recovery surface.
+- **Applied control:** Saved Songbook deletion uses prepared, unknown, and accepted artifacts; every signed-in launch resolves that state before Home; unknown renders retry and Sign out without claiming success, failure, or cancellation; decision 012 preserves the boundary.
 - **Revisit when:** The server exposes a durable status receipt or a stronger acknowledgement protocol removes the ambiguous state.
 - **Related:** `lib/data/repositories/saved_songbook_repository.dart`, `lib/data/repositories/songbook_storage.dart`, decision 012
 

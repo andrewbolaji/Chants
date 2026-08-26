@@ -65,8 +65,10 @@ class _AccountDeletionPendingScreenState
                   const SizedBox(height: Spacing.md),
                   const Text(
                     'Your request is safely queued. Chants is removing your '
-                    'private activity and anonymizing the community posts '
-                    'that stay. You can close the app while it finishes.',
+                    'private activity, anonymizing the community posts that '
+                    'stay, and removing your identity and report text from '
+                    'retained safety records. You can close the app while it '
+                    'finishes.',
                     textAlign: TextAlign.center,
                     style: TextStyle(color: AppColors.textMuted),
                   ),
