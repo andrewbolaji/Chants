@@ -17,7 +17,7 @@ The path from code-complete to public launch, with concrete triggers on every ga
 - Stacked v1 authority and integration remediation implemented and clean-CI verified on draft PR 10: exact direct-write schemas, server-owned vote and like stamps, authoritative moderation disappearance, current-live action gates, missing-parent vote-trigger tolerance, resilient comments and stale Player recovery, and deterministic CI analysis configuration. Review, native compilation, and the combined device walk remain pending.
 - V1 report and feedback abuse controls implemented and clean-CI verified on stacked draft PR 12: authenticated callable admission, atomic private anchored-window budgets, server-owned stored fields, deterministic duplicate preservation, direct-create denial, retained failure-state forms, and account-deletion cleanup. Independent review, native compilation, and the combined device walk remain pending.
 - V1 account-deletion recovery implemented and clean-runner verified on stacked draft PR 13: durable private job acceptance, pending-account denial, bounded retry pages, Auth disable and finalization recovery, retained-contribution anonymization, user-report counter convergence, local Songbook compensation, sign-out, and a guarded pending screen. Its freeze review is complete; the approved correction is locally green. Native compilation and the combined device walk remain pending.
-- V1 freeze remediation packaged and clean-runner green on PR 14 at `f5cb748`. Claude independently reviewed `c57815c...f5cb748` and requested changes. The approved local correction adds persistent unknown-deletion recovery, audit actor and report-text redaction, accepted-last cleanup, target deletion-job denial, and cached access to existing local saves. Correction packaging, replacement clean-runner CI, and narrow re-review remain pending.
+- V1 freeze remediation is packaged and clean-runner green on PR 14 at `c893cd0`. Claude independently reviewed `c57815c...f5cb748` and the correction range `f5cb748...c893cd0`. The approved final local follow-up preserves non-identifying operator provenance, removes report and unknown audit text, discloses target-side safety retention, restores prepared Songbook state without relaunch, and proves completion exactly once through the job transaction. Packaging and replacement clean-runner CI remain pending.
 - Dedup matching engine (backend only): token-overlap matcher exists. Operator `mergeChants` is disabled because its retained sequential implementation has no resumable cursor or complete undo snapshot.
 - Visual identity: complete "matchnight, warmed with playful" redesign, tokenized, AA contrast proven.
 
@@ -28,7 +28,7 @@ The path from code-complete to public launch, with concrete triggers on every ga
 - Saved Matchday Songbook native client compilation and airplane-mode device walk.
 - Basic share-out native compilation, PR review, and device destination walk.
 - Review of stacked PR 10 and stacked PR 12.
-- A narrow independent re-review of the post-freeze correction after it is packaged and clean-runner green.
+- Packaging and replacement clean-runner CI for the final post-review audit and recovery correction.
 - Store launch prep.
 
 ---
@@ -67,7 +67,7 @@ V1 is a trusted songbook and a creator workshop. The work is sequenced as bounde
 
 The accepted product boundary is in `docs/decisions/004-songbook-and-chant-lab.md`. Each state-changing block gets the framework's Lane 2 change spec, execution log, tests, UI evidence, scoped rationale, and rollback plan. Unlimited nesting, notifications, scheduled challenges, collaborative lyric suggestions, creator follows, and hosted media remain later work.
 
-The final feature layer and PR 14 remediation head are clean-runner green. Claude completed the independent freeze review over `c57815c...f5cb748`. Before calling the engineering stack frozen, package the approved request-change correction, run replacement clean CI, and perform a narrow review of that new commit. Commit `c57815c` remains the last pre-remediation whole-stack engineering-review snapshot.
+The final feature layer and PR 14 remediation head are clean-runner green. Claude completed the independent freeze review over `c57815c...f5cb748` and the correction review over `f5cb748...c893cd0`. Before calling the engineering stack frozen, package the approved final follow-up and run replacement clean CI. Commit `c57815c` remains the last pre-remediation whole-stack engineering-review snapshot.
 
 **Trigger to exit:** The current device walk passes; provenance and promotion rules work end to end; Songbook and Chant Lab remain understandable on club and player screens; Saved Matchday Songbook survives airplane-mode relaunch; the dedup nudge works on the seeded archive; and share-out never produces a broken destination.
 
@@ -124,7 +124,7 @@ The implementation boundary and remaining verification gate live in `docs/CHANGE
 
 **Approved product contract:** Chants keeps Terrace Proven content in the trusted Songbook and gives original or not-yet-verified submissions a visible Chant Lab. Submission origin is required. Evidence is optional to post and required to promote a user submission to Terrace Proven. Votes rank ideas but never verify a factual claim.
 
-**Implementation status:** The provenance slice, browse split, Saved Matchday Songbook, Basic Share-Out, authority remediation, report/feedback abuse controls, durable account deletion, and PR 14 freeze remediation are implemented in the stack. PR 14 is clean-runner green on all five jobs; its independent review is complete and the bounded correction is locally green. Correction CI and re-review, native compilation, and the combined device walk remain.
+**Implementation status:** The provenance slice, browse split, Saved Matchday Songbook, Basic Share-Out, authority remediation, report/feedback abuse controls, durable account deletion, and PR 14 freeze remediation are implemented in the stack. PR 14 is clean-runner green on all five jobs; both independent review ranges are complete and the final bounded correction is locally green. Correction packaging and CI, native compilation, and the combined device walk remain.
 
 **Source of truth:** `docs/decisions/004-songbook-and-chant-lab.md` and the interface contract in `docs/INTERFACE.md`.
 

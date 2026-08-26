@@ -12,7 +12,7 @@ flutter pub get
 flutter test                              # models, services, widgets. Needs no Firebase config.
 
 # Backend suites (Node 20), each self-contained. Verified green here:
-cd functions && npm install && npm test   # Cloud Functions, 77 tests
+cd functions && npm install && npm test   # Cloud Functions, 78 tests
 cd seed && npm install && npm test        # seed validation, 42 tests
 
 # Firestore rules tests need Java plus firebase-tools:

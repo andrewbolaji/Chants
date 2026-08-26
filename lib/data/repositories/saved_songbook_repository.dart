@@ -76,6 +76,17 @@ class SavedSongbookRepository {
     });
   }
 
+  Future<SongbookAccountDeletionState> retryAccountDeletionArtifactRecovery(
+    String uid,
+  ) {
+    return _enqueue(() async {
+      _requireAccess(uid);
+      _initializations.remove(uid);
+      await _ensureInitialized(uid);
+      return _storage.accountDeletionState(uid);
+    });
+  }
+
   Future<SavedSongbook> load(String uid) async {
     _requireAccess(uid);
     await _ensureInitialized(uid);
@@ -293,7 +304,17 @@ class SavedSongbookRepository {
       await _ensureInitialized(uid);
       final staged = await _storage.stageForAccountDeletion(uid);
       if (staged) {
-        await _storage.markAccountDeletionRequestStarted(uid);
+        try {
+          await _storage.markAccountDeletionRequestStarted(uid);
+        } catch (error, stackTrace) {
+          _initializations.remove(uid);
+          try {
+            await _storage.recoverAccountDeletionArtifacts(uid);
+          } catch (_) {
+            // A later app-gate recovery retries while Home remains closed.
+          }
+          Error.throwWithStackTrace(error, stackTrace);
+        }
       }
       try {
         await deleteRemoteAccount();

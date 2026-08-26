@@ -1,5 +1,7 @@
 # Change implementation rationale: Post-freeze independent review corrections
 
+> **Correction note, 2026-08-26:** The later post-review audit and recovery correction supersedes this record where it describes uniform audit-detail redaction, target-side retention copy, prepared recovery only through reconstruction, completion-audit identity, formatter residuals, or then-current test counts. See `docs/changes/2026-08-26-post-review-audit-recovery-corrections.md` and decisions 012 and 016. This file otherwise remains the historical rationale for commit `c893cd0`.
+
 > **Document contract:** This file explains the bounded correction made after the independent review of `c57815c...f5cb748`. It is not a whole-repository architecture handoff.
 
 ## Change identity and boundary

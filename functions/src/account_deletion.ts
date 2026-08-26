@@ -65,8 +65,51 @@ export type AccountDeletionStepResult = {
 type PagePhase = {
   collection: string;
   field: string;
-  update?: admin.firestore.UpdateData<admin.firestore.DocumentData>;
+  update?:
+    | admin.firestore.UpdateData<admin.firestore.DocumentData>
+    | ((
+        data: admin.firestore.DocumentData,
+        uid: string
+      ) => admin.firestore.UpdateData<admin.firestore.DocumentData>);
 };
+
+const OPERATOR_AUDIT_ACTIONS = new Set<string>([
+  "ban",
+  "unban",
+  "promote",
+  "demote",
+  "remove-evidence",
+  "hide",
+  "unhide",
+  "remove",
+  "merge_chants",
+]);
+
+export function auditRedactionForDeletedActor(
+  data: admin.firestore.DocumentData,
+  uid: string
+): admin.firestore.UpdateData<admin.firestore.DocumentData> {
+  const action = data.action;
+  if (typeof action === "string" && OPERATOR_AUDIT_ACTIONS.has(action)) {
+    return { actorId: "deleted-operator" };
+  }
+  if (action === "report" || action === "report-user") {
+    return {
+      actorId: "deleted-user",
+      detail: "Report details removed during account deletion.",
+    };
+  }
+  if (action === "accept-policy") {
+    return {
+      actorId: "deleted-user",
+      ...(data.targetId === uid ? { targetId: "deleted-user" } : {}),
+    };
+  }
+  return {
+    actorId: "deleted-user",
+    detail: "Details removed during account deletion.",
+  };
+}
 
 const PAGE_PHASES: Partial<Record<AccountDeletionPhase, PagePhase>> = {
   "delete-votes": { collection: "votes", field: "userId" },
@@ -103,10 +146,7 @@ const PAGE_PHASES: Partial<Record<AccountDeletionPhase, PagePhase>> = {
   "anonymize-audit-by": {
     collection: "auditLog",
     field: "actorId",
-    update: {
-      actorId: "deleted-user",
-      detail: "Details removed during account deletion.",
-    },
+    update: auditRedactionForDeletedActor,
   },
 };
 
@@ -227,8 +267,12 @@ async function processPage(
 
   const batch = params.firestore.batch();
   for (const document of snapshot.docs) {
-    if (page.update) batch.update(document.ref, page.update);
-    else batch.delete(document.ref);
+    if (page.update) {
+      const update = typeof page.update === "function"
+        ? page.update(document.data(), params.uid)
+        : page.update;
+      batch.update(document.ref, update);
+    } else batch.delete(document.ref);
   }
   batch.update(params.firestore.collection("accountDeletionJobs").doc(params.uid), {
     updatedAt: params.now(),

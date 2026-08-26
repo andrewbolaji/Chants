@@ -93,8 +93,11 @@ class MemorySongbookStorage implements SongbookStorage {
       acceptedTombstones.remove(uid);
       return;
     }
-    final prepared = preparedTombstones.remove(uid);
-    if (prepared != null && !active.containsKey(uid)) active[uid] = prepared;
+    final prepared = preparedTombstones[uid];
+    if (prepared != null && !active.containsKey(uid)) {
+      preparedTombstones.remove(uid);
+      active[uid] = prepared;
+    }
   }
 
   @override

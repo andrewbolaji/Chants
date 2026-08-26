@@ -6,6 +6,7 @@ import 'package:chants/data/models/saved_songbook.dart';
 import 'package:chants/data/models/team.dart';
 import 'package:chants/data/repositories/saved_songbook_repository.dart';
 import 'package:chants/data/repositories/songbook_storage.dart';
+import 'package:chants/data/services/sha256.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../helpers/memory_songbook_storage.dart';
@@ -38,6 +39,13 @@ Chant chant(String id, {String status = 'canonical'}) {
 }
 
 void main() {
+  test('SHA-256 covers the empty-message padding path directly', () {
+    expect(
+      sha256Hex(const []),
+      'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+    );
+  });
+
   test('UID storage keys are lowercase SHA-256 and case-collision safe', () {
     expect(() => songbookStorageKeyForUid(''), throwsArgumentError);
     expect(
@@ -147,6 +155,28 @@ void main() {
       final reconstructed = SavedSongbookRepository(storage: storage);
       await reconstructed.load('fan-a');
 
+      expect(storage.active['fan-a'], encoded);
+      expect(storage.preparedTombstones, isEmpty);
+    },
+  );
+
+  test(
+    'prepared deletion artifact can recover without reconstruction',
+    () async {
+      final encoded = jsonEncode(SavedSongbook.empty().toJson());
+      final storage = MemorySongbookStorage()..active['fan-a'] = encoded;
+      final repository = SavedSongbookRepository(storage: storage);
+      await repository.load('fan-a');
+      await storage.stageForAccountDeletion('fan-a');
+
+      expect(
+        await repository.accountDeletionState('fan-a'),
+        SongbookAccountDeletionState.prepared,
+      );
+      expect(
+        await repository.retryAccountDeletionArtifactRecovery('fan-a'),
+        SongbookAccountDeletionState.none,
+      );
       expect(storage.active['fan-a'], encoded);
       expect(storage.preparedTombstones, isEmpty);
     },

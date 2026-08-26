@@ -52,7 +52,9 @@ class _FakeSavedSongbookRepository extends Mock
     implements SavedSongbookRepository {
   SongbookAccountDeletionState state = SongbookAccountDeletionState.none;
   Object? stateError;
+  Object? recoveryError;
   int confirmationCalls = 0;
+  int recoveryCalls = 0;
 
   @override
   Future<SongbookAccountDeletionState> accountDeletionState(String uid) async {
@@ -64,6 +66,16 @@ class _FakeSavedSongbookRepository extends Mock
   Future<void> confirmAccountDeletionAccepted(String uid) async {
     confirmationCalls += 1;
     state = SongbookAccountDeletionState.none;
+  }
+
+  @override
+  Future<SongbookAccountDeletionState> retryAccountDeletionArtifactRecovery(
+    String uid,
+  ) async {
+    recoveryCalls += 1;
+    if (recoveryError != null) throw recoveryError!;
+    state = SongbookAccountDeletionState.none;
+    return state;
   }
 }
 
@@ -332,6 +344,55 @@ void main() {
       },
     );
 
+    testWidgets('prepared local state recovers without process relaunch', (
+      tester,
+    ) async {
+      final savedRepository = _FakeSavedSongbookRepository()
+        ..state = SongbookAccountDeletionState.prepared;
+      await tester.pumpWidget(
+        wrap(
+          authStream: Stream.value(fakeUser as User?),
+          makeProfileStream: () => Stream.value(
+            _makeProfile(acceptedPolicyVersion: kCurrentPolicyVersion),
+          ),
+          savedSongbookRepository: savedRepository,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(savedRepository.recoveryCalls, 1);
+      expect(find.byType(HomeScreen), findsOneWidget);
+      expect(find.byType(AccountDeletionRecoveryScreen), findsNothing);
+    });
+
+    testWidgets('failed prepared recovery stays closed and retries real work', (
+      tester,
+    ) async {
+      final savedRepository = _FakeSavedSongbookRepository()
+        ..state = SongbookAccountDeletionState.prepared
+        ..recoveryError = StateError('disk unavailable');
+      await tester.pumpWidget(
+        wrap(
+          authStream: Stream.value(fakeUser as User?),
+          makeProfileStream: () => Stream.value(
+            _makeProfile(acceptedPolicyVersion: kCurrentPolicyVersion),
+          ),
+          savedSongbookRepository: savedRepository,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(savedRepository.recoveryCalls, 1);
+      expect(find.text('RECOVERY NEEDED'), findsOneWidget);
+      expect(find.byType(HomeScreen), findsNothing);
+
+      await tester.tap(find.text('TRY RECOVERY'));
+      await tester.pumpAndSettle();
+
+      expect(savedRepository.recoveryCalls, 2);
+      expect(find.byType(HomeScreen), findsNothing);
+    });
+
     testWidgets('local deletion status failure blocks Home', (tester) async {
       final savedRepository = _FakeSavedSongbookRepository()
         ..stateError = StateError('disk unavailable');
@@ -348,7 +409,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(AccountDeletionRecoveryScreen), findsOneWidget);
-      expect(find.text('STATUS CHECK NEEDED'), findsOneWidget);
+      expect(find.text('RECOVERY NEEDED'), findsOneWidget);
       expect(find.byType(HomeScreen), findsNothing);
     });
 

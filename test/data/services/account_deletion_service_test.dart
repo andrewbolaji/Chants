@@ -78,6 +78,29 @@ void main() {
   });
 
   test(
+    'request-start failure restores staged data before remote action',
+    () async {
+      final storage = MemorySongbookStorage()
+        ..active['fan'] = '{}'
+        ..failStart = true;
+      final moderation = FakeModerationRepository();
+      var signOutCalls = 0;
+      final service = AccountDeletionService(
+        moderationRepository: moderation,
+        savedSongbookRepository: SavedSongbookRepository(storage: storage),
+        signOut: () async => signOutCalls += 1,
+      );
+
+      await expectLater(service.deleteAccount('fan'), throwsStateError);
+
+      expect(moderation.calls, 0);
+      expect(storage.active['fan'], '{}');
+      expect(storage.preparedTombstones, isEmpty);
+      expect(signOutCalls, 0);
+    },
+  );
+
+  test(
     'accepted deletion signs out when tombstone cleanup is deferred',
     () async {
       final storage = MemorySongbookStorage()

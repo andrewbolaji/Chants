@@ -70,7 +70,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('status-check state fits 390 by 844 at 1.8 text scale', (
+  testWidgets('recovery state fits 390 by 844 at 1.8 text scale', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(390, 844);
@@ -83,8 +83,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('STATUS CHECK NEEDED'), findsOneWidget);
-    expect(find.text('CHECK AGAIN'), findsOneWidget);
+    expect(find.text('RECOVERY NEEDED'), findsOneWidget);
+    expect(find.text('TRY RECOVERY'), findsOneWidget);
     expect(find.text('SIGN OUT'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });

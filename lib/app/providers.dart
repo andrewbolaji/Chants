@@ -110,6 +110,11 @@ final savedSongbookDeletionStateProvider = FutureProvider.autoDispose
     ) async {
       final repository = ref.watch(savedSongbookRepositoryProvider);
       var state = await repository.accountDeletionState(input.uid);
+      if (state == SongbookAccountDeletionState.prepared) {
+        state = await repository.retryAccountDeletionArtifactRecovery(
+          input.uid,
+        );
+      }
       if (input.serverDeletionPending &&
           (state == SongbookAccountDeletionState.unknown ||
               state == SongbookAccountDeletionState.accepted)) {

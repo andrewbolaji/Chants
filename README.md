@@ -134,7 +134,7 @@ Fifteen Functions exports in source (all configured for `europe-west2`; live dep
 
 **Content integrity.** All seed content (lyrics, squads, cultural context) is externally sourced and verified by hand. The build process can only transform supplied data in place; it never generates or rewrites content. This is a standing rule with the highest priority in the project.
 
-**Test coverage across layers.** 336 Flutter tests, 136 Firestore security-rules assertions, 77 Cloud Functions tests, and 42 seed-pipeline tests pass locally on the post-freeze correction. Regression guards cover persistent unknown-deletion recovery, audit redaction, accepted-last local cleanup, cache-local Songbook actions, timing-sensitive UI, chant-ID reuse, moderation revocation, atomic safety intake, transactional counter overlap, direct-write abuse, pending-target closure, responsive states, reply grouping, and offline snapshot reconstruction. PR 14 head `f5cb748` is clean-runner green; replacement CI for the current corrections remains pending.
+**Test coverage across layers.** 341 Flutter tests, 136 Firestore security-rules assertions, 78 Cloud Functions tests, and 42 seed-pipeline tests pass locally on the post-review correction. Regression guards cover prepared and unknown deletion recovery, classified audit privacy and operator provenance, exactly-once completion, accepted-last local cleanup, cache-local Songbook actions, timing-sensitive UI, chant-ID reuse, moderation revocation, atomic safety intake, transactional counter overlap, direct-write abuse, pending-target closure, responsive states, reply grouping, and offline snapshot reconstruction. PR 14 head `c893cd0` is clean-runner green; replacement CI for the current local follow-up remains pending.
 
 ---
 

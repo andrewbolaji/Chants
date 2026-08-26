@@ -286,9 +286,10 @@ Future<void> _showDeleteAccountDialog(
         'reports, feedback, and blocks. Your submitted chants, comments, and '
         'replies stay as community content with your name removed. Your '
         'Saved Matchday Songbook is locked immediately and removed once the '
-        'request is confirmed. Anonymous safety audit records may be kept, '
-        'without your account ID or report text. Cleanup may continue briefly '
-        'in the background. This cannot be undone.',
+        'request is confirmed. Safety records for reports you sent keep '
+        'neither your account ID nor report text. Safety records about your '
+        'account may retain its ID for moderation history. Cleanup may '
+        'continue briefly in the background. This cannot be undone.',
       ),
       actions: [
         TextButton(
@@ -309,6 +310,7 @@ Future<void> _showDeleteAccountDialog(
   try {
     await ref.read(accountDeletionServiceProvider).deleteAccount(uid);
   } on AccountDeletionRequestUnconfirmedException {
+    ref.invalidate(savedSongbookDeletionStateProvider);
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -319,6 +321,7 @@ Future<void> _showDeleteAccountDialog(
       ),
     );
   } catch (_) {
+    ref.invalidate(savedSongbookDeletionStateProvider);
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Deletion could not start. Try again.')),

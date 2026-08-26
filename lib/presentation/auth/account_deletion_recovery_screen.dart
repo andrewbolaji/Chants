@@ -59,9 +59,8 @@ class _AccountDeletionRecoveryScreenState
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final message = widget.statusCheckFailed
-        ? 'Chants could not safely check whether an earlier account deletion '
-              'request exists on this device. Home will stay closed until the '
-              'check succeeds.'
+        ? 'Chants could not safely resolve an earlier account deletion state '
+              'on this device. Home will stay closed until recovery succeeds.'
         : 'We could not confirm whether deletion started. Your Saved Songbook '
               'is locked for safety. Retrying can confirm and continue the '
               'same permanent deletion request. It does not cancel it.';
@@ -86,7 +85,7 @@ class _AccountDeletionRecoveryScreenState
                   const SizedBox(height: Spacing.sm),
                   Text(
                     widget.statusCheckFailed
-                        ? 'STATUS CHECK NEEDED'
+                        ? 'RECOVERY NEEDED'
                         : 'REQUEST NOT CONFIRMED',
                     textAlign: TextAlign.center,
                     style: textTheme.headlineSmall,
@@ -112,7 +111,8 @@ class _AccountDeletionRecoveryScreenState
                         : () => _run(
                             widget.onRetry,
                             fallbackError: widget.statusCheckFailed
-                                ? 'Could not check this device yet. Try again.'
+                                ? 'Could not recover this device state yet. '
+                                      'Try again.'
                                 : 'Could not retry the deletion request. Try again.',
                             classifyUnconfirmed: !widget.statusCheckFailed,
                           ),
@@ -123,7 +123,7 @@ class _AccountDeletionRecoveryScreenState
                           )
                         : Text(
                             widget.statusCheckFailed
-                                ? 'CHECK AGAIN'
+                                ? 'TRY RECOVERY'
                                 : 'TRY DELETION AGAIN',
                           ),
                   ),

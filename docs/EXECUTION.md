@@ -13,6 +13,26 @@ This is the chronological evidence trail for substantial engineering work. It re
 
 ## Entries
 
+### 2026-08-26T13:34:53Z Correct the post-review audit and recovery findings
+
+- **Status:** Implemented and locally verified; packaging and replacement clean-runner CI pending
+- **Scope:** Correct the verified `f5cb748...c893cd0` follow-up findings: preserve known operator audit detail under a non-identifying operator sentinel, keep report and unknown detail private, make retained target-side history copy accurate, recover prepared local state without relaunch, replace the stable-ID claim with transactional exactly-once evidence, test empty SHA input directly, and refresh the current formatter count. No Firebase, seed, native, device, deployment, merge, or release action.
+- **Reference:** `docs/CHANGE_SPEC.md`, independent review of commit `c893cd0`
+- **Approval:** Andrew explicitly approved `post-review audit and recovery correction spec` on 2026-08-26.
+- **Operator:** Codex
+
+| UTC time | Action | Target/environment | Result and evidence |
+|---|---|---|---|
+| 13:34:53 | Independently verified the review against the clean PR 14 head and owner-owned worktree boundary | Local repository at `c893cd0` | Confirmed D-1, D-2, D-3, D-5, and D-6. Classified D-4 as an inaccurate invariant rather than a duplicate-write defect because the audit write and phase advance are transactional. Confirmed clean-runner run `32970254587` had already passed all five jobs. |
+| 13:34:53 | Replaced the completed correction spec with the exact approved follow-up contract | Local repository | Recorded allowlisted operator-detail preservation, report and unknown fail-private behavior, target-side disclosure, prepared recovery, transactional exactly-once evidence, direct empty-message SHA coverage, formatter truth, non-goals, and rollout limits before implementation. |
+| 13:45:00 | Implemented classified audit cleanup and transactional completion evidence | Local Functions source and tests | Known generated operator actions now use `deleted-operator` and retain detail. Reports and unknown actions remove text, self-target policy acceptance removes the target UID, and delayed writers retain their lifecycle transaction. A duplicate post-advance worker delivery writes no second completion row. |
+| 13:45:00 | Implemented same-process prepared recovery and truthful deletion copy | Local Flutter repository, provider, screens, service behavior, tests, and golden | Prepared state actively reruns serialized artifact recovery before Home. Recovery failure stays closed behind a real retry. Pre-network transition failure restores staged data and never calls the remote boundary. Copy distinguishes authored-report redaction from retained target-side history. |
+| 13:50:59 | Ran the complete local verification matrix and reconciled durable records | Local macOS, Flutter 3.44.8, Node 20, OpenJDK 26, Firestore emulator, Dart 3.12.2 | PASS: 341 Flutter tests, scoped analysis, 78 Functions tests and build, 42 seed tests, seed and rules TypeScript, and 136 Java-backed rules assertions. Focused Flutter and Functions groups passed first. The read-only formatter check confirmed 42 of 142 residual files, touched Dart files are formatted, the refreshed 390 by 844 golden was inspected, and memory, style, caller, ownership, and diff checks passed. |
+
+- **Files/artifacts:** Runtime, tests, and golden named in `docs/changes/2026-08-26-post-review-audit-recovery-corrections.md`; decisions 011, 012, and 016; current overview, rationale, interface and learning memory, roadmap, README, handbook, active contract, and this execution entry.
+- **Skipped or blocked:** Commit, push, replacement clean-runner CI, Firebase, seed writes, native build, device walk, deployment, merge, release, and production observation remain outside this approval.
+- **Current state:** Approved Lane 2 follow-up is locally complete and green on `codex/v1-freeze-remediation`. No external state changed. The owner-owned Gradle and lockfile changes plus untracked freeze report remain outside the correction.
+
 ### 2026-08-26T12:06:39Z Correct the post-freeze independent review findings
 
 - **Status:** Implemented and locally verified; packaging, clean-runner CI, and narrow re-review pending
