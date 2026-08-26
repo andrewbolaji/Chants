@@ -158,23 +158,6 @@ service cloud.firestore {
         && (!('variations' in data) || data.variations is list);
     }
 
-    function validReportShape(data, targetField) {
-      return data.keys().hasOnly([
-          targetField, 'reportedBy', 'reason', 'createdAt', 'status'
-        ])
-        && data.keys().hasAll([
-          targetField, 'reportedBy', 'reason', 'createdAt', 'status'
-        ])
-        && data[targetField] is string
-        && data[targetField].size() > 0
-        && data.reportedBy is string
-        && data.reason is string
-        && data.reason.size() > 0
-        && data.reason.size() <= 250
-        && data.status == 'pending'
-        && validRecentClientTimestamp(data.createdAt);
-    }
-
     function validOrigin(value) {
       return value in ['alreadySung', 'originalIdea'];
     }
@@ -362,15 +345,11 @@ service cloud.firestore {
       allow delete: if isAuth() && resource.data.userId == request.auth.uid;
     }
 
-    // reports: one per user per chant (doc ID = userId_chantId), not banned, insert-only
+    // Report admission is server-owned so rate budget and report creation can
+    // commit atomically. Operators retain the existing read boundary.
     match /reports/{reportId} {
       allow read: if isOperator();
-      allow create: if isAuth()
-        && isNotBanned()
-        && validReportShape(request.resource.data, 'chantId')
-        && request.resource.data.reportedBy == request.auth.uid
-        && reportId == request.auth.uid + '_' + request.resource.data.chantId
-        && isVisibleChant(request.resource.data.chantId);
+      allow create: if false;
     }
 
     // auditLog: no client writes (Cloud Functions use Admin SDK), operator read
@@ -463,30 +442,17 @@ service cloud.firestore {
       allow delete: if isAuth() && resource.data.userId == request.auth.uid;
     }
 
-    // commentReports: one per user per comment (doc ID = userId_commentId), not banned, insert-only
+    // Comment report admission is server-owned. Read behavior is unchanged.
     match /commentReports/{reportId} {
       allow read: if isOperator();
-      allow create: if isAuth()
-        && isNotBanned()
-        && validReportShape(request.resource.data, 'commentId')
-        && request.resource.data.reportedBy == request.auth.uid
-        && reportId == request.auth.uid + '_' + request.resource.data.commentId
-        && isVisibleComment(request.resource.data.commentId);
+      allow create: if false;
     }
 
-    // userReports: one per reporter per reported user (doc ID =
-    // reporterId_reportedUserId), not banned, cannot report yourself,
-    // insert-only. userReportCount on the target profile is recomputed by
-    // onUserReportCreated (Admin SDK), never written by the client.
+    // User report admission is server-owned. userReportCount on the target
+    // profile is recomputed by onUserReportCreated (Admin SDK).
     match /userReports/{reportId} {
       allow read: if isOperator();
-      allow create: if isAuth()
-        && isNotBanned()
-        && validReportShape(request.resource.data, 'reportedUserId')
-        && request.resource.data.reportedBy == request.auth.uid
-        && request.resource.data.reportedUserId != request.auth.uid
-        && reportId == request.auth.uid + '_' + request.resource.data.reportedUserId
-        && exists(/databases/$(database)/documents/profiles/$(request.resource.data.reportedUserId));
+      allow create: if false;
     }
 
     // blocks: directional and private to the blocker. The deterministic ID
@@ -509,32 +475,17 @@ service cloud.firestore {
       allow update: if false;
     }
 
-    // feedback: auth create, user reads own, operator reads all
+    // Feedback admission is server-owned. Owners and operators retain the
+    // existing read boundary; all direct client mutations are denied.
     match /feedback/{feedbackId} {
       allow read: if isOperator()
         || (isAuth() && resource.data.userId == request.auth.uid);
-      allow create: if isAuth()
-        && request.resource.data.keys().hasOnly([
-             'userId', 'category', 'message', 'followUpOk', 'resolved',
-             'createdAt'
-           ])
-        && request.resource.data.keys().hasAll([
-             'userId', 'category', 'message', 'followUpOk', 'resolved',
-             'createdAt'
-           ])
-        && request.resource.data.userId is string
-        && request.resource.data.userId == request.auth.uid
-        && request.resource.data.category in [
-             'suggestion', 'bug', 'question', 'other'
-           ]
-        && request.resource.data.message is string
-        && request.resource.data.message.size() > 0
-        && request.resource.data.message.size() <= 1000
-        && request.resource.data.followUpOk is bool
-        && request.resource.data.resolved is bool
-        && request.resource.data.resolved == false
-        && validRecentClientTimestamp(request.resource.data.createdAt);
-      allow update, delete: if false;
+      allow create, update, delete: if false;
+    }
+
+    // Private server-owned anchored-window counters for safety submissions.
+    match /safetyRateLimits/{userId} {
+      allow read, write: if false;
     }
   }
 }

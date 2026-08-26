@@ -77,11 +77,14 @@ Chants is the home for football chants. Fans use it to find the songs, learn the
 5. Optionally add a short note (up to 200 characters).
 6. Tap "Report this chant." You will see "Got it. We will take a look."
 
-**Behind the scenes.** A report document is created in the reports collection with status "pending," your user ID as reportedBy, and a timestamp. Reports are insert-only (you cannot edit or delete a report). Only operators can read reports. The Block 1 security rule enforces that status must be "pending" on create and reportedBy must match your auth UID.
+**Behind the scenes.** The app sends only the target and reason to an authenticated Cloud Function. The server validates your current profile and the visible target, derives your user ID and timestamp, checks a private atomic budget, and creates a pending report. Direct app or raw-SDK report creates are denied. Reports remain insert-only for clients, and only operators can read them.
 
 **Limits and gotchas.**
 - You must be signed in to report.
 - You cannot see or retract your own reports.
+- Chant, comment, and user reports share one anchored hourly budget: 5 accepted reports for accounts under 24 hours and 20 for older accounts.
+- Repeating the same target shows "You already reported this." and does not replace the first report or consume more budget.
+- Reaching the current budget shows "You have sent several reports recently. Try again later." The selected reason and note stay in the form.
 - No confirmation that a specific action was taken. The operator reviews and acts behind the scenes.
 
 **Where it shows up.** The flag icon on the chant detail screen app bar.
@@ -125,12 +128,13 @@ Chants is the home for football chants. Fans use it to find the songs, learn the
 5. Optionally check "OK to follow up by email" if you want a response.
 6. Tap "Send." You will see "Got it. We read every one."
 
-**Behind the scenes.** A feedback document is created in Firestore with your user ID, the category, the message, the follow-up preference, and a timestamp. It is stored exactly as you typed it. You can read your own feedback; the operator can read all feedback. No one can edit or delete a feedback entry.
+**Behind the scenes.** The app sends the category, trimmed message, and follow-up preference to an authenticated Cloud Function. The server derives your user ID and timestamp, checks a private atomic budget, and creates an unresolved feedback row. Direct client creates are denied. You can read your own feedback; the operator can read all feedback. Clients cannot edit or delete an entry.
 
 **Limits and gotchas.**
-- Messages are capped at 1000 characters (enforced both in the app and by Firestore rules).
+- Messages are capped at 1000 characters, enforced in the app and callable.
+- Feedback is limited to 3 accepted entries per anchored 24 hours. Reaching the limit keeps the complete form and shows "You have sent several messages recently. Try again later."
 - The operator cannot mark feedback as resolved in v1. That comes with the moderation console in v1.1.
-- Banned users can still send feedback. This is intentional: it is the appeal channel.
+- Banned accounts cannot submit through this channel. A dedicated appeal path is not part of v1.
 - No email notification in v1. The operator reads feedback in the moderation screen.
 
 **Where it shows up.** The three-dot overflow menu on the home screen. The operator sees a "Feedback" tab in the moderation screen.
@@ -180,7 +184,7 @@ Chants is the home for football chants. Fans use it to find the songs, learn the
 5. To delete your own comment, tap the trash icon on the right side of the card. A confirmation dialog appears first.
 6. To report someone else's comment, tap the flag icon on the right side of their card. Pick a reason and optionally add a note, same flow as reporting a chant.
 
-**Behind the scenes.** Comments are flat (no nested replies). Each comment stores the author's display name, body text, a like count, a flag count, and hidden/removed flags.
+**Behind the scenes.** Comments remain flat Firestore documents. A top-level comment has no parent; one direct reply stores the top-level `parentCommentId`. Replies to replies are rejected. Each comment stores the author's display name, body text, a like count, a flag count, and hidden/removed flags.
 
 Sorting is by most likes first, then newest first among comments with the same like count.
 
@@ -190,14 +194,14 @@ The comment count shown on the chant is also recomputed from ground truth. A Clo
 
 Deleting your own comment is a soft delete: it sets `removed: true` on the document. The query that loads comments excludes hidden and removed comments, so the comment disappears for everyone, but the document is not hard-removed from the database.
 
-Reporting a comment creates a document in the `commentReports` collection with status "pending." A Cloud Function (`onCommentReportCreated`) increments the flag count on the comment in a transaction. If the flag count reaches 3, the comment is auto-hidden and an audit log entry is written. Operators can then review, unhide, or permanently remove the comment.
+Reporting a comment uses the same server-authoritative report callable and shared hourly budget as chant and user reports. The accepted pending row lands in `commentReports`. A Cloud Function (`onCommentReportCreated`) recomputes the pending flag count from stored reports. If the count reaches 3, the comment is auto-hidden and an audit log entry is written. Operators can then review, unhide, or permanently remove the comment.
 
 Rate limits apply per user per hour. New accounts (less than 24 hours old, or 3 or fewer total submissions) can post up to 5 comments per hour. Established accounts can post up to 20 per hour. If a user exceeds the limit, the extra comment is auto-hidden (never auto-removed) and an audit entry is logged. The rate limit runs only on comment creates, not on updates or deletes.
 
 Banned users see "You cannot comment right now" in place of the composer.
 
 **Limits and gotchas.**
-- No nested replies. Comments are a flat list.
+- No replies to replies. V1 supports one direct reply level.
 - No comment downvotes. The only reaction is a like (heart).
 - No lyric-suggestion mechanic yet. All three are parked for v1.1.
 - You cannot report your own comment. The card shows a delete icon for your own comments and a flag icon for everyone else's.

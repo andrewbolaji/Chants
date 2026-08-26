@@ -93,22 +93,6 @@ class CommentRepository {
         .map((doc) => doc.exists ? Comment.fromFirestore(doc) : null);
   }
 
-  /// Submit a report on a comment. Doc ID = userId_commentId.
-  Future<void> submitCommentReport({
-    required String commentId,
-    required String reportedBy,
-    required String reason,
-  }) async {
-    final docId = '${reportedBy}_$commentId';
-    await _commentReports.doc(docId).set({
-      'commentId': commentId,
-      'reportedBy': reportedBy,
-      'reason': reason,
-      'createdAt': FieldValue.serverTimestamp(),
-      'status': 'pending',
-    });
-  }
-
   /// Check if user already reported this comment.
   Future<bool> hasReportedComment({
     required String userId,

@@ -22,8 +22,22 @@ This is the current design contract and decision history for Chants. Read the re
 | Saved Matchday Songbook | Local-first overview, club snapshots, read-only chant detail, explicit refresh and remove, last-refreshed disclosure, UID lock, corrupt and future-version recovery states | Ownership and freshness use words as well as icons; saved detail omits live controls; 390 by 844 and enlarged text remain scrollable and unclipped | `lib/presentation/saved/`, `lib/data/models/saved_songbook.dart`, decision 003 |
 | Submission form | Preserve entered work on validation or network failure; distinguish required from optional fields; denied and banned states explain the next action; clear a stale prefilled Player with recovery copy instead of asserting or spinning | Every choice has a text label and semantic group; subject labels stay on one line at 390 by 844; keyboard never hides the active field or submit result | `lib/presentation/submit/submit_chant_screen.dart` |
 | Comments and replies | One visible reply level, recoverable failed writes and preference reads, reporting, blocking and failed Undo recovery, moderation disappearance, and no orphan promotion | Reply context and hierarchy are announced without indentation alone; tap targets and empty states remain usable at 390 by 844 and 1.8x text | `lib/presentation/comments/`, `docs/decisions/002-comment-reply-depth-and-retention.md` |
+| Reports and feedback | Submit through one server-authoritative boundary. Duplicate reports use `You already reported this.`; report and feedback limits explain that several items were sent recently; other failures retain the existing retry copy. Every failure keeps the entered category, note or message, and follow-up choice, then restores the submit control | Error copy appears in the existing snackbar pattern without replacing or clearing the form. Controls retain stable placement and labels; no limit state relies on color alone | `lib/presentation/report/report_sheet.dart`, `lib/presentation/feedback/feedback_screen.dart`, decision 010 |
 
 ## Decision log
+
+### 2026-08-25T19:29:54Z Keep safety failure recovery inside the existing form
+
+- **Status:** active
+- **Surface and user problem:** A report or feedback attempt may be a duplicate, exceed a server budget, or fail in transit. Losing the fan's selected reason or written context would make a protective control feel punitive and invite repeated submissions.
+- **Decision:** Keep the report sheet or feedback screen open after every failed callable attempt. Preserve every entered value, restore the submit control, and use specific duplicate and limit copy while retaining the existing generic retry copy. Successful confirmation remains unchanged.
+- **Why:** Rate limiting is an admission result, not a form reset. The user can understand the outcome, edit if appropriate, or retry later without recreating useful context.
+- **Alternatives considered:** Clear after any server response, which discards work; show one generic error for every condition, which makes a deliberate budget look broken; add a dedicated error screen, which breaks the lightweight report and feedback flow.
+- **Required states:** Success, duplicate report, report limit, feedback limit, unauthenticated or rejected caller, target unavailable, ordinary callable failure, and repeat submission after control restoration.
+- **Accessibility/responsive impact:** Copy is textual, uses the existing announced snackbar surface, does not shift the form hierarchy, and leaves the active form scrollable. Temporary 800 by 600 renders showed no clipping.
+- **Implementation evidence:** Widget and repository tests cover typed mapping, exact copy, retained values, restored controls, and success for all three report target types. The full Flutter suite passes 294 tests.
+- **Revisit when:** Snackbar announcements prove unreliable with assistive technology, longer localization copy is introduced, or the product adds inline retry timing.
+- **Related:** `docs/decisions/010-server-authoritative-safety-intake.md`, `docs/changes/2026-08-25-v1-report-feedback-abuse-controls.md`
 
 ### 2026-08-25T10:25:44Z Separate readable fallback from live action authority
 

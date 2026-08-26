@@ -10,12 +10,10 @@ import 'package:chants/data/repositories/team_repository.dart';
 import 'package:chants/data/repositories/player_repository.dart';
 import 'package:chants/data/repositories/chant_repository.dart';
 import 'package:chants/data/repositories/vote_repository.dart';
-import 'package:chants/data/repositories/report_repository.dart';
-import 'package:chants/data/repositories/user_report_repository.dart';
-import 'package:chants/data/repositories/feedback_repository.dart';
 import 'package:chants/data/repositories/comment_repository.dart';
 import 'package:chants/data/repositories/block_repository.dart';
 import 'package:chants/data/repositories/moderation_repository.dart';
+import 'package:chants/data/repositories/safety_submission_repository.dart';
 import 'package:chants/data/repositories/saved_songbook_repository.dart';
 import 'package:chants/data/services/account_deletion_service.dart';
 import 'package:chants/data/services/chant_share.dart';
@@ -55,16 +53,8 @@ final voteRepositoryProvider = Provider<VoteRepository>(
   (ref) => VoteRepository(),
 );
 
-final reportRepositoryProvider = Provider<ReportRepository>(
-  (ref) => ReportRepository(),
-);
-
-final userReportRepositoryProvider = Provider<UserReportRepository>(
-  (ref) => UserReportRepository(),
-);
-
-final feedbackRepositoryProvider = Provider<FeedbackRepository>(
-  (ref) => FeedbackRepository(),
+final safetySubmissionRepositoryProvider = Provider<SafetySubmissionRepository>(
+  (ref) => SafetySubmissionRepository(),
 );
 
 final commentRepositoryProvider = Provider<CommentRepository>(

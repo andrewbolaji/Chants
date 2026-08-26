@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chants/app/providers.dart';
 import 'package:chants/app/spacing.dart';
+import 'package:chants/data/repositories/safety_submission_repository.dart';
 
 const _reportCategories = [
   'Hate speech or slurs',
@@ -86,43 +87,38 @@ class _ReportSheetContentState extends State<_ReportSheetContent> {
         ? '$_selectedCategory: $note'
         : _selectedCategory!;
 
-    final user = widget.ref.read(authStateProvider).valueOrNull;
-    if (user == null) return;
-
     try {
-      switch (widget.target) {
-        case ReportChant(:final chantId):
-          await widget.ref.read(reportRepositoryProvider).submitReport(
-                chantId: chantId,
-                reportedBy: user.uid,
-                reason: reason,
-              );
-        case ReportComment(:final commentId):
-          await widget.ref
-              .read(commentRepositoryProvider)
-              .submitCommentReport(
-                commentId: commentId,
-                reportedBy: user.uid,
-                reason: reason,
-              );
-        case ReportUser(:final userId):
-          await widget.ref
-              .read(userReportRepositoryProvider)
-              .submitUserReport(
-                reportedUserId: userId,
-                reportedBy: user.uid,
-                reason: reason,
-              );
-      }
+      final (targetType, targetId) = switch (widget.target) {
+        ReportChant(:final chantId) => (SafetyReportTargetType.chant, chantId),
+        ReportComment(:final commentId) => (
+          SafetyReportTargetType.comment,
+          commentId,
+        ),
+        ReportUser(:final userId) => (SafetyReportTargetType.user, userId),
+      };
+      await widget.ref
+          .read(safetySubmissionRepositoryProvider)
+          .submitReport(
+            targetType: targetType,
+            targetId: targetId,
+            reason: reason,
+          );
       if (!mounted) return;
       setState(() => _submitted = true);
-    } catch (e) {
+    } catch (error) {
       if (!mounted) return;
       setState(() => _submitting = false);
+      final message = switch (error) {
+        SafetySubmissionException(failure: SafetySubmissionFailure.duplicate) =>
+          'You already reported this.',
+        SafetySubmissionException(
+          failure: SafetySubmissionFailure.rateLimited,
+        ) =>
+          'You have sent several reports recently. Try again later.',
+        _ => 'Could not send your report. Try again.',
+      };
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not send your report. Try again.'),
-        ),
+        SnackBar(content: Text(message)),
       );
     }
   }

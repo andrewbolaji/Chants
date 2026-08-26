@@ -133,6 +133,8 @@ Hierarchy is **Sport contains Competition contains Team contains Chant,** modele
   - Provenance / safety: `createdBy`, `createdAt`, `updatedAt`, `flagCount`, `hidden` (bool, fail-safe), `removed` (bool)
 - `votes`: { id, chantId, userId, value (1 or -1), createdAt }. One per user per chant, enforced.
 - `reports`: { id, chantId, reportedBy, reason, createdAt, status }
+- `commentReports` and `userReports`: the same server-owned pending report contract with their target-specific ID field.
+- `safetyRateLimits`: private server-only anchored report and feedback window state, one bounded row per submitting UID.
 - `auditLog`: { id, actorId, action, targetType, targetId, detail, createdAt }. Moderation actions especially.
 - `feedback`: the suggestion box. { id, userId, category (suggestion | bug | question | other), message (<= 1000 chars), followUpOk, resolved, createdAt }
 
@@ -144,9 +146,9 @@ Hierarchy is **Sport contains Competition contains Team contains Chant,** modele
 - Reads: public for non-hidden, non-removed chants.
 - Writes to `chants`: authenticated users may create (enters as `community`). Only the author may edit their own draft fields; counters and `status` are never client-writable.
 - `votes`: one per user per chant, value constrained to 1 or -1. Counter updates happen in a Cloud Function, not the client.
-- `reports`: any authenticated user may insert their own. No edit or delete.
+- `reports`, `commentReports`, `userReports`, and `feedback`: no direct client creates. Authenticated callable Functions validate the profile and target, derive identity and server fields, atomically apply the private budget, and create accepted rows. Existing owner or operator read boundaries remain collection-specific.
 - Moderation (hide, remove, ban, unban, and promote to canonical): operator-only and audit logged. Promotion of a user submission must reject missing or invalid evidence after the provenance block ships.
-- Rate-limits and fail-safe defaults: new or unproven accounts are rate-limited; content past a flag threshold auto-hides pending review.
+- Rate-limits and fail-safe defaults: reports share 5 accepted entries per anchored hour for accounts under 24 hours and 20 for older accounts; feedback allows 3 per anchored 24 hours; content past a flag threshold auto-hides pending review.
 
 ---
 
