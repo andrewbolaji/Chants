@@ -1,0 +1,278 @@
+import 'dart:async';
+
+import 'package:chants/app/providers.dart';
+import 'package:chants/app/theme.dart';
+import 'package:chants/data/models/chant.dart';
+import 'package:chants/data/models/comment.dart';
+import 'package:chants/data/models/comment_like.dart';
+import 'package:chants/data/models/team.dart';
+import 'package:chants/data/repositories/chant_repository.dart';
+import 'package:chants/data/repositories/comment_repository.dart';
+import 'package:chants/data/services/chant_share.dart';
+import 'package:chants/presentation/browse/chant_detail_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mockito/mockito.dart';
+
+class _ChantRepository extends Mock implements ChantRepository {
+  final StreamController<Chant?> controller =
+      StreamController<Chant?>.broadcast();
+
+  @override
+  Stream<Chant?> chantStream(String id) => controller.stream;
+}
+
+class _CommentRepository extends Mock implements CommentRepository {
+  final List<Comment> comments;
+
+  _CommentRepository([this.comments = const []]);
+
+  @override
+  Stream<List<Comment>> commentsForChantStream({required String chantId}) {
+    return Stream.value(comments);
+  }
+
+  @override
+  Future<CommentLike?> getUserLike({
+    required String userId,
+    required String commentId,
+  }) async => null;
+}
+
+class _ShareGateway implements ChantShareGateway {
+  final List<ChantSharePayload> payloads = [];
+  final List<Rect> origins = [];
+  Completer<void>? pending;
+  Object? error;
+
+  @override
+  Future<void> share(
+    ChantSharePayload payload, {
+    required Rect sharePositionOrigin,
+  }) async {
+    payloads.add(payload);
+    origins.add(sharePositionOrigin);
+    if (error != null) throw error!;
+    await (pending?.future ?? Future<void>.value());
+  }
+}
+
+const _team = Team(
+  id: 'arsenal',
+  sportId: 'football',
+  competitionId: 'premier-league',
+  name: 'Arsenal',
+);
+
+Chant _chant({
+  String title = 'North Bank Song',
+  String lyrics = 'Sing it loud\nSing it proud',
+  bool hidden = false,
+  bool removed = false,
+}) {
+  return Chant(
+    id: 'arsenal-north-bank-song',
+    title: title,
+    sportId: 'football',
+    competitionId: 'premier-league',
+    teamId: 'arsenal',
+    subjectTag: 'club',
+    lyrics: lyrics,
+    tuneName: 'Traditional',
+    mediaType: 'none',
+    status: 'canonical',
+    chantType: 'sincere',
+    createdBy: 'system',
+    createdAt: DateTime.utc(2026, 1, 1),
+    updatedAt: DateTime.utc(2026, 1, 1),
+    hidden: hidden,
+    removed: removed,
+  );
+}
+
+Widget _app({
+  required Chant chant,
+  required _ChantRepository repository,
+  required ChantShareGateway gateway,
+  double textScale = 1,
+  List<Comment> comments = const [],
+}) {
+  return ProviderScope(
+    overrides: [
+      authStateProvider.overrideWith((ref) => Stream<User?>.value(null)),
+      chantRepositoryProvider.overrideWithValue(repository),
+      commentRepositoryProvider.overrideWithValue(_CommentRepository(comments)),
+      chantShareGatewayProvider.overrideWithValue(gateway),
+    ],
+    child: MaterialApp(
+      theme: ChantTheme.dark,
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(
+          context,
+        ).copyWith(textScaler: TextScaler.linear(textScale)),
+        child: child!,
+      ),
+      home: ChantDetailScreen(chant: chant, team: _team),
+    ),
+  );
+}
+
+void main() {
+  testWidgets('share action exposes accessible copy and useful payload', (
+    tester,
+  ) async {
+    final repository = _ChantRepository();
+    final gateway = _ShareGateway();
+    addTearDown(repository.controller.close);
+    final semantics = tester.ensureSemantics();
+
+    await tester.pumpWidget(
+      _app(chant: _chant(), repository: repository, gateway: gateway),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byTooltip('Share this chant'), findsOneWidget);
+    expect(find.bySemanticsLabel('Share this chant'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Share this chant'));
+    await tester.pump();
+
+    expect(gateway.payloads, hasLength(1));
+    expect(gateway.payloads.single.text, contains('North Bank Song'));
+    expect(gateway.payloads.single.text, contains('Arsenal'));
+    expect(gateway.payloads.single.text, contains('Sing it loud'));
+    expect(gateway.payloads.single.text, isNot(contains('https://')));
+    expect(gateway.origins.single.width, greaterThan(0));
+    expect(gateway.origins.single.height, greaterThan(0));
+    semantics.dispose();
+  });
+
+  testWidgets('one native share remains outstanding at a time', (tester) async {
+    final repository = _ChantRepository();
+    final gateway = _ShareGateway()..pending = Completer<void>();
+    addTearDown(repository.controller.close);
+
+    await tester.pumpWidget(
+      _app(chant: _chant(), repository: repository, gateway: gateway),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Share this chant'));
+    await tester.pump();
+    await tester.tap(find.byTooltip('Share this chant'));
+    await tester.pump();
+
+    expect(gateway.payloads, hasLength(1));
+
+    gateway.pending!.complete();
+    await tester.pumpAndSettle();
+    gateway.pending = null;
+    await tester.tap(find.byTooltip('Share this chant'));
+    await tester.pumpAndSettle();
+
+    expect(gateway.payloads, hasLength(2));
+  });
+
+  testWidgets('share uses the current chant emitted by the detail stream', (
+    tester,
+  ) async {
+    final repository = _ChantRepository();
+    final gateway = _ShareGateway();
+    addTearDown(repository.controller.close);
+
+    await tester.pumpWidget(
+      _app(chant: _chant(), repository: repository, gateway: gateway),
+    );
+    await tester.pumpAndSettle();
+
+    repository.controller.add(
+      _chant(title: 'Updated terrace song', lyrics: 'The current words'),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Share this chant'));
+    await tester.pumpAndSettle();
+
+    expect(gateway.payloads.single.text, contains('Updated terrace song'));
+    expect(gateway.payloads.single.text, contains('The current words'));
+    expect(gateway.payloads.single.text, isNot(contains('North Bank Song')));
+  });
+
+  testWidgets('platform failure leaves detail readable and explains retry', (
+    tester,
+  ) async {
+    final repository = _ChantRepository();
+    final gateway = _ShareGateway()..error = StateError('platform failed');
+    addTearDown(repository.controller.close);
+
+    await tester.pumpWidget(
+      _app(chant: _chant(), repository: repository, gateway: gateway),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Share this chant'));
+    await tester.pump();
+
+    expect(find.text('NORTH BANK SONG'), findsOneWidget);
+    expect(find.text('Could not open sharing. Try again.'), findsOneWidget);
+  });
+
+  testWidgets('hidden and removed current chants cannot start sharing', (
+    tester,
+  ) async {
+    for (final chant in [_chant(hidden: true), _chant(removed: true)]) {
+      final repository = _ChantRepository();
+      final gateway = _ShareGateway();
+
+      await tester.pumpWidget(
+        _app(chant: chant, repository: repository, gateway: gateway),
+      );
+      await tester.pumpAndSettle();
+
+      final button = tester.widget<IconButton>(
+        find.widgetWithIcon(IconButton, Icons.ios_share_outlined),
+      );
+      expect(button.onPressed, isNull);
+      expect(gateway.payloads, isEmpty);
+
+      await repository.controller.close();
+    }
+  });
+
+  testWidgets('detail actions remain usable with enlarged text', (
+    tester,
+  ) async {
+    final repository = _ChantRepository();
+    final gateway = _ShareGateway();
+    addTearDown(repository.controller.close);
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      _app(
+        chant: _chant(),
+        repository: repository,
+        gateway: gateway,
+        textScale: 1.8,
+        comments: [
+          Comment(
+            id: 'comment-1',
+            chantId: 'arsenal-north-bank-song',
+            userId: 'other-user',
+            displayName: 'North Bank Fan',
+            body: 'Love this one.',
+            createdAt: DateTime.utc(2026, 1, 1),
+          ),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byTooltip('Share this chant'), findsOneWidget);
+    expect(find.byTooltip('Report this chant'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+}

@@ -5,6 +5,7 @@ import 'package:chants/app/spacing.dart';
 import 'package:chants/data/models/chant.dart';
 import 'package:chants/data/models/saved_songbook.dart';
 import 'package:chants/data/models/team.dart';
+import 'package:chants/data/services/chant_share.dart';
 import 'package:chants/presentation/comments/comment_section.dart';
 import 'package:chants/presentation/report/report_sheet.dart';
 import 'package:chants/presentation/shared/chant_provenance_label.dart';
@@ -25,6 +26,46 @@ class ChantDetailScreen extends ConsumerStatefulWidget {
 
 class _ChantDetailScreenState extends ConsumerState<ChantDetailScreen> {
   bool _saving = false;
+  bool _sharing = false;
+
+  Future<void> _shareChant({
+    required Chant chant,
+    required BuildContext shareButtonContext,
+  }) async {
+    if (_sharing || chant.hidden || chant.removed) return;
+    final renderObject = shareButtonContext.findRenderObject();
+    if (renderObject is! RenderBox || !renderObject.hasSize) {
+      _showShareError();
+      return;
+    }
+    final sharePositionOrigin =
+        renderObject.localToGlobal(Offset.zero) & renderObject.size;
+    if (!isValidSharePositionOrigin(sharePositionOrigin)) {
+      _showShareError();
+      return;
+    }
+
+    setState(() => _sharing = true);
+    try {
+      final payload = ChantSharePayload.fromChant(
+        chant: chant,
+        teamName: widget.team?.name,
+      );
+      await ref
+          .read(chantShareGatewayProvider)
+          .share(payload, sharePositionOrigin: sharePositionOrigin);
+    } catch (_) {
+      if (mounted) _showShareError();
+    } finally {
+      if (mounted) setState(() => _sharing = false);
+    }
+  }
+
+  void _showShareError() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Could not open sharing. Try again.')),
+    );
+  }
 
   Future<void> _toggleSaved({
     required String uid,
@@ -136,6 +177,8 @@ class _ChantDetailScreenState extends ConsumerState<ChantDetailScreen> {
             ? null
             : _clubContaining(songbook, live.id);
         final isSaved = isIndividual || club != null;
+        final isShareable =
+            snapshot.data != null && !live.hidden && !live.removed;
         final savedTooltip = _saving
             ? 'Saving for matchday'
             : club != null && !isIndividual
@@ -171,6 +214,22 @@ class _ChantDetailScreenState extends ConsumerState<ChantDetailScreen> {
                           ),
                   ),
                 ),
+              Builder(
+                builder: (shareButtonContext) => Semantics(
+                  label: 'Share this chant',
+                  button: true,
+                  child: IconButton(
+                    icon: const Icon(Icons.ios_share_outlined),
+                    tooltip: 'Share this chant',
+                    onPressed: _sharing || !isShareable
+                        ? null
+                        : () => _shareChant(
+                            chant: live,
+                            shareButtonContext: shareButtonContext,
+                          ),
+                  ),
+                ),
+              ),
               IconButton(
                 icon: const Icon(Icons.flag_outlined),
                 tooltip: 'Report this chant',

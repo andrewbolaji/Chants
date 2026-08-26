@@ -1,232 +1,151 @@
-# Change spec: V1 Saved Matchday Songbook
+# Change spec: V1 basic share-out
 
-**Status:** Approved, implemented, and clean-CI verified; review, native compilation, and release walk pending
-**Updated:** 2026-08-22
-**Risk lane:** Lane 2, device-local persistent state, account identity isolation, deletion lifecycle, and material offline UI
-**Stack base:** Draft PR 7, `codex/v1-songbook-chant-lab`
+**Status:** Implemented and clean-runner verified; native compilation, review, and device walk pending
+**Updated:** 2026-08-24
+**Risk lane:** Lane 2, user-triggered external platform side effect and future public-link contract
+**Stack base:** Draft PR 8, `codex/v1-saved-matchday-songbook`
 
-This is the one active implementation specification on the stacked Saved Matchday Songbook branch. It replaces the completed browse specification only on this branch. Andrew approved the product boundary in decision 003, selected this as the next v1 block, and explicitly approved this exact technical contract on 2026-08-22.
+This is the one active implementation specification on the stacked basic share-out branch. It replaces the completed Saved Matchday Songbook plan only on this branch. Decision 004 and the product spec already place basic share-out in V1, but they do not approve this technical plan.
 
 ## Outcome
 
-- **Problem:** Chants is most useful shortly before or during a match, when stadium connectivity is unreliable. Firestore's incidental device cache cannot make a clear or testable promise that a fan's chosen lyrics will survive an airplane-mode relaunch. The app also has no explicit place to collect matchday material.
-- **Desired behavior:** A signed-in fan can save one currently visible chant or a club's current Terrace Proven Songbook to this device, open the saved lyrics after an airplane-mode relaunch, refresh a complete snapshot when the server is available, and remove it locally. The interface always states when a copy was refreshed and never presents saved counters or conversation as live.
-- **Non-goals:** Cross-device sync, cloud favorites, background refresh, push or match reminders, offline audio or video, hosted media, offline voting, comments, reports, evidence links, creator profiles, analytics, a generic favorites system, Firestore schema or rules changes, Cloud Functions changes, seed changes, live Firebase access, deployment, or release.
-- **Review boundary:** One versioned mobile file store, saved-snapshot models and repository, server refresh orchestration over existing visible team queries, account-deletion cleanup, Saved Songbook navigation and screens, save and refresh controls on Team Songbook and chant detail, focused persistence and UI tests, representative goldens, and current framework records.
+- **Problem:** A fan can find, learn, save, and discuss a chant, but cannot send it through Messages, WhatsApp, X, email, or another installed app. Chants also has no live public chant route, so sharing a guessed `chantsfc.com` URL would create a dead destination.
+- **Desired behavior:** Live chant detail has one accessible Share action. It opens the operating system share sheet with useful plain text containing the current chant's title, optional known club name, full main lyrics, tune, and honest trust wording. A verified public chant URL may be appended later, but an absent or invalid URL always produces a complete text-only share instead of a broken link.
+- **Non-goals:** Direct posting to X, TikTok, Instagram, WhatsApp, or any other service; platform SDK integrations; link previews; universal links; Android App Links; iOS Universal Links; website work; Firebase Dynamic Links; generated cards; images, files, audio, or video; clipboard controls; share counts or analytics; notifications; background work; sharing comments, evidence, context notes, variations, scores, creator identity, or reports; sharing from the read-only Saved Matchday Songbook; Firestore, rules, Functions, indexes, seed, Firebase access, deployment, merge, or release.
+- **Review boundary:** One pure share-payload builder, one narrow native-share gateway, one provider, one live chant-detail action, one runtime dependency, focused tests, one representative visual, and current framework records.
 
 ## Acceptance criteria and invariants
 
-1. Only a currently authenticated Firebase UID can open or mutate its own local snapshot. Every operation requires that UID explicitly, and storage for a different UID is never loaded into the current user's state.
-2. An individual save is available for any currently server-visible canonical or community chant. A club save contains only the club's currently server-visible `status == canonical` Songbook, in deterministic Songbook order.
-3. A first save or refresh requires a successful server-visible result. Cache-only or retained-after-error browse data remains readable but cannot be stamped as freshly saved. Removing local data never requires a network connection.
-4. The saved overview loads the local snapshot before making any network request and remains navigable after the repository and widgets are reconstructed with Firebase reads unavailable. The release walk must prove an actual airplane-mode process relaunch on a supported device.
-5. Each persisted chant contains only the public, bounded data needed for honest offline reading: chant ID, team ID, optional player ID, subject tag, title, lyrics, tune name, optional context notes, variations, `status`, optional origin, and source creation and update timestamps. It excludes scores, vote counts, comment counts, comments, reports, flags, creator ID, evidence URL, cover URL, media URL, audio, and video.
-6. Each persisted team identity contains only ID, sport ID, competition ID, and name. Each individual or club record stores UTC save and refresh timestamps. The UI displays a clear last-refreshed date without claiming continuous freshness.
-7. Saving a chant individually and through a club preserves both save intents but renders that chant only once in the overview. Removing the club reveals any still-individual save. Removing the individual save does not remove a copy still owned by a saved club.
-8. A club refresh replaces that club's complete canonical list in one successful local commit. Chants no longer visible or no longer canonical are removed. A successful targeted refresh reconciles that chant ID across every local source: replace visible canonical copies, remove a visible community chant from club lists while updating any individual save, or remove a no-longer-visible ID everywhere.
-9. A failed server refresh, failed serialization, oversized result, or failed file replacement leaves the last complete file and in-memory snapshot unchanged. The UI says refresh failed and that the saved copy is still available.
-10. Concurrent local mutations for one process are serialized in call order. State is emitted only after the corresponding file replacement succeeds, so the visible state never gets ahead of durable state.
-11. The file format has schema version 1. An unsupported future version is never overwritten by an older client. Malformed or oversized files fail closed into a recoverable local-storage error and are not silently treated as an empty Songbook.
-12. The persisted payload is capped at 2 MiB per UID and 500 unique chant IDs. A write over either limit is rejected before replacing the prior snapshot.
-13. Signing out leaves that UID's local snapshot for a later sign-in on the same device. A successful account deletion removes the UID's active local snapshot. Another account on the device cannot see it before, during, or after deletion cleanup.
-14. Offline saved detail is explicitly read-only. It shows lyrics, tune, context, variations, club identity, trust or origin wording, and snapshot age, but no vote, comment, report, evidence, media, or share action.
-15. Home exposes one obvious `MATCHDAY SONGBOOK` entry. Team Songbook exposes `SAVE FOR MATCHDAY` or `REFRESH SAVED COPY`; chant detail exposes an accessible save state. Empty, busy, saved, cache-only, refresh-error, corrupt, unsupported-version, and remove-confirmation states use text as well as icons or color.
-16. At 390 by 844 and enlarged text, the home entry, saved overview, club snapshot, saved detail, save controls, dates, errors, and destructive confirmation remain readable without overflow or clipped tap targets.
-17. No Firestore collection, field, index, security rule, Cloud Function, seed record, remote configuration, production data, or analytics event changes in this block.
+1. Live chant detail shows a Share action between the existing matchday bookmark and report actions. Its tooltip and screen-reader label are `Share this chant`.
+2. One tap opens the platform share sheet with exactly one plain-text payload. While that invocation is outstanding, repeated taps cannot open another sheet.
+3. The payload uses the current chant rendered by the detail stream, not the route's older snapshot when a newer visible value has arrived.
+4. The text-only payload has this order: title, optional known club name, full main lyrics, `Tune: <tune name>`, one trust line, optional public link, and `Shared from Chants`. Sections use blank lines. Leading and trailing whitespace is removed and CRLF input is normalized to LF without rewriting words.
+5. Trust wording is derived only from existing status and origin values: canonical is `Terrace Proven`; community Already sung is `Chant Lab: Already sung, not yet Terrace Proven`; community original is `Chant Lab: Original idea`; legacy community with no origin is `Chant Lab: Community chant`.
+6. A team name is included only when the current route already knows it. Sharing never performs a team, player, chant, profile, or other network read to enrich the payload.
+7. The payload never includes `createdBy`, evidence URL, media URL, cover URL, context notes, variations, scores, vote counts, comment counts, comments, reports, flags, hidden state, removed state, or authentication identity.
+8. No URL is emitted in current builds because no public chant resolver exists. The payload builder accepts an optional already-validated HTTPS public URL so a later approved website or deep-link block can add one without changing the share-sheet boundary. A missing or rejected URL leaves the text share fully useful.
+9. The system share result never creates a delivery claim. Dismissed, success, and result-unavailable outcomes return silently because the plugin cannot prove that a recipient received anything. An invocation exception leaves chant detail usable and shows `Could not open sharing. Try again.`
+10. The action passes the laid-out button's non-zero global rectangle as `sharePositionOrigin`, which the package requires for safe iPad presentation. If a valid rectangle cannot be resolved, no platform call occurs and the same recoverable error appears.
+11. A hidden or removed current chant cannot start a share. Existing visible content behavior and Firestore enforcement remain the authority for whether live detail is reachable.
+12. The action is a normal operating-system handoff. It does not request contacts, account, photo, storage, tracking, or social-platform permissions, and does not send content to Chants infrastructure.
+13. At 390 by 844 and enlarged text, bookmark, Share, and Report remain reachable with comfortable tap targets and no clipped or overlapping app-bar action.
+14. Existing live detail reading, provenance, evidence, save, vote, report, and comment behavior remains unchanged outside the Share action.
+15. No backend, public web route, persistent data, analytics event, or production configuration changes in this block.
 
 Invariants:
 
-- Firestore remains the source of current visibility and Terrace Proven status. The local file is a user-requested, timestamped reading snapshot, never a moderation or authorization source.
-- A saved stale copy can exist while the device is offline. The interface discloses its timestamp and never calls it current without a successful server refresh.
-- Public chant text is stored locally, but account isolation and deletion are still enforced as product privacy promises.
-- Existing live Team, Player, Chant Lab, voting, comments, reporting, evidence, and submission behavior remains unchanged outside the explicit save controls.
+- The native share sheet is an external user-controlled destination boundary. Chants supplies plain text and never claims control over the receiving app, delivery, retention, or later redistribution.
+- Votes remain popularity signals, evidence remains verification material, and the share payload never upgrades a community chant's trust status.
+- Stable chant IDs remain the future public-link identity. Mutable titles are never proposed as URL identity.
+- Saved Matchday Songbook remains read-only and without a share action under decision 003.
 - No production or staging read, write, deployment, dashboard change, merge, or release is authorized by this specification.
 
-## Storage and data contract
+## Design
 
-### Versioned envelope
+### Pure payload contract
 
-The repository stores one UTF-8 JSON file per Firebase UID under the platform application-support directory. The filename uses unpadded base64url encoding of the UID, not a raw path component. The root shape is:
+Add a small immutable request or payload value and a pure builder under `lib/data/services/`. The builder accepts a `Chant`, optional known team name, and optional already-validated public URL. It returns the share title, email subject, and text without reading Firebase, providers, platform state, or the filesystem.
+
+The plain-text shape is:
 
 ```text
-schemaVersion: 1
-clubSnapshots: teamId -> SavedClubSongbook
-individualSnapshots: chantId -> SavedIndividualChant
+<chant title>
+<known team name, omitted when unavailable>
+
+<full main lyrics>
+
+Tune: <tune name>
+<trust line>
+
+<public URL, omitted in current builds>
+
+Shared from Chants
 ```
 
-`SavedClubSongbook` stores the team identity, `savedAt`, `refreshedAt`, and an ordered list of saved chant snapshots. `SavedIndividualChant` stores the team identity, `savedAt`, `refreshedAt`, and one saved chant snapshot. Timestamps are encoded as UTC ISO-8601 strings and decoded strictly. Map keys must match the embedded IDs.
+The optional team line does not leave an extra blank section when absent. The builder normalizes line endings and trims field boundaries, but preserves internal lyric lines and wording. It does not truncate the current 5,000-character lyrics boundary or add variations, because the fallback must remain a usable rendition of the main chant.
 
-The repository validates the whole payload before exposing it. Wrong types, missing required fields, duplicate chant IDs inside one club snapshot, invalid status or origin values, mismatched keys, a future schema version, more than 500 unique chants, or more than 2 MiB are errors. Unknown additive fields in schema version 1 are ignored so a compatible patch release can add optional metadata without breaking old readers.
+The optional URL is an input, not a resolver owned by this block. It is appended only when its scheme is HTTPS and it has a non-empty host. Current production wiring passes no URL. A later public-route change must define the host, stable path, hidden or removed behavior, metadata, app or web fallback, and live smoke gate before enabling links.
 
-### Atomic persistence
+### Native share boundary
 
-The local store obtains `getApplicationSupportDirectory()` from Flutter's `path_provider` package. For every mutation it:
+Add `share_plus: ^11.1.0`, published by `fluttercommunity.dev` under BSD-3-Clause. Version 11.1.0 supports the current Flutter, Dart, iOS, Java, Android Gradle Plugin, and Gradle versions and exposes `SharePlus.instance.share(ShareParams(...))`. The current latest major requires Android Gradle Plugin 8.12.1, while the repository tracks 8.11.1 and has unrelated user changes in the same settings file. This block does not expand into an Android build-tool upgrade.
 
-1. loads or uses the last validated snapshot for the exact UID;
-2. computes and validates a complete replacement in memory;
-3. writes the complete JSON to a same-directory temporary file with `flush: true`;
-4. renames the temporary file over the active file;
-5. emits the new immutable state only after replacement completes.
+Use one narrow gateway because the platform invocation is an external side effect that widget tests must replace. Production passes text, title, subject, and the button's `sharePositionOrigin` to `SharePlus`. The gateway treats every returned `ShareResultStatus` as a completed handoff and lets invocation exceptions reach the screen boundary for one user-facing translation. It adds no retry because a retry could open a second share sheet after an ambiguous platform outcome.
 
-Mutations are serialized by one repository-owned future chain. A failed temporary write or rename deletes only the temporary artifact when possible and preserves the active file. Tests inject read, write, and replacement failures through a small `SongbookStorage` boundary. Production has one filesystem implementation; the boundary exists for deterministic persistence and fault tests, not speculative storage switching.
+The dependency owner is Flutter Community. Update within the compatible major through normal dependency maintenance. Removal means deleting the detail action, provider, gateway, and package; no data or server cleanup exists.
 
-### Dependency decision
+### Chant-detail interaction
 
-Add direct dependency `path_provider: ^2.1.6`, published by `flutter.dev` under BSD-3-Clause, solely to resolve the application-support directory on supported iOS and Android versions. Dart `File` APIs perform the actual JSON reads and atomic replacement.
+The Share icon sits in the live detail app bar between Save for matchday and Report. A `Builder` or equivalent button-local context supplies the laid-out render rectangle. The screen owns one `_sharing` flag, disables the action until the platform future settles, and reads the current `live` chant already selected by the stream builder.
 
-Rejected alternatives:
+The action needs no sign-in branch beyond the app's existing signed-in shell, no network loading state, and no success snackbar. A thrown platform error shows the bounded failure copy and preserves every current screen state. The screen does not log the payload, target application, result identifier, user identity, or error contents.
 
-- `shared_preferences`: its maintained documentation says writes are asynchronous without a persistence guarantee and the store is not designed for larger data. That does not support the explicit relaunch promise.
-- Firestore offline cache: it is incidental, not user-selected, UID-lifecycle owned, or explainable as a complete snapshot.
-- SQLite, Hive, Isar, or another database: v1 stores one bounded document per UID and needs no query engine. A database adds schema, native, update, and migration surface without buying required behavior.
-- Platform-specific hand-written directory lookup: duplicates a maintained Flutter plugin and increases native test surface.
+### Alternatives rejected
 
-The package owner is the Flutter toolchain owner. Update it with normal Flutter dependency maintenance. Removal means replacing the directory provider, reading the versioned JSON once, and preserving the same repository contract.
-
-## Server refresh and deduplication contract
-
-### Visible source reads
-
-Add a one-shot server method to `ChantRepository` that reuses the current visible team query predicates (`teamId`, `hidden == false`, `removed == false`) with `Source.server`. It returns a complete team result or throws. It introduces no new query shape or index.
-
-- Club save from Team Songbook can use the current route snapshot only when `isFromCache == false` and no recoverable chant error is active.
-- Club refresh from Saved Songbook fetches the complete visible team result from the server, projects only canonical chants, applies the existing deterministic Songbook order, strips live-only fields, then atomically replaces the club snapshot.
-- Individual save or refresh fetches the complete visible result for that chant's team and selects the stable chant ID. A visible canonical result replaces the same ID wherever stored. A visible community result is removed from club lists and retained only when there is individual save intent. A missing ID in a successful result is removed everywhere. A failed fetch is not treated as removal.
-- Team identity is passed from Team or Discovery when already known. Otherwise it is resolved through `TeamRepository` before a first individual save. A failed identity lookup prevents the first save. Refresh retains the last team identity if the chant result succeeds but the team metadata read fails.
-
-The service that joins server reads to local mutations remains separate from the pure file repository. This keeps the repository usable and testable without Firebase and prevents a partial remote result from entering the local file.
-
-### Ownership and one-render rule
-
-Club and individual records remain separate because they represent different removal intent. A pure projection builds the overview:
-
-1. render saved clubs first, in team-name then team-ID order;
-2. collect every chant ID embedded by those club records;
-3. render only individual records whose chant ID is not already represented by a club;
-4. retain the hidden individual record so it reappears if the covering club is removed.
-
-No score is persisted. A club snapshot keeps the deterministic server-side Songbook order calculated at refresh time. Individual items order by most recent `refreshedAt`, then chant ID.
-
-## Account lifecycle contract
-
-Sign-out does not mutate local files. Every saved provider and screen keys state by the current UID and is disposed when auth changes.
-
-The account-deletion service captures the UID and atomically renames any active local file to a UID-scoped deletion tombstone before invoking the existing callable. This works without decoding the file, so corrupt local state cannot block account deletion cleanup. If the rename fails, the callable is not invoked. If the callable fails, the service renames the exact tombstone bytes back to the active path and reports the existing account-deletion failure. If the callable succeeds, no active snapshot remains and the tombstone is deleted. A failed restore reports possible local-save loss with the callable error as the primary cause. A failed final tombstone deletion can never make the data readable by another UID and is retried during the next repository initialization. The deletion confirmation copy adds Saved Matchday Songbook to the data removed from this device.
-
-This orchestration is implemented in a small account-deletion service rather than duplicated in the Home widget. The service owns only ordering and compensation between the existing callable and the local repository. It does not change server deletion semantics.
-
-## Interface and interaction design
-
-### Home and entry
-
-- Add one signed-in home card below search and before the competition entry: `MATCHDAY SONGBOOK`, supporting copy `Saved on this device, ready when the signal drops`, a bookmark icon, and a chevron.
-- The card opens the local overview immediately. It never waits for a Firestore query.
-- The empty overview says `PACK YOUR MATCHDAY SONGBOOK` and offers `FIND A CLUB`, returning to the normal club browse journey.
-
-### Team Songbook
-
-- Place one full-width matchday control after the Songbook introduction and before the chant sections.
-- Unsaved plus fresh server data: `SAVE FOR MATCHDAY`.
-- Saved plus fresh server data: `REFRESH SAVED COPY`, with last-refreshed supporting text.
-- Cache-only, retained-error, empty, or in-flight data: keep the control visible but disabled and explain `Connect for a fresh copy`. An existing saved copy remains openable from Matchday Songbook.
-- Successful save or refresh confirms the chant count. Failure states that the previous saved copy is still available.
-- Removal lives in the Saved Songbook club view behind a confirmation dialog, avoiding an easy destructive toggle on the live club screen.
-
-### Live chant detail
-
-- Add a bookmark action with explicit tooltip and semantics: `Save for matchday`, `Saved individually`, or `Saved with club`.
-- Unsaved action performs a fresh visible-team read before saving. While busy, the control is disabled and announced as saving.
-- If individually saved, the action can remove that individual intent after confirmation. If covered only by a club snapshot, it opens the saved club view rather than implying that one tap removes the club copy.
-- A failed save or refresh leaves any prior state unchanged and names the safe next action.
-
-### Saved overview and club view
-
-- The overview app bar says `MATCHDAY SONGBOOK`. Intro copy says the material is saved on this device and shows that timestamps indicate freshness.
-- Saved club cards show team name, number of chants, and last-refreshed date. Individually saved chants not covered by a club appear under `SAVED CHANTS`.
-- A club view is entirely local on first render. It shows `LAST REFRESHED`, ordered saved chant cards, `REFRESH`, and `REMOVE FROM DEVICE`.
-- Refresh is an explicit network action. A spinner disables duplicate taps. A failed refresh keeps every old lyric visible with `Could not refresh. Your saved copy is still here.`
-- If a successful refresh yields no canonical chants, keep the club record with an honest empty state and current refresh timestamp until the user removes it.
-
-### Saved chant detail
-
-- Use a dedicated read-only route backed only by `SavedChantSnapshot`, not a fabricated live `Chant` and not a Firestore stream.
-- Reuse extracted lyric, tune, context, variations, provenance wording, and layout components where their inputs stay honest.
-- Show `SAVED COPY` and the refresh timestamp near the top. Omit live score, votes, comments, report, evidence, media, and creator actions completely.
-- Refresh and removal are explicit controls. If the item is also in a saved club, removal copy explains that the club copy remains.
-
-### Local storage errors
-
-- First load shows a bounded progress state while reading the file.
-- Missing file is the normal empty state.
-- Malformed or oversized schema shows `SAVED COPY NEEDS ATTENTION`, preserves the file, and offers `RESET LOCAL COPY` behind destructive confirmation.
-- A future schema version shows `UPDATE CHANTS TO OPEN THIS COPY`, with no reset or mutation from the older client.
-- Do not claim the device is offline from a caught exception. Say only that fresh updates are unavailable.
+- `url_launcher` alone: it can open a specific URL or application scheme but cannot present the general native share sheet already required by the product contract.
+- Hand-written Android intents and iOS activity controllers: duplicates maintained platform code and creates a larger native compatibility and test surface than one established plugin.
+- Latest `share_plus` plus an Android Gradle upgrade: expands a small product feature into build-tool work and overlaps unrelated user edits. Revisit as separate dependency maintenance.
+- A guessed `https://chantsfc.com/chants/<id>` link: the route does not exist, so the recipient would reach a dead destination.
+- Share only a title or promotional sentence: the text fallback would be an advertisement instead of a useful chant.
+- Share images or generated lyric cards: creates rendering, temporary-file, accessibility, platform compatibility, and brand-preview work already deferred to v1.1.
+- Direct social-platform integrations: adds accounts, SDKs, permissions, platform review, tracking, and service-specific failure modes without improving the basic user job.
 
 ## Failure and abuse analysis
 
 | Condition | Expected behavior | Evidence |
 |---|---|---|
-| Same mutation is tapped twice | UI disables duplicate taps; serialized idempotent map replacement produces one record | Repository and widget tests |
-| Two different local mutations overlap | They commit in call order and the later operation starts from the prior committed state | Deferred-storage concurrency test |
-| Temporary write or rename fails | Old file and emitted state remain intact; temporary artifact is cleaned when possible | Fault-injected file-store test |
-| Process is reconstructed without network | New repository instance reads the same UID file and local routes render without Firebase access | Temporary-directory integration test plus device walk |
-| Cache-only Team data is visible | Live chants remain readable; save or refresh is disabled and no new freshness timestamp is written | Team widget test |
-| Server refresh fails | Existing snapshot and timestamps remain unchanged; recoverable copy is shown | Service and widget tests |
-| Successful club refresh omits hidden, removed, or demoted chant | Complete atomic replacement removes it | Refresh service test |
-| Successful individual refresh returns canonical, community, or no target | Canonical replaces every copy; community leaves only individual intent; missing removes every copy; unrelated records remain | Refresh service test |
-| Same chant has club and individual ownership | One overview entry renders; removal of one owner preserves the other | Pure projection and widget tests |
-| Different UID signs in on the device | Only its encoded file is loaded; the first UID's titles and counts never appear | Negative identity-isolation integration test |
-| Account deletion callable fails | Exact tombstone bytes are restored even when the payload is corrupt; account error remains visible | Account-deletion compensation test |
-| Account deletion callable succeeds | No active UID file exists, a new repository load is empty, and tombstone cleanup completes or remains unreadable pending retry | Account-deletion integration test |
-| JSON is malformed, wrong-shaped, too large, or schema is newer | It is never rendered as valid or overwritten; state distinguishes corrupt from unsupported | Codec and repository tests |
-| Local file is manually altered | Strict validation rejects invalid IDs, enums, dates, and shape before UI exposure | Hostile-fixture tests |
-| No canonical chants remain after club refresh | Club stays as a zero-item, freshly timestamped record until removal | Service and widget test |
-| Large text or narrow viewport | Controls, dates, lyrics, dialogs, and empty/error copy remain usable | 390 by 844 goldens and enlarged-text test |
+| Share tapped twice quickly | Only the first native call starts; the action stays disabled until completion | Widget test with deferred fake gateway |
+| Share sheet dismissed | No success or failure claim appears; detail remains unchanged | Gateway and widget test |
+| Platform reports result unavailable | Treat as a completed handoff, not a failure or delivery proof | Gateway test |
+| Platform invocation throws | One recoverable snackbar appears; no crash, retry, or lost detail state | Throwing-gateway widget test |
+| Button origin is absent, zero, or outside its render box | No platform call; show the recoverable failure | Geometry helper and widget test |
+| Chant stream updates after route open | Payload contains the newer rendered title, lyrics, tune, and trust state | Stream-driven widget test |
+| Chant is hidden or removed in current data | Share action is disabled or absent and the gateway is not called | Negative widget test |
+| Team route did not provide a Team | Payload omits the team line without a placeholder or extra blank section | Pure builder test |
+| Community chant is popular | Payload still says Chant Lab and never Terrace Proven unless status is canonical | Pure provenance matrix test |
+| User-controlled text contains CRLF, URLs, or markup-like characters | It remains plain text; line endings normalize and no value is executed or interpreted by Chants | Hostile-text unit test |
+| Optional URL is missing or invalid | Complete text-only payload is shared with no dead or malformed link | Pure builder test |
+| Receiving app mishandles or retains text | Chants makes no delivery, deletion, privacy, or compatibility claim about third-party behavior | Interface copy and device walk |
 
 ## Performance and cost
 
-- **Workload:** V1 launches with 20 Premier League clubs and roughly five operator-seeded chants per club. The supported local ceiling is 500 unique chant IDs or 2 MiB for one UID, whichever arrives first.
-- **Storage:** One active JSON file plus one transient replacement file per UID. No media bytes, indexes, WAL, database runtime, background job, or cloud storage.
-- **Client budget:** Decode, validate, and project a 500-chant fixture in under 100 ms at p95 on the representative local test machine. Saved lists remain lazy. No filesystem work runs synchronously on the UI isolate.
-- **Network cost:** Club save from a fresh Team route adds zero reads. A saved-screen club refresh reads one team document plus every currently visible chant for that team. An individual save or refresh uses the same bounded team-visible read so hidden content can be identified without weakening rules. There are no background reads.
-- **Measurement:** Retain a deterministic 500-chant codec benchmark-style test and record elapsed time as diagnostic evidence without a noisy CI timing gate. Verify the 2 MiB rejection structurally.
-- **Revisit trigger:** Move to SQLite or another indexed store only if snapshots exceed 500 chants or 2 MiB, measured decode exceeds 100 ms p95 on a representative supported device, partial updates become necessary, or offline media is approved.
+- **Workload:** One user-triggered payload per tap. Current model limits bound title and tune to 200 characters each and main lyrics to 5,000 characters.
+- **Client cost:** One linear string construction and one platform-channel call. No network, database, filesystem, image encoding, or background work.
+- **Budget:** Payload construction stays synchronous and allocation-bounded by the existing chant limits. Duplicate taps create one outstanding call at most. Native sheet presentation latency belongs to the operating system and is not described as Chants latency.
+- **Server and financial cost:** Zero Chants reads, writes, functions, storage, analytics, scheduled work, or paid API calls.
+- **Measurement:** Unit-test the maximum accepted text boundary and inspect that one gateway call receives the expected bounded payload. No timing gate is justified for a roughly 5 KiB string.
 
 ## Rollout and recovery
 
-- **Order:** Merge after draft PRs 4 through 7. No Firebase deployment or data migration exists. Release the client only after automated checks, independent PR review, and the combined device walk.
-- **Compatibility:** Older clients ignore the new file. Schema version 1 readers accept their own known fields and ignore additive unknown fields. They refuse a future schema version rather than overwriting it. Sign-out preserves the file; app uninstall removes it according to platform behavior.
-- **Canary:** On an authorized local or non-production iOS or Android device, save one community chant, one canonical chant, and one club; force-stop; enable airplane mode; relaunch; verify exact lyrics and UID isolation; reconnect; refresh after hiding or demoting a fixture in the authorized environment; then test removal and account-deletion cleanup.
-- **Healthy signals:** Local routes open immediately, every expected lyric survives relaunch, no live controls appear offline, timestamps are honest, failed refresh retains the old copy, successful refresh removes stale content, and another UID sees an empty or its own Songbook.
-- **Observation window:** Complete the scenario once on iOS and once on Android before release. No production analytics are added, so production health is assessed through feedback and crash reporting already in the app.
-- **Rollback:** Revert the client entry points and repository provider. The versioned file can remain dormant for forward recovery. Do not delete it in a rollback build. If schema version 1 itself is faulty, ship a forward fix that can read or explicitly quarantine it.
-- **Owner:** Andrew authorizes review, merge, device/environment access, release, and any live moderation fixture. Codex implements and verifies repository changes only.
+- **Order:** Stack after draft PR 8. Merge only after the preceding stack, automated checks, independent review, native compilation, and the combined device walk.
+- **Compatibility:** The package adds normal Android and iOS plugin registration. It changes no persisted or remote data. Current builds remain text-only.
+- **Device gate:** On authorized iPhone and Android devices, open one Terrace Proven and one Chant Lab detail, inspect the sheet, send to a test Messages or Notes destination, dismiss once, and verify a second tap works. On iPad or an iPad simulator, verify the sheet anchors without a crash or frozen interface.
+- **Public-link gate:** No URL is enabled in this block. A later change may supply one only after the exact HTTPS route resolves for a visible stable chant ID and has honest hidden, removed, unknown, web, and app-not-installed behavior.
+- **Healthy signals:** One sheet per tap, correct full text and provenance, no dead URL, no detail-state loss, no crash, and no false success message after dismissal.
+- **Rollback:** Remove the Share action, provider, gateway, payload builder, and `share_plus` dependency. No migration, cleanup, compensating server action, or user-data recovery is needed.
+- **Owner:** Andrew authorizes review, merge, release, public-route activation, deployment, and any live-device or external-destination test. Codex implements and verifies repository changes only.
 
 ## Verification plan
 
 | Claim | Check | Expected evidence |
 |---|---|---|
-| Codec is strict and versioned | Focused model and hostile-fixture tests | Round trip succeeds; malformed, mismatched, oversized, invalid enum/date, and future version cases fail distinctly |
-| Writes survive reconstruction | Repository integration test over a temporary directory | A second repository instance reads exact saved lyrics, timestamps, ownership, and ordering |
-| Atomic failure preserves state | Fault-injected storage test | Failed write and replacement leave prior file bytes and emitted state unchanged |
-| Mutations are serialized | Deferred-storage concurrency test | Completion and final state follow invocation order with no lost update |
-| UID isolation is enforced | Two-UID temporary-directory test | Neither title, count, nor snapshot from UID A appears for UID B |
-| Club and individual ownership dedupe correctly | Pure projection tests | One rendered ID, correct reveal after either owner is removed |
-| Refresh honors server visibility | Refresh-service tests with fake complete team results | Hidden, removed, demoted, and missing targets leave no stale rendered copy after success; failures retain old copy |
-| Account deletion clears safely | Account-deletion service tests | Success leaves no active file; callable failure restores exact bytes, including a corrupt fixture; cleanup retry never exposes a tombstone |
-| Saved routes never initialize live social behavior | Widget tests with throwing Firebase repositories | Overview, club, and saved detail render while chant, vote, comment, report, and evidence boundaries are unavailable |
-| Live entry controls are honest | Team and chant-detail widget tests | Fresh, cache-only, busy, saved-individual, saved-with-club, failure, and removal states match the contract |
-| Interface holds at launch viewport | 390 by 844 overview, club, and saved-detail goldens plus enlarged-text test | Hierarchy, dates, offline wording, controls, and lyrics are readable without overflow |
-| Package integrates on supported clients | Android debug build and iOS simulator build before release | `path_provider` plugin registration compiles without Android Gradle or iOS project edits |
-| Existing app remains green | `flutter test`, `flutter analyze lib test`, Functions, seed, rules TypeScript, and clean-runner CI | All changed and untouched repository gates pass |
-| New test proves the product promise | Temporarily bypass the file read or replace active-before-temp | Relaunch or atomic-failure test fails for the intended reason, then passes after restoration |
-| Diff stays inside the contract | Compare against `codex/v1-songbook-chant-lab`, run `git diff --check`, project-memory checks, writing-style check, and inspect dependency diff | Only approved Flutter, dependency, test, and framework paths; no unrelated Android, backend, rules, index, seed, or Firebase config changes |
-| Actual airplane-mode promise holds | Combined device walk after implementation | Force-stop and relaunch shows exact saved lyrics without connectivity on iOS and Android |
+| Payload is useful and bounded | Pure builder tests for canonical, both community origins, legacy origin, absent team, CRLF, hostile text, maximum field lengths, and optional URL | Exact title, lyrics, tune, trust, optional URL, and footer with no excluded data |
+| URL fallback is honest | Missing, HTTP, hostless, and valid HTTPS cases | Invalid or absent URL produces complete text only; valid supplied URL is appended once |
+| Native dependency is isolated | Gateway unit test using the package platform test seam or a fake gateway | Parameters include text, title, subject, and non-zero origin; returned statuses create no delivery claim |
+| Repeated taps are bounded | Deferred-gateway widget test | Two rapid taps produce one invocation; action re-enables after completion |
+| Current stream data is shared | Stream-driven ChantDetailScreen test | Captured payload uses the post-route stream value |
+| Failure is recoverable | Throwing-gateway and invalid-origin widget tests | Screen remains readable and shows `Could not open sharing. Try again.` |
+| Hidden and removed data do not share | Negative widget tests | Gateway call count remains zero |
+| Interface holds at launch viewport | 390 by 844 chant-detail golden and enlarged-text widget test | Save, Share, Report, trust, title, and lyrics remain reachable without clipping or overflow |
+| Plugin compiles for supported clients | Android debug build and iOS simulator build before release | Native registration compiles without changing the current Android Gradle or iOS deployment settings |
+| Existing app remains green | `flutter test`, `flutter analyze lib test`, Functions, seed, rules TypeScript, and clean-runner CI | All touched and repository gates pass |
+| New behavior has a real red guard | Temporarily prevent the gateway call or remove lyrics from the payload | Focused widget or builder test fails for the intended reason, then passes after restoration |
+| Diff stays inside the contract | Compare against `codex/v1-saved-matchday-songbook`, run `git diff --check`, project-memory checks, writing-style check, and inspect dependency diff | Only approved share, detail, dependency, test, visual, and framework paths; user Android and unrelated lockfile changes remain outside the commit |
 
 ## Approval
 
-**Approved.** Andrew explicitly approved this exact Saved Matchday Songbook specification on 2026-08-22. Repository implementation and local or clean-runner verification are authorized within this boundary. Approval does not authorize Firebase access, moderation fixture changes, deployment, merge, release, or production observation.
+**Approved.** Andrew explicitly approved this exact basic share-out specification on 2026-08-24. Repository implementation and local or clean-runner verification are authorized within this boundary. Approval does not authorize Firebase access, a public website route, deep-link configuration, analytics, deployment, merge, release, or production observation.
 
 ## Open decisions
 
-None. Decision 003 already fixes device-local UID scope, individual and club snapshots, atomic refresh, deletion cleanup, and deferred cross-device sync. This contract selects the exact filesystem, schema, refresh, deduplication, lifecycle, interface, workload, and verification behavior required to implement it.
+None. The accepted product contract already chooses the native share sheet, live chant detail, and honest text fallback. This specification selects the exact payload, trust wording, dependency compatibility boundary, failure behavior, iPad geometry control, and verification evidence.
