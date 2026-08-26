@@ -63,6 +63,36 @@ class _ChantRepository extends Mock implements ChantRepository {
   }
 }
 
+class _FixtureChantRepository extends Mock implements ChantRepository {
+  _FixtureChantRepository(this.chants);
+
+  final Map<String, Chant> chants;
+
+  @override
+  Stream<LiveChantSnapshot> chantStream(String id) =>
+      Stream.value(LiveChantSnapshot(chant: chants[id], isFromCache: false));
+}
+
+class _ControlledChantRepository extends Mock implements ChantRepository {
+  _ControlledChantRepository({
+    required this.chants,
+    required this.controlledId,
+    required this.controlledStream,
+  });
+
+  final Map<String, Chant> chants;
+  final String controlledId;
+  final Stream<LiveChantSnapshot> controlledStream;
+
+  @override
+  Stream<LiveChantSnapshot> chantStream(String id) {
+    if (id == controlledId) return controlledStream;
+    return Stream.value(
+      LiveChantSnapshot(chant: chants[id], isFromCache: false),
+    );
+  }
+}
+
 class _VoteRepository extends Mock implements VoteRepository {
   @override
   Future<Vote?> getUserVote({
@@ -160,6 +190,8 @@ final _chants = [
   ),
 ];
 
+final _reviewNow = DateTime.utc(2026, 8, 26);
+
 Future<void> _loadFonts() async {
   final fonts = {
     'Nunito': 'assets/fonts/Nunito-Variable.ttf',
@@ -200,6 +232,147 @@ Widget _app(
 }
 
 void main() {
+  testWidgets('Home derives Rising instead of granting it to every idea', (
+    tester,
+  ) async {
+    final staleIdea = _chants.last.copyWith(
+      id: 'stale-idea',
+      title: 'An Old Unranked Idea',
+      score: 0,
+      createdAt: DateTime.utc(2024, 1, 1),
+      updatedAt: DateTime.utc(2024, 1, 1),
+    );
+    final visible = [_chants.first, staleIdea];
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authStateProvider.overrideWith((ref) => Stream.value(null)),
+          chantRepositoryProvider.overrideWithValue(
+            _FixtureChantRepository({
+              for (final chant in visible) chant.id: chant,
+            }),
+          ),
+          voteRepositoryProvider.overrideWithValue(_VoteRepository()),
+          discoveryProvider.overrideWith((ref) async => visible),
+          allTeamsProvider.overrideWith(
+            (ref) => Stream.value({'arsenal': 'Arsenal'}),
+          ),
+        ],
+        child: _app(
+          Scaffold(
+            body: SingleChildScrollView(
+              child: DiscoverySection(
+                groupByTrust: true,
+                risingEvaluationTime: _reviewNow,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('TERRACE PROVEN'), findsWidgets);
+    expect(find.text('ORIGINAL IDEA'), findsOneWidget);
+    expect(find.text('RISING'), findsNothing);
+  });
+
+  testWidgets('Home recalculates Rising from the current live chant', (
+    tester,
+  ) async {
+    final controller = StreamController<LiveChantSnapshot>();
+    addTearDown(controller.close);
+    final idea = _chants.last;
+    final visible = [_chants.first, idea];
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authStateProvider.overrideWith((ref) => Stream.value(null)),
+          chantRepositoryProvider.overrideWithValue(
+            _ControlledChantRepository(
+              chants: {for (final chant in visible) chant.id: chant},
+              controlledId: idea.id,
+              controlledStream: controller.stream,
+            ),
+          ),
+          voteRepositoryProvider.overrideWithValue(_VoteRepository()),
+          discoveryProvider.overrideWith((ref) async => visible),
+          allTeamsProvider.overrideWith(
+            (ref) => Stream.value({'arsenal': 'Arsenal'}),
+          ),
+        ],
+        child: _app(
+          Scaffold(
+            body: SingleChildScrollView(
+              child: DiscoverySection(
+                groupByTrust: true,
+                risingEvaluationTime: _reviewNow,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('RISING'), findsOneWidget);
+
+    controller.add(
+      LiveChantSnapshot(chant: idea.copyWith(score: 0), isFromCache: false),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('ORIGINAL IDEA'), findsOneWidget);
+    expect(find.text('RISING'), findsNothing);
+  });
+
+  testWidgets('empty Terrace Proven lane sends the fan to club browse', (
+    tester,
+  ) async {
+    final visited = <RouteSettings>[];
+    final idea = _chants.last;
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authStateProvider.overrideWith((ref) => Stream.value(null)),
+          chantRepositoryProvider.overrideWithValue(
+            _FixtureChantRepository({idea.id: idea}),
+          ),
+          voteRepositoryProvider.overrideWithValue(_VoteRepository()),
+          discoveryProvider.overrideWith((ref) async => [idea]),
+          allTeamsProvider.overrideWith(
+            (ref) => Stream.value({'arsenal': 'Arsenal'}),
+          ),
+        ],
+        child: _app(
+          const Scaffold(
+            body: SingleChildScrollView(
+              child: DiscoverySection(groupByTrust: true),
+            ),
+          ),
+          onRoute: visited.add,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('No Terrace Proven chants are published yet.'),
+      findsOneWidget,
+    );
+    await tester.tap(find.widgetWithText(TextButton, 'BROWSE CLUBS'));
+    await tester.pumpAndSettle();
+
+    expect(visited.last.name, AppRouter.competition);
+    expect(visited.last.arguments, const {
+      'id': 'premier-league',
+      'name': 'Premier League',
+    });
+  });
+
   testWidgets('Home search clear control is labelled and clears the query', (
     tester,
   ) async {
@@ -395,16 +568,26 @@ void main() {
                 Stream.value({for (final team in _teams) team.id: team.name}),
           ),
         ],
-        child: _app(const HomeScreen()),
+        child: _app(HomeScreen(risingEvaluationTime: _reviewNow)),
       ),
     );
     await tester.pumpAndSettle();
+    expect(find.text('TERRACE PROVEN'), findsWidgets);
+    expect(find.text('ORIGINAL IDEA'), findsOneWidget);
+    expect(find.text('RISING'), findsOneWidget);
     await expectLater(
       find.byType(MaterialApp),
       matchesGoldenFile('goldens/core_home.png'),
     );
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpAndSettle();
+
+    installTolerantGoldenComparator(
+      testFile: Uri.base.resolve(
+        'test/presentation/browse/core_journey_golden_test.dart',
+      ),
+      precisionTolerance: 0.022,
+    );
 
     await tester.pumpWidget(
       ProviderScope(

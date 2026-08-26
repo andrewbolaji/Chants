@@ -1,87 +1,85 @@
-# Change spec: V1 Home hierarchy refresh
+# Change spec: V1 native build readiness
 
-**Status:** Packaged in draft PR 15 and replacement clean-runner green; review and native walkthrough pending
+**Status:** Implemented and locally compiled; packaging, clean-runner CI, combined device walk, and final independent review pending
 **Updated:** 2026-08-26
-**Risk lane:** Lane 1, bounded client presentation and deterministic visual evidence
-**Base:** Locally stacked above the completed V1 core-journey interface-readiness block on `codex/framework-ui-readiness`
-**Approval:** Andrew selected the refined redesign direction and explicitly directed Codex to implement it, make the typography and sizing judgment, balance fun with basic clarity, and complete one last visual-potential pass using Vouch only as a modern layout reference on 2026-08-26.
+**Risk lane:** Lane 1, bounded native compilation and release-readiness evidence
+**Base:** `9189c71d99c52539cb3d1b02f51701fa4334c144`, merged PR 15 on `main`, plus the locally verified post-interface correction batch
+**Approval:** Andrew asked Codex to fix the complete PR 15 review batch, continue with the next sensible build work, and defer independent review until one combined pre-release engineering head.
 
 ## Outcome
 
-- **Problem:** Current Home is coherent and usable, but it reads mainly as a catalogue. It does not immediately express the product's three return reasons: matchday utility, trusted Terrace Proven material, and community creativity in Chant Lab.
-- **Desired behavior:** Home keeps the existing routes and data authority while presenting a compact fan-voiced header, clearer search, prominent Matchday Songbook utility, simple Premier League entry, and separate Terrace Proven and Chant Lab previews. Type, spacing, and ornament remain disciplined enough for a basic utility app.
-- **Non-goals:** Persistent bottom navigation, a global route rewrite, a global design-system replacement, a new feed query, pagination, hosted media, a generic submit route, a View all destination, schema or repository changes, Firebase rules or Functions, seed work, dependency changes, deployment, signing, or release.
-- **Review boundary:** `lib/presentation/home/home_screen.dart`, Home-mode presentation in `lib/presentation/browse/discovery_section.dart`, a narrowly optional Home presentation mode in shared chant cards, one color token if required, focused widget and golden evidence, interface memory, execution, and scoped rationale.
+- **Problem:** Flutter, Functions, rules, seed, and interface tests are green, but the current merged application has not yet been compiled across its native V1 boundary. The repository also lacks checked-in production Firebase configuration by design, and this Mac has no Android SDK.
+- **Desired behavior:** Prove that the iOS simulator target compiles from the current combined source with temporary non-secret local fixtures, diagnose and correct only repository-owned native blockers, preserve an honest Android environment gate, and leave a reproducible final-review record.
+- **Non-goals:** Production signing, physical-device installation, live Firebase access, seed writes, Functions or rules deployment, App Store or Play Console work, Android SDK installation, package upgrades, new product features, or visual redesign.
+- **Review boundary:** Native project source and configuration needed to compile, scoped native tests, temporary ignored fixtures, generated-file cleanup, current engineering records, and the already approved correction batch. The independent review happens once at the final pre-release engineering head rather than after this block.
 
 ## Acceptance criteria and invariants
 
-1. Home uses existing `discoveryProvider`, `allTeamsProvider`, `authStateProvider`, profile stream, named routes, and current-live chant stream. No network query, repository, authorization, or persistence contract changes.
-2. The title and chant names use the condensed display face. Search and explanatory copy use the legible UI face. Monospace is limited to short labels and metadata. Lyrics remain calm and readable.
-3. The representative normal-text scale is approximately: Home title 30 to 32, chant preview title 19 to 21, utility title 18 to 20, section label 11 to 13, body and search 14 to 16, metadata 10 to 12.
-4. Spacing uses existing tokens, aligned 16-pixel primary page insets, 12 to 16-pixel content rhythm, and at least 44-pixel interactive targets.
-5. Visual personality comes from the type voices, warm ink and gold palette, one restrained community accent, and the existing Terrace Proven badge. Cards and ordinary navigation remain flat, calm, and readable.
-6. Signed-in Home exposes Matchday Songbook with honest device-local and offline wording. Signed-out behavior remains readable and never exposes an unavailable saved action.
-7. Premier League remains the one obvious route to clubs and preserves the exact named-route argument contract.
-8. When not searching, Home separates current discovery results into Terrace Proven and Chant Lab previews without changing each chant's status or trust meaning. No community score or Rising label implies verification.
-9. When searching, Home keeps one combined result list across title, lyrics, tune, and club name. Empty, loading, initial error, current-live permission denial, cache authority, and retry behavior remain intact.
-10. There is no bottom navigation, View all action, or global Add action. The selected concept's unsupported controls do not enter runtime.
-11. The account and operator controls retain their routes, labels, and authorization behavior. Account deletion lifecycle behavior remains byte-for-byte unchanged.
-12. Home and its first meaningful scroll segment render without overflow at 390 by 844 with normal text. At 1.8x text, search, utility routes, section labels, and chant previews remain reachable and unclipped through scrolling.
-13. Primary controls have stable labels and logical reading order. Meaning is not conveyed by color alone.
-14. Focused Home, discovery authority, saved entry, and golden tests pass before the complete Flutter suite and scoped analysis.
-15. The implementation receives an inspected updated Home golden, formatter check, governance checks, ownership check, and scoped rationale. Native device sign-off remains a later release gate.
+1. `flutter build ios --simulator --debug --no-pub` succeeds from the current feature head, or the exact external/repository blocker is captured with command evidence.
+2. Temporary Firebase files contain placeholder values only, remain ignored, and are removed after verification.
+3. A repository-owned native defect is changed only when the build reproduces it and the smallest supported correction can be verified.
+4. Generated build products and dependency artifacts do not enter the tracked diff. Any incidental tracked rewrite is manually restored and audited.
+5. Native Runner tests run when the available simulator/toolchain can execute them without signing or live-service access.
+6. Android compilation is not claimed on this machine while the Android SDK is absent. Source-level inspection may identify risks, but installing a toolchain remains a separate user-authorized action.
+7. No production key, signing credential, live Firebase operation, deployment, seed mutation, store action, or physical-device action occurs.
+8. The protected owner worktree and its uncommitted platform/configuration files remain untouched.
+9. The post-interface corrections remain in the same eventual final-review range and are not sent for another intermediate review.
+10. The final records distinguish verified compilation, environment-blocked checks, and deferred release gates without converting any of them into inferred evidence.
+
+## Implementation outcome
+
+- `flutter build ios --simulator --debug --no-pub` now succeeds and produces `build/ios/iphonesimulator/Runner.app` from the combined correction head.
+- The first build reproduced Flutter's automatic mixed SwiftPM migration compiling `cloud_firestore 6.4.1` against incompatible Firebase bridge APIs. The project now pins Flutter's supported project-level SwiftPM setting off and keeps the V1 graph on CocoaPods.
+- `ios/Podfile.lock` now includes the native `share_plus` and `url_launcher_ios` pods already declared by the merged V1 Dart dependencies. Existing Firebase pod versions remain pinned.
+- CI now fails if the project loses its CocoaPods ownership flag, loses either merged native plugin pod, or tracks generated Flutter SwiftPM state.
+- The current Flutter UIScene migration is retained: `AppDelegate` registers plugins through `FlutterImplicitEngineDelegate`, `Info.plist` declares the Flutter scene, and the obsolete framework minimum-version override is removed.
+- The Runner app and RunnerTests bundle both compile and validate. Two signed, single-destination RunnerTests launches were blocked before XCTest began because CoreSimulator denied or lost the app-launch service. The inherited `testExample` assertion is therefore not claimed as executed.
+- Android remains environment-blocked because this Mac has no Android SDK. No SDK was installed.
+- Both placeholder Firebase fixtures were ignored, contained no production secret, and were deleted after verification. `pubspec.lock` and the Xcode project file match the base; generated SwiftPM resolution files are absent.
 
 ## Design
 
-- **Selected direction:** V2 defines the product structure in `docs/mockups/chants-home-redesign-concept-v2.png`; the Vouch-informed but football-specific final polish reference is `docs/mockups/chants-home-redesign-concept-v3.png`.
-- **Runtime adaptation:** The mockup is a hierarchy and typography reference, not a pixel-copy contract. Fixture-only counts become truthful generic copy unless current local state is already available without adding load or failure complexity.
-- **Home header:** A slightly larger `CHANTS` title, quiet `THE TERRACES, IN YOUR POCKET.` line, and existing account and operator controls.
-- **Utilities:** Compact outlined Matchday Songbook card when signed in, followed by a calm raised Premier League card.
-- **Content:** Gold-accented Terrace Proven heading and restrained community-accented Chant Lab heading. Each group shows a small preview set from the already-fetched shuffled discovery result. Search restores the existing combined result behavior.
-- **Empty community state:** If there is trusted material but no community idea in the current result, Home may point to the real Premier League browse route so the fan can choose a club. It must not invent a teamless submission route.
-- **Shared card adaptation:** A Home-only emphasis option may adjust title size, padding, and margins without changing card semantics, vote authority, route arguments, or other screens.
+### Local-only Firebase fixtures
 
-## Failure and abuse analysis
+The compile uses ignored placeholder `firebase_options.dart` and `GoogleService-Info.plist` files with the repository's production identifiers replaced by non-routable test values. They exist only long enough to satisfy generated imports and the Xcode resource reference. The build must not contact or mutate Firebase.
+
+### Native evidence before native edits
+
+The inherited iOS project uses CocoaPods. The first proof is the existing project as-is. If compilation fails, the build log determines whether the defect belongs to source, generated state, dependency resolution, or the local toolchain before any tracked file changes.
+
+### Honest platform boundary
+
+iOS is the executable native gate on this Mac because Xcode, CocoaPods, and iOS simulators are available. Android remains a named environment prerequisite because no Android SDK is installed; this block does not silently expand into a large toolchain installation.
+
+## Failure analysis
 
 | Condition | Expected behavior | Evidence |
 |---|---|---|
-| Discovery loading | Header and utility routes remain stable; one progress state appears in content | Widget state test |
-| Discovery initial error | Real Try again action remains; no stale authority is implied | Widget test |
-| One trust group absent | The present group remains useful; absent group copy is honest and routes only to a real destination | Widget test |
-| Permission denial or current absence | Existing live wrapper removes the stale card | Inherited authority test |
-| Cache-only live value | Card remains readable; vote stays disabled | Inherited authority test |
-| Signed out | Songbook utility is absent; browse and search remain | Widget test |
-| Enlarged text | Page scrolls; no horizontal overflow or hidden route | 390 by 844 at 1.8x test |
-| Rapid shuffle or route tap | Existing provider invalidation and Navigator behavior apply; no new server mutation occurs | Existing and focused interaction tests |
-
-## Performance and cost
-
-- No additional Firestore read, listener, Function, or persistent file access is approved.
-- Grouping is one linear pass over the already-fetched discovery list, bounded by the existing response.
-- Home renders at most a small preview from each trust group before search. Search retains the existing result cap.
-- Added visual tests must remain proportionate and use deterministic fixtures.
-
-## Rollout and recovery
-
-- No migration or deployment is authorized.
-- Presentation changes can be reverted without data work.
-- Healthy source evidence is focused and complete Flutter green, clean analysis, inspected golden, governance checks, and later native walkthrough approval.
-- If the Home hierarchy confuses trust meaning or hides a current route, revert the Home presentation while retaining the preceding readiness corrections.
+| Ignored Firebase files are absent | Add placeholder-only fixtures for the build and remove them afterward | Ignore checks, fixture inspection, final status audit |
+| CocoaPods or Swift compilation fails | Capture the exact failing target and diagnose ownership before editing | Full native build log |
+| Tracked generated files change during build | Restore only the incidental generated delta and verify the intended diff remains | Before/after path and diff audit |
+| Native tests require signing or live services | Stop at the authorized boundary and record the deferred gate | Exact command result |
+| Android tooling is unavailable | Record the missing SDK; do not claim a build or install it implicitly | `flutter doctor` and SDK-path checks |
 
 ## Verification plan
 
-| Claim | Check | Expected evidence |
-|---|---|---|
-| Existing routes remain | Tap Songbook, Premier League, account menu, and preview chant under test | Exact route name and arguments |
-| Trust sections are honest | Fixture includes canonical and community chants | Correct headings, badges, order, and no View all or bottom navigation |
-| Search remains broad and clearable | Query title, team, tune, and no result | Combined results, stable clear label, utility suppression, truthful empty state |
-| Responsive hierarchy | Home at 390 by 844 normal and 1.8x | No exception or overflow; actions reachable by scroll |
-| Authority is unchanged | Existing discovery live-authority suite | Permission denial removal and cache-disabled vote still pass |
-| Whole client remains intact | `flutter test --no-pub` and CI-equivalent scoped analysis | Complete pass |
-| Framework remains intact | Memory, writing, YAML, formatting, diff, and ownership checks | Pass with no backend, rules, seed, dependency, native, or owner-file change |
+| Claim | Check |
+|---|---|
+| iOS source compiles | `flutter build ios --simulator --debug --no-pub` |
+| Runner native target is executable under test | Scoped `xcodebuild test` against an available iOS simulator, when supported |
+| Fixtures are safe and ephemeral | Inspect placeholder content, ignore rules, and final absence |
+| No unintended platform diff exists | Compare tracked native paths and lockfiles against the pre-build state |
+| Existing app corrections remain sound | Re-run only the proportionate governance/diff checks after native work; full clean-runner CI belongs to packaging |
+| Records are truthful | Update execution, rationale, overview, and roadmap with verified versus blocked gates |
+
+## Rollout and recovery
+
+- No runtime rollout occurs in this block.
+- Temporary ignored files are deleted after the native evidence run.
+- A bounded tracked native correction, if required, stays on this branch and is included in the eventual combined clean CI and one final Claude review.
+- If the blocker is the local environment rather than the repository, record it as a release prerequisite instead of changing application code to work around it.
 
 ## Open decisions
 
-- The bounded Home hierarchy direction is approved, including Codex's final typography and spacing judgment.
-- The final preview count is one Terrace Proven chant and one Chant Lab idea. This keeps both meanings legible in the first meaningful scroll segment while search remains the complete discovery surface.
-- Persistent global navigation remains deferred. It needs a later route and back-stack specification if product evidence supports it.
+- Installing an Android SDK is deferred unless Andrew separately authorizes that machine-level change.
+- Production signing, real Firebase configuration, combined device walkthrough, seed writes, deployment, and store release remain later release gates.

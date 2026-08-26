@@ -60,6 +60,12 @@ flutter_native_splash:
     color: "#444444"
 
 flutter:
+  # Keep the V1 iOS dependency graph on CocoaPods. Flutter's automatic mixed
+  # SwiftPM migration currently compiles cloud_firestore against incompatible
+  # Firebase bridge APIs; revisit as one explicit dependency-manager change.
+  config:
+    enable-swift-package-manager: false
+
   uses-material-design: true
 
   fonts:

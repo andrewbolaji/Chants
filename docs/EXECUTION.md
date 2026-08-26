@@ -13,6 +13,54 @@ This is the chronological evidence trail for substantial engineering work. It re
 
 ## Entries
 
+### 2026-08-26T23:50:13Z Prove V1 native iOS build readiness
+
+- **Status:** iOS simulator compilation complete; RunnerTests launch and Android compilation environment-blocked; packaging and final combined review pending
+- **Scope:** Compile the combined post-interface head through its native iOS boundary, correct only reproduced repository-owned blockers, leave Android as an honest environment gate, and preserve one eventual final independent review range.
+- **Reference:** `docs/CHANGE_SPEC.md`, `docs/changes/2026-08-26-v1-native-build-readiness.md`
+- **Approval:** Andrew asked Codex to continue from the complete review corrections, build the next sensible work, and use one final Claude review rather than incremental reviews.
+- **Operator:** Codex
+
+| UTC time | Action | Target/environment | Result and evidence |
+|---|---|---|---|
+| 22:02:00 | Inventoried native toolchains and established safety fixtures | macOS, Flutter 3.44.8, Dart 3.12.2, Xcode 26.6, CocoaPods 1.17.0 | Xcode and iOS simulators were available; Android SDK was absent. Added ignored placeholder-only Firebase files for compilation. No real configuration or live service was accessed. |
+| 22:08:00 | Ran the inherited iOS simulator build | `flutter build ios --simulator --debug --no-pub` | RED after 374.5 seconds. Flutter automatically introduced SwiftPM and `cloud_firestore 6.4.1` failed on missing `initWithRef:firestore:` and `initWithCollectionId:` bridge initializers. |
+| 22:21:00 | Isolated the mixed dependency graph and applied the project-owned correction | Flutter project config and CocoaPods graph | Disabled SwiftPM through `flutter.config.enable-swift-package-manager: false`, removed generated SwiftPM project state, rebuilt CocoaPods, preserved existing Firebase pins, and added the native `share_plus` and `url_launcher_ios` pods already required by merged Dart code. |
+| 22:34:00 | Cleared stale Xcode dependency state and reran the exact build | Local iOS simulator target | PASS after a cold 2017.1-second compile: `Built build/ios/iphonesimulator/Runner.app`. The previous Firestore bridge failure did not recur. |
+| 23:10:00 | Built the native RunnerTests boundary | Xcode Runner workspace and iOS 26.5 simulators | PASS for compilation, embedding, local simulator signing, and bundle validation across the app and test host. No SwiftPM graph was used. |
+| 23:48:52 | Attempted scoped RunnerTests execution twice | Signed single-destination iOS simulator launches, parallel cloning disabled on the retry | BLOCKED before XCTest. CoreSimulator first lost its service, then a fresh simulator rejected the Runner launch through `SBMainWorkspace`. Neither Runner nor XCTest spawned, so the inherited empty `testExample` is not claimed as run. |
+| 23:50:13 | Removed fixtures, audited generated state, and installed a deterministic native contract check | Local repository and project-governance CI | Placeholder Firebase files and SwiftPM resolution files are absent. `pubspec.lock` and the Xcode project file match the base. The intended native diff is the project-level SwiftPM pin, current Flutter UIScene migration, and Podfile lock representation for the two merged native plugins. The regression harness rejects a missing pin and tracked Flutter SwiftPM integration. |
+
+- **Files/artifacts:** `pubspec.yaml`, `ios/Podfile.lock`, current Flutter UIScene project files, active spec, completed change rationale, overview, project rationale, roadmap, project profile, README, learning memory, and this execution entry.
+- **Blocked or skipped:** RunnerTests execution is blocked at the local simulator launcher; Android compilation is blocked by the absent SDK. Real Firebase, production signing, physical devices, live seed access, deployment, stores, and production observation were not authorized or attempted.
+- **Current state:** The repository-owned iOS compile blocker is closed locally. The post-interface correction and native-readiness work remain one uncommitted branch range for packaging, clean-runner CI, and one combined final independent review.
+- **Follow-up:** Finish truth refresh and deterministic checks, then package the combined range when authorized. Complete Android/native device evidence and release operations only at their explicit later gates.
+
+### 2026-08-26T21:26:27Z Correct the independent PR 15 interface findings
+
+- **Status:** Implemented and locally verified; packaging, clean-runner CI, and independent correction review pending
+- **Scope:** Correct the false Home Rising label, impossible Terrace Proven empty action, broad golden tolerance, and governance-script accuracy findings from the independent review of `2df9fa0...9189c71`. Preserve routes, providers, current-live authority, backend, rules, seed, dependencies, native projects, and production state.
+- **Reference:** `docs/CODE_REVIEW_INTERFACE_READINESS_2026-08.md`, `docs/CHANGE_SPEC.md`
+- **Approval:** Andrew explicitly approved `post-interface independent review correction spec` on 2026-08-26.
+- **Operator:** Codex
+
+| UTC time | Action | Target/environment | Result and evidence |
+|---|---|---|---|
+| 21:08:00 | Verified merged PR 15 and its exact-main CI | GitHub PR 15 and Actions run `33012771517` | PR 15 merged as `9189c71`. Project governance, 353 Flutter tests, analysis, 78 Functions tests, 42 seed tests, and 136 Java-backed Firestore rules assertions passed at the exact merge commit. |
+| 21:12:00 | Verified the independent review against source and preserved its artifact | Protected review worktree and clean branch from `origin/main` | Confirmed the hardcoded `rising: true`, one 3 percent comparator spanning three images, the impossible empty-lane shuffle, structure-only CI memory mode, whitespace-splitting staged loop, fail-open prose scan, and broad working-tree scan. Copied the review into the clean correction boundary without changing the protected worktree. |
+| 21:16:00 | Recorded the approved Lane 1 correction contract | `docs/CHANGE_SPEC.md` | Limited work to Home trust truthfulness, useful empty recovery, per-image evidence, governance scripts and their tests, and truthful durable records. No server, data, seed, dependency, native, deployment, or release scope entered. |
+| 21:19:00 | Captured pre-fix Home regressions | Focused Flutter widget tests | RED: a score-zero community chant created in 2024 rendered one `RISING` label. RED: the canonical-empty lane lacked the expected useful club-browse copy and action. |
+| 21:21:00 | Captured and corrected governance regressions | Temporary Git repositories under the operating-system temp directory | RED: a documentation-only path containing spaces was split and misclassified as implementation. GREEN after NUL-delimited staged paths. The durable harness also proves implementation requires staged execution evidence, tracked prose rejects the forbidden dash, untracked scratch is excluded, and Git index errors fail closed. |
+| 21:23:00 | Corrected Home truth and recovery | `DiscoverySection`, `HomeScreen`, and focused tests | Home derives Rising from the currently rendered live chant through `isRisingChant` and an injectable time. A live score transition from 7 to 0 removes Rising while retaining Original Idea. Empty Terrace Proven opens the exact Premier League competition route. |
+| 21:24:00 | Scoped visual tolerance and semantic evidence | Core journey test | Home retains the measured 3 percent cross-renderer ceiling. Competition and player return to 2.2 percent. Direct assertions cover Terrace Proven, Original Idea, and truthful Rising outside image comparison. All 8 core-journey tests passed. |
+| 21:25:00 | Corrected governance claims and script behavior | AGENTS, project profile, CI, memory script, writing script, interface and learning memory | CI is documented as structure enforcement. The staged change-to-execution mode is an explicit manual pre-handoff gate. Writing style scans tracked index prose. CI now runs the durable governance regression harness. |
+| 21:26:27 | Ran the complete local client and governance matrix | Local macOS, Flutter 3.44.8, Dart 3.12.2, Bash | PASS: 356 Flutter tests, `flutter analyze --no-pub lib test`, 8 core-journey tests, governance regressions, shell syntax, and whitespace diff. The ignored non-secret Firebase fixture used for analysis was removed. `pubspec.lock` was restored byte-for-byte after local package resolution and is outside the diff. |
+
+- **Files/artifacts:** Home and discovery presentation, core journey regressions, three governance scripts, CI governance step, approved spec, independent review, interface and learning memory, current overview and rationale, README, roadmap, this execution entry, and `docs/changes/2026-08-26-post-interface-independent-review-corrections.md`.
+- **Skipped:** Functions, rules, seed, dependency, native build, device walk, Firebase, deployment, signing, release, and production actions are outside this block. Their exact merged-main evidence remains run `33012771517` at `9189c71`.
+- **Current state:** The approved correction is locally complete and green on `codex/post-interface-review-corrections`. It is not committed, pushed, clean-runner verified, independently closed, merged, deployed, released, or observed in production.
+- **Follow-up:** Package one correction commit when Andrew authorizes it, push a review PR, run replacement clean-runner CI, obtain independent closure, then perform the combined native walkthrough.
+
 ### 2026-08-26T20:25:18Z Implement the approved V1 Home hierarchy refresh
 
 - **Status:** Packaged in draft PR 15 and replacement clean-runner green; review and native walkthrough pending

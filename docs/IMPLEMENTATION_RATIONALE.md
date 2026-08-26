@@ -5,13 +5,13 @@
 ## Document identity and completeness
 
 - **Product:** Chants, a Flutter and Firebase mobile app for learning trusted football chants and publishing new chant ideas.
-- **External review boundary:** Claude independently reviewed `c57815c...f5cb748`, `f5cb748...c893cd0`, and `c893cd0...fe93e20`, then approved the final closure range `fe93e20...0b64dcf` with both prior findings closed and no new defect.
-- **Current stack head:** Final merged `main` at `2df9fa04a839f88a19fe43c2bcc8ed9a583627c3`, plus the locally verified `codex/framework-ui-readiness` and bounded Home hierarchy changes.
-- **Review type:** Current whole-project milestone snapshot after the independent freeze reviews, final stack merge, exact-main clean-runner CI, local interface readiness, and the approved Home hierarchy pass. It is not a native or release sign-off.
+- **External review boundary:** Claude independently reviewed the freeze ranges through final closure, then reviewed merged PR 15 at `2df9fa0...9189c71`. The latest review accepted the interface boundary overall and found one blocking false Home trust label plus three medium evidence, recovery, and governance findings.
+- **Current stack head:** Final merged `main` at `9189c71d99c52539cb3d1b02f51701fa4334c144`, plus the locally verified `codex/post-interface-review-corrections` branch.
+- **Review type:** Current whole-project milestone snapshot after the independent freeze reviews, merged Home hierarchy, exact-main clean-runner CI, and the locally corrected independent interface findings. It is not a clean-runner, native, or release sign-off for the correction branch.
 - **Coverage:** Flutter client, Cloud Functions, Firestore rules and tests, seed pipeline, native configuration, CI, framework docs, and release boundaries.
 - **Excluded:** Vendored `node_modules`, generated Flutter and TypeScript output, live Firebase data and dashboard state, deployed artifacts, store dashboards, and operating-system device behavior.
 - **Preserved unrelated work:** Andrew's older `android/app/build.gradle.kts`, `android/settings.gradle.kts`, `pubspec.lock`, and private freeze-note work remains untouched in its original worktree.
-- **Current status:** The V1 engineering stack is merged and exact-main clean-runner green. Native compilation, the combined device walk, live stable-identity preflight, remaining verified seed, production configuration, signing, and release remain pending.
+- **Current status:** The V1 engineering stack through PR 15 is merged and exact-main clean-runner green. The post-interface correction passes 356 Flutter tests, scoped analysis, and governance regressions locally. Packaging, clean-runner CI, independent correction closure, native compilation, the combined device walk, live stable-identity preflight, remaining verified seed, production configuration, signing, and release remain pending.
 
 ## Repository coverage ledger
 
@@ -20,7 +20,7 @@
 | Auth | Email/password sign-up, sign-in, reset, sign-out in `lib/presentation/auth/` and `lib/data/repositories/auth_repository.dart` | Firebase Auth owns identity; client never chooses privileged role or ban state | Flutter auth and gate tests | Reset-email template behavior remains dashboard-only and unverified |
 | Age and consent | Local DOB check, stored 17-plus boolean, versioned policy gate in `lib/data/services/age.dart`, `lib/app/app.dart`, `functions/src/index.ts :: acceptPolicy` | DOB is not stored; policy version and acceptance time are server-written | Flutter, Functions, and rules tests | Actual policy copy is still a placeholder |
 | Profiles and roles | Owner profile plus operator moderation identity in `profiles` | Owners can edit only display name and update time; role, ban, age, consent, and report count are pinned by `firestore.rules :: profiles` | Rules suite; ban handler tests | Dashboard-created operator bootstrap and second-account device proof unverified |
-| Browse and discovery | Home matchday utility, Premier League entry, one Terrace Proven and one Chant Lab preview, competition, Team, Player, Songbook, Discover, and broad search in `lib/presentation/home/` and `lib/presentation/browse/` | Existing providers and routes remain authoritative; visible queries constrain hidden and removed; permission denial removes Discover cards; cache stays readable but cannot authorize live actions; presentation never mutates repository-owned lists | Core Home exact-route, search, signed-state, 1.8x, and golden tests plus competition, player, ranking, cache-authority, and identity tests | Full Discover fetch remains a scale boundary; native visual sign-off remains pending |
+| Browse and discovery | Home matchday utility, Premier League entry, one Terrace Proven and one Chant Lab preview, competition, Team, Player, Songbook, Discover, and broad search in `lib/presentation/home/` and `lib/presentation/browse/` | Existing providers and routes remain authoritative; visible queries constrain hidden and removed; permission denial removes Discover cards; cache stays readable but cannot authorize live actions; presentation never mutates repository-owned lists; Rising comes from the current live community chant and never from lane membership alone | Core Home exact-route, search, signed-state, 1.8x, trust-label, live-score, useful-empty-action, and golden tests plus competition, player, ranking, cache-authority, and identity tests | Full Discover fetch remains a scale boundary; native visual sign-off remains pending |
 | Submission | Required origin, title, lyrics, tune, subject, style; optional evidence in `SubmitChantScreen` | Exact parser-safe user schema; Team and optional Player relationship; community, no direct media, empty variations | Flutter and 136-case rules suite | No author flow to attach evidence later; invalid legacy rows require normalization before direct edit |
 | Provenance and evidence | Honest labels, canonical YouTube/X normalization, evidence-gated promotion in `chant_evidence.dart`, `chant_trust.ts` | Votes never prove terrace use; user content needs valid evidence plus operator review for canonical status | Dart, Functions, rules, and golden tests | No author flow to attach evidence later |
 | Duplicate nudge | Advisory token matcher and explicit continue/view/back flow in `SubmitChantScreen :: _reviewLikelyDuplicates` | Failure of an advisory read cannot block posting | Matcher and submit widget tests | No open implementation gap in v1 boundary |
@@ -33,7 +33,7 @@
 | Saved Matchday Songbook | UID-isolated bounded local JSON snapshots, explicit refresh, offline read-only routes | Maximum 500 unique chants and 2 MiB; active matching UID; case-safe SHA-256 path; unknown deletion state unreadable; accepted marker removed after every other artifact | Model, repository, migration, service, widget, lifecycle, SHA-boundary, and golden tests | Physical force-stop/airplane-mode persistence unverified; no cross-device sync by design |
 | Share-out | Plain-text native sheet from live detail in `chant_share.dart` and `chant_detail_screen.dart` | No public URL or delivery claim; every live-target action requires server-confirmed non-cache visible authority | Payload, gateway, cache authority, enlarged-text, and golden tests | Native device destination behavior unverified |
 | Seed | Explicit stable chant IDs, read-only preflight, transaction ownership recheck, validation, orphan report | Source content is human supplied; seed may transform but never invent lyrics or context | 42 seed tests plus TypeScript | Only Arsenal JSON exists; no live preflight or remaining club write ran |
-| CI | Six GitHub Actions jobs in the readiness branch's `.github/workflows/ci.yml` | Tests, rules, analysis, project memory, and prose style must fail closed before merge | Final-main run `32993748570` at `2df9fa0` passed the original five jobs; PR 15 replacement run `33011936510` passed all six | Flutter version is unpinned; no Dart format gate |
+| CI | Six GitHub Actions jobs in `.github/workflows/ci.yml`; the correction adds governance-script regressions to the governance job | Tests, rules, analysis, memory structure, tracked prose, and governance-script behavior must fail closed in CI; change-to-execution linkage remains an explicit manual staged gate | Exact-main run `33012771517` at `9189c71` passed all six jobs; local governance regressions pass on the correction branch | Correction clean-runner result pending; Flutter version is unpinned; no Dart format gate |
 | Native release | Flutter Android/iOS shells and plugin registration | Store signing and native compilation are separate release gates | Source inspection and prior attempted builds | Android uses debug signing; Android SDK unavailable locally; inherited iOS Firestore Swift sources failed compile |
 
 ## System overview and architecture
@@ -177,15 +177,15 @@ No current dependency advisory conclusion is claimed. The audit request was bloc
 |---|---|---|---|
 | Flutter/Dart | `pubspec.yaml`, SDK `^3.10.8` | Client runtime | Verified on Flutter 3.44.8 and Dart 3.12.2; CI uses movable stable |
 | Riverpod | `flutter_riverpod ^2.6.1` | DI and async state | Hand-written providers; codegen packages are unused |
-| Firebase client | core, auth, Firestore, Functions, App Check, Crashlytics | Auth, data, callable, integrity, errors | Native compilation incomplete; live enforcement unverified |
+| Firebase client | core, auth, Firestore, Functions, App Check, Crashlytics | Auth, data, callable, integrity, errors | iOS simulator compilation passes on CocoaPods; live enforcement unverified |
 | `url_launcher ^6.3.2` | External evidence | Opens normalized provider URL | Failure translated in UI tests |
 | `path_provider ^2.1.6` | Local Songbook | Application-support directory | Physical lifecycle unverified |
-| `share_plus ^11.1.0` | Native share sheet | Plain-text operating-system handoff | Gateway and widgets pass; native compile/device gate pending |
+| `share_plus ^11.1.0` | Native share sheet | Plain-text operating-system handoff | Gateway, widgets, and iOS native linkage pass; destination device walk pending |
 | Functions Node 20 | `firebase-admin ^13`, `firebase-functions ^6.3` | Server authority | 78 local tests pass |
 | Seed Node | `firebase-admin ^13` | Manual Admin writes | 42 tests and `tsc --noEmit` pass |
-| Rules test | Firebase emulator, Java in CI and local Homebrew runtime | Authorization assertions | 136 passed locally and on final merged `main` at `2df9fa0` |
+| Rules test | Firebase emulator, Java in CI and local Homebrew runtime | Authorization assertions | 136 passed locally and on final merged `main` at `9189c71` |
 | Android Gradle | AGP 8.11.1, Kotlin 2.2.20 | Android build | User has unstaged Crashlytics plugin changes; release signs debug |
-| iOS | deployment target 15.0, CocoaPods scaffold | iOS build | Prior simulator compilation failed in inherited Cloud Firestore Swift package sources |
+| iOS | deployment target 15.0, project-pinned CocoaPods graph, Flutter UIScene lifecycle | iOS build | Simulator app passes; RunnerTests bundle passes compilation but CoreSimulator blocks before XCTest launch |
 
 Removal and update ownership is Andrew's. Dependency freshness and advisories need a separately authorized maintenance pass before release.
 
@@ -205,29 +205,32 @@ Before public volume, establish query/read budgets for Discover and counters, Fu
 
 | Command or probe | Environment | Result | Claim supported |
 |---|---|---|---|
-| `flutter test` | Local macOS, Flutter 3.44.8 | PASS, 353 | Current combined Flutter suite, including Home hierarchy and routes, core journey, both disposed-Home error classes, same-process prepared recovery, persistent unknown state, cache-local actions, identity, and goldens |
-| scoped `flutter analyze` over the Home change boundary | Same | PASS | Home runtime and focused tests have no analyzer issue |
+| `flutter test --no-pub` | Local macOS, Flutter 3.44.8 | PASS, 356 | Current combined Flutter suite, including truthful Home Rising across live changes, useful empty recovery, Home hierarchy and routes, core journey, both disposed-Home error classes, same-process prepared recovery, persistent unknown state, cache-local actions, identity, and goldens |
+| `flutter analyze --no-pub lib test` | Same, temporary non-secret Firebase fixture removed afterward | PASS | Client source and tests have no analyzer issue |
 | `cd functions && npm test` | Node 20.20.2 | PASS, 78 | Extracted handlers compile and pass, including classified audit cleanup, duplicate completion delivery, delayed audit privacy, target job denial, counter overlap, merge stop, deletion, and safety boundaries |
 | `cd seed && npm test` | Node 20.20.2 | PASS, 42 | Seed identity, plan, validation, reconciliation |
 | `cd seed && npx tsc --noEmit` | Node 20.20.2 | PASS | Full seed TypeScript type check |
 | `git diff --check` | Git | PASS after final documentation refresh | Current worktree diff has no whitespace error |
 | `firebase emulators:exec --only firestore ...` | Local OpenJDK 26, emulator 1.21.0 | PASS, 136 | Current shapes accepted; pending target block is denied |
+| `flutter build ios --simulator --debug --no-pub` | Local macOS, Xcode 26.6, CocoaPods 1.17.0 | RED under automatic mixed SwiftPM, then PASS under project-pinned CocoaPods | Full current iOS simulator app and native share/URL plugins compile |
+| scoped `xcodebuild test` | Two local iOS 26.5 simulator destinations | App and RunnerTests compile, embed, sign locally, and validate; BLOCKED before XCTest by CoreSimulator launch denial | Test-host compilation is verified; native assertion execution is not claimed |
 | final closure Flutter regressions | Local Flutter renderer | RED at both disposed-Consumer invalidations, then PASS, 19 app-gate tests | Both late error classes leave the pending screen authoritative and never touch disposed Home state |
 | post-review Functions regressions | Local Node | PASS, 15 focused | Classified audit pages, duplicate completion delivery, and delayed audit privacy hold |
 | core-journey and inherited authority suites | Local Flutter | PASS, 24 focused after a pre-fix immutable-list failure | Home, competition, player, cached authority, and Songbook entry states hold |
 | Home hierarchy and inherited authority suites | Local Flutter | PASS | Exact utility, competition, chant, and account routes hold; normal and 1.8x Home layouts remain scrollable; signed-state, search, authority, and card behavior remain intact |
 | scoped formatting over touched Dart files | Dart 3.12.2 | PASS, no changes required | Readiness Dart files are formatted without normalizing inherited files |
-| project memory and writing checks | Local POSIX shell | PASS after each rejected its temporary known-bad fixture | Framework governance is executable and fail-closed locally |
+| project governance regressions | Local Bash | RED before correction on a spaced documentation path, then PASS | Staged paths are NUL-delimited; implementation needs execution evidence; tracked prose rejects forbidden punctuation; untracked scratch is excluded; Git scan errors fail closed |
+| project memory and writing checks | Local Bash | PASS for structure and tracked index | CI's structure boundary and the manual staged handoff boundary are stated separately and execute as documented |
 | repository formatter measurement | Dart 3.12.2, read-only output | Expected nonzero, 41 of 143 | Current residual measured without writing files; earlier 46-of-142 result remains historical |
-| Final-main clean-runner CI | GitHub Actions run `32993748570` on `2df9fa04a839f88a19fe43c2bcc8ed9a583627c3` | PASS: Flutter, analysis, Functions, seed, and 136 rules | Clean Linux and Java evidence for the exact merged V1 engineering stack |
 | PR 15 replacement clean-runner CI | GitHub Actions run `33011936510` on `a2e463c` | PASS: all six jobs | Governance, 353 Flutter tests, repository-wide analysis, 78 Functions tests, 42 seed tests, and 136 rules assertions pass on the packaged interface head |
+| Exact-main PR 15 CI | GitHub Actions run `33012771517` on `9189c71d99c52539cb3d1b02f51701fa4334c144` | PASS: all six jobs | Clean Linux and Java evidence for the exact merged Home hierarchy before the local review correction |
 
-The earlier freeze blocks captured red evidence before their implementations. The final closure also proved both disposed-Home error paths red before moving the mounted guard, then passed the focused and complete matrix. The readiness baseline then reproduced mutation of an immutable competition snapshot before the list-copy correction. The merged stack and its exact-main clean-runner result remain the remote baseline for the locally verified interface branch.
+The earlier freeze blocks captured red evidence before their implementations. The final closure also proved both disposed-Home error paths red before moving the mounted guard, then passed the focused and complete matrix. The readiness baseline reproduced mutation of an immutable competition snapshot before the list-copy correction. The post-interface correction then reproduced the false Rising badge, impossible empty action, and spaced-path governance failure before correction. Exact merged `main` remains the remote baseline; correction clean-runner evidence is pending.
 
 Skipped or blocked:
 
 - Android build: no Android SDK.
-- iOS build: prior inherited Cloud Firestore Swift package compile failure.
+- iOS device and RunnerTests execution: CoreSimulator launch failure after successful app and test-host compilation.
 - Independent freeze reviews: completed against `c57815c...f5cb748`, `f5cb748...c893cd0`, `c893cd0...fe93e20`, and final closure `fe93e20...0b64dcf`.
 - Live Firebase, deploy, seed, merge, release, and device actions: not authorized.
 - npm production advisory audit: network failed in sandbox and elevated disclosure was rejected.
@@ -252,12 +255,12 @@ Recovery paths:
 
 | Document or claim | Current source reality | Action |
 |---|---|---|
-| README test counts and feature status | Interface and Home-hierarchy branch passes 353 Flutter; final freeze baseline passes 136 rules, 78 Functions, and 42 seed; exact merged `main` passed CI | Distinguishes local branch evidence from run `32993748570` at `2df9fa0` |
-| Roadmap freeze state | Stack PRs 4 through 10 and 12 through 14 are merged; exact-main CI is green | Corrected in the framework-alignment preparation |
-| CI analysis and governance state | Final main has five green jobs; readiness branch defines a sixth governance job | PR 15 replacement run `33011936510` passed all six jobs |
+| README test counts and feature status | Correction branch passes 356 Flutter; merged PR 15 baseline passes 136 rules, 78 Functions, and 42 seed; exact merged `main` passed CI | Distinguishes local correction evidence from run `33012771517` at `9189c71` |
+| Roadmap freeze state | PRs 4 through 15 are merged; independent PR 15 review reopened one bounded local correction, followed by local iOS native readiness | Packaging, clean-runner CI, one combined final review, Android, and the device walk remain explicit |
+| CI analysis and governance state | Exact main has six green jobs; correction adds governance-script regressions and truthful manual staged semantics | Run `33012771517` passed all six at `9189c71`; correction CI pending |
 | Function merge comments | Audit payload is bounded and cannot reverse the operation | Corrected source comments; historical archive retained |
 | `docs/KNOWN_ISSUES.md` | Clearly labels itself a legacy snapshot | No longer an authority defect |
-| `docs/CHANGE_SPEC.md` | Approved V1 Home hierarchy contract | Packaged in draft PR 15 and replacement clean-runner green; review and device walk pending |
+| `docs/CHANGE_SPEC.md` | Approved V1 native build-readiness contract after the completed correction | iOS simulator compile complete; packaging, clean-runner CI, combined walkthrough, and final review pending |
 
 ## Known compromises, gaps, and uncertainty
 

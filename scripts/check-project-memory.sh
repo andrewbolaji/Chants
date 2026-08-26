@@ -1,5 +1,5 @@
-#!/bin/sh
-set -eu
+#!/usr/bin/env bash
+set -euo pipefail
 
 memory_mode=${1:-structure}
 
@@ -49,9 +49,18 @@ if [ "$memory_mode" = "--staged" ]; then
   fi
 
   memory_has_implementation_change=0
-  memory_staged_paths=$(git -C "$memory_project_root" diff --cached --name-only --diff-filter=ACMR)
+  memory_staged_paths=$(mktemp "${TMPDIR:-/tmp}/project-memory-paths.XXXXXX")
+  trap 'rm -f "$memory_staged_paths"' EXIT HUP INT TERM
+  if ! git -C "$memory_project_root" diff \
+    --cached \
+    --name-only \
+    --diff-filter=ACMR \
+    -z >"$memory_staged_paths"; then
+    echo "Could not read staged paths for the project-memory check." >&2
+    exit 2
+  fi
 
-  for memory_path in $memory_staged_paths; do
+  while IFS= read -r -d '' memory_path; do
     case "$memory_path" in
       docs/*|*.md|*.txt|LICENSE*|.gitignore|.gitattributes)
         ;;
@@ -59,7 +68,7 @@ if [ "$memory_mode" = "--staged" ]; then
         memory_has_implementation_change=1
         ;;
     esac
-  done
+  done <"$memory_staged_paths"
 
   if [ "$memory_has_implementation_change" -eq 1 ] && [ "${PROJECT_MEMORY_LANE:-}" != "0" ]; then
     if git -C "$memory_project_root" diff --cached --quiet -- docs/EXECUTION.md; then

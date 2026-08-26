@@ -49,13 +49,17 @@ This is the compact source of truth to read before changing Chants. Detailed cur
 | Seed tests | `npm ci && npm test && npx tsc --noEmit` | `seed/`, Node 20 | Mocha results and TypeScript type check |
 | Firestore rules | `npm ci` in `test_rules/`, then `firebase emulators:exec --only firestore --project chants-f95b4 "cd test_rules && npm test"` from the repository root | Java, Node 20, Firebase emulator, local test project ID | Java-backed rule assertions and emulator exit status |
 | Project-memory structure | `./scripts/check-project-memory.sh` | Repository root | Required memory files and agent references present |
-| Writing style | `./scripts/check-writing-style.sh` | Repository root | No em dash in repository-authored Markdown, MDX, or text |
+| Project-memory handoff | `./scripts/check-project-memory.sh --staged` after staging | Repository root; manual pre-handoff gate | Staged implementation changes include a staged `docs/EXECUTION.md` update unless a confirmed Lane 0 run sets `PROJECT_MEMORY_LANE=0` |
+| Writing style | `./scripts/check-writing-style.sh` after staging | Repository root and tracked Git index | No em dash in tracked Markdown, MDX, or text; scan errors fail closed |
+| Governance regressions | `./scripts/test-project-governance.sh` | Repository root; also CI | Whitespace-safe memory classification, required execution evidence, index-scoped prose, and error propagation hold |
+| Native project contract | `./scripts/check-native-project.sh` | Repository root; also CI | CocoaPods ownership pin, required native share pods, and absence of tracked Flutter SwiftPM state |
 | Local debug run | `flutter devices`, then `flutter run -d <device-id>` | One booted simulator or connected device with local Firebase config | Installable debug client and interactive console |
-| Build or package | Not yet canonicalized | Native release target | A signed, installable artifact is still a release gate |
+| iOS simulator compile | `flutter build ios --simulator --debug --no-pub` | Project-pinned CocoaPods graph with ignored local Firebase config | `build/ios/iphonesimulator/Runner.app`; this is not distribution signing or a device walk |
+| Build or package | Not yet canonicalized | Native release target | A signed distribution artifact is still a release gate |
 | Dependency advisory scan | Not yet authorized or canonicalized | Flutter and three npm lockfile surfaces | Dated advisory output; absence of a run is not a safety claim |
 | Infrastructure validate or plan | Not applicable as code today | No checked-in IaC | Firebase source configuration can be inspected, but deployed parity requires separately authorized access |
 
-The project has proved the Flutter, Functions, seed, rules, analysis, and clean-runner gates can fail through prior red regressions and CI corrections recorded in `docs/EXECUTION.md` and `docs/changes/`. The structural and writing checks each rejected a temporary known-bad Chants fixture before CI integration, then passed again after cleanup.
+The project has proved the Flutter, Functions, seed, rules, analysis, and clean-runner gates can fail through prior red regressions and CI corrections recorded in `docs/EXECUTION.md` and `docs/changes/`. CI checks project-memory structure. The manual staged gate checks change-to-execution linkage. The writing check scans tracked index prose. Their regression harness proves whitespace classification, required execution evidence, forbidden prose, index scope, and scan-error behavior.
 
 ## Technology and infrastructure sources
 
@@ -115,7 +119,7 @@ Default lanes come from the Codex Engineering Framework.
 | Item | Consequence | Owner | Revisit trigger |
 |---|---|---|---|
 | Android release uses debug signing | Store release is blocked | Andrew | Before the first production Android build |
-| Native compilation and combined device walk are incomplete | Automated evidence does not prove platform integration or final visual behavior | Andrew | Before V1 sign-off |
+| Android compilation, RunnerTests launch, and combined device walk are incomplete | The iOS simulator app compiles, but evidence does not yet cover both platforms or final physical-device behavior | Andrew | Before V1 sign-off |
 | App Check enforcement and operational alerts are unverified | Abuse and retained-job failures may be detected late | Andrew | Before public beta and during the first telemetry window |
 | Content policy is placeholder copy | User consent and store compliance are incomplete | Andrew | Before public user submission |
 | Only Arsenal has reviewed seed JSON in source | Most clubs have no canonical live primer set | Andrew | As each club clears external lyric and context verification |

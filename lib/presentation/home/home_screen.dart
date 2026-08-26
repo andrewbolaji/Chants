@@ -9,7 +9,9 @@ import 'package:chants/presentation/browse/discovery_section.dart';
 import 'package:chants/presentation/shared/section_eyebrow.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
-  const HomeScreen({super.key});
+  final DateTime? risingEvaluationTime;
+
+  const HomeScreen({super.key, this.risingEvaluationTime});
 
   @override
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
@@ -327,7 +329,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             const SizedBox(height: Spacing.md),
           ],
 
-          DiscoverySection(searchQuery: _query, groupByTrust: true),
+          DiscoverySection(
+            searchQuery: _query,
+            groupByTrust: true,
+            risingEvaluationTime: widget.risingEvaluationTime,
+          ),
         ],
       ),
     );
