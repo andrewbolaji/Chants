@@ -26,11 +26,6 @@ let voteStore: Record<string, Record<string, unknown>> = {};
 function makeFakeFirestore(): admin.firestore.Firestore {
   const fakeDocRefWithPath = (path: string) => {
     const ref = {
-      get: () => Promise.resolve({ exists: chantExists }),
-      update: (data: Record<string, unknown>) => {
-        standaloneWrites.push({ path, data });
-        return Promise.resolve();
-      },
       __path: path,
     };
     return ref;
@@ -38,38 +33,60 @@ function makeFakeFirestore(): admin.firestore.Firestore {
 
   const fakeCollectionWithPath = (name: string) => ({
     doc: (id: string) => fakeDocRefWithPath(`${name}/${id}`),
-    where: (field: string, op: string, value: unknown) => ({
-      get: () => {
-        voteQueryReads++;
-        // Filter vote store by the query condition
-        const docs = Object.entries(voteStore)
-          .filter(([, data]) => data[field] === value)
-          .map(([id, data]) => ({
-            id,
-            data: () => ({ ...data }),
-          }));
-        return Promise.resolve({ docs });
-      },
+    where: (field: string, _op: string, value: unknown) => ({
+      __query: { name, field, value },
     }),
   });
 
-  const fakeBatch = () => {
+  const runTransaction = async (
+    handler: (transaction: {
+      get: (target: Record<string, unknown>) => Promise<unknown>;
+      update: (ref: Record<string, unknown>, data: Record<string, unknown>) => void;
+    }) => Promise<unknown>
+  ) => {
     const staged: StagedWrite[] = [];
-    return {
+    const result = await handler({
+      get: async (target: Record<string, unknown>) => {
+        const query = target.__query as {
+          name: string;
+          field: string;
+          value: unknown;
+        } | undefined;
+        if (query) {
+          voteQueryReads++;
+          const docs = Object.entries(voteStore)
+            .filter(([, data]) => data[query.field] === query.value)
+            .map(([id, data]) => ({ id, data: () => ({ ...data }) }));
+          return { docs };
+        }
+        const path = target.__path as string;
+        const [collection, id] = path.split("/");
+        if (collection === "chants") {
+          return { exists: chantExists, data: () => undefined };
+        }
+        const data = collection === "votes" ? voteStore[id] : undefined;
+        return {
+          exists: data !== undefined,
+          data: () => data === undefined ? undefined : { ...data },
+        };
+      },
       update: (ref: Record<string, unknown>, data: Record<string, unknown>) => {
-        const path = ref.__path as string;
-        staged.push({ path, data });
+        staged.push({ path: ref.__path as string, data });
       },
-      commit: () => {
-        batchCommits.push({ writes: [...staged] });
-        return Promise.resolve();
-      },
-    };
+    });
+    if (staged.length > 0) batchCommits.push({ writes: [...staged] });
+    for (const write of staged) {
+      const [collection, id] = write.path.split("/");
+      if (collection === "votes" && voteStore[id]) {
+        Object.assign(voteStore[id], write.data);
+      }
+    }
+    return result;
   };
 
   return {
     collection: fakeCollectionWithPath,
-    batch: fakeBatch,
+    runTransaction,
   } as unknown as admin.firestore.Firestore;
 }
 
@@ -272,5 +289,106 @@ describe("handleVoteWritten", () => {
       assert.strictEqual(chantWrite!.data.score, -1,
         `Event ${i + 1}: score must be -1`);
     }
+  });
+
+  it("CONCURRENCY: an older transaction retries after a newer aggregate commits", async () => {
+    const votes: Record<string, Record<string, unknown>> = {
+      user1_chant1: { value: 1, chantId: "chant1", userId: "user1" },
+    };
+    let parentVersion = 0;
+    let storedScore = 0;
+    let firstAttempt = true;
+    let releaseOlder: () => void = () => undefined;
+    const olderCanCommit = new Promise<void>((resolve) => {
+      releaseOlder = resolve;
+    });
+    let olderReadComplete: () => void = () => undefined;
+    const olderHasRead = new Promise<void>((resolve) => {
+      olderReadComplete = resolve;
+    });
+    let invocation = 0;
+    let olderAttempts = 0;
+
+    const collection = (name: string) => ({
+      doc: (id: string) => ({ __path: `${name}/${id}` }),
+      where: (field: string, _op: string, value: unknown) => ({
+        __query: { name, field, value },
+      }),
+    });
+    const firestore = {
+      collection,
+      runTransaction: async (handler: (transaction: {
+        get: (target: Record<string, unknown>) => Promise<unknown>;
+        update: (ref: Record<string, unknown>, data: Record<string, unknown>) => void;
+      }) => Promise<unknown>) => {
+        const currentInvocation = ++invocation;
+        while (true) {
+          if (currentInvocation === 1) olderAttempts++;
+          const readVersion = parentVersion;
+          const writes: StagedWrite[] = [];
+          const result = await handler({
+            get: async (target: Record<string, unknown>) => {
+              const query = target.__query as {
+                field: string;
+                value: unknown;
+              } | undefined;
+              if (query) {
+                const docs = Object.entries(votes)
+                  .filter(([, data]) => data[query.field] === query.value)
+                  .map(([id, data]) => ({ id, data: () => ({ ...data }) }));
+                if (currentInvocation === 1 && firstAttempt) {
+                  firstAttempt = false;
+                  olderReadComplete();
+                  await olderCanCommit;
+                }
+                return { docs };
+              }
+              const path = target.__path as string;
+              if (path.startsWith("chants/")) {
+                return { exists: true, data: () => ({ score: storedScore }) };
+              }
+              const [, id] = path.split("/");
+              const data = votes[id];
+              return {
+                exists: data !== undefined,
+                data: () => data === undefined ? undefined : { ...data },
+              };
+            },
+            update: (ref, data) => writes.push({
+              path: ref.__path as string,
+              data,
+            }),
+          });
+          if (parentVersion !== readVersion) continue;
+          const parentWrite = writes.find((write) => write.path === "chants/chant1");
+          if (parentWrite) {
+            storedScore = parentWrite.data.score as number;
+            parentVersion++;
+          }
+          return result;
+        }
+      },
+    } as unknown as admin.firestore.Firestore;
+
+    const older = handleVoteWritten(
+      undefined,
+      { value: 1, chantId: "chant1", userId: "user1" },
+      "user1_chant1",
+      firestore
+    );
+    await olderHasRead;
+    votes.user2_chant1 = { value: 1, chantId: "chant1", userId: "user2" };
+    await handleVoteWritten(
+      undefined,
+      { value: 1, chantId: "chant1", userId: "user2" },
+      "user2_chant1",
+      firestore
+    );
+    releaseOlder();
+    await older;
+
+    assert.strictEqual(storedScore, 2);
+    assert.strictEqual(olderAttempts, 2,
+      "the transaction that read one vote must retry after the parent changed");
   });
 });

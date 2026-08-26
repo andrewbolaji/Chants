@@ -5,6 +5,7 @@ import 'package:chants/app/spacing.dart';
 import 'package:chants/data/models/chant.dart';
 import 'package:chants/data/models/saved_songbook.dart';
 import 'package:chants/data/models/team.dart';
+import 'package:chants/data/repositories/chant_repository.dart';
 import 'package:chants/data/services/chant_share.dart';
 import 'package:chants/presentation/comments/comment_section.dart';
 import 'package:chants/presentation/report/report_sheet.dart';
@@ -165,17 +166,20 @@ class _ChantDetailScreenState extends ConsumerState<ChantDetailScreen> {
         .watch(chantRepositoryProvider)
         .chantStream(widget.chant.id);
 
-    return StreamBuilder<Chant?>(
+    return StreamBuilder<LiveChantSnapshot>(
       stream: chantStream,
-      initialData: widget.chant,
+      initialData: LiveChantSnapshot(chant: widget.chant, isFromCache: true),
       builder: (context, snapshot) {
-        final live = snapshot.data ?? widget.chant;
+        final current = snapshot.data;
+        final live = current?.chant ?? widget.chant;
         final actionsEnabled =
             snapshot.connectionState == ConnectionState.active &&
             !snapshot.hasError &&
-            snapshot.data != null &&
-            !snapshot.data!.hidden &&
-            !snapshot.data!.removed;
+            current != null &&
+            !current.isFromCache &&
+            current.chant != null &&
+            !current.chant!.hidden &&
+            !current.chant!.removed;
         final songbook = saved?.valueOrNull;
         final isIndividual =
             songbook?.individualSnapshots.containsKey(live.id) ?? false;
@@ -183,6 +187,7 @@ class _ChantDetailScreenState extends ConsumerState<ChantDetailScreen> {
             ? null
             : _clubContaining(songbook, live.id);
         final isSaved = isIndividual || club != null;
+        final saveActionEnabled = isSaved || actionsEnabled;
         final savedTooltip = _saving
             ? 'Saving for matchday'
             : club != null && !isIndividual
@@ -209,7 +214,7 @@ class _ChantDetailScreenState extends ConsumerState<ChantDetailScreen> {
                             isSaved ? Icons.bookmark : Icons.bookmark_border,
                           ),
                     tooltip: savedTooltip,
-                    onPressed: _saving || songbook == null || !actionsEnabled
+                    onPressed: _saving || songbook == null || !saveActionEnabled
                         ? null
                         : () => _toggleSaved(
                             uid: user.uid,
@@ -272,6 +277,7 @@ class _ChantDetailScreenState extends ConsumerState<ChantDetailScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   VoteControls(
+                    key: ValueKey(live.id),
                     chant: live,
                     large: true,
                     enabled: actionsEnabled,

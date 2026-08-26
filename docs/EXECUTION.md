@@ -13,6 +13,90 @@ This is the chronological evidence trail for substantial engineering work. It re
 
 ## Entries
 
+### 2026-08-26T14:18:08Z Close the final freeze review findings
+
+- **Status:** Implemented and locally verified; one correction commit, push, and replacement clean-runner CI pending
+- **Scope:** Correct the final independent review's disposed-Home deletion race and record the dormant merge audit privacy re-enable gate. Add two direct widget regressions, reconcile current engineering records, package one correction commit, push PR 14, and run replacement clean-runner CI. No runtime merge, Functions, rules, seed, dependency, native, device, Firebase, deployment, PR merge, signing, release, or production action.
+- **Reference:** `docs/CHANGE_SPEC.md`, independent review of `c893cd0...fe93e20`
+- **Approval:** Andrew explicitly approved `final freeze closure spec` on 2026-08-26.
+- **Operator:** Codex
+
+| UTC time | Action | Target/environment | Result and evidence |
+|---|---|---|---|
+| 14:18:08 | Verified the final review against the clean PR 14 head and framework boundary | Local repository at `fe93e20` | Confirmed both Home error handlers access `ref` before checking `context.mounted`. Riverpod 2.6.1 asserts that a Consumer element is not disposed before invalidation. Confirmed `mergeChants` stops before request parsing or mutation, while its legacy retained audit detail includes source-authored content and raw `createdBy`. The separately noted active-plus-prepared loop remains latent and unreachable under current writers. |
+| 14:18:08 | Replaced the completed prior contract with the exact approved final closure | Local repository | Recorded mounted-guard dominance, two delayed-response regressions, merge's audit privacy re-enable condition, complete verification, one-commit packaging, PR 14 publication, and the external-action stop boundary before implementation. |
+| 14:24:00 | Proved and corrected both disposed-Home response paths | Flutter app gate and Home | RED: unconfirmed and generic delayed failures each threw Riverpod's disposed-Consumer `StateError` at provider invalidation after the pending profile replaced Home. Moved the mounted guard before provider and scaffold access. GREEN: all 19 focused app-gate tests passed with the pending screen retained and Home absent. |
+| 14:30:05 | Ran the complete local matrix and reconciled durable records | Local macOS, Flutter 3.44.8, Dart 3.12.2, Node 20, OpenJDK 26, Firestore emulator | PASS: 343 Flutter tests, scoped analysis, 78 Functions tests and build, 42 seed tests, seed and rules TypeScript, and 136 Java-backed rules assertions. Both touched Dart files are formatted; the read-only repository measurement remains 42 of 142 residual files. The governing decision now records the legacy merge payload as a privacy re-enable gate. |
+
+- **Files/artifacts:** `lib/presentation/home/home_screen.dart`, `test/app/app_gate_test.dart`, decision 016, current overview and rationale, roadmap, interface and learning memory, README, active contract, execution evidence, and `docs/changes/2026-08-26-final-freeze-closure.md`.
+- **Skipped or blocked:** The first rules attempt could not locate macOS Java; the replacement used the installed Homebrew OpenJDK path and passed 136 assertions. Runtime merge, Firebase, seed writes, native build, device walk, deployment, PR merge, signing, release, and production observation remain outside this approval.
+- **Current state:** Approved Lane 2 final closure is locally complete and green on `codex/v1-freeze-remediation`. One correction commit, push to PR 14, and replacement CI remain. Owner-owned worktree files remain outside the correction.
+
+### 2026-08-26T13:34:53Z Correct the post-review audit and recovery findings
+
+- **Status:** Implemented and locally verified; packaging and replacement clean-runner CI pending
+- **Scope:** Correct the verified `f5cb748...c893cd0` follow-up findings: preserve known operator audit detail under a non-identifying operator sentinel, keep report and unknown detail private, make retained target-side history copy accurate, recover prepared local state without relaunch, replace the stable-ID claim with transactional exactly-once evidence, test empty SHA input directly, and refresh the current formatter count. No Firebase, seed, native, device, deployment, merge, or release action.
+- **Reference:** `docs/CHANGE_SPEC.md`, independent review of commit `c893cd0`
+- **Approval:** Andrew explicitly approved `post-review audit and recovery correction spec` on 2026-08-26.
+- **Operator:** Codex
+
+| UTC time | Action | Target/environment | Result and evidence |
+|---|---|---|---|
+| 13:34:53 | Independently verified the review against the clean PR 14 head and owner-owned worktree boundary | Local repository at `c893cd0` | Confirmed D-1, D-2, D-3, D-5, and D-6. Classified D-4 as an inaccurate invariant rather than a duplicate-write defect because the audit write and phase advance are transactional. Confirmed clean-runner run `32970254587` had already passed all five jobs. |
+| 13:34:53 | Replaced the completed correction spec with the exact approved follow-up contract | Local repository | Recorded allowlisted operator-detail preservation, report and unknown fail-private behavior, target-side disclosure, prepared recovery, transactional exactly-once evidence, direct empty-message SHA coverage, formatter truth, non-goals, and rollout limits before implementation. |
+| 13:45:00 | Implemented classified audit cleanup and transactional completion evidence | Local Functions source and tests | Known generated operator actions now use `deleted-operator` and retain detail. Reports and unknown actions remove text, self-target policy acceptance removes the target UID, and delayed writers retain their lifecycle transaction. A duplicate post-advance worker delivery writes no second completion row. |
+| 13:45:00 | Implemented same-process prepared recovery and truthful deletion copy | Local Flutter repository, provider, screens, service behavior, tests, and golden | Prepared state actively reruns serialized artifact recovery before Home. Recovery failure stays closed behind a real retry. Pre-network transition failure restores staged data and never calls the remote boundary. Copy distinguishes authored-report redaction from retained target-side history. |
+| 13:50:59 | Ran the complete local verification matrix and reconciled durable records | Local macOS, Flutter 3.44.8, Node 20, OpenJDK 26, Firestore emulator, Dart 3.12.2 | PASS: 341 Flutter tests, scoped analysis, 78 Functions tests and build, 42 seed tests, seed and rules TypeScript, and 136 Java-backed rules assertions. Focused Flutter and Functions groups passed first. The read-only formatter check confirmed 42 of 142 residual files, touched Dart files are formatted, the refreshed 390 by 844 golden was inspected, and memory, style, caller, ownership, and diff checks passed. |
+
+- **Files/artifacts:** Runtime, tests, and golden named in `docs/changes/2026-08-26-post-review-audit-recovery-corrections.md`; decisions 011, 012, and 016; current overview, rationale, interface and learning memory, roadmap, README, handbook, active contract, and this execution entry.
+- **Skipped or blocked:** Commit, push, replacement clean-runner CI, Firebase, seed writes, native build, device walk, deployment, merge, release, and production observation remain outside this approval.
+- **Current state:** Approved Lane 2 follow-up is locally complete and green on `codex/v1-freeze-remediation`. No external state changed. The owner-owned Gradle and lockfile changes plus untracked freeze report remain outside the correction.
+
+### 2026-08-26T12:06:39Z Correct the post-freeze independent review findings
+
+- **Status:** Implemented and locally verified; packaging, clean-runner CI, and narrow re-review pending
+- **Scope:** Correct the verified review findings at PR 14 head `f5cb748`: persistent unknown-deletion recovery, audit actor and free-text privacy, confirmed local cleanup, local saved-action availability, initialization retry, typed permission classification, deleting-target report closure, dead report lookup code, SHA boundary coverage, and exact freeze documentation. No job monitor, aggregate redesign, dependency, Firebase, seed, native, device, deployment, merge, or release action.
+- **Reference:** `docs/CHANGE_SPEC.md`, independent review range `c57815c...f5cb748`
+- **Approval:** Andrew explicitly approved `post-freeze independent review correction spec` on 2026-08-26.
+- **Operator:** Codex
+
+| UTC time | Action | Target/environment | Result and evidence |
+|---|---|---|---|
+| 12:06:39 | Verified branch, user-owned worktree boundary, framework requirements, and independent-review evidence | Local repository at `f5cb748` | Confirmed PR 14 head is unchanged and pushed. Preserved the owner's two Gradle files, `pubspec.lock`, and untracked freeze report. Reproduced the formatter observation as 46 of 142 files with read-only output. Confirmed the review's suggested restore-on-false-profile approach is unsafe because negative state can be stale or race a late commit. |
+| 12:06:39 | Replaced the completed freeze spec with the approved bounded correction contract | Local repository | Recorded positive-only reconciliation, persistent recovery UI, accepted-marker-last cleanup, audit redaction, local-action authority split, bounded hardening, evidence corrections, rollout limits, and explicit non-goals before implementation. |
+| 12:36:47 | Implemented persistent positive-only deletion recovery and accepted-last local cleanup | Flutter app gate, Saved Songbook repository and storage, deletion UI | Unknown state now presents Retry and Sign out before Home even when the first profile read is unavailable. Only callable success or a positive pending profile advances cleanup. Initialization retries after transient failure, and accepted cleanup removes every conflicting artifact before its marker. |
+| 12:36:47 | Closed audit privacy and deleting-target admission | Cloud Functions | Added a 200-row audit redaction phase, non-identifying completion audit, transactional delayed-report audit guard, and same-transaction user-report denial when the target deletion job exists. No Functions deployment or live data access occurred. |
+| 12:36:47 | Completed bounded authority, dead-code, SHA, copy, and regression corrections | Flutter, Functions, tests, goldens, and durable records | Existing device-local Songbook navigation and removal work from cached detail while new saves and live actions stay gated. Permission denial is typed, unused report lookup paths are removed, SHA padding vectors are fixed, deletion retention copy is accurate, and decisions 011, 012, 015, and 016 preserve the architecture. |
+| 12:36:47 | Ran the complete local verification matrix and inspected both deletion goldens | Local macOS, Flutter 3.44.8, Node 20, OpenJDK 26, Firestore emulator | PASS: 336 Flutter tests, scoped analysis, 77 Functions tests and build, 42 seed tests and TypeScript, rules TypeScript, 136 Java-backed assertions, 16-file Dart format check, project-memory and writing checks, caller searches, and final diff checks. The 390 by 844 pending and recovery goldens are unclipped and truthful. |
+
+- **Files/artifacts:** Runtime, tests, and goldens named in `docs/changes/2026-08-26-post-freeze-independent-review-corrections.md`; decision 016; refinements to decisions 011, 012, and 015; current overview, rationale, interface, learning, roadmap, README, setup, active contract, and this execution record.
+- **Skipped or blocked:** Firebase, seed writes, native build, device walk, deployment, commit, push, clean-runner CI, merge, release, deletion-job monitoring, and aggregate redesign remain outside this approved local block.
+- **Current state:** Approved Lane 2 correction is locally complete and green on `codex/v1-freeze-remediation`. No external state changed. The owner-owned Gradle and lockfile changes plus untracked freeze report remain outside the correction.
+
+### 2026-08-26T04:06:54Z Start V1 freeze correctness remediation
+
+- **Status:** Implemented and locally verified; packaging and independent review pending
+- **Scope:** Implement the locally reproducible correctness fixes from `docs/CODE_REVIEW_FREEZE_2026-08.md`: deletion acknowledgement and tombstone states, transaction-safe counters, deletion-pending target closure, UID-safe local paths, cache-aware live authority, chant-identity lifecycle, report path validation, and a safe stop on non-resumable merge. Production policy copy, signing, native builds, device actions, dependency disclosure, Firebase, seed, deployment, merge, and release remain outside scope.
+- **Reference:** `docs/CHANGE_SPEC.md`, reviewed range `c57815c...267afa2`
+- **Approval:** Andrew directed Codex to "make the fixes you think make logical sense" on 2026-08-25, explicitly delegating the bounded technical choices recorded in the active spec.
+- **Operator:** Codex
+
+| UTC time | Action | Target/environment | Result and evidence |
+|---|---|---|---|
+| 04:06:54 | Created a stacked remediation branch from the exact reviewed head | Local Git | Created `codex/v1-freeze-remediation` at `267afa2`. Preserved the untracked freeze review and the owner's three existing Gradle and lockfile modifications. |
+| 04:06:54 | Replaced the completed prior active contract with the bounded remediation contract | Local repository | Marked the exact technical scope approved under Andrew's delegated instruction. Runtime implementation begins only after this record. |
+| 04:14:00 | Captured red evidence at the affected boundaries | Focused Flutter, Functions, and rules tests | Reproduced ambiguous deletion restoration, cache-only action enablement, chant-ID state reuse, pending-target acceptance, oversized report identity, and non-transactional counter writers before implementing fixes. |
+| 04:24:00 | Implemented deletion acknowledgement and UID-safe storage | Local Flutter repositories and UI | Added prepared, unknown, and accepted artifacts; retryable unconfirmed response; lowercase SHA-256 UID keys; active legacy migration; truthful uncertainty copy; and reconstruction coverage without a dependency or lockfile change. |
+| 04:29:00 | Implemented transactional aggregation and safety target closure | Local Functions and Firestore rules | Parent-serialized vote, like, visible-comment, user-report, content-report, and explicit chant reconciliation now converge under overlap. Pending report and block targets and path-sized report IDs fail closed. |
+| 04:33:00 | Implemented cache provenance, chant identity isolation, and merge stop | Local Flutter and Functions source | Cache text stays readable while live actions wait for server authority. Vote and comment async work cannot cross chant IDs. Operator merge stops before target parsing or mutation. |
+| 04:36:00 | Ran backend and authorization verification | Local Node 20, OpenJDK 26, Firestore emulator | PASS: 73 Functions tests and build, 42 seed tests, rules TypeScript compilation, and 136 Java-backed rules assertions. The first rules cold start exceeded the inherited 10-second setup timeout; the same suite passed with a 30-second hook allowance. |
+| 04:40:55 | Ran full client verification and refreshed durable records | Local Flutter and repository | PASS: 322 Flutter tests, scoped analysis with no issues, 21 touched Dart files formatted, and focused lifecycle, cache, migration, and identity regressions. Added decisions 012 through 015, completed record, interface and learning updates, overview, rationale, roadmap, README, and handbook truth. |
+| 04:53:09 | Hardened conflicting local artifact recovery and completed the ownership and diff audit | Local Flutter, Git, and repository | Unknown and accepted deletion markers now outrank conflicting active files. The added regression passes, the complete Flutter suite remains 322 of 322, scoped analysis is clean, `git diff --check` passes, new files have no trailing whitespace, and the Git index is empty. |
+
+- **Files/artifacts:** Runtime and regression paths named in `docs/changes/2026-08-26-v1-freeze-correctness-remediation.md`; decisions 012 through 015; active contract; current overview and rationale; this execution entry; and the preserved untracked external freeze report.
+- **Skipped or blocked:** Final policy text, production signing, native builds, physical-device review, advisory lookup, cloud alert creation, Firebase access, seed reads or writes, deployment, commit, push, PR, merge, and release. Clean-runner CI awaits packaging authorization.
+- **Current state:** Approved remediation is locally complete and green on `codex/v1-freeze-remediation`. No external or repository-publication state changed. The owner's three pre-existing modifications remain unstaged and untouched.
+
 ### 2026-08-25T20:25:22Z Package abuse controls and implement account deletion recovery
 
 - **Status:** Abuse-control PR and account-deletion PR packaged and clean-runner green; external freeze review pending

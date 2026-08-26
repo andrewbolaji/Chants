@@ -7,6 +7,8 @@ import 'package:chants/app/theme.dart';
 import 'package:chants/app/colors.dart';
 import 'package:chants/app/providers.dart';
 import 'package:chants/data/models/user_profile.dart';
+import 'package:chants/data/repositories/songbook_storage.dart';
+import 'package:chants/presentation/auth/account_deletion_recovery_screen.dart';
 import 'package:chants/presentation/auth/policy_acceptance_gate_screen.dart';
 import 'package:chants/presentation/auth/account_deletion_pending_screen.dart';
 import 'package:chants/presentation/auth/sign_in_screen.dart';
@@ -20,12 +22,14 @@ class ChantApp extends ConsumerWidget {
     final authState = ref.watch(authStateProvider);
 
     // Addition B: force dark system UI overlay
-    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-      statusBarBrightness: Brightness.dark,
-      statusBarIconBrightness: Brightness.light,
-      systemNavigationBarColor: AppColors.background,
-      systemNavigationBarIconBrightness: Brightness.light,
-    ));
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarBrightness: Brightness.dark,
+        statusBarIconBrightness: Brightness.light,
+        systemNavigationBarColor: AppColors.background,
+        systemNavigationBarIconBrightness: Brightness.light,
+      ),
+    );
 
     return MaterialApp(
       title: 'Chants',
@@ -72,12 +76,34 @@ class _SignedInGateState extends ConsumerState<_SignedInGate> {
     if (oldWidget.uid != widget.uid) _lastVerifiedProfile = null;
   }
 
-  Widget _screenFor(UserProfile profile) {
-    if (profile.deletionPending) {
+  Widget _screenFor({
+    required UserProfile? profile,
+    required SongbookAccountDeletionState localState,
+    required SongbookDeletionGateInput deletionInput,
+  }) {
+    if (localState == SongbookAccountDeletionState.unknown) {
+      return AccountDeletionRecoveryScreen(
+        onRetry: () =>
+            ref.read(accountDeletionServiceProvider).deleteAccount(widget.uid),
+        onSignOut: ref.read(authRepositoryProvider).signOut,
+      );
+    }
+    if (localState == SongbookAccountDeletionState.prepared) {
+      return AccountDeletionRecoveryScreen(
+        statusCheckFailed: true,
+        onRetry: () async {
+          ref.invalidate(savedSongbookDeletionStateProvider(deletionInput));
+        },
+        onSignOut: ref.read(authRepositoryProvider).signOut,
+      );
+    }
+    if (localState == SongbookAccountDeletionState.accepted ||
+        profile?.deletionPending == true) {
       return AccountDeletionPendingScreen(
         onSignOut: ref.read(authRepositoryProvider).signOut,
       );
     }
+    if (profile == null) return const _NeutralLoadingScreen();
     if (profile.acceptedPolicyVersion != kCurrentPolicyVersion) {
       return const PolicyAcceptanceGateScreen();
     }
@@ -87,18 +113,35 @@ class _SignedInGateState extends ConsumerState<_SignedInGate> {
   @override
   Widget build(BuildContext context) {
     final profileAsync = ref.watch(userProfileProvider(widget.uid));
-
-    return profileAsync.when(
+    final profile = profileAsync.when<UserProfile?>(
       data: (profile) {
         _lastVerifiedProfile = profile;
-        return profile == null
-            ? const _NeutralLoadingScreen()
-            : _screenFor(profile);
+        return profile;
       },
+      loading: () => null,
+      error: (_, _) => _lastVerifiedProfile,
+    );
+    final deletionInput = (
+      uid: widget.uid,
+      serverDeletionPending: profile?.deletionPending ?? false,
+    );
+    final localState = ref.watch(
+      savedSongbookDeletionStateProvider(deletionInput),
+    );
+    return localState.when(
+      data: (state) => _screenFor(
+        profile: profile,
+        localState: state,
+        deletionInput: deletionInput,
+      ),
       loading: () => const _NeutralLoadingScreen(),
-      error: (_, _) => _lastVerifiedProfile == null
-          ? const _NeutralLoadingScreen()
-          : _screenFor(_lastVerifiedProfile!),
+      error: (_, _) => AccountDeletionRecoveryScreen(
+        statusCheckFailed: true,
+        onRetry: () async {
+          ref.invalidate(savedSongbookDeletionStateProvider(deletionInput));
+        },
+        onSignOut: ref.read(authRepositoryProvider).signOut,
+      ),
     );
   }
 }
@@ -108,8 +151,6 @@ class _NeutralLoadingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: CircularProgressIndicator()),
-    );
+    return const Scaffold(body: Center(child: CircularProgressIndicator()));
   }
 }

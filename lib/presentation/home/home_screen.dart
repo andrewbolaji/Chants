@@ -4,6 +4,7 @@ import 'package:chants/app/colors.dart';
 import 'package:chants/app/providers.dart';
 import 'package:chants/app/router.dart';
 import 'package:chants/app/spacing.dart';
+import 'package:chants/data/repositories/saved_songbook_repository.dart';
 import 'package:chants/presentation/browse/discovery_section.dart';
 import 'package:chants/presentation/shared/section_eyebrow.dart';
 
@@ -284,7 +285,10 @@ Future<void> _showDeleteAccountDialog(
         'This starts permanent deletion of your account, votes, likes, '
         'reports, feedback, and blocks. Your submitted chants, comments, and '
         'replies stay as community content with your name removed. Your '
-        'Saved Matchday Songbook on this device is also removed. Cleanup may '
+        'Saved Matchday Songbook is locked immediately and removed once the '
+        'request is confirmed. Safety records for reports you sent keep '
+        'neither your account ID nor report text. Safety records about your '
+        'account may retain its ID for moderation history. Cleanup may '
         'continue briefly in the background. This cannot be undone.',
       ),
       actions: [
@@ -305,15 +309,22 @@ Future<void> _showDeleteAccountDialog(
 
   try {
     await ref.read(accountDeletionServiceProvider).deleteAccount(uid);
-  } catch (e) {
+  } on AccountDeletionRequestUnconfirmedException {
     if (!context.mounted) return;
+    ref.invalidate(savedSongbookDeletionStateProvider);
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text(
-          'Deletion did not start. Your account and Saved Songbook are still '
-          'available. Try again.',
+          'We could not confirm whether deletion started. Your Saved Songbook '
+          'is locked for safety. Try again to confirm the request.',
         ),
       ),
+    );
+  } catch (_) {
+    if (!context.mounted) return;
+    ref.invalidate(savedSongbookDeletionStateProvider);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Deletion could not start. Try again.')),
     );
   }
 }

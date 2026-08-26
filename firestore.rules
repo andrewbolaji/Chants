@@ -27,6 +27,13 @@ service cloud.firestore {
             || get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.deletionPending == false);
     }
 
+    function isActiveProfile(userId) {
+      return exists(/databases/$(database)/documents/profiles/$(userId))
+        && !exists(/databases/$(database)/documents/accountDeletionJobs/$(userId))
+        && (!('deletionPending' in get(/databases/$(database)/documents/profiles/$(userId)).data)
+            || get(/databases/$(database)/documents/profiles/$(userId)).data.deletionPending == false);
+    }
+
     // Must match CURRENT_POLICY_VERSION in functions/src/index.ts and
     // kCurrentPolicyVersion in lib/app/policy.dart.
     function hasAcceptedPolicy() {
@@ -483,7 +490,7 @@ service cloud.firestore {
         && request.resource.data.blockedDisplayName.size() <= 50
         && request.resource.data.createdAt is timestamp
         && blockId == request.auth.uid + '_' + request.resource.data.blockedUserId
-        && exists(/databases/$(database)/documents/profiles/$(request.resource.data.blockedUserId));
+        && isActiveProfile(request.resource.data.blockedUserId);
       allow delete: if isAuth() && resource.data.blockerId == request.auth.uid;
       allow update: if false;
     }

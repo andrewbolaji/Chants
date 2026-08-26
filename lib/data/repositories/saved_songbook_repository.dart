@@ -6,20 +6,14 @@ import 'package:chants/data/models/saved_songbook.dart';
 import 'package:chants/data/models/team.dart';
 import 'package:chants/data/repositories/songbook_storage.dart';
 
-class SavedSongbookAccountDeletionException implements Exception {
-  final Object primaryError;
-  final Object cleanupError;
+class AccountDeletionRequestUnconfirmedException implements Exception {
+  final Object cause;
 
-  const SavedSongbookAccountDeletionException({
-    required this.primaryError,
-    required this.cleanupError,
-  });
+  const AccountDeletionRequestUnconfirmedException(this.cause);
 
   @override
-  String toString() {
-    return 'Account deletion failed and the local Songbook could not be '
-        'restored: $primaryError; cleanup: $cleanupError';
-  }
+  String toString() =>
+      'Account deletion request could not be confirmed: $cause';
 }
 
 class SavedSongbookAccessException implements Exception {
@@ -35,7 +29,7 @@ class SavedSongbookRepository {
   final SongbookStorage _storage;
   final bool Function(String uid) _canAccess;
   Future<void> _mutationTail = Future.value();
-  Future<void>? _initialization;
+  final Map<String, Future<void>> _initializations = {};
 
   SavedSongbookRepository({
     SongbookStorage? storage,
@@ -47,13 +41,55 @@ class SavedSongbookRepository {
     if (!_canAccess(uid)) throw SavedSongbookAccessException(uid);
   }
 
-  Future<void> _ensureInitialized() {
-    return _initialization ??= _storage.cleanupDeletionTombstones();
+  Future<void> _ensureInitialized(String uid) {
+    final existing = _initializations[uid];
+    if (existing != null) return existing;
+
+    late final Future<void> tracked;
+    tracked = _storage
+        .recoverAccountDeletionArtifacts(uid)
+        .then<void>(
+          (_) {},
+          onError: (Object error, StackTrace stackTrace) {
+            if (identical(_initializations[uid], tracked)) {
+              _initializations.remove(uid);
+            }
+            Error.throwWithStackTrace(error, stackTrace);
+          },
+        );
+    _initializations[uid] = tracked;
+    return tracked;
+  }
+
+  Future<SongbookAccountDeletionState> accountDeletionState(String uid) async {
+    _requireAccess(uid);
+    await _ensureInitialized(uid);
+    return _storage.accountDeletionState(uid);
+  }
+
+  Future<void> confirmAccountDeletionAccepted(String uid) {
+    return _enqueue(() async {
+      _requireAccess(uid);
+      await _ensureInitialized(uid);
+      await _storage.markAccountDeletionAccepted(uid);
+      await _storage.finishAccountDeletion(uid);
+    });
+  }
+
+  Future<SongbookAccountDeletionState> retryAccountDeletionArtifactRecovery(
+    String uid,
+  ) {
+    return _enqueue(() async {
+      _requireAccess(uid);
+      _initializations.remove(uid);
+      await _ensureInitialized(uid);
+      return _storage.accountDeletionState(uid);
+    });
   }
 
   Future<SavedSongbook> load(String uid) async {
     _requireAccess(uid);
-    await _ensureInitialized();
+    await _ensureInitialized(uid);
     return _read(uid);
   }
 
@@ -107,7 +143,7 @@ class SavedSongbookRepository {
   ) {
     return _enqueue(() async {
       _requireAccess(uid);
-      await _ensureInitialized();
+      await _ensureInitialized(uid);
       final current = await _read(uid);
       final next = transform(current);
       await _storage.writeAtomically(uid, _encode(next));
@@ -254,7 +290,7 @@ class SavedSongbookRepository {
   Future<void> resetLocalCopy(String uid) {
     return _enqueue(() async {
       _requireAccess(uid);
-      await _ensureInitialized();
+      await _ensureInitialized(uid);
       await _storage.delete(uid);
     });
   }
@@ -265,32 +301,37 @@ class SavedSongbookRepository {
   }) {
     return _enqueue(() async {
       _requireAccess(uid);
-      await _ensureInitialized();
+      await _ensureInitialized(uid);
       final staged = await _storage.stageForAccountDeletion(uid);
+      if (staged) {
+        try {
+          await _storage.markAccountDeletionRequestStarted(uid);
+        } catch (error, stackTrace) {
+          _initializations.remove(uid);
+          try {
+            await _storage.recoverAccountDeletionArtifacts(uid);
+          } catch (_) {
+            // A later app-gate recovery retries while Home remains closed.
+          }
+          Error.throwWithStackTrace(error, stackTrace);
+        }
+      }
       try {
         await deleteRemoteAccount();
-      } catch (primaryError, primaryStack) {
-        if (staged) {
-          try {
-            await _storage.restoreAfterAccountDeletionFailure(uid);
-          } catch (cleanupError) {
-            Error.throwWithStackTrace(
-              SavedSongbookAccountDeletionException(
-                primaryError: primaryError,
-                cleanupError: cleanupError,
-              ),
-              primaryStack,
-            );
-          }
-        }
-        Error.throwWithStackTrace(primaryError, primaryStack);
+      } catch (error, stackTrace) {
+        Error.throwWithStackTrace(
+          AccountDeletionRequestUnconfirmedException(error),
+          stackTrace,
+        );
       }
       if (staged) {
         try {
+          await _storage.markAccountDeletionAccepted(uid);
           await _storage.finishAccountDeletion(uid);
         } catch (_) {
-          // The tombstone is already unreadable as an active Songbook. The
-          // next repository initialization retries its best-effort cleanup.
+          // Remote acceptance is already durable. The local artifact remains
+          // unreadable and a later active-UID initialization retries cleanup
+          // if the accepted marker was committed.
         }
       }
     });

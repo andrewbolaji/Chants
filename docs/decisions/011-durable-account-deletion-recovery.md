@@ -1,9 +1,9 @@
 # Decision 011: Account deletion uses a durable bounded job
 
-- **Status:** Accepted
+- **Status:** Accepted; client acknowledgement handling refined by Decision 012 and audit handling refined by Decision 016
 - **Date:** 2026-08-25
 - **Owner:** Andrew
-- **Related:** Decisions 003, 009, and 010; v1 account deletion recovery
+- **Related:** Decisions 003, 009, 010, 012, and 016; v1 account deletion recovery
 
 ## Context
 
@@ -15,11 +15,11 @@ Account deletion crosses Firebase Auth, public retained contributions, private i
 
 An authenticated empty `deleteAccount` request creates one private deterministic `accountDeletionJobs/{uid}` document and marks the existing profile `deletionPending: true` in the same transaction. The callable returns only after this request is durable. Repeating the request never resets the stored phase or timestamps.
 
-A retry-enabled `onAccountDeletionJobWritten` Function advances one bounded unit per event. Collection work is paged at 200 documents. Interactions are deleted, retained chants and comments are anonymized, a deterministic audit entry is written, Firebase Auth is deleted, and the profile plus job are finalized atomically. Missing Auth users and already-processed rows are successful no-ops. Unknown job schemas or phases fail closed and preserve the job for investigation.
+A retry-enabled `onAccountDeletionJobWritten` Function advances one bounded unit per event. Collection work is paged at 200 documents. Interactions are deleted, retained chants and comments are anonymized, audit rows authored by the user are classified under Decision 016, a non-identifying completion audit is written, Firebase Auth is deleted, and the profile plus job are finalized atomically. The completion write and phase advancement share one transaction, which provides exactly-once behavior without a stable audit document ID. Missing Auth users and already-processed rows are successful no-ops. Unknown job schemas or phases fail closed and preserve the job for investigation.
 
-Pending authority is a deny state. Firestore rules require both no deletion job and an absent-or-false profile pending marker before active writes or operator actions. Touched callables perform the corresponding server check. The signed-in app gate shows only a deletion-in-progress recovery screen with Sign out.
+Pending authority is a deny state. Firestore rules require both no deletion job and an absent-or-false profile pending marker before active writes or operator actions. Touched callables perform the corresponding server check. The signed-in app gate also checks local deletion state. It shows persistent retry for unknown acknowledgement and only deletion progress plus Sign out after acceptance.
 
-The client stages the UID-scoped Saved Songbook before the request. A request failure restores the exact local bytes. Durable acceptance finalizes the unreadable tombstone and signs out, while deferred tombstone removal is retried by normal storage initialization.
+The original client contract restored the staged Songbook whenever the callable threw. The freeze review proved that a transport exception can arrive after the server transaction committed, so that compensation rule was unsafe. Decision 012 supersedes only this client acknowledgement paragraph: prepared data may be restored before the remote attempt or by explicit same-process recovery, an unknown remote outcome remains locked and retryable, and explicit durable acceptance permits deletion and sign-out. The server job and pending-authority decision remain unchanged.
 
 User-report deletion receives its own ground-truth convergence trigger so deletion of reports filed by one account repairs a surviving target profile's count.
 

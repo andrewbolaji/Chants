@@ -1,14 +1,20 @@
 import 'dart:async';
 
 import 'package:chants/app/providers.dart';
+import 'package:chants/app/router.dart';
 import 'package:chants/app/theme.dart';
 import 'package:chants/data/models/chant.dart';
 import 'package:chants/data/models/comment.dart';
 import 'package:chants/data/models/comment_like.dart';
 import 'package:chants/data/models/saved_songbook.dart';
 import 'package:chants/data/models/team.dart';
+import 'package:chants/data/models/user_profile.dart';
+import 'package:chants/data/models/vote.dart';
 import 'package:chants/data/repositories/chant_repository.dart';
 import 'package:chants/data/repositories/comment_repository.dart';
+import 'package:chants/data/repositories/profile_repository.dart';
+import 'package:chants/data/repositories/saved_songbook_repository.dart';
+import 'package:chants/data/repositories/vote_repository.dart';
 import 'package:chants/data/services/chant_share.dart';
 import 'package:chants/presentation/browse/chant_detail_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -18,24 +24,31 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 
 class _ChantRepository extends Mock implements ChantRepository {
-  final StreamController<Chant?> controller =
-      StreamController<Chant?>.broadcast();
+  final StreamController<LiveChantSnapshot> controller =
+      StreamController<LiveChantSnapshot>.broadcast();
   Chant? current;
   bool emitCurrentOnListen = true;
 
   @override
-  Stream<Chant?> chantStream(String id) => Stream<Chant?>.multi((events) {
-    if (emitCurrentOnListen && current != null) events.add(current);
-    final subscription = controller.stream.listen(
-      (chant) {
-        current = chant;
-        events.add(chant);
-      },
-      onError: events.addError,
-      onDone: events.close,
-    );
-    events.onCancel = subscription.cancel;
-  });
+  Stream<LiveChantSnapshot> chantStream(String id) =>
+      Stream<LiveChantSnapshot>.multi((events) {
+        if (emitCurrentOnListen && current != null) {
+          events.add(LiveChantSnapshot(chant: current, isFromCache: false));
+        }
+        final subscription = controller.stream.listen(
+          (snapshot) {
+            current = snapshot.chant;
+            events.add(snapshot);
+          },
+          onError: events.addError,
+          onDone: events.close,
+        );
+        events.onCancel = subscription.cancel;
+      });
+
+  void emit(Chant? chant, {bool isFromCache = false}) {
+    controller.add(LiveChantSnapshot(chant: chant, isFromCache: isFromCache));
+  }
 }
 
 class _User extends Mock implements User {
@@ -60,6 +73,19 @@ class _CommentRepository extends Mock implements CommentRepository {
   }) async => null;
 }
 
+class _VoteRepository extends Mock implements VoteRepository {
+  @override
+  Future<Vote?> getUserVote({
+    required String userId,
+    required String chantId,
+  }) async => null;
+}
+
+class _ProfileRepository extends Mock implements ProfileRepository {
+  @override
+  Stream<UserProfile?> profileStream(String userId) => Stream.value(null);
+}
+
 class _ShareGateway implements ChantShareGateway {
   final List<ChantSharePayload> payloads = [];
   final List<Rect> origins = [];
@@ -75,6 +101,19 @@ class _ShareGateway implements ChantShareGateway {
     origins.add(sharePositionOrigin);
     if (error != null) throw error!;
     await (pending?.future ?? Future<void>.value());
+  }
+}
+
+class _SavedRepository extends Mock implements SavedSongbookRepository {
+  int removeCalls = 0;
+
+  @override
+  Future<SavedSongbook> removeIndividual({
+    required String uid,
+    required String chantId,
+  }) async {
+    removeCalls += 1;
+    return SavedSongbook.empty();
   }
 }
 
@@ -111,6 +150,34 @@ Chant _chant({
   );
 }
 
+SavedSongbook _savedIndividually(Chant chant) {
+  final timestamp = DateTime.utc(2026, 8, 26);
+  return SavedSongbook(
+    individualSnapshots: {
+      chant.id: SavedIndividualChant(
+        team: SavedTeamIdentity.fromTeam(_team),
+        savedAt: timestamp,
+        refreshedAt: timestamp,
+        chant: SavedChantSnapshot.fromChant(chant),
+      ),
+    },
+  );
+}
+
+SavedSongbook _savedWithClub(Chant chant) {
+  final timestamp = DateTime.utc(2026, 8, 26);
+  return SavedSongbook(
+    clubSnapshots: {
+      _team.id: SavedClubSongbook(
+        team: SavedTeamIdentity.fromTeam(_team),
+        savedAt: timestamp,
+        refreshedAt: timestamp,
+        chants: [SavedChantSnapshot.fromChant(chant)],
+      ),
+    },
+  );
+}
+
 Widget _app({
   required Chant chant,
   required _ChantRepository repository,
@@ -118,6 +185,8 @@ Widget _app({
   double textScale = 1,
   List<Comment> comments = const [],
   User? user,
+  SavedSongbook? songbook,
+  SavedSongbookRepository? savedRepository,
 }) {
   repository.current = chant;
   return ProviderScope(
@@ -125,12 +194,17 @@ Widget _app({
       authStateProvider.overrideWith((ref) => Stream<User?>.value(user)),
       chantRepositoryProvider.overrideWithValue(repository),
       commentRepositoryProvider.overrideWithValue(_CommentRepository(comments)),
+      voteRepositoryProvider.overrideWithValue(_VoteRepository()),
+      profileRepositoryProvider.overrideWithValue(_ProfileRepository()),
       chantShareGatewayProvider.overrideWithValue(gateway),
       blockedUserIdsProvider.overrideWith(
         (ref, uid) => Stream.value(const <String>{}),
       ),
+      userProfileProvider.overrideWith((ref, uid) => Stream.value(null)),
+      if (savedRepository != null)
+        savedSongbookRepositoryProvider.overrideWithValue(savedRepository),
       savedSongbookProvider.overrideWith(
-        (ref, uid) async => SavedSongbook.empty(),
+        (ref, uid) async => songbook ?? SavedSongbook.empty(),
       ),
     ],
     child: MaterialApp(
@@ -141,6 +215,10 @@ Widget _app({
         ).copyWith(textScaler: TextScaler.linear(textScale)),
         child: child!,
       ),
+      routes: {
+        AppRouter.savedClub: (_) =>
+            const Scaffold(body: Center(child: Text('SAVED CLUB ROUTE'))),
+      },
       home: ChantDetailScreen(chant: chant, team: _team),
     ),
   );
@@ -214,7 +292,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    repository.controller.add(
+    repository.emit(
       _chant(title: 'Updated terrace song', lyrics: 'The current words'),
     );
     await tester.pumpAndSettle();
@@ -285,7 +363,7 @@ void main() {
       );
       expect(shareButton.onPressed, isNull);
 
-      repository.controller.add(_chant());
+      repository.emit(_chant());
       await tester.pump();
       shareButton = tester.widget<IconButton>(
         find.widgetWithIcon(IconButton, Icons.ios_share_outlined),
@@ -347,6 +425,114 @@ void main() {
       findsOneWidget,
     );
     expect(gateway.payloads, isEmpty);
+  });
+
+  testWidgets('cached detail stays readable with every action disabled', (
+    tester,
+  ) async {
+    final repository = _ChantRepository()..emitCurrentOnListen = false;
+    final gateway = _ShareGateway();
+    addTearDown(repository.controller.close);
+
+    await tester.pumpWidget(
+      _app(
+        chant: _chant(),
+        repository: repository,
+        gateway: gateway,
+        user: _User(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    repository.emit(_chant(), isFromCache: true);
+    await tester.pump();
+
+    expect(find.text('NORTH BANK SONG'), findsOneWidget);
+    for (final icon in <IconData>[
+      Icons.bookmark_border,
+      Icons.ios_share_outlined,
+      Icons.flag_outlined,
+      Icons.arrow_drop_up,
+      Icons.arrow_drop_down,
+    ]) {
+      final button = tester.widget<IconButton>(
+        find.widgetWithIcon(IconButton, icon).first,
+      );
+      expect(button.onPressed, isNull, reason: '$icon must wait for server');
+    }
+
+    repository.emit(_chant());
+    await tester.pump();
+    final share = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.ios_share_outlined),
+    );
+    expect(share.onPressed, isNotNull);
+  });
+
+  testWidgets('cached detail can remove an existing individual save', (
+    tester,
+  ) async {
+    final repository = _ChantRepository()..emitCurrentOnListen = false;
+    final savedRepository = _SavedRepository();
+    final gateway = _ShareGateway();
+    final chant = _chant();
+    addTearDown(repository.controller.close);
+
+    await tester.pumpWidget(
+      _app(
+        chant: chant,
+        repository: repository,
+        gateway: gateway,
+        user: _User(),
+        songbook: _savedIndividually(chant),
+        savedRepository: savedRepository,
+      ),
+    );
+    await tester.pumpAndSettle();
+    repository.emit(chant, isFromCache: true);
+    await tester.pump();
+
+    final bookmark = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.bookmark),
+    );
+    expect(bookmark.onPressed, isNotNull);
+    await tester.tap(find.byTooltip('Saved individually'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('REMOVE FROM DEVICE'));
+    await tester.pumpAndSettle();
+
+    expect(savedRepository.removeCalls, 1);
+    expect(find.textContaining('Removed the individual save'), findsOneWidget);
+  });
+
+  testWidgets('cached detail can open a club-owned saved chant', (
+    tester,
+  ) async {
+    final repository = _ChantRepository()..emitCurrentOnListen = false;
+    final gateway = _ShareGateway();
+    final chant = _chant();
+    addTearDown(repository.controller.close);
+
+    await tester.pumpWidget(
+      _app(
+        chant: chant,
+        repository: repository,
+        gateway: gateway,
+        user: _User(),
+        songbook: _savedWithClub(chant),
+      ),
+    );
+    await tester.pumpAndSettle();
+    repository.emit(chant, isFromCache: true);
+    await tester.pump();
+
+    final bookmark = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.bookmark),
+    );
+    expect(bookmark.onPressed, isNotNull);
+    await tester.tap(find.byTooltip('Saved with club'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('SAVED CLUB ROUTE'), findsOneWidget);
   });
 
   testWidgets('detail actions remain usable with enlarged text', (

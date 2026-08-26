@@ -115,10 +115,11 @@ Comment _makeComment({
   String displayName = 'OtherUser',
   String? parentCommentId,
   DateTime? createdAt,
+  String chantId = 'chant-1',
 }) {
   return Comment(
     id: id,
-    chantId: 'chant-1',
+    chantId: chantId,
     userId: userId,
     displayName: displayName,
     body: body,
@@ -205,6 +206,46 @@ void main() {
     // The like should still be shown correctly after reconciliation.
     expect(find.byIcon(Icons.favorite), findsOneWidget);
     expect(find.text('1'), findsOneWidget);
+  });
+
+  testWidgets('changing chant clears rows from the old subscription', (
+    tester,
+  ) async {
+    final chantId = ValueNotifier<String>('chant-1');
+    addTearDown(chantId.dispose);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          commentRepositoryProvider.overrideWithValue(fakeCommentRepo),
+          profileRepositoryProvider.overrideWithValue(fakeProfileRepo),
+          blockRepositoryProvider.overrideWithValue(fakeBlockRepo),
+          authStateProvider.overrideWith(
+            (ref) => Stream.value(fakeUser as User?),
+          ),
+          blockedUserIdsProvider.overrideWith(
+            (ref, userId) => Stream.value(<String>{}),
+          ),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: ValueListenableBuilder<String>(
+              valueListenable: chantId,
+              builder: (_, value, _) =>
+                  CommentSection(chantId: value, commentCount: 0),
+            ),
+          ),
+        ),
+      ),
+    );
+    fakeCommentRepo.controller.add([_makeComment(body: 'Old chant comment')]);
+    await tester.pumpAndSettle();
+    expect(find.text('Old chant comment'), findsOneWidget);
+
+    chantId.value = 'chant-2';
+    await tester.pump();
+
+    expect(find.text('Old chant comment'), findsNothing);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
   });
 
   testWidgets(

@@ -6,7 +6,7 @@
 
 Chants is a mobile app where football fans find and learn terrace songs, contribute the ones that are missing, and back new ideas that deserve to be sung next. Every chant has its lyrics, the tune it is sung to, and the story behind it. The trusted Songbook keeps Terrace Proven material distinct from the community Chant Lab, where fans can create, compete, vote, and comment.
 
-> **Status:** In active development. App Store submission is in progress; not yet live on the stores. Arsenal is fully seeded; the remaining Premier League clubs are being added.
+> **Status:** In active development and preparing for store submission; not yet live on the stores. Arsenal is fully seeded; the remaining Premier League clubs are being added.
 
 ---
 
@@ -35,7 +35,7 @@ Chants is a mobile app where football fans find and learn terrace songs, contrib
 - **Search.** Filter chants by title, lyrics, tune name, or club name with results updating as you type.
 - **Saved Matchday Songbook.** Save one chant or a club's Songbook as a bounded device copy for quick offline reading at the ground.
 - **Share-out.** Send a complete, honestly labelled chant through the native share sheet without inventing a dead public link.
-- **Account management.** Email/password auth, password reset, and durable in-app account deletion with pending-account denial, bounded retry, contribution anonymization, local Songbook cleanup, and counter reconciliation.
+- **Account management.** Email/password auth, password reset, and durable in-app account deletion with persistent unknown-request recovery, pending-account denial, bounded retry, contribution and audit anonymization, local Songbook cleanup, and counter reconciliation.
 
 ---
 
@@ -134,7 +134,7 @@ Fifteen Functions exports in source (all configured for `europe-west2`; live dep
 
 **Content integrity.** All seed content (lyrics, squads, cultural context) is externally sourced and verified by hand. The build process can only transform supplied data in place; it never generates or rewrites content. This is a standing rule with the highest priority in the project.
 
-**Test coverage across layers.** 310 Flutter tests, 135 Firestore security-rules assertions, 69 Cloud Functions tests, and 42 seed-pipeline tests. Regression guards cover timing-sensitive UI, moderation revocation, atomic safety intake, durable account deletion, direct-write abuse, trigger deletion races, responsive comment states, stale Player recovery, reply grouping, and offline snapshot reconstruction.
+**Test coverage across layers.** 343 Flutter tests, 136 Firestore security-rules assertions, 78 Cloud Functions tests, and 42 seed-pipeline tests pass locally on the final freeze closure. Regression guards cover late deletion responses after Home disposal, prepared and unknown deletion recovery, classified audit privacy and operator provenance, exactly-once completion, accepted-last local cleanup, cache-local Songbook actions, timing-sensitive UI, chant-ID reuse, moderation revocation, atomic safety intake, transactional counter overlap, direct-write abuse, pending-target closure, responsive states, reply grouping, and offline snapshot reconstruction. PR 14 head `fe93e20` is clean-runner green; replacement CI for the final closure remains pending.
 
 ---
 

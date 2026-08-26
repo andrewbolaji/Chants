@@ -6,6 +6,7 @@ import {
   ACCOUNT_DELETION_PHASES,
   AccountDeletionAuth,
   AccountDeletionPhase,
+  auditRedactionForDeletedActor,
   processAccountDeletionStep,
   requestAccountDeletion,
 } from "../src/account_deletion";
@@ -18,6 +19,7 @@ type Operation =
 
 class FirestoreHarness {
   private readonly store = new Map<string, Map<string, Data>>();
+  private nextDocumentId = 0;
   failNextBatch = false;
   failNextTransaction = false;
   afterNextQuery: (() => void) | null = null;
@@ -75,8 +77,8 @@ class FirestoreHarness {
 
   private collection(name: string) {
     return {
-      doc: (id: string) => {
-        const ref = this.ref(name, id);
+      doc: (id?: string) => {
+        const ref = this.ref(name, id ?? `auto-${++this.nextDocumentId}`);
         return {
           ...ref,
           get: async () => this.snapshot(ref),
@@ -213,6 +215,31 @@ describe("account deletion recovery", () => {
     now = makeClock();
   });
 
+  it("preserves generated detail for every known operator audit action", () => {
+    for (const action of [
+      "ban",
+      "unban",
+      "promote",
+      "demote",
+      "remove-evidence",
+      "hide",
+      "unhide",
+      "remove",
+      "merge_chants",
+    ]) {
+      assert.deepStrictEqual(
+        auditRedactionForDeletedActor({
+          actorId: "fan",
+          action,
+          targetId: "target",
+          detail: "Generated operator detail.",
+        }, "fan"),
+        { actorId: "deleted-operator" },
+        action
+      );
+    }
+  });
+
   it("creates the exact durable job and pending marker in one request", async () => {
     db.set("profiles", "fan", { displayName: "Fan", banned: false });
 
@@ -331,6 +358,7 @@ describe("account deletion recovery", () => {
       "delete-user-reports-against",
       "delete-blocks-by",
       "delete-blocks-against",
+      "anonymize-audit-by",
     ] as const;
 
     for (const phase of pagePhases) {
@@ -371,7 +399,7 @@ describe("account deletion recovery", () => {
     assert.strictEqual(db.get("accountDeletionJobs", "fan")!.phase, "delete-votes");
   });
 
-  it("disables Auth, removes safety state, and writes one deterministic audit", async () => {
+  it("classifies audit pages and writes exactly one non-identifying completion audit", async () => {
     db.set("accountDeletionJobs", "fan", job("disable-auth"));
     await processAccountDeletionStep({ uid: "fan", firestore: db.firestore, auth, now });
     assert.strictEqual(auth.disabled, true);
@@ -382,11 +410,96 @@ describe("account deletion recovery", () => {
     await processAccountDeletionStep({ uid: "fan", firestore: db.firestore, auth, now });
     assert.strictEqual(db.get("safetyRateLimits", "fan"), undefined);
 
-    db.set("accountDeletionJobs", "fan", job("write-audit"));
+    db.set("accountDeletionJobs", "fan", job("anonymize-audit-by"));
+    for (let index = 0; index < ACCOUNT_DELETION_PAGE_SIZE - 3; index++) {
+      db.set("auditLog", `report-${index}`, {
+        actorId: "fan",
+        action: "report",
+        targetId: `chant-${index}`,
+        detail: `Reason: private text ${index}`,
+      });
+    }
+    db.set("auditLog", "operator-action", {
+      actorId: "fan",
+      action: "hide",
+      targetType: "chant",
+      targetId: "chant-moderated",
+      detail: "Chant hidden by operator.",
+    });
+    db.set("auditLog", "policy-acceptance", {
+      actorId: "fan",
+      action: "accept-policy",
+      targetType: "user",
+      targetId: "fan",
+      detail: "Accepted content policy version v1.",
+    });
+    db.set("auditLog", "unknown-action", {
+      actorId: "fan",
+      action: "legacy-free-text",
+      targetType: "user",
+      targetId: "another-user",
+      detail: "Potentially user-authored text.",
+    });
+    db.set("auditLog", "report-final-page", {
+      actorId: "fan",
+      action: "report-user",
+      targetId: "reported-user",
+      detail: "Reason: final private text",
+    });
+
     await processAccountDeletionStep({ uid: "fan", firestore: db.firestore, auth, now });
-    assert.strictEqual(db.size("auditLog"), 1);
-    assert.ok(db.get("auditLog", "delete-account-fan"));
+    assert.strictEqual(db.get("auditLog", "report-0")!.actorId, "deleted-user");
+    assert.strictEqual(
+      db.get("auditLog", "report-0")!.detail,
+      "Report details removed during account deletion."
+    );
+    assert.strictEqual(
+      [...Array(ACCOUNT_DELETION_PAGE_SIZE - 3).keys()].some((index) =>
+        String(db.get("auditLog", `report-${index}`)!.detail).includes("private text")
+      ),
+      false
+    );
+    assert.deepStrictEqual(db.get("auditLog", "operator-action"), {
+      actorId: "deleted-operator",
+      action: "hide",
+      targetType: "chant",
+      targetId: "chant-moderated",
+      detail: "Chant hidden by operator.",
+    });
+    assert.deepStrictEqual(db.get("auditLog", "policy-acceptance"), {
+      actorId: "deleted-user",
+      action: "accept-policy",
+      targetType: "user",
+      targetId: "deleted-user",
+      detail: "Accepted content policy version v1.",
+    });
+    assert.deepStrictEqual(db.get("auditLog", "unknown-action"), {
+      actorId: "deleted-user",
+      action: "legacy-free-text",
+      targetType: "user",
+      targetId: "another-user",
+      detail: "Details removed during account deletion.",
+    });
+    assert.strictEqual(db.get("auditLog", "report-final-page")!.actorId, "fan");
+
+    await processAccountDeletionStep({ uid: "fan", firestore: db.firestore, auth, now });
+    assert.strictEqual(
+      db.get("auditLog", "report-final-page")!.detail,
+      "Report details removed during account deletion."
+    );
+    await processAccountDeletionStep({ uid: "fan", firestore: db.firestore, auth, now });
+    assert.strictEqual(db.get("accountDeletionJobs", "fan")!.phase, "write-audit");
+
+    await processAccountDeletionStep({ uid: "fan", firestore: db.firestore, auth, now });
+    assert.strictEqual(db.size("auditLog"), ACCOUNT_DELETION_PAGE_SIZE + 2);
+    const completion = db.get("auditLog", "auto-1")!;
+    assert.strictEqual(completion.actorId, "system");
+    assert.strictEqual(completion.targetId, "deleted-user");
+    assert.strictEqual(JSON.stringify(completion).includes("fan"), false);
     assert.strictEqual(db.get("accountDeletionJobs", "fan")!.phase, "delete-auth");
+
+    await processAccountDeletionStep({ uid: "fan", firestore: db.firestore, auth, now });
+    assert.strictEqual(db.size("auditLog"), ACCOUNT_DELETION_PAGE_SIZE + 2);
   });
 
   it("recovers after Auth deletion and finalization failures", async () => {

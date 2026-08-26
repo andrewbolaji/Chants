@@ -12,42 +12,54 @@ let profilesStore: Record<string, Record<string, unknown>> = {};
 let profileUpdateCalls: Array<{ id: string; data: Record<string, unknown> }> = [];
 
 function makeFakeFirestore(): admin.firestore.Firestore {
-  const fakeCollection = (name: string) => {
-    if (name === "userReports") {
-      return {
-        where: (field: string, op: string, value: unknown) => ({
-          get: () => {
-            const docs = Object.entries(userReportsStore)
-              .filter(([, data]) => data[field] === value)
-              .map(([id, data]) => ({ id, data: () => ({ ...data }) }));
-            return Promise.resolve({ docs, size: docs.length });
-          },
-        }),
-      };
-    }
-    if (name === "profiles") {
-      return {
-        doc: (id: string) => ({
-          get: () => {
-            const data = profilesStore[id];
-            return Promise.resolve({
-              exists: data !== undefined,
-              data: () => (data ? { ...data } : undefined),
-            });
-          },
-          update: (data: Record<string, unknown>) => {
-            profileUpdateCalls.push({ id, data });
-            profilesStore[id] = { ...(profilesStore[id] || {}), ...data };
-            return Promise.resolve();
-          },
-        }),
-      };
-    }
-    throw new Error(`unexpected collection: ${name}`);
-  };
+  const fakeCollection = (name: string) => ({
+    doc: (id: string) => ({ __path: `${name}/${id}` }),
+    where: (field: string, _op: string, value: unknown) => ({
+      __query: { name, field, value },
+    }),
+  });
 
   return {
     collection: fakeCollection,
+    runTransaction: async (handler: (transaction: {
+      get: (target: Record<string, unknown>) => Promise<unknown>;
+      update: (ref: Record<string, unknown>, data: Record<string, unknown>) => void;
+    }) => Promise<unknown>) => {
+      const writes: Array<{
+        ref: Record<string, unknown>;
+        data: Record<string, unknown>;
+      }> = [];
+      const result = await handler({
+        get: async (target: Record<string, unknown>) => {
+          const query = target.__query as {
+            name: string;
+            field: string;
+            value: unknown;
+          } | undefined;
+          if (query) {
+            const docs = Object.entries(userReportsStore)
+              .filter(([, data]) => data[query.field] === query.value)
+              .map(([id, data]) => ({ id, data: () => ({ ...data }) }));
+            return { docs, size: docs.length };
+          }
+          const path = target.__path as string;
+          const [collection, id] = path.split("/");
+          const data = collection === "profiles" ? profilesStore[id] : undefined;
+          return {
+            exists: data !== undefined,
+            data: () => data === undefined ? undefined : { ...data },
+          };
+        },
+        update: (ref, data) => writes.push({ ref, data }),
+      });
+      for (const write of writes) {
+        const path = write.ref.__path as string;
+        const [, id] = path.split("/");
+        profileUpdateCalls.push({ id, data: write.data });
+        profilesStore[id] = { ...(profilesStore[id] || {}), ...write.data };
+      }
+      return result;
+    },
   } as unknown as admin.firestore.Firestore;
 }
 
@@ -88,8 +100,8 @@ describe("handleUserReportCreated", () => {
 
     const result = await handleUserReportCreated("ghost-user", fakeDb);
 
-    assert.strictEqual(result.userReportCount, 1,
-      "count is still computed from ground truth even if the write is skipped");
+    assert.strictEqual(result.userReportCount, 0,
+      "missing parent stops before reading report ground truth");
     assert.strictEqual(profileUpdateCalls.length, 0,
       "must not attempt to update a profile that no longer exists");
   });

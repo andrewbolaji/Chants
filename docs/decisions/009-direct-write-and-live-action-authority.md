@@ -1,6 +1,6 @@
 # Decision 009: Direct writes and live actions fail closed at authority boundaries
 
-- **Status:** Accepted
+- **Status:** Accepted; cached-snapshot authority refined by Decision 015
 - **Date:** 2026-08-25
 - **Owner:** Andrew
 - **Related:** Decisions 004, 006, and 008; stacked v1 authority remediation
@@ -17,7 +17,7 @@ Direct client writes use exact collection-specific schemas. Required fields have
 
 Vote and comment-like clients create only their public intent fields and may later change only `value`. `appliedValue` is server-owned. The client uses transactions so a missing interaction can be created once while an existing interaction preserves the Function stamp.
 
-Readable fallback and action authority are separate UI states. Ordinary transient errors may retain previously safe public text. A Firestore permission denial, current missing document, or current hidden or removed document removes Discover content. Live detail may keep route text readable, but Save, Share, Vote, Report, and Comment actions require an active, error-free, current visible chant.
+Readable fallback and action authority are separate UI states. Ordinary transient errors may retain previously safe public text. A Firestore permission denial, current missing document, or current hidden or removed document removes Discover content. Live detail may keep route text readable, but Save, Share, Vote, Report, and Comment actions require an active, error-free, server-confirmed current visible chant. Decision 015 records why a Firestore cache event is readable fallback rather than current action authority.
 
 ## Alternatives considered
 

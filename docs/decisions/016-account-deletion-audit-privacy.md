@@ -1,0 +1,55 @@
+# Decision 016: Account deletion classifies retained audit history
+
+- **Status:** Accepted
+- **Date:** 2026-08-26
+- **Owner:** Andrew
+- **Related:** Decisions 010, 011, and 012; post-freeze independent review corrections
+
+## Context
+
+The durable deletion job removed report documents but did not process `auditLog`. Report triggers stored the reporter UID and the submitted reason, which can include user-authored text. The completion audit also placed the deleted UID in its document ID, actor, and target. Account deletion could therefore complete while retained audit rows still linked the deleted account to report text.
+
+Audit history still has a legitimate moderation and security purpose. Deleting every row about an account would also erase records created by operators or other reporters. The boundary needs to remove the deleting user's identity as an actor without pretending that all safety history disappears.
+
+## Decision
+
+Account deletion includes a bounded `anonymize-audit-by` phase. It queries at most 200 `auditLog` rows whose `actorId` is the deleting UID and applies an allowlisted classification:
+
+- Known generated operator actions use `deleted-operator` and retain their action, target, generated detail, and timestamp. The sentinel preserves role-level provenance without retaining the operator UID.
+- `report` and `report-user` use `deleted-user` and replace the submitted reason with deletion-safe generic detail.
+- `accept-policy` uses `deleted-user`, redacts a self target to `deleted-user`, and retains the generated policy-version detail.
+- Unknown actions fail private with `deleted-user` and generic detail.
+
+The page is idempotent and uses the existing forward-only job heartbeat and phase transition. Reachable operator writers use generated moderation detail, so their allowlisted rows may retain that detail. The disabled legacy `merge_chants` action is an explicit exception: its old payload embeds source title, lyrics, context, tune, and raw `createdBy`. The callable exits before request parsing or mutation, so it cannot create that payload now. Its allowlist entry preserves existing action classification but is not precedent for retaining arbitrary future detail.
+
+New report audits read the reporter profile in the same Firestore transaction that writes the audit row. A pending or missing profile writes `deleted-user` and no report reason. This closes the delayed-trigger race where an old report-create event arrives after the deletion worker has already scanned audit rows.
+
+The final deletion audit uses a random Firestore document ID, `system` as actor, `deleted-user` as target, and generic detail. It contains no raw deleted UID. The audit write and transition to `delete-auth` share one Firestore transaction, so retry or duplicate delivery after phase advancement does not create another completion row. Exactly-once behavior depends on that phase transaction, not a stable document ID.
+
+Audit rows where the deleted account is only the target may remain as moderation or security history and may retain that target ID. User-facing copy distinguishes those target-side records from reports authored by the deleting account, whose actor ID and submitted text are removed.
+
+## Alternatives considered
+
+| Alternative | Benefit | Cost or risk | Why not chosen |
+|---|---|---|---|
+| Delete every audit row involving the UID | Broad erasure | Removes operator and third-party safety history | Target-side records have a different owner and purpose |
+| Disclose existing retention without redaction | Smallest code change | Retains reporter identity and free text after deletion | Data minimization is achievable with the existing worker |
+| Redact only in the deletion page | Reuses one phase | A delayed report trigger can write identifying data after the page advances | Writers must also respect the lifecycle boundary |
+| Store only anonymous report audits for every account | Eliminates deletion-specific identity work | Removes active-account abuse investigation capability | The narrower deleting-or-missing profile condition is sufficient |
+| Replace every actor row with one user sentinel and generic detail | One uniform cleanup rule | Destroys trusted operator provenance and moderation context | Classify known generated actions and fail private for unknown actions |
+
+## Consequences
+
+- Positive: completed deletion does not retain the user's raw UID or submitted report text as an audit actor.
+- Positive: known operator history retains role-level provenance and generated moderation context without retaining the operator UID.
+- Positive: delayed report triggers cannot reintroduce identity after the pending marker or profile deletion.
+- Positive: page processing remains bounded, retryable, and compatible with the existing job model.
+- Negative: audit rows about the deleted account can remain, including its target ID, when another actor created them.
+- Negative: the disabled legacy merge payload is not privacy-safe enough to re-enable because it contains authored source fields and a raw creator ID.
+- Negative: the repository still has no time-based audit retention policy or export workflow.
+- Operational: audit redaction is forward-only privacy work. A faulty deployed version needs a forward correction, not restoration of identity.
+
+## Validation and revisit trigger
+
+- **Evidence:** Functions tests cover a mixed 201-row population, every allowlisted operator action, report and unknown-action redaction, self-target policy acceptance, empty-page advancement, pending and missing reporter writes, reason removal, a non-identifying completion row, and no second completion row after phase advancement. Flutter tests and inspected goldens cover prepared recovery, unknown state, recovery failure, and the target-side retention disclosure.
+- **Revisit when:** legal retention requirements are approved, an audit retention schedule is introduced, operator investigations require a different pseudonymous key, a general privacy-deletion service replaces the current worker, or `mergeChants` is considered for re-enable. Merge re-enable requires a privacy-safe audit payload and a fresh review of the retained-action allowlist before the runtime stop can move.

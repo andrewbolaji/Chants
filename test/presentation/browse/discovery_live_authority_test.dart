@@ -17,11 +17,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 
 class _ChantRepository extends Mock implements ChantRepository {
-  final StreamController<Chant?> controller =
-      StreamController<Chant?>.broadcast();
+  final StreamController<LiveChantSnapshot> controller =
+      StreamController<LiveChantSnapshot>.broadcast();
 
   @override
-  Stream<Chant?> chantStream(String id) => controller.stream;
+  Stream<LiveChantSnapshot> chantStream(String id) => controller.stream;
+
+  void emit(Chant? chant, {bool isFromCache = false}) {
+    controller.add(LiveChantSnapshot(chant: chant, isFromCache: isFromCache));
+  }
 }
 
 class _CommentRepository extends Mock implements CommentRepository {
@@ -91,6 +95,16 @@ Widget _app({
 }
 
 void main() {
+  test('permission denial requires a typed Firebase error', () {
+    expect(isChantPermissionDenied(StateError('permission-denied')), isFalse);
+    expect(
+      isChantPermissionDenied(
+        FirebaseException(plugin: 'cloud_firestore', code: 'permission_denied'),
+      ),
+      isTrue,
+    );
+  });
+
   testWidgets('permission denial removes a stale Discover card', (
     tester,
   ) async {
@@ -127,6 +141,32 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('NORTH BANK SONG'), findsOneWidget);
+  });
+
+  testWidgets('cached Discover value stays readable but cannot vote', (
+    tester,
+  ) async {
+    final repository = _ChantRepository();
+    final gateway = _ShareGateway();
+    addTearDown(repository.controller.close);
+
+    await tester.pumpWidget(_app(repository: repository, gateway: gateway));
+    await tester.pumpAndSettle();
+    repository.emit(_chant, isFromCache: true);
+    await tester.pump();
+
+    expect(find.text('NORTH BANK SONG'), findsOneWidget);
+    var upvote = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.arrow_drop_up),
+    );
+    expect(upvote.onPressed, isNull);
+
+    repository.emit(_chant);
+    await tester.pump();
+    upvote = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.arrow_drop_up),
+    );
+    expect(upvote.onPressed, isNotNull);
   });
 
   testWidgets('Discover route snapshot cannot share after permission denial', (

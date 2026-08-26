@@ -12,6 +12,72 @@ This is durable, evidence-backed project memory. It prevents the same failure or
 
 ## Entries
 
+### 2026-08-26T14:18:08Z Mounted guards must dominate Consumer ref access
+
+- **Status:** promoted
+- **Scope:** Async Flutter callbacks owned by a Riverpod Consumer widget
+- **Observed:** Both account-deletion error handlers invalidated a provider before checking whether Home still existed. A positive pending-profile update could replace and dispose Home while the request was in flight, after which either late error threw `Bad state: Cannot use "ref" after the widget was disposed`.
+- **Evidence:** Two widget regressions start deletion from active Home, advance the profile to pending while the request remains unresolved, and then complete with an unconfirmed or generic error. Both failed at Riverpod invalidation before the correction and pass with the pending screen still authoritative afterward.
+- **Learning:** A mounted check must dominate every Consumer `ref` access and every context-derived UI lookup after an `await`. Guarding only the scaffold call is too late because the provider container boundary is already disposed with the widget.
+- **Applied control:** Both deletion catch paths return on an unmounted context before invalidating local deletion state or resolving the scaffold messenger.
+- **Revisit when:** Async work moves into a longer-lived controller, Riverpod lifecycle ownership changes, or another widget callback retains `ref` across an external await.
+- **Related:** `lib/presentation/home/home_screen.dart`, `test/app/app_gate_test.dart`, final freeze closure
+
+### 2026-08-26T13:34:53Z Privacy cleanup must classify provenance before flattening detail
+
+- **Status:** promoted
+- **Scope:** Audit retention when one account may have acted both as a user and an operator
+- **Observed:** Actor-wide replacement of every audit detail removed reporter text, but it also destroyed generated moderation context and made deleted operator actions indistinguishable from ordinary user actions.
+- **Evidence:** Functions tests exercise all nine allowlisted operator actions, a mixed 201-row audit population, report and unknown actions, self-target policy acceptance, and duplicate completion delivery. Operator rows retain generated detail under `deleted-operator`; report and unknown rows fail private.
+- **Learning:** Privacy cleanup should classify fields by origin and purpose, not only by document owner. Preserve only allowlisted trusted metadata that still serves accountability, replace user-authored or unknown text, and use a non-identifying role sentinel when raw identity is unnecessary.
+- **Applied control:** `auditRedactionForDeletedActor` distinguishes generated operator actions, reports, policy acceptance, and unknown actions; decision 016 records the target-side retention and completion-transaction boundary.
+- **Revisit when:** Operator detail becomes user-authored, the action vocabulary changes, a general retention engine replaces this allowlist, or approved policy requires target-side pseudonymization.
+- **Related:** `functions/src/account_deletion.ts`, decision 016
+
+### 2026-08-26T12:06:39Z Lifecycle cleanup must constrain late writers
+
+- **Status:** promoted
+- **Scope:** Privacy cleanup for asynchronously written audit or derived records
+- **Observed:** Redacting every existing audit row authored by a deleting account did not close the boundary. A delayed report-create trigger could run after the deletion worker's audit scan and write the reporter UID and reason again.
+- **Evidence:** Functions tests cover the bounded mixed 201-row cleanup path and separately deliver report audit work after the reporter becomes pending or its profile disappears. The writer produces the anonymous sentinel and generic detail in both delayed cases.
+- **Learning:** Historical cleanup and future-write prevention are separate requirements. When asynchronous writers can outlive a lifecycle transition, cleanup must pair a bounded backfill with a writer-side check committed atomically with the new record.
+- **Applied control:** Account deletion classifies actor-owned audit pages under a fail-private allowlist, while report audit writers read reporter lifecycle state in the same transaction as the audit write; decision 016 records the retention boundary.
+- **Revisit when:** Audit intake moves behind one synchronous service, a general privacy ledger replaces profile-state checks, or approved retention policy changes which fields may survive deletion.
+- **Related:** `functions/src/account_deletion.ts`, `functions/src/audit.ts`, decision 016
+
+### 2026-08-26T04:40:55Z A transport exception is not negative acknowledgement
+
+- **Status:** promoted
+- **Scope:** Client compensation after a server transaction starts a destructive workflow
+- **Observed:** The account-deletion callable commits its durable job before responding. A response can be lost after that commit, so restoring local data on every thrown request can reverse the privacy boundary after server acceptance. A transient snackbar also disappeared on process death while the durable unknown marker remained.
+- **Evidence:** Lifecycle tests force an ambiguous remote exception, reconstruct storage across prepared, unknown, and accepted states, and prove that only prepared data restores while unknown data remains locked and retryable. Same-process tests prove prepared recovery can be retried without relaunch and a pre-network transition failure never calls the remote boundary. App-gate tests prove unknown, prepared-recovery failure, or unreadable local status cannot expose Home.
+- **Learning:** Once a destructive request may have reached its commit point, classify a missing acknowledgement as unknown. Compensate only with positive rejection evidence and finalize only with positive acceptance evidence. A persistent uncertainty state also requires a persistent recovery surface.
+- **Applied control:** Saved Songbook deletion uses prepared, unknown, and accepted artifacts; prepared actively recovers, unknown renders deletion retry and Sign out without claiming success, failure, or cancellation, and every signed-in launch resolves that state before Home; decision 012 preserves the boundary.
+- **Revisit when:** The server exposes a durable status receipt or a stronger acknowledgement protocol removes the ambiguous state.
+- **Related:** `lib/data/repositories/saved_songbook_repository.dart`, `lib/data/repositories/songbook_storage.dart`, decision 012
+
+### 2026-08-26T04:40:55Z Absolute recomputation still needs a serialization point
+
+- **Status:** promoted
+- **Scope:** Firestore triggers that derive a parent aggregate from child documents
+- **Observed:** Querying child ground truth and writing an absolute count survives duplicate delivery, but two handlers can still read different snapshots and let the slower older batch overwrite the newer value.
+- **Evidence:** A controlled vote test lets an older transaction read one vote, commits a newer two-vote aggregate, and proves the older transaction retries to finish at two. Duplicate, burst, delete, and missing-parent cases remain green.
+- **Learning:** Idempotency and concurrency safety are separate properties. Put the parent read, child query, and parent write in one transaction so every aggregate writer conflicts on the shared parent and reruns its query.
+- **Applied control:** Vote, like, visible-comment, user-report, and explicit chant reconciliation now use parent-serialized Firestore transactions; decision 013 records the invariant.
+- **Revisit when:** Measured volume makes transactional scans or retries material enough to justify a deduplicated event ledger or another aggregation service.
+- **Related:** `functions/src/index.ts`, decision 013
+
+### 2026-08-26T04:40:55Z Encoded identifiers can still collide at the filesystem boundary
+
+- **Status:** promoted
+- **Scope:** UID-derived local filenames on mobile filesystems
+- **Observed:** Base64url preserves case distinctions, but common filesystems may not. Distinct Firebase UIDs whose encoded keys differ only by case can therefore resolve to one path.
+- **Evidence:** The regression pair produces distinct lowercase SHA-256 keys, the known vector fixes digest behavior, and the file test proves active legacy migration to the bounded hash path.
+- **Learning:** Storage identity must match the comparison semantics of the storage layer. Use a fixed lowercase digest rather than a case-sensitive reversible encoding when filenames may be case-insensitive.
+- **Applied control:** Saved Songbook paths use SHA-256 of UTF-8 UID bytes and active-UID-only lazy legacy migration; decision 014 records the choice.
+- **Revisit when:** Local state moves to an account-namespaced database or platform storage provides a stronger keyed identity primitive.
+- **Related:** `lib/data/repositories/songbook_storage.dart`, decision 014
+
 ### 2026-08-25T21:22:57Z Authentication cannot be the retry token for account deletion
 
 - **Status:** promoted
@@ -50,11 +116,11 @@ This is durable, evidence-backed project memory. It prevents the same failure or
 - **Status:** promoted
 - **Scope:** Public content screens that retain route or stream data through connectivity failure while exposing local or external side effects
 - **Observed:** Discover restored its initial card for every document-stream error, including a Firebase permission denial. Route `initialData` then made live-target controls available before a current visible document had been confirmed.
-- **Evidence:** Review probes reproduced the stale moderated Discover card. The production regression tests now separate Firebase-shaped permission denial from transient failure, exercise the Discover-to-detail route, and prove Save, Share, Report, Vote, and Comment remain unavailable until an active current visible chant arrives. The full Flutter suite passes 282 tests.
+- **Evidence:** Review probes reproduced the stale moderated Discover card. The production regression tests now separate Firebase-shaped permission denial from transient failure, preserve Firestore cache provenance, exercise the Discover-to-detail route, and prove Save, Share, Report, Vote, and Comment remain unavailable until a server-confirmed current visible chant arrives.
 - **Learning:** Stale public text may be safe and useful to read, but it cannot authorize a save, report, vote, comment, or external share. Classify authoritative revocation separately from ordinary transport failure and derive actions only from current visible state.
-- **Applied control:** `_LiveChantCard` fails closed on permission denial, current absence, hidden, or removed data. `ChantDetailScreen` keeps route text readable while gating every live-target action through one current-authority predicate.
+- **Applied control:** `ChantRepository.chantStream` retains `isFromCache`; `_LiveChantCard` and `ChantDetailScreen` keep cached text readable while gating every live-target action through one server-confirmed authority predicate. Decision 015 preserves the cache boundary.
 - **Revisit when:** An approved offline mutation queue defines its own target version and revocation semantics, or a shared live-availability abstraction replaces these widget-local controls.
-- **Related:** `lib/presentation/browse/discovery_section.dart`, `lib/presentation/browse/chant_detail_screen.dart`, decision 009
+- **Related:** `lib/presentation/browse/discovery_section.dart`, `lib/presentation/browse/chant_detail_screen.dart`, decisions 009 and 015
 
 ### 2026-08-25T00:41:42Z Native verification can mutate project scaffolding before it fails
 

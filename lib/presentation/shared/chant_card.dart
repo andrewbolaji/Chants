@@ -10,6 +10,7 @@ class ChantCard extends StatelessWidget {
   final String? teamName;
   final String? playerName;
   final bool rising;
+  final bool actionsEnabled;
   final VoidCallback onTap;
 
   const ChantCard({
@@ -18,6 +19,7 @@ class ChantCard extends StatelessWidget {
     this.teamName,
     this.playerName,
     this.rising = false,
+    this.actionsEnabled = true,
     required this.onTap,
   });
 
@@ -164,7 +166,12 @@ class ChantCard extends StatelessWidget {
                     ),
                     const SizedBox(width: Spacing.md),
                   ],
-                  VoteControls(chant: chant, compact: true),
+                  VoteControls(
+                    key: ValueKey(chant.id),
+                    chant: chant,
+                    compact: true,
+                    enabled: actionsEnabled,
+                  ),
                 ],
               ),
             ],

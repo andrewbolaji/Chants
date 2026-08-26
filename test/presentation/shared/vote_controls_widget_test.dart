@@ -53,9 +53,9 @@ class _FakeVoteRepository implements VoteRepository {
 
 // --- Helpers ---
 
-Chant _makeChant({int score = 5}) {
+Chant _makeChant({String id = 'test-chant-1', int score = 5}) {
   return Chant(
-    id: 'test-chant-1',
+    id: id,
     title: 'Test Chant',
     sportId: 'football',
     competitionId: 'premier-league',
@@ -101,9 +101,7 @@ void main() {
         ),
       ],
       child: MaterialApp(
-        home: Scaffold(
-          body: VoteControls(chant: chant),
-        ),
+        home: Scaffold(body: VoteControls(chant: chant)),
       ),
     );
   }
@@ -120,50 +118,54 @@ void main() {
   }
 
   group('VoteControls widget', () {
-    testWidgets(
-      'a. tap Upvote: shows start+1 and holds after write settles',
-      (tester) async {
-        final chant = _makeChant(score: 5);
-        await tester.pumpWidget(wrap(chant));
-        // Let _loadUserVote future complete and set _loaded = true
-        await tester.pumpAndSettle();
+    testWidgets('a. tap Upvote: shows start+1 and holds after write settles', (
+      tester,
+    ) async {
+      final chant = _makeChant(score: 5);
+      await tester.pumpWidget(wrap(chant));
+      // Let _loadUserVote future complete and set _loaded = true
+      await tester.pumpAndSettle();
 
-        expect(renderedScore(tester), '5', reason: 'initial score');
+      expect(renderedScore(tester), '5', reason: 'initial score');
 
-        // Tap Upvote
-        await tester.tap(find.bySemanticsLabel('Upvote'));
-        await tester.pump(); // optimistic update
-        expect(renderedScore(tester), '6', reason: 'optimistic +1');
+      // Tap Upvote
+      await tester.tap(find.bySemanticsLabel('Upvote'));
+      await tester.pump(); // optimistic update
+      expect(renderedScore(tester), '6', reason: 'optimistic +1');
 
-        // Let the async castVote future complete (confirmWrite fires)
-        await tester.pumpAndSettle();
-        // Score MUST hold at 6, NOT snap back to 5
-        expect(renderedScore(tester), '6',
-            reason: 'must hold after write settles, not snap back');
-      },
-    );
+      // Let the async castVote future complete (confirmWrite fires)
+      await tester.pumpAndSettle();
+      // Score MUST hold at 6, NOT snap back to 5
+      expect(
+        renderedScore(tester),
+        '6',
+        reason: 'must hold after write settles, not snap back',
+      );
+    });
 
-    testWidgets(
-      'b. server score arrival (re-pump): no double count',
-      (tester) async {
-        final chant = _makeChant(score: 5);
-        await tester.pumpWidget(wrap(chant));
-        await tester.pumpAndSettle();
+    testWidgets('b. server score arrival (re-pump): no double count', (
+      tester,
+    ) async {
+      final chant = _makeChant(score: 5);
+      await tester.pumpWidget(wrap(chant));
+      await tester.pumpAndSettle();
 
-        // Tap Upvote
-        await tester.tap(find.bySemanticsLabel('Upvote'));
-        await tester.pumpAndSettle();
-        expect(renderedScore(tester), '6');
+      // Tap Upvote
+      await tester.tap(find.bySemanticsLabel('Upvote'));
+      await tester.pumpAndSettle();
+      expect(renderedScore(tester), '6');
 
-        // Simulate Cloud Function: parent re-pumps with score=6
-        final updatedChant = _makeChant(score: 6);
-        await tester.pumpWidget(wrap(updatedChant));
-        await tester.pumpAndSettle();
-        // Must show 6, not 7 (double count)
-        expect(renderedScore(tester), '6',
-            reason: 'must not double-count server confirmation');
-      },
-    );
+      // Simulate Cloud Function: parent re-pumps with score=6
+      final updatedChant = _makeChant(score: 6);
+      await tester.pumpWidget(wrap(updatedChant));
+      await tester.pumpAndSettle();
+      // Must show 6, not 7 (double count)
+      expect(
+        renderedScore(tester),
+        '6',
+        reason: 'must not double-count server confirmation',
+      );
+    });
 
     testWidgets(
       'c. toggle off before server update: returns to start, never negative',
@@ -180,73 +182,84 @@ void main() {
         // Tap Upvote again (toggle off), no server update yet
         await tester.tap(find.bySemanticsLabel('Upvote'));
         await tester.pumpAndSettle();
-        expect(renderedScore(tester), '5',
-            reason: 'toggle off returns to start');
-        expect(int.parse(renderedScore(tester)) >= 0, true,
-            reason: 'up-tap must never produce a negative score');
-      },
-    );
-
-    testWidgets(
-      'd. third up-tap shows start+1 again',
-      (tester) async {
-        final chant = _makeChant(score: 5);
-        await tester.pumpWidget(wrap(chant));
-        await tester.pumpAndSettle();
-
-        // Tap 1: UP (on)
-        await tester.tap(find.bySemanticsLabel('Upvote'));
-        await tester.pumpAndSettle();
-        expect(renderedScore(tester), '6');
-
-        // Tap 2: UP (off)
-        await tester.tap(find.bySemanticsLabel('Upvote'));
-        await tester.pumpAndSettle();
-        expect(renderedScore(tester), '5');
-
-        // Tap 3: UP (on again)
-        await tester.tap(find.bySemanticsLabel('Upvote'));
-        await tester.pumpAndSettle();
-        expect(renderedScore(tester), '6',
-            reason: 'third tap must re-show start+1');
-      },
-    );
-
-    testWidgets(
-      'e. up then down: net -1, down arrow shows red active state',
-      (tester) async {
-        final chant = _makeChant(score: 5);
-        await tester.pumpWidget(wrap(chant));
-        await tester.pumpAndSettle();
-
-        // Tap Upvote
-        await tester.tap(find.bySemanticsLabel('Upvote'));
-        await tester.pumpAndSettle();
-        expect(renderedScore(tester), '6');
-
-        // Tap Downvote (switches from up to down: net -2 swing)
-        await tester.tap(find.bySemanticsLabel('Downvote'));
-        await tester.pumpAndSettle();
-        // start(5) + delta(from null confirmed to -1) = 5 + (-1) = 4
-        // But since we went up first without server confirm, confirmed is
-        // still null, so switching from up(1) to down(-1): delta = -1 - 0 = -1
-        // display = 5 + (-1) = 4
-        expect(renderedScore(tester), '4',
-            reason: 'up then down is net one below start');
-
-        // Down arrow should show the error/red active color.
-        // The IconButton applies color to the icon; read it from the
-        // IconButton's color property instead of the Icon itself.
-        final downButton = tester.widget<IconButton>(
-          find.descendant(
-            of: find.bySemanticsLabel('Downvote'),
-            matching: find.byType(IconButton),
-          ),
+        expect(
+          renderedScore(tester),
+          '5',
+          reason: 'toggle off returns to start',
         );
-        expect(downButton.color, AppColors.error,
-            reason: 'down arrow must show red active state');
+        expect(
+          int.parse(renderedScore(tester)) >= 0,
+          true,
+          reason: 'up-tap must never produce a negative score',
+        );
       },
     );
+
+    testWidgets('d. third up-tap shows start+1 again', (tester) async {
+      final chant = _makeChant(score: 5);
+      await tester.pumpWidget(wrap(chant));
+      await tester.pumpAndSettle();
+
+      // Tap 1: UP (on)
+      await tester.tap(find.bySemanticsLabel('Upvote'));
+      await tester.pumpAndSettle();
+      expect(renderedScore(tester), '6');
+
+      // Tap 2: UP (off)
+      await tester.tap(find.bySemanticsLabel('Upvote'));
+      await tester.pumpAndSettle();
+      expect(renderedScore(tester), '5');
+
+      // Tap 3: UP (on again)
+      await tester.tap(find.bySemanticsLabel('Upvote'));
+      await tester.pumpAndSettle();
+      expect(
+        renderedScore(tester),
+        '6',
+        reason: 'third tap must re-show start+1',
+      );
+    });
+
+    testWidgets('e. up then down: net -1, down arrow shows red active state', (
+      tester,
+    ) async {
+      final chant = _makeChant(score: 5);
+      await tester.pumpWidget(wrap(chant));
+      await tester.pumpAndSettle();
+
+      // Tap Upvote
+      await tester.tap(find.bySemanticsLabel('Upvote'));
+      await tester.pumpAndSettle();
+      expect(renderedScore(tester), '6');
+
+      // Tap Downvote (switches from up to down: net -2 swing)
+      await tester.tap(find.bySemanticsLabel('Downvote'));
+      await tester.pumpAndSettle();
+      // start(5) + delta(from null confirmed to -1) = 5 + (-1) = 4
+      // But since we went up first without server confirm, confirmed is
+      // still null, so switching from up(1) to down(-1): delta = -1 - 0 = -1
+      // display = 5 + (-1) = 4
+      expect(
+        renderedScore(tester),
+        '4',
+        reason: 'up then down is net one below start',
+      );
+
+      // Down arrow should show the error/red active color.
+      // The IconButton applies color to the icon; read it from the
+      // IconButton's color property instead of the Icon itself.
+      final downButton = tester.widget<IconButton>(
+        find.descendant(
+          of: find.bySemanticsLabel('Downvote'),
+          matching: find.byType(IconButton),
+        ),
+      );
+      expect(
+        downButton.color,
+        AppColors.error,
+        reason: 'down arrow must show red active state',
+      );
+    });
   });
 
   // --- appliedValue disambiguation tests (T1-T7) ---
@@ -260,11 +273,9 @@ void main() {
 
     /// Shared overrides used by all helpers below.
     List<Override> overrides() => [
-          voteRepositoryProvider.overrideWithValue(repo),
-          authStateProvider.overrideWith(
-            (ref) => Stream.value(fakeUser as User?),
-          ),
-        ];
+      voteRepositoryProvider.overrideWithValue(repo),
+      authStateProvider.overrideWith((ref) => Stream.value(fakeUser as User?)),
+    ];
 
     /// Pumps VoteControls with a [ValueNotifier] so the test can swap the
     /// chant (simulating a stream-delivered score update via didUpdateWidget).
@@ -335,10 +346,7 @@ void main() {
           overrides: overrides(),
           child: MaterialApp(
             home: Scaffold(
-              body: VoteControls(
-                key: ValueKey(keyLabel),
-                chant: chant,
-              ),
+              body: VoteControls(key: ValueKey(keyLabel), chant: chant),
             ),
           ),
         ),
@@ -347,149 +355,153 @@ void main() {
     }
 
     // T1: Case B on load (stale score, persisted downvote, CF not caught up)
-    testWidgets(
-      'T1: Case B load shows vote reflected, stream arrival stable',
-      (tester) async {
-        repo.nextVote = _makeVote(value: -1, appliedValue: null);
+    testWidgets('T1: Case B load shows vote reflected, stream arrival stable', (
+      tester,
+    ) async {
+      repo.nextVote = _makeVote(value: -1, appliedValue: null);
 
-        final notifier = await pumpWithNotifier(
-          tester,
-          chant: _makeChant(score: 0),
-        );
+      final notifier = await pumpWithNotifier(
+        tester,
+        chant: _makeChant(score: 0),
+      );
 
-        // Case B: serverScore 0 does not include the vote. Must show -1.
-        expect(renderedScore(tester), '-1');
+      // Case B: serverScore 0 does not include the vote. Must show -1.
+      expect(renderedScore(tester), '-1');
 
-        // Stream delivers the CF-updated score.
-        notifier.value = _makeChant(score: -1);
-        await tester.pumpAndSettle();
+      // Stream delivers the CF-updated score.
+      notifier.value = _makeChant(score: -1);
+      await tester.pumpAndSettle();
 
-        // Must stay at -1, no drift.
-        expect(renderedScore(tester), '-1');
-      },
-    );
+      // Must stay at -1, no drift.
+      expect(renderedScore(tester), '-1');
+    });
 
     // T2: Case A on load (caught-up score, persisted downvote)
-    testWidgets(
-      'T2: Case A load shows correct score, no double-count',
-      (tester) async {
-        repo.nextVote = _makeVote(value: -1, appliedValue: -1);
+    testWidgets('T2: Case A load shows correct score, no double-count', (
+      tester,
+    ) async {
+      repo.nextVote = _makeVote(value: -1, appliedValue: -1);
 
-        await pumpWithNotifier(tester, chant: _makeChant(score: -1));
+      await pumpWithNotifier(tester, chant: _makeChant(score: -1));
 
-        // Case A: serverScore already includes the vote. Must show -1, not -2.
-        expect(renderedScore(tester), '-1');
-      },
-    );
+      // Case A: serverScore already includes the vote. Must show -1, not -2.
+      expect(renderedScore(tester), '-1');
+    });
 
     // T3: Reported reproduction (vote, back out, re-enter)
-    testWidgets(
-      'T3: re-entry after vote shows correct score in both cases',
-      (tester) async {
-        // Phase 1: fresh chant, no prior vote.
-        repo.nextVote = null;
-        await pumpFresh(tester, chant: _makeChant(score: 0), keyLabel: 'p1');
-        expect(renderedScore(tester), '0');
+    testWidgets('T3: re-entry after vote shows correct score in both cases', (
+      tester,
+    ) async {
+      // Phase 1: fresh chant, no prior vote.
+      repo.nextVote = null;
+      await pumpFresh(tester, chant: _makeChant(score: 0), keyLabel: 'p1');
+      expect(renderedScore(tester), '0');
 
-        // Tap downvote.
-        await tester.tap(find.bySemanticsLabel('Downvote'));
-        await tester.pump();
-        expect(renderedScore(tester), '-1');
+      // Tap downvote.
+      await tester.tap(find.bySemanticsLabel('Downvote'));
+      await tester.pump();
+      expect(renderedScore(tester), '-1');
 
-        // Phase 2: re-enter with CF NOT caught up.
-        repo.nextVote = _makeVote(value: -1, appliedValue: null);
-        await pumpFresh(
-            tester, chant: _makeChant(score: 0), keyLabel: 'p2-b');
-        expect(renderedScore(tester), '-1',
-            reason: 'Case B re-entry must show vote, not stale 0');
+      // Phase 2: re-enter with CF NOT caught up.
+      repo.nextVote = _makeVote(value: -1, appliedValue: null);
+      await pumpFresh(tester, chant: _makeChant(score: 0), keyLabel: 'p2-b');
+      expect(
+        renderedScore(tester),
+        '-1',
+        reason: 'Case B re-entry must show vote, not stale 0',
+      );
 
-        // Phase 3: re-enter with CF caught up.
-        repo.nextVote = _makeVote(value: -1, appliedValue: -1);
-        await pumpFresh(
-            tester, chant: _makeChant(score: -1), keyLabel: 'p3-a');
-        expect(renderedScore(tester), '-1',
-            reason: 'Case A re-entry must show -1, not -2');
-      },
-    );
+      // Phase 3: re-enter with CF caught up.
+      repo.nextVote = _makeVote(value: -1, appliedValue: -1);
+      await pumpFresh(tester, chant: _makeChant(score: -1), keyLabel: 'p3-a');
+      expect(
+        renderedScore(tester),
+        '-1',
+        reason: 'Case A re-entry must show -1, not -2',
+      );
+    });
 
     // T4: Toggle after reload with persisted downvote (Case B)
-    testWidgets(
-      'T4: toggle after Case B reload never shows +1',
-      (tester) async {
-        repo.nextVote = _makeVote(value: -1, appliedValue: null);
+    testWidgets('T4: toggle after Case B reload never shows +1', (
+      tester,
+    ) async {
+      repo.nextVote = _makeVote(value: -1, appliedValue: null);
 
-        await pumpWithNotifier(tester, chant: _makeChant(score: 0));
-        expect(renderedScore(tester), '-1');
+      await pumpWithNotifier(tester, chant: _makeChant(score: 0));
+      expect(renderedScore(tester), '-1');
 
-        // Tap down (toggle off, removing the vote).
-        await tester.tap(find.bySemanticsLabel('Downvote'));
-        await tester.pump();
-        expect(renderedScore(tester), '0',
-            reason: 'toggle off returns to base, never +1');
+      // Tap down (toggle off, removing the vote).
+      await tester.tap(find.bySemanticsLabel('Downvote'));
+      await tester.pump();
+      expect(
+        renderedScore(tester),
+        '0',
+        reason: 'toggle off returns to base, never +1',
+      );
 
-        // Tap down again (re-apply).
-        await tester.tap(find.bySemanticsLabel('Downvote'));
-        await tester.pump();
-        expect(renderedScore(tester), '-1');
-      },
-    );
+      // Tap down again (re-apply).
+      await tester.tap(find.bySemanticsLabel('Downvote'));
+      await tester.pump();
+      expect(renderedScore(tester), '-1');
+    });
 
     // T5: No-vote control (baseline)
-    testWidgets(
-      'T5: no persisted vote loads at plain score',
-      (tester) async {
-        repo.nextVote = null;
-        await pumpWithNotifier(tester, chant: _makeChant(score: 7));
-        expect(renderedScore(tester), '7');
-      },
-    );
+    testWidgets('T5: no persisted vote loads at plain score', (tester) async {
+      repo.nextVote = null;
+      await pumpWithNotifier(tester, chant: _makeChant(score: 7));
+      expect(renderedScore(tester), '7');
+    });
 
     // T6: Vote flip with stale appliedValue
-    testWidgets(
-      'T6: flip from up to down with stale appliedValue',
-      (tester) async {
-        // User flipped from upvote to downvote, CF has not processed the flip.
-        repo.nextVote = _makeVote(value: -1, appliedValue: 1);
+    testWidgets('T6: flip from up to down with stale appliedValue', (
+      tester,
+    ) async {
+      // User flipped from upvote to downvote, CF has not processed the flip.
+      repo.nextVote = _makeVote(value: -1, appliedValue: 1);
 
-        await pumpWithNotifier(tester, chant: _makeChant(score: 5));
+      await pumpWithNotifier(tester, chant: _makeChant(score: 5));
 
-        // delta = deltaForTransition(1, -1) = -2. display = 5 + (-2) = 3.
-        expect(renderedScore(tester), '3');
-      },
-    );
+      // delta = deltaForTransition(1, -1) = -2. display = 5 + (-2) = 3.
+      expect(renderedScore(tester), '3');
+    });
 
     // T7: Cold load after a delete (vote removed, CF not caught up)
-    testWidgets(
-      'T7: delete window, stale then stream corrects',
-      (tester) async {
-        // Vote was removed (getUserVote returns null) but the chant score
-        // still includes the old vote's effect (serverScore = -1).
-        repo.nextVote = null;
+    testWidgets('T7: delete window, stale then stream corrects', (
+      tester,
+    ) async {
+      // Vote was removed (getUserVote returns null) but the chant score
+      // still includes the old vote's effect (serverScore = -1).
+      repo.nextVote = null;
 
-        final notifier = await pumpWithNotifier(
-          tester,
-          chant: _makeChant(score: -1),
-        );
+      final notifier = await pumpWithNotifier(
+        tester,
+        chant: _makeChant(score: -1),
+      );
 
-        // No vote doc, so confirmedVote = null, delta = 0. Display = -1.
-        // Temporarily wrong (true score is 0) but acceptable because:
-        //   - No highlighted arrow, no toggle confusion.
-        //   - On the stream-backed list and detail, the stream corrects it.
-        expect(renderedScore(tester), '-1',
-            reason: 'stale score before CF catches up on delete');
+      // No vote doc, so confirmedVote = null, delta = 0. Display = -1.
+      // Temporarily wrong (true score is 0) but acceptable because:
+      //   - No highlighted arrow, no toggle confusion.
+      //   - On the stream-backed list and detail, the stream corrects it.
+      expect(
+        renderedScore(tester),
+        '-1',
+        reason: 'stale score before CF catches up on delete',
+      );
 
-        // Stream delivers the CF-updated score (vote effect removed).
-        notifier.value = _makeChant(score: 0);
-        await tester.pumpAndSettle();
+      // Stream delivers the CF-updated score (vote effect removed).
+      notifier.value = _makeChant(score: 0);
+      await tester.pumpAndSettle();
 
-        expect(renderedScore(tester), '0',
-            reason: 'stream corrects the delete window');
+      expect(
+        renderedScore(tester),
+        '0',
+        reason: 'stream corrects the delete window',
+      );
 
-        // Verify it stays stable.
-        await tester.pump(const Duration(seconds: 1));
-        expect(renderedScore(tester), '0');
-      },
-    );
+      // Verify it stays stable.
+      await tester.pump(const Duration(seconds: 1));
+      expect(renderedScore(tester), '0');
+    });
   });
 
   // ---------------------------------------------------------------
@@ -514,9 +526,7 @@ void main() {
           ),
         ],
         child: MaterialApp(
-          home: Scaffold(
-            body: VoteControls(chant: chant),
-          ),
+          home: Scaffold(body: VoteControls(chant: chant)),
         ),
       );
     }
@@ -558,167 +568,324 @@ void main() {
       return notifier;
     }
 
-    testWidgets(
-      'a. rapid up+up (like then unlike): settles at start',
-      (tester) async {
-        await tester.pumpWidget(wrapCtrl(_makeChant(score: 0)));
-        await tester.pumpAndSettle();
-        expect(renderedScore(tester), '0');
+    testWidgets('a. rapid up+up (like then unlike): settles at start', (
+      tester,
+    ) async {
+      await tester.pumpWidget(wrapCtrl(_makeChant(score: 0)));
+      await tester.pumpAndSettle();
+      expect(renderedScore(tester), '0');
 
-        // Tap UP -- starts write, hangs on completer
+      // Tap UP -- starts write, hangs on completer
+      await tester.tap(find.bySemanticsLabel('Upvote'));
+      await tester.pump();
+      expect(renderedScore(tester), '1', reason: 'optimistic +1');
+
+      // Tap UP again while first write in-flight (busy guard)
+      await tester.tap(find.bySemanticsLabel('Upvote'));
+      await tester.pump();
+      expect(renderedScore(tester), '0', reason: 'toggle off');
+
+      // Complete first write, let follow-up logic run
+      repo.completeNextWrite();
+      await tester.pump();
+      await tester.pump();
+
+      // Must NOT drift to 1 (the pending-replay bug)
+      expect(
+        renderedScore(tester),
+        '0',
+        reason: 'must not re-toggle after first write settles',
+      );
+
+      // Complete any follow-up write
+      repo.completeAllWrites();
+      await tester.pump();
+      await tester.pump();
+
+      expect(
+        renderedScore(tester),
+        '0',
+        reason: 'fully settled: back to start',
+      );
+    });
+
+    testWidgets('b. rapid down+down (toggle off): settles at start', (
+      tester,
+    ) async {
+      await tester.pumpWidget(wrapCtrl(_makeChant(score: 0)));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.bySemanticsLabel('Downvote'));
+      await tester.pump();
+      expect(renderedScore(tester), '-1');
+
+      await tester.tap(find.bySemanticsLabel('Downvote'));
+      await tester.pump();
+      expect(renderedScore(tester), '0', reason: 'toggle off');
+
+      repo.completeNextWrite();
+      await tester.pump();
+      await tester.pump();
+      expect(
+        renderedScore(tester),
+        '0',
+        reason: 'must not re-toggle after first write settles',
+      );
+
+      repo.completeAllWrites();
+      await tester.pump();
+      await tester.pump();
+      expect(renderedScore(tester), '0');
+    });
+
+    testWidgets('c. rapid up+down (switch): settles at -1, never -2', (
+      tester,
+    ) async {
+      await tester.pumpWidget(wrapCtrl(_makeChant(score: 0)));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.bySemanticsLabel('Upvote'));
+      await tester.pump();
+      expect(renderedScore(tester), '1');
+
+      await tester.tap(find.bySemanticsLabel('Downvote'));
+      await tester.pump();
+      expect(renderedScore(tester), '-1', reason: 'switch to down');
+
+      repo.completeNextWrite();
+      await tester.pump();
+      await tester.pump();
+
+      final mid = int.parse(renderedScore(tester));
+      expect(
+        mid,
+        greaterThanOrEqualTo(-1),
+        reason: 'must never show -2 or lower',
+      );
+      expect(
+        renderedScore(tester),
+        '-1',
+        reason: 'intent is downvote, must hold',
+      );
+
+      repo.completeAllWrites();
+      await tester.pump();
+      await tester.pump();
+      expect(
+        renderedScore(tester),
+        '-1',
+        reason: 'settled: one downvote relative to start',
+      );
+    });
+
+    testWidgets('d. from confirmed down(-1): tap down+up quickly: never -2', (
+      tester,
+    ) async {
+      repo.nextVote = _makeVote(value: -1, appliedValue: -1);
+      await pumpCtrlWithVote(tester, chant: _makeChant(score: -1));
+      expect(renderedScore(tester), '-1', reason: 'confirmed downvote');
+
+      // Tap DOWN (remove the downvote)
+      await tester.tap(find.bySemanticsLabel('Downvote'));
+      await tester.pump();
+      expect(renderedScore(tester), '0', reason: 'removed downvote');
+
+      // Tap UP while first write in-flight
+      await tester.tap(find.bySemanticsLabel('Upvote'));
+      await tester.pump();
+      expect(renderedScore(tester), '1', reason: 'switch to upvote');
+      // CRITICAL: must never be -2
+      expect(int.parse(renderedScore(tester)), greaterThanOrEqualTo(-1));
+
+      repo.completeNextWrite();
+      await tester.pump();
+      await tester.pump();
+      expect(
+        int.parse(renderedScore(tester)),
+        greaterThanOrEqualTo(-1),
+        reason: 'must never show -2 after first write completes',
+      );
+
+      repo.completeAllWrites();
+      await tester.pump();
+      await tester.pump();
+
+      final settled = int.parse(renderedScore(tester));
+      expect(
+        settled,
+        greaterThanOrEqualTo(-1),
+        reason: 'must never show -2 after settle',
+      );
+      expect(settled, 1, reason: 'settled: upvote from -1 base');
+    });
+
+    testWidgets('e. 5-tap burst on up arrow: collapses to single vote', (
+      tester,
+    ) async {
+      await tester.pumpWidget(wrapCtrl(_makeChant(score: 0)));
+      await tester.pumpAndSettle();
+
+      // 5 rapid taps on UP
+      for (int i = 0; i < 5; i++) {
         await tester.tap(find.bySemanticsLabel('Upvote'));
         await tester.pump();
-        expect(renderedScore(tester), '1', reason: 'optimistic +1');
+      }
 
-        // Tap UP again while first write in-flight (busy guard)
-        await tester.tap(find.bySemanticsLabel('Upvote'));
-        await tester.pump();
-        expect(renderedScore(tester), '0', reason: 'toggle off');
+      // 5 taps: on(1), off(0), on(1), off(0), on(1) -- odd = on
+      expect(
+        renderedScore(tester),
+        '1',
+        reason: 'odd number of taps = upvoted',
+      );
 
-        // Complete first write, let follow-up logic run
-        repo.completeNextWrite();
-        await tester.pump();
-        await tester.pump();
-
-        // Must NOT drift to 1 (the pending-replay bug)
-        expect(renderedScore(tester), '0',
-            reason: 'must not re-toggle after first write settles');
-
-        // Complete any follow-up write
+      // Complete all writes + follow-ups
+      for (int i = 0; i < 5; i++) {
         repo.completeAllWrites();
         await tester.pump();
         await tester.pump();
+      }
 
-        expect(renderedScore(tester), '0',
-            reason: 'fully settled: back to start');
-      },
-    );
-
-    testWidgets(
-      'b. rapid down+down (toggle off): settles at start',
-      (tester) async {
-        await tester.pumpWidget(wrapCtrl(_makeChant(score: 0)));
-        await tester.pumpAndSettle();
-
-        await tester.tap(find.bySemanticsLabel('Downvote'));
-        await tester.pump();
-        expect(renderedScore(tester), '-1');
-
-        await tester.tap(find.bySemanticsLabel('Downvote'));
-        await tester.pump();
-        expect(renderedScore(tester), '0', reason: 'toggle off');
-
-        repo.completeNextWrite();
-        await tester.pump();
-        await tester.pump();
-        expect(renderedScore(tester), '0',
-            reason: 'must not re-toggle after first write settles');
-
-        repo.completeAllWrites();
-        await tester.pump();
-        await tester.pump();
-        expect(renderedScore(tester), '0');
-      },
-    );
-
-    testWidgets(
-      'c. rapid up+down (switch): settles at -1, never -2',
-      (tester) async {
-        await tester.pumpWidget(wrapCtrl(_makeChant(score: 0)));
-        await tester.pumpAndSettle();
-
-        await tester.tap(find.bySemanticsLabel('Upvote'));
-        await tester.pump();
-        expect(renderedScore(tester), '1');
-
-        await tester.tap(find.bySemanticsLabel('Downvote'));
-        await tester.pump();
-        expect(renderedScore(tester), '-1', reason: 'switch to down');
-
-        repo.completeNextWrite();
-        await tester.pump();
-        await tester.pump();
-
-        final mid = int.parse(renderedScore(tester));
-        expect(mid, greaterThanOrEqualTo(-1),
-            reason: 'must never show -2 or lower');
-        expect(renderedScore(tester), '-1',
-            reason: 'intent is downvote, must hold');
-
-        repo.completeAllWrites();
-        await tester.pump();
-        await tester.pump();
-        expect(renderedScore(tester), '-1',
-            reason: 'settled: one downvote relative to start');
-      },
-    );
-
-    testWidgets(
-      'd. from confirmed down(-1): tap down+up quickly: never -2',
-      (tester) async {
-        repo.nextVote = _makeVote(value: -1, appliedValue: -1);
-        await pumpCtrlWithVote(tester, chant: _makeChant(score: -1));
-        expect(renderedScore(tester), '-1', reason: 'confirmed downvote');
-
-        // Tap DOWN (remove the downvote)
-        await tester.tap(find.bySemanticsLabel('Downvote'));
-        await tester.pump();
-        expect(renderedScore(tester), '0', reason: 'removed downvote');
-
-        // Tap UP while first write in-flight
-        await tester.tap(find.bySemanticsLabel('Upvote'));
-        await tester.pump();
-        expect(renderedScore(tester), '1', reason: 'switch to upvote');
-        // CRITICAL: must never be -2
-        expect(int.parse(renderedScore(tester)), greaterThanOrEqualTo(-1));
-
-        repo.completeNextWrite();
-        await tester.pump();
-        await tester.pump();
-        expect(int.parse(renderedScore(tester)), greaterThanOrEqualTo(-1),
-            reason: 'must never show -2 after first write completes');
-
-        repo.completeAllWrites();
-        await tester.pump();
-        await tester.pump();
-
-        final settled = int.parse(renderedScore(tester));
-        expect(settled, greaterThanOrEqualTo(-1),
-            reason: 'must never show -2 after settle');
-        expect(settled, 1, reason: 'settled: upvote from -1 base');
-      },
-    );
-
-    testWidgets(
-      'e. 5-tap burst on up arrow: collapses to single vote',
-      (tester) async {
-        await tester.pumpWidget(wrapCtrl(_makeChant(score: 0)));
-        await tester.pumpAndSettle();
-
-        // 5 rapid taps on UP
-        for (int i = 0; i < 5; i++) {
-          await tester.tap(find.bySemanticsLabel('Upvote'));
-          await tester.pump();
-        }
-
-        // 5 taps: on(1), off(0), on(1), off(0), on(1) -- odd = on
-        expect(renderedScore(tester), '1',
-            reason: 'odd number of taps = upvoted');
-
-        // Complete all writes + follow-ups
-        for (int i = 0; i < 5; i++) {
-          repo.completeAllWrites();
-          await tester.pump();
-          await tester.pump();
-        }
-
-        expect(renderedScore(tester), '1',
-            reason: 'collapses to single upvote');
-        expect(int.parse(renderedScore(tester)).abs(), lessThanOrEqualTo(1),
-            reason: 'single user never drifts beyond +/-1');
-      },
-    );
+      expect(renderedScore(tester), '1', reason: 'collapses to single upvote');
+      expect(
+        int.parse(renderedScore(tester)).abs(),
+        lessThanOrEqualTo(1),
+        reason: 'single user never drifts beyond +/-1',
+      );
+    });
   });
+
+  group('VoteControls chant identity', () {
+    testWidgets('old hydration cannot populate a newly swapped chant', (
+      tester,
+    ) async {
+      final repository = _DeferredVoteRepository();
+      final chant = ValueNotifier<Chant>(_makeChant(id: 'chant-a', score: 3));
+      final showControls = ValueNotifier<bool>(false);
+      addTearDown(chant.dispose);
+      addTearDown(showControls.dispose);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            voteRepositoryProvider.overrideWithValue(repository),
+            authStateProvider.overrideWith(
+              (ref) => Stream.value(fakeUser as User?),
+            ),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: Consumer(
+                builder: (context, ref, _) {
+                  ref.watch(authStateProvider);
+                  return ValueListenableBuilder<bool>(
+                    valueListenable: showControls,
+                    builder: (_, show, _) => show
+                        ? ValueListenableBuilder<Chant>(
+                            valueListenable: chant,
+                            builder: (_, value, _) =>
+                                VoteControls(chant: value),
+                          )
+                        : const SizedBox.shrink(),
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      showControls.value = true;
+      await tester.pump();
+
+      chant.value = _makeChant(id: 'chant-b', score: 20);
+      await tester.pump();
+      repository.completeLoad('chant-a', _makeVote(value: -1));
+      await tester.pump();
+      repository.completeLoad('chant-b', null);
+      await tester.pumpAndSettle();
+
+      expect(renderedScore(tester), '20');
+      expect(repository.loadedIds, ['chant-a', 'chant-b']);
+    });
+
+    testWidgets('an in-flight write remains bound to its original chant', (
+      tester,
+    ) async {
+      final repository = _DeferredVoteRepository()..autoCompleteLoads = true;
+      final chant = ValueNotifier<Chant>(_makeChant(id: 'chant-a', score: 3));
+      addTearDown(chant.dispose);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            voteRepositoryProvider.overrideWithValue(repository),
+            authStateProvider.overrideWith(
+              (ref) => Stream.value(fakeUser as User?),
+            ),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: ValueListenableBuilder<Chant>(
+                valueListenable: chant,
+                builder: (_, value, _) => VoteControls(chant: value),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.bySemanticsLabel('Upvote'));
+      await tester.pump();
+
+      chant.value = _makeChant(id: 'chant-b', score: 20);
+      await tester.pump();
+      repository.completeWrite();
+      await tester.pumpAndSettle();
+
+      expect(repository.castIds, ['chant-a']);
+      expect(renderedScore(tester), '20');
+    });
+  });
+}
+
+class _DeferredVoteRepository implements VoteRepository {
+  final Map<String, Completer<Vote?>> _loads = {};
+  final List<String> loadedIds = [];
+  final List<String> castIds = [];
+  Completer<void>? _write;
+  bool autoCompleteLoads = false;
+
+  @override
+  Future<Vote?> getUserVote({required String userId, required String chantId}) {
+    loadedIds.add(chantId);
+    if (autoCompleteLoads) return Future.value(null);
+    return (_loads[chantId] ??= Completer<Vote?>()).future;
+  }
+
+  void completeLoad(String chantId, Vote? vote) {
+    (_loads[chantId] ??= Completer<Vote?>()).complete(vote);
+  }
+
+  @override
+  Future<void> castVote({
+    required String userId,
+    required String chantId,
+    required int value,
+  }) {
+    castIds.add(chantId);
+    return (_write = Completer<void>()).future;
+  }
+
+  void completeWrite() => _write?.complete();
+
+  @override
+  Future<void> removeVote({
+    required String userId,
+    required String chantId,
+  }) async {}
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 // --- Controllable fake: writes hang until explicitly completed ---
@@ -749,10 +916,7 @@ class _ControllableFakeVoteRepository implements VoteRepository {
   }
 
   @override
-  Future<void> removeVote({
-    required String userId,
-    required String chantId,
-  }) {
+  Future<void> removeVote({required String userId, required String chantId}) {
     writeLog.add('remove');
     final c = Completer<void>();
     _completers.add(c);

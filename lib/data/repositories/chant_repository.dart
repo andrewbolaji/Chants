@@ -102,14 +102,19 @@ class ChantRepository {
     return Chant.fromFirestore(doc);
   }
 
-  /// Live single-doc stream for the chant detail screen.
-  /// Emits the current chant and re-emits on any field change (score,
-  /// hidden, etc.), so VoteControls.didUpdateWidget can reconcile.
-  Stream<Chant?> chantStream(String id) {
+  /// Live single-doc stream with cache provenance. A cached document remains
+  /// useful reading fallback, but only a server-confirmed value can authorize
+  /// local or external actions that Firestore rules cannot reverse.
+  Stream<LiveChantSnapshot> chantStream(String id) {
     return _collection
         .doc(id)
-        .snapshots()
-        .map((doc) => doc.exists ? Chant.fromFirestore(doc) : null);
+        .snapshots(includeMetadataChanges: true)
+        .map(
+          (doc) => LiveChantSnapshot(
+            chant: doc.exists ? Chant.fromFirestore(doc) : null,
+            isFromCache: doc.metadata.isFromCache,
+          ),
+        );
   }
 
   Future<void> createChant(Chant chant) async {
@@ -141,6 +146,13 @@ class ChantRepository {
               .toList(),
         );
   }
+}
+
+class LiveChantSnapshot {
+  final Chant? chant;
+  final bool isFromCache;
+
+  const LiveChantSnapshot({required this.chant, required this.isFromCache});
 }
 
 class ChantBrowseSnapshot {
