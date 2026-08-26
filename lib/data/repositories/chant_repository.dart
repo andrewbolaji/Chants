@@ -51,6 +51,19 @@ class ChantRepository {
     return snap.docs.map(Chant.fromFirestore).toList();
   }
 
+  /// Complete server-visible team set used by explicit Saved Songbook
+  /// refresh. Source.server prevents a cache snapshot from receiving a fresh
+  /// timestamp. The query shape matches the existing team browse boundary.
+  Future<List<Chant>> visibleChantsForTeamFromServer({
+    required String teamId,
+  }) async {
+    final snap = await _visibleChants()
+        .where('teamId', isEqualTo: teamId)
+        .orderBy('score', descending: true)
+        .get(const GetOptions(source: Source.server));
+    return snap.docs.map(Chant.fromFirestore).toList();
+  }
+
   /// Visible player browse data plus Firestore cache provenance.
   Stream<ChantBrowseSnapshot> playerBrowseStream({required String playerId}) {
     return _visibleChants()

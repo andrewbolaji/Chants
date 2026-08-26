@@ -12,6 +12,17 @@ This is durable, evidence-backed project memory. It prevents the same failure or
 
 ## Entries
 
+### 2026-08-22T19:38:09Z Queue-time identity checks prevent stale-account local writes
+
+- **Status:** applied
+- **Scope:** Device-local repositories whose asynchronous operations are scoped to the currently authenticated account
+- **Observed:** A screen-level UID gate prevents normal cross-account navigation, but an operation queued before an auth transition can begin after the active account changes unless the persistence boundary checks again.
+- **Evidence:** The repository access test saves under UID A, switches the guard to UID B, and proves both a later load and a queued mutation for UID A fail while UID A's bytes remain unchanged. The mismatched-route widget test also proves UID A's titles do not render for UID B.
+- **Learning:** Identity must be revalidated at the durable operation boundary, not inferred only from the screen that initiated work. UI gates explain access; repository guards enforce it when asynchronous work actually starts.
+- **Applied control:** Production `SavedSongbookRepository` receives an auth-backed access guard, checks every load and queued mutation at execution time, and keeps account-deletion cleanup inside its already-authorized serialized operation.
+- **Revisit when:** Saved state moves to a server-authorized store or a shared local database with a stronger transaction-scoped identity primitive.
+- **Related:** `lib/data/repositories/saved_songbook_repository.dart`, `lib/app/providers.dart`, decision 003
+
 ### 2026-08-22T16:57:38Z Recoverable stream errors need retained route state
 
 - **Status:** applied
@@ -38,10 +49,10 @@ This is durable, evidence-backed project memory. It prevents the same failure or
 
 - **Status:** promoted
 - **Scope:** Flutter widget goldens generated on one operating system and verified on another
-- **Observed:** The reply and operator-control goldens passed on macOS with Flutter 3.44.8 but failed on Ubuntu with Flutter 3.47.1 at 1.02% and 0.49% pixel difference. Later text-heavy full-screen Songbook and Chant Lab goldens differed by 2.09% and 1.94% on the same platform pair while all 223 non-golden Flutter tests passed.
-- **Evidence:** Draft PR 4 workflow run `32541324140`, draft PR 7 workflow run `32587305522`, and the focused local comparator test.
+- **Observed:** The reply and operator-control goldens passed on macOS with Flutter 3.44.8 but failed on Ubuntu with Flutter 3.47.1 at 1.02% and 0.49% pixel difference. Later text-heavy full-screen Songbook and Chant Lab goldens differed by 2.09% and 1.94%. The Saved Songbook detail differed by 2.25% on the same platform pair while all 254 other Flutter tests passed.
+- **Evidence:** Draft PR 4 workflow run `32541324140`, draft PR 7 workflow run `32587305522`, draft PR 8 workflow run `32594555589`, and the focused local comparator test.
 - **Learning:** Exact pixels are too strict across renderers, but removing visual checks would hide real regressions. Use a documented, measured tolerance with a known-bad test that proves the boundary still rejects material changes.
-- **Applied control:** `test/helpers/tolerant_golden_file_comparator.dart` keeps a 1.5% default. The two measured full-screen browse goldens opt into 2.2% locally, while the comparator test proves a small synthetic difference passes and a fully changed image fails.
+- **Applied control:** `test/helpers/tolerant_golden_file_comparator.dart` keeps a 1.5% default. The measured full-screen browse test opts into 2.2% and the Saved Songbook test into 2.3%, while the comparator test proves a small synthetic difference passes and a fully changed image fails.
 - **Revisit when:** A pinned renderer or platform-specific baselines make exact comparison stable, or observed benign drift approaches a test's measured boundary.
 - **Related:** `.github/workflows/ci.yml`
 
