@@ -33,7 +33,7 @@
 | Saved Matchday Songbook | UID-isolated bounded local JSON snapshots, explicit refresh, offline read-only routes | Maximum 500 unique chants and 2 MiB; active matching UID; case-safe SHA-256 path; unknown deletion state unreadable; accepted marker removed after every other artifact | Model, repository, migration, service, widget, lifecycle, SHA-boundary, and golden tests | Physical force-stop/airplane-mode persistence unverified; no cross-device sync by design |
 | Share-out | Plain-text native sheet from live detail in `chant_share.dart` and `chant_detail_screen.dart` | No public URL or delivery claim; every live-target action requires server-confirmed non-cache visible authority | Payload, gateway, cache authority, enlarged-text, and golden tests | Native device destination behavior unverified |
 | Seed | Explicit stable chant IDs, read-only preflight, transaction ownership recheck, validation, orphan report | Source content is human supplied; seed may transform but never invent lyrics or context | 42 seed tests plus TypeScript | Only Arsenal JSON exists; no live preflight or remaining club write ran |
-| CI | Six GitHub Actions jobs in the readiness branch's `.github/workflows/ci.yml` | Tests, rules, analysis, project memory, and prose style must fail closed before merge | Final-main run `32993748570` at `2df9fa0` passed the original five jobs; both governance checks pass locally and reject known-bad fixtures | New governance job lacks clean-runner evidence; Flutter version is unpinned; no Dart format gate |
+| CI | Six GitHub Actions jobs in the readiness branch's `.github/workflows/ci.yml` | Tests, rules, analysis, project memory, and prose style must fail closed before merge | Final-main run `32993748570` at `2df9fa0` passed the original five jobs; PR 15 run `33011415224` proved governance, analysis, Functions, seed, and rules | Replacement Flutter evidence is pending after measured golden calibration; Flutter version is unpinned; no Dart format gate |
 | Native release | Flutter Android/iOS shells and plugin registration | Store signing and native compilation are separate release gates | Source inspection and prior attempted builds | Android uses debug signing; Android SDK unavailable locally; inherited iOS Firestore Swift sources failed compile |
 
 ## System overview and architecture
@@ -253,10 +253,10 @@ Recovery paths:
 |---|---|---|
 | README test counts and feature status | Interface and Home-hierarchy branch passes 353 Flutter; final freeze baseline passes 136 rules, 78 Functions, and 42 seed; exact merged `main` passed CI | Distinguishes local branch evidence from run `32993748570` at `2df9fa0` |
 | Roadmap freeze state | Stack PRs 4 through 10 and 12 through 14 are merged; exact-main CI is green | Corrected in the framework-alignment preparation |
-| CI analysis and governance state | Final main has five green jobs; readiness branch defines a sixth governance job | Analysis fixture and local governance checks pass; branch clean-runner run pending |
+| CI analysis and governance state | Final main has five green jobs; readiness branch defines a sixth governance job | PR 15 run `33011415224` passed governance, analysis, Functions, seed, and rules; replacement Flutter evidence is pending |
 | Function merge comments | Audit payload is bounded and cannot reverse the operation | Corrected source comments; historical archive retained |
 | `docs/KNOWN_ISSUES.md` | Clearly labels itself a legacy snapshot | No longer an authority defect |
-| `docs/CHANGE_SPEC.md` | Approved V1 Home hierarchy contract | Implemented and locally verified; packaging and clean-runner CI pending |
+| `docs/CHANGE_SPEC.md` | Approved V1 Home hierarchy contract | Packaged in draft PR 15; replacement clean-runner CI pending |
 
 ## Known compromises, gaps, and uncertainty
 

@@ -88,7 +88,7 @@ Competition has no cache metadata in its repository contract, so it cannot expos
 
 No manifest, lockfile, package, Firebase config, index, rule, Function, or seed change exists. CI gains one Linux job that runs two POSIX shell checks after checkout. Both scripts use repository and operating-system tools only.
 
-The new CI job has not run on GitHub yet. Final merged `main` still has five passing jobs in run `32993748570`; this branch proposes a sixth governance job and requires clean-runner evidence after packaging.
+The new governance job passed on draft PR 15 in run `33011415224`, alongside analysis, Functions, seed, and rules. The first Flutter job found one measured Home renderer difference; replacement proof is pending after the scoped calibration.
 
 ## Performance, scale, and cost impact
 
@@ -127,7 +127,7 @@ Functions, Firestore rules, and seed suites were not rerun because this branch c
 | Route screens do not gain in-place retry | A user returns and reopens the route after an initial read failure | Avoids a new subscription lifecycle in a readiness correction | Andrew | Device walk or support evidence shows back-navigation recovery is unclear |
 | Home concept is not implemented | Current Home remains less expressive and has no persistent primary navigation | Product direction needs explicit comparison and global route design | Andrew | Explicit redesign approval after reviewing current and concept images |
 | Native behavior is not verified | Renderer evidence cannot prove platform fonts or device lifecycle | Device walkthrough is deliberately deferred | Andrew | Before release sign-off |
-| New governance CI has no remote run yet | Linux executable and workflow behavior are locally inspected only | Packaging and clean-runner CI are the next publication gate | Codex | Branch push and pull request |
+| Replacement Flutter clean-runner evidence is pending | The first PR 15 run found a 2.40 percent Linux Home render difference against the original 2.20 percent ceiling | Keep the calibration scoped and rerun the complete clean runner | Codex | Replacement PR 15 run |
 
 ## Material files and artifacts
 
