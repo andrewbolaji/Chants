@@ -42,6 +42,7 @@ class _SubmitChantScreenState extends ConsumerState<SubmitChantScreen> {
   String _subjectTag = 'club';
   String _chantType = 'sincere';
   String? _selectedPlayerId;
+  String? _playerSelectionNotice;
   bool _submitting = false;
   String? _error;
 
@@ -62,6 +63,18 @@ class _SubmitChantScreenState extends ConsumerState<SubmitChantScreen> {
     _contextController.dispose();
     _evidenceController.dispose();
     super.dispose();
+  }
+
+  void _clearUnavailablePlayer(String playerId) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _selectedPlayerId != playerId) return;
+      setState(() {
+        _selectedPlayerId = null;
+        _playerSelectionNotice =
+            'That player is no longer on this club list. Pick another player '
+            'or choose a different subject.';
+      });
+    });
   }
 
   Future<void> _submit() async {
@@ -322,16 +335,32 @@ class _SubmitChantScreenState extends ConsumerState<SubmitChantScreen> {
                 Text('Who is it about?', style: textTheme.labelMedium),
                 const SizedBox(height: Spacing.sm),
                 SegmentedButton<String>(
+                  selectedIcon: const Icon(Icons.check, size: 14),
                   segments: const [
-                    ButtonSegment(value: 'club', label: Text('Club')),
-                    ButtonSegment(value: 'player', label: Text('Player')),
-                    ButtonSegment(value: 'coach', label: Text('Coach')),
-                    ButtonSegment(value: 'rival', label: Text('Rival')),
+                    ButtonSegment(
+                      value: 'club',
+                      label: FittedBox(child: Text('Club')),
+                    ),
+                    ButtonSegment(
+                      value: 'player',
+                      label: FittedBox(child: Text('Player')),
+                    ),
+                    ButtonSegment(
+                      value: 'coach',
+                      label: FittedBox(child: Text('Coach')),
+                    ),
+                    ButtonSegment(
+                      value: 'rival',
+                      label: FittedBox(child: Text('Rival')),
+                    ),
                   ],
                   selected: {_subjectTag},
                   onSelectionChanged: (values) => setState(() {
                     _subjectTag = values.first;
-                    if (_subjectTag != 'player') _selectedPlayerId = null;
+                    if (_subjectTag != 'player') {
+                      _selectedPlayerId = null;
+                      _playerSelectionNotice = null;
+                    }
                   }),
                 ),
                 const SizedBox(height: Spacing.md),
@@ -339,6 +368,16 @@ class _SubmitChantScreenState extends ConsumerState<SubmitChantScreen> {
                   StreamBuilder<List<Player>>(
                     stream: playersStream,
                     builder: (context, snapshot) {
+                      if (snapshot.hasError) {
+                        return Text(
+                          'Could not load this club’s players. Try again when '
+                          'you are connected, or choose another subject.',
+                          key: const Key('player-load-error'),
+                          style: textTheme.bodySmall?.copyWith(
+                            color: AppColors.error,
+                          ),
+                        );
+                      }
                       if (!snapshot.hasData) {
                         return const Padding(
                           padding: EdgeInsets.all(Spacing.sm),
@@ -347,24 +386,58 @@ class _SubmitChantScreenState extends ConsumerState<SubmitChantScreen> {
                       }
                       final players = [...snapshot.data!]
                         ..sort((a, b) => a.name.compareTo(b.name));
-                      return DropdownButtonFormField<String>(
-                        initialValue: _selectedPlayerId,
-                        decoration: const InputDecoration(
-                          labelText: 'Which player?',
-                        ),
-                        items: players
-                            .map(
-                              (player) => DropdownMenuItem(
-                                value: player.id,
-                                child: Text(player.name),
+                      final selectedPlayerId =
+                          players.any(
+                            (player) => player.id == _selectedPlayerId,
+                          )
+                          ? _selectedPlayerId
+                          : null;
+                      if (_selectedPlayerId != null &&
+                          selectedPlayerId == null) {
+                        _clearUnavailablePlayer(_selectedPlayerId!);
+                      }
+                      final playerSetKey = players
+                          .map((player) => player.id)
+                          .join(',');
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          DropdownButtonFormField<String>(
+                            key: ValueKey(
+                              'player-dropdown-$playerSetKey-'
+                              '${selectedPlayerId ?? 'none'}',
+                            ),
+                            initialValue: selectedPlayerId,
+                            decoration: const InputDecoration(
+                              labelText: 'Which player?',
+                            ),
+                            items: players
+                                .map(
+                                  (player) => DropdownMenuItem(
+                                    value: player.id,
+                                    child: Text(player.name),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (value) => setState(() {
+                              _selectedPlayerId = value;
+                              _playerSelectionNotice = null;
+                            }),
+                            validator: (value) => value == null
+                                ? 'Pick which player this chant is for.'
+                                : null,
+                          ),
+                          if (_playerSelectionNotice != null) ...[
+                            const SizedBox(height: Spacing.xs),
+                            Text(
+                              _playerSelectionNotice!,
+                              key: const Key('player-selection-notice'),
+                              style: textTheme.bodySmall?.copyWith(
+                                color: AppColors.error,
                               ),
-                            )
-                            .toList(),
-                        onChanged: (value) =>
-                            setState(() => _selectedPlayerId = value),
-                        validator: (value) => value == null
-                            ? 'Pick which player this chant is for.'
-                            : null,
+                            ),
+                          ],
+                        ],
                       );
                     },
                   ),

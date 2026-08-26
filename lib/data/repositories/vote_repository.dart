@@ -5,7 +5,7 @@ class VoteRepository {
   final FirebaseFirestore _firestore;
 
   VoteRepository({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   CollectionReference<Map<String, dynamic>> get _collection =>
       _firestore.collection('votes');
@@ -33,7 +33,15 @@ class VoteRepository {
       value: value,
       createdAt: DateTime.now(),
     );
-    await _collection.doc(docId).set(vote.toJson(), SetOptions(merge: true));
+    final reference = _collection.doc(docId);
+    await _firestore.runTransaction((transaction) async {
+      final existing = await transaction.get(reference);
+      if (existing.exists) {
+        transaction.update(reference, {'value': value});
+      } else {
+        transaction.set(reference, vote.toJson());
+      }
+    });
   }
 
   Future<void> removeVote({

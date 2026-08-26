@@ -16,6 +16,8 @@ interface BatchCommit {
 
 let batchCommits: BatchCommit[] = [];
 let standaloneWrites: StagedWrite[] = [];
+let chantExists = true;
+let voteQueryReads = 0;
 
 // In-memory vote store for where().get() queries.
 // Keyed by doc id. Each entry has { value, chantId, userId }.
@@ -24,6 +26,7 @@ let voteStore: Record<string, Record<string, unknown>> = {};
 function makeFakeFirestore(): admin.firestore.Firestore {
   const fakeDocRefWithPath = (path: string) => {
     const ref = {
+      get: () => Promise.resolve({ exists: chantExists }),
       update: (data: Record<string, unknown>) => {
         standaloneWrites.push({ path, data });
         return Promise.resolve();
@@ -37,6 +40,7 @@ function makeFakeFirestore(): admin.firestore.Firestore {
     doc: (id: string) => fakeDocRefWithPath(`${name}/${id}`),
     where: (field: string, op: string, value: unknown) => ({
       get: () => {
+        voteQueryReads++;
         // Filter vote store by the query condition
         const docs = Object.entries(voteStore)
           .filter(([, data]) => data[field] === value)
@@ -76,6 +80,8 @@ describe("handleVoteWritten", () => {
     batchCommits = [];
     standaloneWrites = [];
     voteStore = {};
+    chantExists = true;
+    voteQueryReads = 0;
   });
 
   it("CREATE: recomputes counters from vote store and stamps appliedValue atomically", async () => {
@@ -179,6 +185,31 @@ describe("handleVoteWritten", () => {
       "Re-trigger with unchanged value must not create any batch");
     assert.strictEqual(standaloneWrites.length, 0,
       "Re-trigger with unchanged value must produce zero writes");
+    assert.strictEqual(voteQueryReads, 0,
+      "Re-trigger with unchanged value must not query vote ground truth");
+  });
+
+  it("MISSING PARENT: returns before querying votes or staging writes", async () => {
+    chantExists = false;
+    voteStore["user1_chant1"] = {
+      value: 1,
+      chantId: "chant1",
+      userId: "user1",
+    };
+
+    await handleVoteWritten(
+      undefined,
+      { value: 1, chantId: "chant1", userId: "user1" },
+      "user1_chant1",
+      fakeDb
+    );
+
+    assert.strictEqual(voteQueryReads, 0,
+      "A deleted parent must stop before the vote query");
+    assert.strictEqual(batchCommits.length, 0,
+      "A deleted parent must not create or commit a batch");
+    assert.strictEqual(standaloneWrites.length, 0,
+      "A deleted parent must not receive any standalone write");
   });
 
   it("IDEMPOTENCY: duplicate delivery of the same create produces correct counters both times", async () => {

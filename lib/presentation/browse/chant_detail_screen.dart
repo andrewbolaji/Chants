@@ -170,6 +170,12 @@ class _ChantDetailScreenState extends ConsumerState<ChantDetailScreen> {
       initialData: widget.chant,
       builder: (context, snapshot) {
         final live = snapshot.data ?? widget.chant;
+        final actionsEnabled =
+            snapshot.connectionState == ConnectionState.active &&
+            !snapshot.hasError &&
+            snapshot.data != null &&
+            !snapshot.data!.hidden &&
+            !snapshot.data!.removed;
         final songbook = saved?.valueOrNull;
         final isIndividual =
             songbook?.individualSnapshots.containsKey(live.id) ?? false;
@@ -177,8 +183,6 @@ class _ChantDetailScreenState extends ConsumerState<ChantDetailScreen> {
             ? null
             : _clubContaining(songbook, live.id);
         final isSaved = isIndividual || club != null;
-        final isShareable =
-            snapshot.data != null && !live.hidden && !live.removed;
         final savedTooltip = _saving
             ? 'Saving for matchday'
             : club != null && !isIndividual
@@ -205,7 +209,7 @@ class _ChantDetailScreenState extends ConsumerState<ChantDetailScreen> {
                             isSaved ? Icons.bookmark : Icons.bookmark_border,
                           ),
                     tooltip: savedTooltip,
-                    onPressed: _saving || songbook == null
+                    onPressed: _saving || songbook == null || !actionsEnabled
                         ? null
                         : () => _toggleSaved(
                             uid: user.uid,
@@ -221,7 +225,7 @@ class _ChantDetailScreenState extends ConsumerState<ChantDetailScreen> {
                   child: IconButton(
                     icon: const Icon(Icons.ios_share_outlined),
                     tooltip: 'Share this chant',
-                    onPressed: _sharing || !isShareable
+                    onPressed: _sharing || !actionsEnabled
                         ? null
                         : () => _shareChant(
                             chant: live,
@@ -233,21 +237,23 @@ class _ChantDetailScreenState extends ConsumerState<ChantDetailScreen> {
               IconButton(
                 icon: const Icon(Icons.flag_outlined),
                 tooltip: 'Report this chant',
-                onPressed: () {
-                  if (user == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Sign in to report this chant.'),
-                      ),
-                    );
-                    return;
-                  }
-                  showReportSheet(
-                    context: context,
-                    target: ReportChant(live.id),
-                    ref: ref,
-                  );
-                },
+                onPressed: !actionsEnabled
+                    ? null
+                    : () {
+                        if (user == null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Sign in to report this chant.'),
+                            ),
+                          );
+                          return;
+                        }
+                        showReportSheet(
+                          context: context,
+                          target: ReportChant(live.id),
+                          ref: ref,
+                        );
+                      },
               ),
             ],
           ),
@@ -264,7 +270,13 @@ class _ChantDetailScreenState extends ConsumerState<ChantDetailScreen> {
             child: SafeArea(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: [VoteControls(chant: live, large: true)],
+                children: [
+                  VoteControls(
+                    chant: live,
+                    large: true,
+                    enabled: actionsEnabled,
+                  ),
+                ],
               ),
             ),
           ),
@@ -285,6 +297,7 @@ class _ChantDetailScreenState extends ConsumerState<ChantDetailScreen> {
                 CommentSection(
                   chantId: live.id,
                   commentCount: live.commentCount,
+                  actionsEnabled: actionsEnabled,
                 ),
               ],
             ),

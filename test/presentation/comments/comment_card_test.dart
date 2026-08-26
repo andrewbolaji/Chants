@@ -37,89 +37,128 @@ void main() {
         body: 'Great chant this one',
       );
 
-      await tester.pumpWidget(_wrap(CommentCard(
-        comment: comment,
-        likeState: CommentLikeState.initial(0),
-        isAuthor: false,
-      )));
+      await tester.pumpWidget(
+        _wrap(
+          CommentCard(
+            comment: comment,
+            likeState: CommentLikeState.initial(0),
+            isAuthor: false,
+            onReportComment: () {},
+            onReportUser: () {},
+          ),
+        ),
+      );
 
       expect(find.text('FanNumber1'), findsOneWidget);
       expect(find.text('Great chant this one'), findsOneWidget);
       expect(find.text('2h ago'), findsOneWidget);
     });
 
-    testWidgets('shows report flag for non-author, delete for author',
-        (tester) async {
+    testWidgets('shows report flag for non-author, delete for author', (
+      tester,
+    ) async {
       final comment = _makeComment();
 
       // Non-author: flag icon, no delete
-      await tester.pumpWidget(_wrap(CommentCard(
-        comment: comment,
-        likeState: CommentLikeState.initial(0),
-        isAuthor: false,
-      )));
+      await tester.pumpWidget(
+        _wrap(
+          CommentCard(
+            comment: comment,
+            likeState: CommentLikeState.initial(0),
+            isAuthor: false,
+            onReportComment: () {},
+            onReportUser: () {},
+          ),
+        ),
+      );
       expect(find.byIcon(Icons.flag_outlined), findsOneWidget);
       expect(find.byIcon(Icons.delete_outline), findsNothing);
 
       // Author: delete icon, no flag
-      await tester.pumpWidget(_wrap(CommentCard(
-        comment: comment,
-        likeState: CommentLikeState.initial(0),
-        isAuthor: true,
-      )));
+      await tester.pumpWidget(
+        _wrap(
+          CommentCard(
+            comment: comment,
+            likeState: CommentLikeState.initial(0),
+            isAuthor: true,
+            onDelete: () {},
+          ),
+        ),
+      );
       expect(find.byIcon(Icons.delete_outline), findsOneWidget);
       expect(find.byIcon(Icons.flag_outlined), findsNothing);
     });
 
     testWidgets(
-        'report menu offers report comment and report user for non-author',
-        (tester) async {
+      'report menu offers report comment and report user for non-author',
+      (tester) async {
+        final comment = _makeComment();
+
+        await tester.pumpWidget(
+          _wrap(
+            CommentCard(
+              comment: comment,
+              likeState: CommentLikeState.initial(0),
+              isAuthor: false,
+              onReportComment: () {},
+              onReportUser: () {},
+            ),
+          ),
+        );
+
+        await tester.tap(find.byIcon(Icons.flag_outlined));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Report this comment'), findsOneWidget);
+        expect(find.text('Report this user'), findsOneWidget);
+      },
+    );
+
+    testWidgets('top-level comment offers Reply but a reply does not', (
+      tester,
+    ) async {
       final comment = _makeComment();
 
-      await tester.pumpWidget(_wrap(CommentCard(
-        comment: comment,
-        likeState: CommentLikeState.initial(0),
-        isAuthor: false,
-      )));
-
-      await tester.tap(find.byIcon(Icons.flag_outlined));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Report this comment'), findsOneWidget);
-      expect(find.text('Report this user'), findsOneWidget);
-    });
-
-    testWidgets('top-level comment offers Reply but a reply does not',
-        (tester) async {
-      final comment = _makeComment();
-
-      await tester.pumpWidget(_wrap(CommentCard(
-        comment: comment,
-        likeState: CommentLikeState.initial(0),
-        isAuthor: false,
-        onReply: () {},
-      )));
+      await tester.pumpWidget(
+        _wrap(
+          CommentCard(
+            comment: comment,
+            likeState: CommentLikeState.initial(0),
+            isAuthor: false,
+            onReply: () {},
+          ),
+        ),
+      );
       expect(find.text('Reply'), findsOneWidget);
 
-      await tester.pumpWidget(_wrap(CommentCard(
-        comment: comment,
-        likeState: CommentLikeState.initial(0),
-        isAuthor: false,
-        isReply: true,
-        onReply: () {},
-      )));
+      await tester.pumpWidget(
+        _wrap(
+          CommentCard(
+            comment: comment,
+            likeState: CommentLikeState.initial(0),
+            isAuthor: false,
+            isReply: true,
+            onReply: () {},
+          ),
+        ),
+      );
       expect(find.text('Reply'), findsNothing);
     });
 
-    testWidgets('more menu offers and invokes block when configured',
-        (tester) async {
+    testWidgets('more menu offers and invokes block when configured', (
+      tester,
+    ) async {
       var blocked = false;
-      await tester.pumpWidget(_wrap(CommentCard(
-        comment: _makeComment(),
-        likeState: CommentLikeState.initial(0),
-        isAuthor: false,
-        onBlockUser: () => blocked = true,
-      )));
+      await tester.pumpWidget(
+        _wrap(
+          CommentCard(
+            comment: _makeComment(),
+            likeState: CommentLikeState.initial(0),
+            isAuthor: false,
+            onBlockUser: () => blocked = true,
+          ),
+        ),
+      );
 
       await tester.tap(find.byIcon(Icons.flag_outlined));
       await tester.pumpAndSettle();
@@ -129,19 +168,24 @@ void main() {
       expect(blocked, true);
     });
 
-    testWidgets('selecting "Report this comment" fires onReportComment only',
-        (tester) async {
+    testWidgets('selecting "Report this comment" fires onReportComment only', (
+      tester,
+    ) async {
       final comment = _makeComment();
       var reportedComment = false;
       var reportedUser = false;
 
-      await tester.pumpWidget(_wrap(CommentCard(
-        comment: comment,
-        likeState: CommentLikeState.initial(0),
-        isAuthor: false,
-        onReportComment: () => reportedComment = true,
-        onReportUser: () => reportedUser = true,
-      )));
+      await tester.pumpWidget(
+        _wrap(
+          CommentCard(
+            comment: comment,
+            likeState: CommentLikeState.initial(0),
+            isAuthor: false,
+            onReportComment: () => reportedComment = true,
+            onReportUser: () => reportedUser = true,
+          ),
+        ),
+      );
 
       await tester.tap(find.byIcon(Icons.flag_outlined));
       await tester.pumpAndSettle();
@@ -152,19 +196,24 @@ void main() {
       expect(reportedUser, false);
     });
 
-    testWidgets('selecting "Report this user" fires onReportUser only',
-        (tester) async {
+    testWidgets('selecting "Report this user" fires onReportUser only', (
+      tester,
+    ) async {
       final comment = _makeComment();
       var reportedComment = false;
       var reportedUser = false;
 
-      await tester.pumpWidget(_wrap(CommentCard(
-        comment: comment,
-        likeState: CommentLikeState.initial(0),
-        isAuthor: false,
-        onReportComment: () => reportedComment = true,
-        onReportUser: () => reportedUser = true,
-      )));
+      await tester.pumpWidget(
+        _wrap(
+          CommentCard(
+            comment: comment,
+            likeState: CommentLikeState.initial(0),
+            isAuthor: false,
+            onReportComment: () => reportedComment = true,
+            onReportUser: () => reportedUser = true,
+          ),
+        ),
+      );
 
       await tester.tap(find.byIcon(Icons.flag_outlined));
       await tester.pumpAndSettle();
@@ -175,39 +224,54 @@ void main() {
       expect(reportedComment, false);
     });
 
-    testWidgets('like toggle: unfilled heart when not liked, filled when liked',
-        (tester) async {
-      final comment = _makeComment(likeCount: 3);
+    testWidgets(
+      'like toggle: unfilled heart when not liked, filled when liked',
+      (tester) async {
+        final comment = _makeComment(likeCount: 3);
 
-      // Not liked
-      await tester.pumpWidget(_wrap(CommentCard(
-        comment: comment,
-        likeState: CommentLikeState.initial(3),
-        isAuthor: false,
-      )));
-      expect(find.byIcon(Icons.favorite_border), findsOneWidget);
-      expect(find.byIcon(Icons.favorite), findsNothing);
-      expect(find.text('3'), findsOneWidget);
+        // Not liked
+        await tester.pumpWidget(
+          _wrap(
+            CommentCard(
+              comment: comment,
+              likeState: CommentLikeState.initial(3),
+              isAuthor: false,
+            ),
+          ),
+        );
+        expect(find.byIcon(Icons.favorite_border), findsOneWidget);
+        expect(find.byIcon(Icons.favorite), findsNothing);
+        expect(find.text('3'), findsOneWidget);
 
-      // Liked (after toggle)
-      final likedState = CommentLikeState.initial(3)
-          .reconcileFromPersistedLike(1);
-      await tester.pumpWidget(_wrap(CommentCard(
-        comment: comment,
-        likeState: likedState,
-        isAuthor: false,
-      )));
-      expect(find.byIcon(Icons.favorite), findsOneWidget);
-      expect(find.byIcon(Icons.favorite_border), findsNothing);
-    });
+        // Liked (after toggle)
+        final likedState = CommentLikeState.initial(
+          3,
+        ).reconcileFromPersistedLike(1);
+        await tester.pumpWidget(
+          _wrap(
+            CommentCard(
+              comment: comment,
+              likeState: likedState,
+              isAuthor: false,
+            ),
+          ),
+        );
+        expect(find.byIcon(Icons.favorite), findsOneWidget);
+        expect(find.byIcon(Icons.favorite_border), findsNothing);
+      },
+    );
 
     testWidgets('hides like count when displayCount is 0', (tester) async {
       final comment = _makeComment(likeCount: 0);
-      await tester.pumpWidget(_wrap(CommentCard(
-        comment: comment,
-        likeState: CommentLikeState.initial(0),
-        isAuthor: false,
-      )));
+      await tester.pumpWidget(
+        _wrap(
+          CommentCard(
+            comment: comment,
+            likeState: CommentLikeState.initial(0),
+            isAuthor: false,
+          ),
+        ),
+      );
 
       // Heart icon shown, but no count text
       expect(find.byIcon(Icons.favorite_border), findsOneWidget);
@@ -257,8 +321,11 @@ void main() {
         // CORRECT behavior: reconcileFromPersistedLike sees appliedValue == 1,
         // sets confirmedLiked = true, delta = 0. Display = 1.
         final correct = s.reconcileFromPersistedLike(1);
-        expect(correct.displayCount, 1,
-            reason: 'appliedValue == 1 means server count includes the like');
+        expect(
+          correct.displayCount,
+          1,
+          reason: 'appliedValue == 1 means server count includes the like',
+        );
         expect(correct.liked, true);
         expect(correct.optimisticDelta, 0);
 
@@ -271,8 +338,12 @@ void main() {
           busy: false,
           optimisticDelta: 1, // naive +1
         );
-        expect(buggy.displayCount, 2,
-            reason: 'Without appliedValue reconciliation, the like is double-counted');
+        expect(
+          buggy.displayCount,
+          2,
+          reason:
+              'Without appliedValue reconciliation, the like is double-counted',
+        );
 
         // The fix is reconcileFromPersistedLike: it checks appliedValue and
         // avoids the double-count.
@@ -280,16 +351,22 @@ void main() {
       },
     );
 
-    test('cold load with appliedValue absent: server has not processed yet', () {
-      // Server likeCount is 0 (CF has not yet processed the like).
-      // Like doc exists but appliedValue is null.
-      final s = CommentLikeState.initial(0);
-      final reconciled = s.reconcileFromPersistedLike(null);
+    test(
+      'cold load with appliedValue absent: server has not processed yet',
+      () {
+        // Server likeCount is 0 (CF has not yet processed the like).
+        // Like doc exists but appliedValue is null.
+        final s = CommentLikeState.initial(0);
+        final reconciled = s.reconcileFromPersistedLike(null);
 
-      expect(reconciled.liked, true);
-      expect(reconciled.optimisticDelta, 1);
-      expect(reconciled.displayCount, 1,
-          reason: 'Show expected count until server catches up');
-    });
+        expect(reconciled.liked, true);
+        expect(reconciled.optimisticDelta, 1);
+        expect(
+          reconciled.displayCount,
+          1,
+          reason: 'Show expected count until server catches up',
+        );
+      },
+    );
   });
 }

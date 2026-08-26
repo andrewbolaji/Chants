@@ -6,7 +6,7 @@ class CommentRepository {
   final FirebaseFirestore _firestore;
 
   CommentRepository({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   CollectionReference<Map<String, dynamic>> get _comments =>
       _firestore.collection('comments');
@@ -40,8 +40,8 @@ class CommentRepository {
     await _comments.doc(commentId).update({'removed': true});
   }
 
-  /// Like a comment. Uses SetOptions(merge: true) to preserve the
-  /// appliedValue field written by the Cloud Function.
+  /// Like a comment. The transaction creates the client shape once, then
+  /// updates only value so the Cloud Function's appliedValue is preserved.
   Future<void> likeComment({
     required String userId,
     required String commentId,
@@ -54,7 +54,15 @@ class CommentRepository {
       value: 1,
       createdAt: DateTime.now(),
     );
-    await _commentLikes.doc(docId).set(like.toJson(), SetOptions(merge: true));
+    final reference = _commentLikes.doc(docId);
+    await _firestore.runTransaction((transaction) async {
+      final existing = await transaction.get(reference);
+      if (existing.exists) {
+        transaction.update(reference, {'value': 1});
+      } else {
+        transaction.set(reference, like.toJson());
+      }
+    });
   }
 
   /// Unlike a comment (delete the like doc).
@@ -79,9 +87,10 @@ class CommentRepository {
 
   /// Stream a single comment doc for live likeCount updates.
   Stream<Comment?> commentStream(String commentId) {
-    return _comments.doc(commentId).snapshots().map(
-          (doc) => doc.exists ? Comment.fromFirestore(doc) : null,
-        );
+    return _comments
+        .doc(commentId)
+        .snapshots()
+        .map((doc) => doc.exists ? Comment.fromFirestore(doc) : null);
   }
 
   /// Submit a report on a comment. Doc ID = userId_commentId.

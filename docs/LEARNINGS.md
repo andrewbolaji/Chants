@@ -12,6 +12,28 @@ This is durable, evidence-backed project memory. It prevents the same failure or
 
 ## Entries
 
+### 2026-08-25T10:25:44Z Rule-valid public writes must fit the shipped parser
+
+- **Status:** promoted
+- **Scope:** Firestore collections written directly by clients and deserialized by typed application models
+- **Observed:** Field-level value checks still allowed unknown or wrongly typed data outside the form path. A permitted raw write could therefore pass rules and fail a public Dart query mapper. Owners could also mutate Function reconciliation stamps that the UI treats as server confirmation.
+- **Evidence:** The review's rule-to-parser ledger found unchecked chant hierarchy, nullable, media, and variations fields. The implemented hostile matrix denies malformed and unknown fields, forged `appliedValue`, timestamp abuse, wrong Team and Player relationships, report reasons, and feedback types; all 131 Java-backed assertions pass.
+- **Learning:** Authorization includes stored shape, not only writer identity. Every direct-write collection needs an exact parser-compatible schema, and server-owned bookkeeping must be absent from create plus immutable from client update.
+- **Applied control:** `firestore.rules` now uses collection-specific exact shapes and bounds. Vote and like repositories create intent once and then change only `value`. Decision 009 makes rule and model parity a durable contract.
+- **Revisit when:** A collection moves entirely behind a server API, or a new client field is approved with its parser, rule, abuse, and compatibility contract.
+- **Related:** `firestore.rules`, `test_rules/firestore_rules.test.ts`, decision 009
+
+### 2026-08-25T10:25:44Z Readable fallback is not live action authority
+
+- **Status:** promoted
+- **Scope:** Public content screens that retain route or stream data through connectivity failure while exposing local or external side effects
+- **Observed:** Discover restored its initial card for every document-stream error, including a Firebase permission denial. Route `initialData` then made live-target controls available before a current visible document had been confirmed.
+- **Evidence:** Review probes reproduced the stale moderated Discover card. The production regression tests now separate Firebase-shaped permission denial from transient failure, exercise the Discover-to-detail route, and prove Save, Share, Report, Vote, and Comment remain unavailable until an active current visible chant arrives. The full Flutter suite passes 282 tests.
+- **Learning:** Stale public text may be safe and useful to read, but it cannot authorize a save, report, vote, comment, or external share. Classify authoritative revocation separately from ordinary transport failure and derive actions only from current visible state.
+- **Applied control:** `_LiveChantCard` fails closed on permission denial, current absence, hidden, or removed data. `ChantDetailScreen` keeps route text readable while gating every live-target action through one current-authority predicate.
+- **Revisit when:** An approved offline mutation queue defines its own target version and revocation semantics, or a shared live-availability abstraction replaces these widget-local controls.
+- **Related:** `lib/presentation/browse/discovery_section.dart`, `lib/presentation/browse/chant_detail_screen.dart`, decision 009
+
 ### 2026-08-25T00:41:42Z Native verification can mutate project scaffolding before it fails
 
 - **Status:** applied

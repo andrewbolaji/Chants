@@ -1,416 +1,288 @@
 # Repository implementation rationale
 
-> **Document contract:** This is a milestone implementation snapshot for the entire repository at the stated baseline. It covers every material product capability and operational subsystem, not only the newest feature or the latest work session. Put preimplementation intent in `docs/CHANGE_SPEC.md`, completed change reasoning in `docs/changes/`, and durable architectural decisions in `docs/decisions/`. Refresh this snapshot at a whole-project review or release boundary rather than using it as a parallel per-change ledger.
-
-The implementing agent creates or refreshes this file before Codex performs a whole-project or release review. Explain the code and infrastructure that exist, including inherited and unchanged areas. The reviewer will verify every material claim independently.
-
-The sibling paths named in the contract are now canonical. `docs/DECISIONS.md` and `docs/BLOCK_RECAPS.md` remain historical archives for work completed before 2026-08-17. `docs/ROADMAP.md` owns product sequencing.
-
-## Approved-change amendment, 2026-08-17
-
-This snapshot began as the pre-remediation whole-repository audit at commit `f780628`. The approved one-level reply block and its interaction-safety prerequisites were then implemented in the working tree. Where an original baseline finding below conflicts with this amendment or `docs/CHANGE_SPEC.md`, the amendment is the current claim.
-
-Material changes now present:
-
-- One direct comment-reply level, with nullable `parentCommentId`, legacy flat-document compatibility, ranked parents, chronological replies, orphan suppression, cancellable reply context, and failed-draft preservation.
-- Directional user blocks with an unblock screen, client visibility filtering, and server denial of replies/likes in either direction.
-- Firestore existence, visibility, relationship, timestamp-plausibility, enum, lifetime-length, and private-read hardening. Profiles, votes, and comment likes are no longer world-readable.
-- Transactional ground-truth `flagCount` recomputation for chant and comment reports; no blind increment or audit write inside a transaction callback.
-- Monotonic account-age classification in both rate limiters and timestamp constraints that stop raw clients backdating new submissions out of the one-hour query.
-- Comment/reply migration in `mergeChants`; `userReports`, block relations, and report-counter reconciliation in `deleteAccount`; Auth deletion moved before profile deletion; accurate account-deletion disclosure.
-- Compensating cleanup when sign-up creates an Auth user but profile/policy completion fails.
-
-Verification: `flutter analyze lib test` passed; the complete Flutter suite passed all 183 tests, including the reply-thread and operator-access goldens; Functions passed 26; seed passed 42; and the local Firestore emulator passed all 106 rule assertions using Homebrew OpenJDK. The real widgets have checked goldens at `test/presentation/comments/goldens/comment_reply_thread.png` and `test/presentation/moderation/goldens/user_ban_button.png`. The reply-order test was proven red by reversing production order, then green after restoration. The stable-ID rename guard was also proven red against a temporary title-derived resolver, then green after restoration. The remaining release checks are the live-device keyboard/offline/moderation walk and the separately authorized live identity preflight.
-
-Still open and unchanged: narrow moderation-queue queries, no report/feedback rate limit, sequential/non-resumable account deletion at scale, no user-data export, no repository evidence for backup/restore, and no live Firebase deployment inspection. Product-level unban is now implemented and audited through the operator-only callable.
+> **Document contract:** This is the current milestone snapshot for the entire Chants repository. It covers inherited and newly stacked behavior. Preimplementation intent belongs in `docs/CHANGE_SPEC.md`, completed change reasoning in `docs/changes/`, durable decisions in `docs/decisions/`, and chronological evidence in `docs/EXECUTION.md`.
 
 ## Document identity and completeness
 
-- **Repository/product:** Chants, a Flutter and Firebase mobile app for finding, learning, and contributing football terrace chants.
-- **Baseline:** commit `f780628f5b3e8f9434d76fd025fa5fd88e462b4d` on `main` ("Fix the lint issues flutter analyze now actually gates on", 2026-08-10). Before these review and framework documents were added, the working tree was not clean: three tracked files modified (`android/app/build.gradle.kts` and `android/settings.gradle.kts` add the Crashlytics Gradle plugin; `pubspec.lock` has five transitive-dependency bumps), plus untracked `AGENTS.md` and `.codex/`. No release tag exists.
-- **Implementation agent:** Claude Code produced the original snapshot on 2026-08-17. Codex independently checked its material claims, corrected this document, and migrated the repository to the canonical framework on the same date. The code itself was written across prior sessions by Claude Code and the author; the legacy archives preserve that history.
-- **Refresh date:** 2026-08-17.
-- **Requested review:** whole repository. Purpose in the author's framing: find holes in the features and code, anything that might not work, may lead to bugs, or is written poorly, and check the tests. This is a pre-v1 hardening review, not a release sign-off, because two store-compliance gates are still open.
-- **Coverage status:** complete for application code, Cloud Functions, security rules, seed pipeline, tests, and CI. The Firestore suite was executed locally with the Homebrew JDK and all 106 assertions passed. **Remaining gap:** no deployed Firebase project was inspected, so every claim about live rules, indexes, App Check enforcement mode, billing alerts, seeded content, and CI secrets is repository state only.
-- **Excluded paths/systems:** `functions/node_modules/`, `seed/node_modules/`, `test_rules/node_modules/` (vendored dependencies, represented by lockfile rows below). `build/` (Flutter build output, gitignored, contains vendored Firebase plugin source that pollutes local `flutter analyze`). `.dart_tool/`, `firestore-debug.log` (an untracked local emulator artifact, gitignored). `android/` and `ios/` platform scaffolding is covered only where it is non-default. `docs/screenshots/` was not compared against the current UI. `lib/firebase_options.dart` and the platform Google services files are gitignored client configuration and were not inspected. Firebase client configuration is not a server secret; service account credentials are.
+- **Product:** Chants, a Flutter and Firebase mobile app for learning trusted football chants and publishing new chant ideas.
+- **Reviewed baseline:** `b72f4abddea0cd8a3b201de2d4dda246c62a413c`, the exact head of stacked draft PR 9, plus the approved authority and integration remediation in the current worktree on 2026-08-25.
+- **Comparison base:** `main` at `f780628`; 136 changed paths, 14,557 insertions, and 1,546 deletions.
+- **Review type:** Whole-project stacked engineering review before the combined device walk, not a release sign-off.
+- **Coverage:** Flutter client, Cloud Functions, Firestore rules and tests, seed pipeline, native configuration, CI, framework docs, and release boundaries.
+- **Excluded:** Vendored `node_modules`, generated Flutter and TypeScript output, live Firebase data and dashboard state, deployed artifacts, store dashboards, and operating-system device behavior.
+- **Preserved unrelated work:** `android/app/build.gradle.kts`, `android/settings.gradle.kts`, and `pubspec.lock` were already modified and remain unstaged.
+- **Current status:** The approved remediation is implemented and locally green. Independent review, clean-runner CI, native compilation, and the combined device walk remain pending.
 
 ## Repository coverage ledger
 
-| Capability/subsystem | User/system behavior | Entrypoints and key paths | Source of truth | Key decisions and invariants | Dependencies/infrastructure | Verification | Known risk/gap |
-|---|---|---|---|---|---|---|---|
-| Identity and auth | Email and password sign-up, sign-in, password reset. No social sign-in. | `lib/data/repositories/auth_repository.dart`, `lib/presentation/auth/*` | Firebase Auth | Password reset cannot leak account existence. Failed sign-up completion attempts server account cleanup; if no profile exists it can delete the just-created Auth user locally, otherwise it preserves a coherent retryable account. | Firebase Auth, `firebase_auth ^6.5.1` | `flutter test`; `test/presentation/auth/sign_up_validation_test.dart` | Password reset email link reported non-tappable in `docs/KNOWN_ISSUES.md`; a Firebase Console template issue, not code. No email verification is required before posting. |
-| User profile and roles | Profile doc per user holding displayName, role, ban state, age confirmation, policy acceptance, report count. | `lib/data/repositories/profile_repository.dart`, `lib/data/models/user_profile.dart`, `firestore.rules :: profiles` | Firestore `profiles/{uid}` | Privileged fields are pinned; owners may update only `displayName` and `updatedAt`. Reads are owner/operator only and create timestamps must be recent. | Firestore | `test_rules :: describe("profiles")`, executed in the 106-pass emulator run | No public profile directory exists; display names needed by comments are denormalized on comment documents. |
-| Operator role and admin | Operator sees a moderation console with six tabs and can hide, unhide, remove, promote, demote, ban, unban, and act on comments. | `lib/presentation/moderation/moderation_screen.dart`, `functions/src/index.ts :: onModerationAction` | Firestore `profiles/{uid}.role` | Role is a Firestore field read via `get()` in rules, not a custom auth claim, with two written migration triggers (`docs/DECISIONS.md`). Actor UID always derives from `request.auth`, never from a client parameter. Ban and unban are Admin SDK writes behind that role check. | Cloud Functions callable, `europe-west2` | `test_rules` operator-read assertions; focused `handleUserBanAction` tests cover unban state, audit payload, and missing profiles | The broader callable switch still lacks an emulator-level end-to-end test. |
-| Content browse | Competition to club to player to chant drill-down, plus a shuffled cross-club Discover feed and client-side search. | `lib/presentation/home/home_screen.dart`, `browse/*`, `lib/data/repositories/chant_repository.dart` | Firestore `chants`, `teams`, `players`, `competitions`, `sports` | Chants are one flat top-level collection with denormalized parent IDs, chosen so drill-down and cross-club queries are both cheap with no joins (`docs/DECISIONS.md`). Every chant query must carry the `hidden` and `removed` filters. | Firestore, two composite indexes | `flutter test` widget tests; `test_rules :: "chant list query boundary"` | `discoveryChants()` fetches every visible chant with no limit. Home screen hardcodes `'premier-league'`. Search is client-side over the already-fetched Discover list only. |
-| Ranking | Club chant lists order by score desc, canonical first, oldest first, then ID. Order is frozen per screen visit. | `lib/data/services/chant_ranking.dart :: rankChants`, `lib/presentation/browse/team_screen.dart :: _captureOrder` | Derived from `chants.score` and `status` | Four-key total order so the list is stable between identical loads. Order captured once per visit so a card does not jump under the user's finger on vote (`docs/DECISIONS.md`, 2026-07-02). No visibility floor: downvoted chants still show. | none | `test/data/services/chant_ranking_test.dart` | Frozen order means a chant hidden mid-visit disappears but a newly created one does not appear until re-entry. |
-| Voting | Upvote, downvote, or clear. Score updates instantly and reconciles against the server. | `lib/presentation/shared/vote_controls.dart :: OptimisticVoteState`, `lib/data/repositories/vote_repository.dart`, `functions/src/index.ts :: handleVoteWritten` | Firestore `votes` collection is ground truth; `chants.score` is derived | Display = server score + (intended vote - last confirmed vote). One vote per user per chant is enforced by deterministic ID. Creates prove the chant exists and is visible. | Firestore trigger, `europe-west2` | Widget/unit vote suites; `functions/test/on_vote_written.test.ts` | Vote rows are owner/operator-readable, not public. The client's own reconciliation stamp remains a self-display concern rather than an authority boundary. |
-| Comments | Top-level comments with one direct reply level, one like per user per comment/reply, author soft-delete, report, and block. | `lib/presentation/comments/comment_section.dart`, `comment_card.dart :: CommentLikeState`, `lib/data/repositories/comment_repository.dart`, `lib/data/repositories/block_repository.dart` | Firestore `comments`, `commentLikes`, `blocks` | Missing/null `parentCommentId` is top-level. Parents rank by likes/newest; replies are oldest-first. Rules reject deeper, cross-chant, missing, hidden, removed, and block-conflicting parents. Notifications and deeper nesting remain v1.1. | Firestore triggers | Reply model/widget/golden tests; 106-pass rules suite; comment-like Functions tests | `CommentLikeState` still reimplements the vote reconciliation protocol as a second, immutable variant. Blocking visibility is applied by the client because public collection queries cannot be filtered by a per-viewer relationship lookup. |
-| Submission | Signed-in users add a chant with title, lyrics, tune, context, subject, and type. | `lib/presentation/submit/submit_chant_screen.dart`, `firestore.rules :: chants` | Firestore `chants` | Submissions enter as community content with counters pinned to zero. Create and author update both enforce content lengths and supported subject/type/media values; new timestamps must be recent. | Firestore | `test_rules :: describe("chants")`, executed | Team IDs are type/non-empty validated but not yet proven against a live team document; player/sport/competition referential integrity remains app-path dependent. |
-| Reporting | Report a chant, comment/reply, or user account, one report per reporter per target. | Report sheet/repositories; `functions/src/index.ts :: handleChantReportWritten`, `handleCommentReportWritten`, `handleUserReportCreated` | Firestore report collections | Chants/comments auto-hide at three pending reports; user reports never auto-act. Flag counts are transactional ground-truth recomputes, so duplicate/racing/status/delete events converge. | Firestore triggers | Functions report tests and emulator report suites | No screen exposes a chant author's identity, and report submission itself is not rate-limited. |
-| Moderation actions and audit | Operator hide/unhide/remove/promote/demote on chants, same on comments, and ban/unban on users, all audit-logged. | `functions/src/index.ts :: onModerationAction`, `functions/src/audit.ts :: writeAuditEntry` | Firestore `auditLog` (append-only, no client write) | Automatic paths always hide, never remove. `unhide` resets `flagCount` and dismisses reports. Unban restores interaction access without changing report history. Report-trigger audits execute after the counter transaction and only for a create event; transaction retries cannot duplicate an in-callback audit. | Cloud Functions callable | Rules prove clients cannot write audit rows; the user ban-state handler has focused unit coverage | The full callable remains without an emulator-level end-to-end test. |
-| Rate limiting | Excess chant or comment creation within an hour is auto-hidden pending review. | `functions/src/index.ts :: onChantCreated`, `:: onCommentWritten`, `isNewAccount`; `firestore.rules :: validRecentClientTimestamp` | Firestore timestamps | Account classification depends only on age and is monotonic. Client timestamps are accepted only within the current hour and never in the future, so a raw SDK cannot backdate a new row outside the velocity query. | Firestore triggers | Functions classification test; rules timestamp constraints execute in the emulator suite | Still soft auto-hide enforcement, with full velocity paths not yet covered by emulator-backed Functions integration tests. |
-| Duplicate detection | Token-overlap similarity between a proposed chant and existing ones. | `lib/data/services/chant_matcher.dart :: ChantMatcher.findMatches` | in-memory only | Jaccard over Levenshtein because chants are bags of words and word order is incidental (`docs/DECISIONS.md`, 2026-05-27). | none | `test/data/services/chant_matcher_test.dart`, 13 cases | **Not wired to any screen.** Dead code at this baseline; `docs/ROADMAP.md` Phase 3 confirms the UI is a v1.1 item. |
-| Duplicate merge | Operator merges a duplicate chant into a keeper. | `functions/src/index.ts :: mergeChants` | Firestore | Both chants must share a team. Votes and reports dedupe on their deterministic target keys; every source comment/reply receives the target chant ID before source deletion. | Cloud Functions callable | TypeScript compile; not exposed in the moderation UI | The audit payload remains partial rather than a complete undo snapshot, and the callable still lacks an end-to-end test. |
-| Policy acceptance gate | Users must accept the current content policy before posting anything. | `lib/app/policy.dart :: kCurrentPolicyVersion`, `lib/app/app.dart :: _SignedInGate`, `functions/src/index.ts :: acceptPolicy`, `firestore.rules :: hasAcceptedPolicy` | Firestore `profiles/{uid}.acceptedPolicyVersion`, written only by the callable | Version string is triplicated across Dart, TypeScript, and rules with cross-referencing comments, because no shared-constant mechanism exists. The server decides the version and stamps the time; the rules forbid the client from writing either field. Gate fails **open** to Home on a profile read error, because the rules layer is still closed. | Cloud Functions callable | `test/app/app_gate_test.dart` (4 branches); `functions/test/accept_policy.test.ts` (4 cases); `test_rules :: "policy acceptance gate"` (5 assertions) | The policy text is a placeholder (`content_policy_screen.dart`), so users are consenting to unwritten terms. Writing it forces a version bump that re-gates every account. |
-| Age gate | Date of birth at sign-up, blocked under 17, DOB never stored. | `lib/data/services/age.dart :: calculateAge`, `lib/presentation/auth/sign_up_screen.dart` | Firestore `profiles/{uid}.ageConfirmed17Plus` | Only the pass/fail boolean is persisted; the raw DOB never leaves the device. The boolean is pinned true on create and blocked from update. | none | `test/data/services/age_test.dart`; `test_rules` create-pinning assertions | Client-side check only. Nothing prevents a raw SDK profile create by an under-17 user, since the rule only requires the field to be `true`. |
-| Account deletion | User deletes their account; interactions, all report types, feedback, and block relations are removed; chants/comments/replies are anonymized. | `functions/src/index.ts :: deleteAccount`, `lib/presentation/home/home_screen.dart :: _showDeleteAccountDialog` | Firebase Auth plus Firestore | Report-derived counters are reconciled. The dialog discloses every retained content type. Auth is deleted before the profile so an Auth failure leaves a profile-backed retry path. | Cloud Functions callable | TypeScript compile; disclosure covered by Flutter build/analyze | Still sequential, non-atomic, non-resumable, and unbatched; it needs an end-to-end failure/retry test before scale. |
-| Feedback | In-app suggestion box, readable by the submitter and by operators. | `lib/presentation/feedback/feedback_screen.dart`, `lib/data/repositories/feedback_repository.dart` | Firestore `feedback` | Banned users **can** submit feedback, deliberately, because it is the appeal channel (`docs/DECISIONS.md`). No update or delete path in v1, so the `resolved` field has no writer. | Firestore | `test_rules :: describe("feedback")` (7 assertions); `test/presentation/feedback/feedback_screen_test.dart` | `resolved` is dead schema until the v1.1 console. No email notification. |
-| Seed pipeline | Admin-SDK script writes canonical reference and chant content from hand-verified JSON. | `seed/seed.ts`, `seed/seed_plan.ts`, `seed/validate.ts`, `seed/chant_identity.ts` | `seed_data/*.json` is the source of truth for canonical content and explicit chant identity | Highest-priority standing rule: content is externally sourced and hand-verified, never generated or rewritten (`docs/DECISIONS.md`). Re-seed updates an explicit **allowlist** of content fields only, so counters and moderation state are unreachable. Chant IDs are immutable source data; preflight and transaction checks reject unsafe ownership or team collisions. `--preflight-only` calls no writer. | Node 20, `firebase-admin`, gitignored service account key | `cd seed && npm test`, 42 pass | Only one club file exists (`arsenal.json`). Orphans are reported, never deleted. Live identity compatibility remains unverified until an authorized preflight. |
-| Counter reconciliation tool | Manual repair of chant vote counters from ground truth. | `seed/reconcile.ts :: reconcileChant` | Firestore `votes` | Duplicates the trigger's computation as an independent operational tool. | Node 20, service account key | `seed/reconcile.test.ts` | Requires the same production service account key as the seed script. |
-| Client integrity | App Check attestation, non-blocking. | `lib/main.dart` | Firebase App Check | Debug providers in debug builds, App Attest / Play Integrity in release. Activation wrapped in try/catch so a token failure never blocks startup or auth. Soft-enforce at launch by decision (`docs/DECISIONS.md`, D6). | Firebase App Check | not testable in `flutter test` | Whether the live project is in soft or full enforcement is dashboard state, **unverified**. |
-| Crash reporting | Flutter and platform errors reported as fatal. | `lib/main.dart` (`FlutterError.onError`, `PlatformDispatcher.instance.onError`) | Firebase Crashlytics | Chosen as free and first-party, with the privacy-declaration cost acknowledged (`docs/DECISIONS.md`, D4). | Firebase Crashlytics; Android Gradle plugin added **in the uncommitted working tree** | not testable in `flutter test` | The Android Crashlytics Gradle plugin wiring is uncommitted. Until it is committed, Android release builds do not upload symbols. |
-| Design system | Dark-only themed UI built primarily from named tokens. | `lib/app/colors.dart`, `spacing.dart`, `theme.dart` | in-code tokens | Variable fonts must pin the `wght` axis via `FontVariation` because a pubspec weight alone does not set it (`docs/DECISIONS.md`, 2026-06-01). `textFaint` is documented as decorative only at 3.0:1 contrast. | bundled font assets | golden/widget tests exist for shared widgets | Full search finds 17 literal `fontSize` declarations across 11 presentation files and one raw color literal in `gold_foil_badge.dart`. |
-| CI | Five jobs on every branch push and PR to main. | `.github/workflows/ci.yml` | GitHub Actions | Analyze split from test so a missing Firebase config cannot mask a test failure (commit `c50c21c`). Rules job pinned to Java 21 because `firebase-tools@15` requires it (commit `b0bf2e2`). | GitHub Actions, `subosito/flutter-action@v2`, `actions/setup-node@v4`, `actions/setup-java@v4` | Latest inspected HEAD run `31396879847` passed all five jobs and executed analyze | Analyze still exits 0 with an explicit skip when `FIREBASE_OPTIONS_DART` is absent. `main` had no branch protection when checked. |
-| Agent tooling | Repo-local guardrails for AI-assisted development. | `AGENTS.md`, `.codex/agents/reviewer.toml`, `.codex/hooks/run_tests.sh`; `CLAUDE.md` compatibility pointer | in-repo | `AGENTS.md` is canonical. Once trusted in Codex, the stop hook runs `flutter test`, blocks on failure, and exits 0 when Flutter is absent or the turn was already continued. | Codex | JSON and shell syntax checks; full passing hook execution; loop-guard execution | The changed hook must be reviewed and trusted in `/hooks`. Framework files remain uncommitted until Andrew explicitly authorizes a commit. |
+| Capability | Behavior and key paths | Authority and invariant | Verification | Current gap |
+|---|---|---|---|---|
+| Auth | Email/password sign-up, sign-in, reset, sign-out in `lib/presentation/auth/` and `lib/data/repositories/auth_repository.dart` | Firebase Auth owns identity; client never chooses privileged role or ban state | Flutter auth and gate tests | Reset-email template behavior remains dashboard-only and unverified |
+| Age and consent | Local DOB check, stored 17-plus boolean, versioned policy gate in `lib/data/services/age.dart`, `lib/app/app.dart`, `functions/src/index.ts :: acceptPolicy` | DOB is not stored; policy version and acceptance time are server-written | Flutter, Functions, and rules tests | Actual policy copy is still a placeholder |
+| Profiles and roles | Owner profile plus operator moderation identity in `profiles` | Owners can edit only display name and update time; role, ban, age, consent, and report count are pinned by `firestore.rules :: profiles` | Rules suite; ban handler tests | Dashboard-created operator bootstrap and second-account device proof unverified |
+| Browse and discovery | Home, competition, Team, Player, Songbook, Chant Lab, Discover, search in `lib/presentation/browse/` | Visible queries constrain hidden and removed; permission denial removes Discover cards; ordinary transient failure may retain safe content | Ranking, Team, Player, authority, and golden tests | Full Discover fetch remains a scale boundary |
+| Submission | Required origin, title, lyrics, tune, subject, style; optional evidence in `SubmitChantScreen` | Exact parser-safe user schema; Team and optional Player relationship; community, no direct media, empty variations | Flutter and 131-case rules suite | No author flow to attach evidence later; invalid legacy rows require normalization before direct edit |
+| Provenance and evidence | Honest labels, canonical YouTube/X normalization, evidence-gated promotion in `chant_evidence.dart`, `chant_trust.ts` | Votes never prove terrace use; user content needs valid evidence plus operator review for canonical status | Dart, Functions, rules, and golden tests | No author flow to attach evidence later |
+| Duplicate nudge | Advisory token matcher and explicit continue/view/back flow in `SubmitChantScreen :: _reviewLikelyDuplicates` | Failure of an advisory read cannot block posting | Matcher and submit widget tests | No open implementation gap in v1 boundary |
+| Voting | Optimistic up/down/clear with Function recompute in `vote_controls.dart`, `vote_repository.dart`, `handleVoteWritten` | Deterministic vote ID; client changes only intent; Function owns `appliedValue`; missing parent no-ops | Vote widget, repository, 7 Functions, and hostile rules cases | Aggregate query cost grows with popularity |
+| Comments and replies | Ranked parents, one chronological reply level, likes, report, delete, block in `comment_section.dart` and `comment_card.dart` | Visible same-chant top-level parent; both block directions; background hydration and Undo failures contained | Model, widget, enlarged-text, golden, Functions, and rules tests | No open v1 correctness gap in this reviewed boundary |
+| Reports | One report per reporter/target, chant/comment auto-hide at 3 pending reports, user reports inform operators | Exact five-field bounded shape; counts recompute from pending ground truth; automatic action hides only | Functions and hostile rules tests | No velocity limit |
+| Moderation | Hide, unhide, remove, promote, demote, evidence removal, ban, unban in callable and operator screen | Callable derives actor from auth and re-reads operator role; audit is Admin-written | Pure trust and ban handlers, rules operator reads | Full callable and `mergeChants` lack end-to-end tests; queue query remains narrow |
+| Merge | Operator moves votes, reports, comments/replies and deletes duplicate source in `mergeChants` | Same-Team check; deterministic interaction keys dedupe target rows; delayed vote triggers tolerate a deleted parent | Functions tests, TypeScript compilation, and source review | Sequential and non-resumable; audit payload is partial |
+| Account deletion | Remove interactions/reports/blocks, anonymize contributions, delete Auth and profile in `deleteAccount` | Auth is deleted before profile so an Auth failure retains a retryable profile | Account-deletion service tests and source inspection | Eleven sequential steps, no durable progress or end-to-end retry test |
+| Saved Matchday Songbook | UID-isolated bounded local JSON snapshots, explicit refresh, offline read-only routes | Maximum 500 unique chants and 2 MiB; local actions require active matching UID | Model, repository, service, widget, lifecycle, and golden tests | Physical force-stop/airplane-mode persistence unverified; no cross-device sync by design |
+| Share-out | Plain-text native sheet from live detail in `chant_share.dart` and `chant_detail_screen.dart` | No public URL or delivery claim; every live-target action requires current visible authority | Payload, gateway, authority, enlarged-text, and golden tests | Native device destination behavior unverified |
+| Seed | Explicit stable chant IDs, read-only preflight, transaction ownership recheck, validation, orphan report | Source content is human supplied; seed may transform but never invent lyrics or context | 42 seed tests plus TypeScript | Only Arsenal JSON exists; no live preflight or remaining club write ran |
+| CI | Five GitHub Actions jobs in `.github/workflows/ci.yml` | Tests, rules, and analysis must fail closed before merge | Exact-head PR 9 CI previously green; deterministic analysis fixture in current worktree | Flutter version is unpinned; no format gate; remediation clean-runner result pending |
+| Native release | Flutter Android/iOS shells and plugin registration | Store signing and native compilation are separate release gates | Source inspection and prior attempted builds | Android uses debug signing; Android SDK unavailable locally; inherited iOS Firestore Swift sources failed compile |
 
 ## System overview and architecture
 
-Chants is a two-tier system with no separately hosted API server. A Flutter client talks directly to Firestore and Firebase Auth; a set of Cloud Functions reacts to Firestore writes and exposes four callables. There is no container, Terraform, queue, or scheduled job. Repository configuration and the historical archive identify one Firebase project and `europe-west2`; the live Firestore location and deployed topology were not inspected.
+The client is a repository-backed Flutter app with Riverpod dependency injection. There is no generated Riverpod code. `lib/app/providers.dart` declares repositories and derived providers by hand, which makes widget tests replace external boundaries cheaply.
 
-**The trust boundary is `firestore.rules`, not the client.** The Dart repositories are a convenience layer, and every constraint they appear to enforce is either also enforced in rules or is not enforced at all. This is the single most important thing to internalize when reviewing: a screen that refuses an action proves nothing.
+Firestore uses flat top-level collections. Chants denormalize sport, competition, Team, and optional Player IDs so Team queries and cross-club discovery read one document type. Interactions also use top-level collections and deterministic IDs. This avoids subcollection traversal and makes global moderation queries possible, at the cost of repeated referential fields that rules must validate.
 
-Authoritative versus derived:
+Cloud Functions own counter recomputation, moderation callables, rate-limit auto-hide, consent stamps, account deletion, and duplicate merge. Every exported Function is configured for `europe-west2` in `functions/src/index.ts`. Live deployment parity was not inspected.
 
-- **Authoritative:** `votes`, `commentLikes`, `comments`, `reports`, `commentReports`, `userReports` documents; `profiles` (except `userReportCount`); Firebase Auth records; `seed_data/*.json` for canonical content.
-- **Derived and recomputed:** `chants.upvotes`, `.downvotes`, `.score`, `.commentCount`; `comments.likeCount`; `profiles.userReportCount`. Each is recomputed from a full query over its source collection on every relevant trigger invocation.
-- **Derived and recomputed from pending reports:** `chants.flagCount`, `comments.flagCount`.
-- **Client-side cache stamps, never authoritative:** `votes.appliedValue`, `commentLikes.appliedValue`, written by the function so the client can decide whether a counter already includes its own contribution on a cold load.
+### Critical path: create and browse a chant
 
-### Critical path: casting a vote
+1. `SubmitChantScreen` validates retained form fields, parses optional evidence, and performs the advisory duplicate lookup.
+2. `ChantRepository.createChant` writes the Dart model to `chants`.
+3. `firestore.rules :: chants` checks authentication, ban and policy state, community status, content values, zero counters, origin, evidence, and timestamps.
+4. `onChantCreated` classifies account age and may auto-hide an over-limit submission.
+5. Team and Player queries project status through `lib/data/services/chant_browse.dart :: projectChants`; Discover performs a separate full visible fetch and shuffle.
 
-Tap in `VoteControls` → `OptimisticVoteState.applyVote` assigns the optimistic delta and sets busy → `VoteRepository.castVote` writes `votes/{uid}_{chantId}` with `SetOptions(merge: true)` (merge specifically so the function's `appliedValue` stamp survives a re-vote) → rules check auth, ban state, doc-ID shape, and that `value` is 1 or -1 → write lands → `onVoteWritten` fires → `handleVoteWritten` early-returns if `value` did not change, otherwise queries **every** vote for that chant, counts them, and commits `{upvotes, downvotes, score}` on the chant plus `appliedValue` on the vote in one `WriteBatch` → the `appliedValue` write re-triggers the function, which early-returns → the chant's snapshot stream reaches the widget → `didUpdateWidget` calls `reconcileServerScore`, which collapses the delta to zero if no write is in flight.
+Step 3 now enforces exact keys, types, bounds, Team and Player relationships, no direct media, and empty v1 variations. The 131-case rules suite includes hostile raw SDK payloads so the public parser boundary is tested independently of the form.
 
-Concurrency: a tap during an in-flight write sets `_hasPendingChange` and updates display state but does not fire a second write. On completion, `_writeSettledIntent` writes the settled `userVote` directly, never replaying the raw tap through `applyVote`. Failure: the catch block calls `revertWrite` with the pre-tap values and clears the pending latch; a `PERMISSION_DENIED` (the ban case) shows a specific message pointing at the suggestion box.
+### Critical path: vote and reconcile
 
-### Critical path: reporting content
+1. `VoteControls` records intent and displays an optimistic delta.
+2. `VoteRepository` creates, updates, or deletes `votes/{uid}_{chantId}`.
+3. `handleVoteWritten` queries all votes for that chant, computes absolute up, down, and score values, and batches the chant update with `appliedValue` on the vote.
+4. The live chant stream and private vote read reconcile the local state.
 
-Report sheet → repository writes `reports/{uid}_{chantId}` (or the comment/user equivalent) with `status: 'pending'` → rules check auth, ban state, that `reportedBy` equals the caller, that status is `pending`, and that the doc ID matches; for user reports, also that the target is not the caller → `onReportCreated` fires → a transaction reads the chant, increments `flagCount`, and if the new count reaches 3 while `hidden` is false, sets `hidden: true` and writes an audit entry → a second audit entry recording the report is written after the transaction → the chant disappears from every user-facing query because those queries all filter `hidden == false`.
+The absolute recompute is idempotent under duplicate trigger delivery. Both vote and like handlers now no-op before aggregate work when the parent is absent, so delayed deletion-trigger delivery does not recreate or retry a missing target.
 
-### Critical path: operator moderation
+### Critical path: report and moderate
 
-Moderation screen → `ModerationRepository` calls `onModerationAction` with `{action, targetId}` → the callable rejects unauthenticated calls, reads the caller's profile through the Admin SDK, and rejects any non-operator → dispatches on action → for `unhide`, sets `hidden: false` and `flagCount: 0`, then batch-updates every pending report on that chant to `dismissed` → writes an audit entry with the actor UID from auth context. For comment actions it additionally recomputes the parent chant's `commentCount`, because hiding a comment changes it.
+1. A deterministic report row is created by the appropriate repository.
+2. `recomputeReportCount` counts pending rows in a transaction and updates the target absolute `flagCount`.
+3. Crossing three pending reports auto-hides, never auto-removes.
+4. Operators call `onModerationAction`; the Function rechecks Firestore role, applies the action, resolves reports where required, and writes `auditLog`.
+5. Visible query streams remove the content. Discover distinguishes permission denial from transient failure, and detail actions require a current visible live value even when route text remains readable.
 
-### Critical path: sign-up
+### Critical path: save for matchday
 
-Sign-up form validates locally (display name length, password length and confirmation, DOB present and 17+, policy checkbox ticked) → `AuthRepository.signUp` creates the Auth user → `ProfileRepository.createProfile` writes the profile with `ageConfirmed17Plus: true` and no policy fields → `ModerationRepository.acceptPolicy` calls the callable, which stamps `acceptedPolicyVersion` and `acceptedPolicyAt` server-side → the app-level `_SignedInGate`, already watching the profile stream, sees a matching version and renders Home. The ordering matters and is commented: acceptance is recorded **before** navigating, so a brand-new user is never bounced to the acceptance gate on landing. During the window before the profile write lands, the gate shows a neutral loading screen rather than the gate, because `data(null)` is treated as "not yet known", not as "not accepted".
+1. A Team or detail screen requests a fresh server-visible set.
+2. `SavedSongbookService` projects only required public reading fields into a bounded snapshot.
+3. `SavedSongbookRepository` serializes the mutation and asks `FileSongbookStorage` for atomic replacement.
+4. Saved routes load only local data and expose refresh date and device-copy semantics.
 
-### Recovery paths
-
-There is no automated recovery. The manual ones are: `seed/reconcile.ts` for chant counter drift; a re-run of `seed/seed.ts` for content corrections (safe by construction); operator `unhide` for false-positive auto-hides; and the audit-log payload snapshot for reversing a bad `mergeChants`. Restoring a wrongly banned user, or repairing a partially-completed `deleteAccount`, requires the Firebase console or a direct Admin SDK session; neither has a runbook in the repository.
+No Firestore document, Function, rule, index, background task, or cloud sync is involved.
 
 ## Feature and subsystem implementation choices
 
-| Capability and choice with file/symbol | Why this approach | Alternatives considered | Tradeoff accepted | Evidence or ADR |
-|---|---|---|---|---|
-| Counters recomputed from ground truth, `functions/src/index.ts :: handleVoteWritten`, `:: handleCommentLikeWritten`, `:: recomputeCommentCount`, `:: handleUserReportCreated` | Cloud Functions triggers are at-least-once. Blind `FieldValue.increment` double-applied on duplicate delivery and drove a chant to `-11/-11` from a single `-1` vote in production. Recompute is idempotent under duplicate, out-of-order, and burst delivery, and self-heals any prior drift. | Blind increment (shipped first, failed). Dedup by event ID (would need a ledger collection). Distributed counter shards (solves throughput, not idempotency). | A full collection query per trigger invocation. Read cost grows linearly with votes per chant. | `docs/DECISIONS.md` 2026-07-02; `functions/test/on_vote_written.test.ts :: "IDEMPOTENCY"` and `:: "BURST"` |
-| Counter set and `appliedValue` stamp committed in one `WriteBatch`, `functions/src/index.ts:352-372` | Without atomicity a client can observe the new score before `appliedValue` lands, conclude its own vote is uncounted, and re-apply its optimistic delta. This produced the visible "-2 flash". | Two sequential writes (the original, buggy). Transaction (heavier, and the writes span two collections with no read dependency). | The write-back re-triggers the function; the no-op early return at line 335 is load-bearing and must never be removed. | Inline comment at `functions/src/index.ts:349-352`; `functions/test/on_vote_written.test.ts :: "NO-OP"` |
-| Optimistic delta assigned rather than accumulated, `lib/presentation/shared/vote_controls.dart :: OptimisticVoteState.deltaForTransition` | The displayed score must be a pure function of server truth plus a single-vote swing. An accumulator drifts across rapid taps and cannot be reconciled. | Running-sum accumulator (shipped first, drifted). Blocking the UI during the write (rejected as feeling frozen). | The state class is only correct together with the busy guard and the pending latch; all three must be reasoned about as one unit. | `docs/DECISIONS.md` 2026-06-29 and 2026-07-04; `test/presentation/shared/vote_controls_widget_test.dart` |
-| Pending-intent latch is a boolean, not a stored tap value, `:: _hasPendingChange` and `:: _writeSettledIntent` | Storing the raw tap value and replaying it through `applyVote` re-toggled the intent (a settled "off" flipped back "on"), producing a wrong follow-up write and a stale delta. Writing the already-settled `userVote` directly cannot re-toggle. | Queue every tap (N writes). Debounce (adds latency and still needs reconciliation). | A recursive follow-up path (`_writeSettledIntent` calls itself) that is correct but not obvious on first read. | `docs/DECISIONS.md` 2026-07-04, five red-then-green widget tests cited |
-| `appliedValue` stamp for cold-load reconciliation, `lib/data/models/vote.dart :: Vote.appliedValue` | On a cold load the client cannot tell from the score alone whether its stored vote is already counted. Comparing `appliedValue` to `value` answers exactly that, including the mid-flip case where the server has applied the *old* value. | Timestamp comparison (clock skew). Optimistically assuming counted (wrong right after voting). Assuming uncounted (wrong on every later load). | An extra field on every vote and like document that the client must never write; `toJson` deliberately omits it, but the rules' update blocklist does not cover it. | Class doc comments on `Vote` and `CommentLike`; `test/presentation/comments/like_reconciliation_test.dart` |
-| Comments read via manual `StreamSubscription`, `lib/presentation/comments/comment_section.dart :: _subscribeToComments` | The `StreamBuilder` version reconciled like state inside `build`, calling `setState` during build, and crashed the comment section whenever a like arrived mid-build. Moving reconciliation into the listener makes `build` pure. | Keep `StreamBuilder` and defer reconciliation with `addPostFrameCallback` (a workaround, not a fix). Move state to a Riverpod notifier (a larger refactor late in the cycle). | The subscription must handle chant swaps itself in `didUpdateWidget`, which `StreamBuilder` would have done automatically. | `docs/DECISIONS.md` 2026-07-04; `test/presentation/comments/comment_section_like_crash_test.dart` |
-| Chants in one flat collection with denormalized parent IDs, `lib/data/models/chant.dart` | Serves both drill-down (`where teamId ==`) and the cross-club shuffle (no parent constraint) with no joins and no `collectionGroup` queries, and gives a future search index one document type to read. | Subcollections under teams (harder shuffle, costly topology to undo). | Referential integrity between a chant and its team is nobody's job; nothing validates that `teamId` exists. | `docs/DECISIONS.md` 2026-05-24 |
-| Composite doc IDs for votes, likes, and all three report types | Makes one-per-user-per-target a property of the key space rather than a check that can be forgotten, and lets the rules assert the ID shape so the constraint holds against raw SDK writes. | Random IDs with a uniqueness query (racy). A composite-key index (Firestore has none). | Only two-part keys are expressible; any future third dimension breaks the scheme. | `firestore.rules:119`, `:137`, `:178`, `:196`, `:210`; `test_rules` "wrong doc ID" assertions |
-| Privileged fields pinned on create **and** blocked on update, `firestore.rules:57-75` | Create-pinning alone lets a user set the field correctly and then update it. Both halves are needed for the guard to mean anything. Explicitly recorded as a standing rule after a privilege-escalation bug was found in review. | Server-side profile creation via a callable (better, but adds a network hop to sign-up and a second failure mode). | Six field names are duplicated between the create clause and the update blocklist; adding a seventh privileged field means remembering both. | `docs/DECISIONS.md` 2026-05-25; `test_rules :: "denies create with role 'operator' (privilege escalation)"` |
-| Operator role in a profile document read via `get()`, not a custom claim | At founder-only volume one `get()` per operator action is cheap, and it avoids standing up a claim-setting Cloud Function and a token-refresh story. Two explicit migration triggers were written down at the time. | Custom auth claims (the documented future). | A signed-in chant create already costs **two** `get()` calls on the same profile document, because `isNotBanned()` and `hasAcceptedPolicy()` read it independently. The first migration trigger is closer than the log suggests. | `docs/DECISIONS.md` 2026-05-24; `firestore.rules:9-26` |
-| Query-shape enforcement instead of server-side filtering, `firestore.rules:79` | Firestore has no row filtering. A `list` is allowed only if the rule can hold for every document the query could return, so requiring the visibility predicate in the query is the only way to make hidden content unreachable. | Filtering client-side (leaks hidden content over the wire). Duplicating visible chants into a second collection (two writes, drift). | Every new chant query must remember both filters or fail wholesale, with an error that does not look like a visibility problem. Only `ChantRepository._visibleChants` centralizes it, and the moderation screen bypasses the repository entirely. | `AGENTS.md :: Gotchas`; `test_rules :: "chant list query boundary"` |
-| Automatic paths hide, never remove | Hiding is reversible at zero cost; removal is a judgement. Every automatic trigger (flag threshold, both rate limiters) therefore sets `hidden`, and only an explicit operator action sets `removed`. | Auto-remove above a higher threshold (rejected: brigadable). | Hidden-but-not-removed content accumulates and depends on an operator actually working the queue. | `docs/DECISIONS.md` 2026-05-25; consistent across `onReportCreated`, `onChantCreated`, `onCommentWritten` |
-| `unhide` resets `flagCount` to 0 and dismisses reports, `functions/src/index.ts:106-121` | Without the reset a cleared chant sits at the threshold and re-hides on the very next report, so an operator decision has no durable effect. | Leave the count and rely on operator memory (the original, and wrong). | A chant that is genuinely bad and repeatedly reported restarts its count after each unhide, so a mistaken unhide costs three more reports. | `docs/DECISIONS.md` Fix 4 |
-| User reports never auto-act, `functions/src/index.ts :: handleUserReportCreated` | Auto-hiding a chant is reversible and cheap. Auto-banning a person is neither, and is trivially brigadable. The count only surfaces the profile for human review. | Auto-ban at a threshold (rejected in the function's own header comment). | Requires an operator to actually watch the reported-users tab; there is no notification of any kind. | Header comment at `functions/src/index.ts:866-872` |
-| Policy version triplicated across three languages | Dart, TypeScript, and the Firestore rules language genuinely cannot share a constant. The mitigation chosen was to make the coupling loud: all three sites carry a comment naming the other two and warning that a bump re-gates every user. | Store the current version in a Firestore config document (adds a `get()` to the hottest rule path). Server-only check (leaves the client unable to show the gate). | Three-way manual sync. A missed site either locks everyone out or silently stops gating. | `lib/app/policy.dart`, `functions/src/index.ts:11-14`, `firestore.rules:22-26` |
-| Policy gate fails **open** on a profile read error, `lib/app/app.dart :: _SignedInGate` | A transient Firestore read failure must never lock a user out of an app they can otherwise read. Failing open is safe here specifically because the rules layer is still closed: an unaccepted user reaching Home cannot write anything. | Fail closed to the gate (a network blip becomes a hard lockout). Retry with backoff (more code, same outcome). | Depends on the rules staying closed. If a future rule change drops `hasAcceptedPolicy()`, this fail-open silently becomes a compliance hole. | Class doc comment on `_SignedInGate`; `test/app/app_gate_test.dart` |
-| DOB used but never stored, `lib/presentation/auth/sign_up_screen.dart` | Collect the minimum and persist the derived answer. Storing a date of birth turns a store-compliance checkbox into a personal-data retention obligation. | Store the DOB for future re-checks (rejected implicitly by the code and its comment). | The check cannot be re-run or audited later, and a client that skips the app can create a profile with `ageConfirmed17Plus: true` regardless. | Inline comment at the `createProfile` call; `lib/data/services/age.dart` |
-| Seed re-run updates an allowlist of content fields, `seed/seed.ts :: upsert`, `seed/chant_identity.ts :: upsertSeededChantInTransaction` | Correcting a lyric typo must not reset vote tallies or un-hide moderated content. An allowlist (`CONTENT_FIELDS_*`) makes counters and moderation state structurally unreachable from a reseed; a blocklist would need updating every time a field is added. The chant helper repeats system ownership and team membership inside the write transaction. | Full-document `set()` (destroys state). Blocklist (fails open on new fields). Non-transactional ownership check (races a concurrent claim). | Adding a genuinely new content field means remembering to add it to the constant, or reseeds silently skip it. | `docs/decisions/005-explicit-seeded-chant-identity.md`; `seed/chant_identity.test.ts` |
-| Seeded chants use explicit immutable IDs, `seed/chant_identity.ts`, `seed/validate.ts :: validateClub` | Mutable titles previously changed document identity and orphaned engagement. Explicit IDs keep rename and identity separate. Duplicate explicit IDs and duplicate normalized titles are both rejected. | Title-derived IDs (destructive rename). New random IDs for Arsenal (requires immediate dependent migration). | Source authors must choose and retain a club-prefixed ID. Unexpected live state stops the seed and needs a separate migration. | `docs/decisions/005-explicit-seeded-chant-identity.md`; `seed/chant_identity.test.ts`; `seed/validate.test.ts` |
-| Pure handlers extracted for testing, `functions/src/index.ts :: handleVoteWritten` etc. | Taking `Firestore` as a parameter lets four handlers be tested with a hand-written fake, so the whole functions suite runs in 17ms with no emulator and no credentials. | `firebase-functions-test` with the emulator (slower, needs Java). | The extracted handlers deliberately do not write audit entries, because `writeAuditEntry` uses the global `admin.firestore()`. Audit-writing is therefore untested. | Doc comments on `handleAcceptPolicy` and `handleUserReportCreated` |
-| Widget-level regression tests mandatory for stream-reconciled widgets | The `OptimisticVoteState` unit test asserted the snap-back **as expected behavior**, so it stayed green while voting was visibly broken on device. A unit test of the state class is explicitly not accepted as the guard. | Unit tests only (proven insufficient by this exact failure). | Widget tests are slower and more brittle. | `docs/DECISIONS.md` 2026-06-29, which records that the test was verified by reintroducing the bug |
-| Club chant order frozen per visit, `lib/presentation/browse/team_screen.dart :: _captureOrder` | Live re-sorting made a card jump out from under the user's finger the moment they voted on it. Freezing position while still streaming content is calmer and matches Discover. | Live re-sort (the original, felt unstable). No live scores (loses the point of voting). | Three parallel frozen-order fields to keep consistent, and a chant created mid-visit does not appear until re-entry. | `docs/DECISIONS.md` 2026-07-02 |
-| Dark theme only, forced | The near-black palette is the product identity; light mode is a separate design exercise, not a toggle. | Follow system theme (would require a second full palette). | Users with a light-mode preference get no accommodation. | `docs/DECISIONS.md` 2026-05-25; `lib/app/app.dart` sets `themeMode: ThemeMode.dark` |
+| Choice | Reason | Rejected alternative | Consequence and evidence |
+|---|---|---|---|
+| Songbook and Chant Lab split by stored status | Archive truth and creative popularity are different meanings | One blended feed | `docs/decisions/004-songbook-and-chant-lab.md`; browse projection tests |
+| Optional evidence at post, mandatory for user promotion | Fans may know a chant without having a clip; canonical status must remain factual | Require every submitter to find a link, or let votes verify | `docs/decisions/006-chant-provenance-and-evidence.md`; trust tests |
+| Explicit stable IDs for seeded chants | Title edits must not orphan interactions, saves, or future links | Title-derived IDs | `docs/decisions/005-explicit-seeded-chant-identity.md`; seed rename red guard |
+| Ground-truth counter recompute | At-least-once delivery made increments drift | Blind `FieldValue.increment` | Functions burst, duplicate, and no-op tests |
+| One direct reply level | Retention benefit without a deep moderation graph | Unlimited nesting or flat comments only | `docs/decisions/002-comment-reply-depth-and-retention.md`; reply rules and goldens |
+| Device-local saved snapshots | Stadium connectivity is unreliable; v1 does not need cloud sync complexity | Generic favorites or Firestore sync | `docs/decisions/003-saved-matchday-songbook.md`; persistence tests |
+| Native text share with no current URL | A useful chant can be sent now without a dead web destination | Guessed URL, direct social SDK, generated image | `docs/changes/2026-08-24-basic-share-out.md`; payload and gateway tests |
+| Fail-soft cached browse | Ordinary network errors should not erase readable chants | Clear all data on any error | Team, Player, and Discover transient-error tests | Permission denial separately removes Discover and live action authority |
+
+Decision 009 records the durable cross-service contract introduced by the remediation: exact parser-safe direct writes, server-owned reconciliation stamps, and separation of readable fallback from live action authority.
 
 ## Data, state, and external effects
 
-**Data model and ownership.** One Firestore database in `europe-west2`, fourteen top-level collections, no subcollections. Reference data (`sports`, `competitions`, `teams`, `players`) is owned by the seed pipeline and world-readable. Content (`chants`) is owned jointly: seeded rows are `status: 'canonical'` with `createdBy: 'system'`, user rows are `status: 'community'` with the author's UID. Interaction data (`votes`, `comments`, `commentLikes`) is owned by its author. Abuse reports (`reports`, `commentReports`, `userReports`) are insert-only from the client and status-updated only by the Admin SDK. `profiles` is owned by the user for `displayName` and by the server for everything privileged. `auditLog` is Admin-SDK-only, append-only, operator-readable. `feedback` is insert-only from the client with no update path at all.
+### Persistent state
 
-**State machines.** Two, both small and both enforced server-side.
+- **Firebase Auth:** account identity.
+- **Firestore reference data:** sports, competitions, Teams, Players.
+- **Firestore content:** chants, comments, replies through `parentCommentId`.
+- **Firestore interactions:** votes, likes, reports, blocks, feedback.
+- **Firestore authority and audit:** profiles and audit log.
+- **Device filesystem:** Saved Matchday Songbook JSON and deletion tombstones.
 
-*Chant visibility* is a pair of independent booleans, not an enum. `hidden` is set by three automatic paths (flag threshold, chant rate limit, comment rate limit for comments) and by operator `hide`; it is cleared only by operator `unhide`, which also zeroes `flagCount`. `removed` is set only by operator `remove` and **has no clearing path anywhere in the code**. A removed chant is permanently invisible to users and to the moderation console (which queries `hidden == true` only). *Chant status* is `community` on creation, pinned by rules, and moves to `canonical` only via operator `promote`, back via `demote`. `docs/DECISIONS.md` records that canonical is sticky: downvotes never demote, only an operator does.
+No media bytes are hosted. `storage.rules` denies all access. External evidence opens in YouTube or X; native share hands plain text to a user-selected operating-system destination.
 
-*Report status* is `pending` on creation, pinned by rules, moving to `reviewed` (operator hid or removed the target) or `dismissed` (operator unhid it). `userReports` have the same field but **no transition path exists**: nothing ever updates a user report's status, so the reported-users tab shows every report a profile has ever received forever.
+### Lifecycle and deletion
 
-**Transactions and concurrency.** Only two transactions exist in the entire system, both in `onReportCreated` and `onCommentReportCreated`, both wrapping a read-then-increment of `flagCount`. Everything else is either a single document write, a `WriteBatch` (used in the two counter handlers and in the two report-resolving helpers), or a sequence of independent awaits. Duplicate and reordered input is handled architecturally rather than transactionally: composite doc IDs make duplicate votes, likes, and reports impossible; recompute-from-ground-truth makes duplicate trigger delivery harmless for four of the six derived counters. The client-side concurrency control is the busy guard plus pending latch in `VoteControls` and the `busy` flag in `CommentLikeState`.
+Remote account deletion intentionally retains anonymized chants and comments as community content. It deletes votes, likes, reports, feedback, blocks, Auth, and profile. Local deletion stages and removes the matching UID's Saved Songbook. The user-facing dialog in `lib/presentation/home/home_screen.dart :: _showDeleteAccountDialog` states that retained and removed boundary.
 
-The two transactions have a defect: `writeAuditEntry` (and, in the comment case, `recomputeCommentCount`) is awaited **inside** the transaction callback while operating outside the transaction. Firestore retries the callback on contention, so a retry writes duplicate audit entries.
+Merge is a separate destructive content lifecycle. It rekeys child interactions sequentially, then deletes the source. Saved device snapshots and any future public links do not migrate. Its audit data cannot recreate every source field or reverse target dedup decisions.
 
-**External side effects.** The code has no non-Firebase payment, email, push, or other third-party integration. It does have meaningful external effects through Firebase: Auth creation, password-reset email requests and user deletion; Firestore reads and writes; Cloud Function execution; and Crashlytics and App Check telemetry. Trigger idempotency therefore matters, and the repository already contains both recompute-from-ground-truth handlers and `seed/reconcile.ts`. Timeouts are Firebase defaults throughout; nothing sets one explicitly.
+### Retention and export
 
-The one partial-failure path that matters most is `deleteAccount`: ten sequential steps with no transaction, no batch, and no progress marker. The Auth deletion is last and most early steps are individually idempotent, but a late failure after profile deletion can leave an authenticated user without the profile the app expects. There is no record of how far a failed attempt got and no guaranteed normal retry path.
-
-**Migrations and compatibility.** There is no migration framework, because Firestore is schemaless. Schema evolution has been handled three ways in this repo's history, all recorded in `docs/DECISIONS.md`:
-
-1. Defaulting in the deserializer. `Chant.fromJson` defaults every counter to 0, every boolean to false, and `variations` to `const []` when absent, null, or empty. The variations decision (2026-06-29) explicitly names this as the whole strategy: "the whole risk is deserialization safety on existing docs that lack the field. Defaulting to an empty list in fromJson and conditional rendering in the detail screen handles it without a migration."
-2. Defining fields at zero long before they are used. Counters existed from the first block even though voting shipped three blocks later, specifically to avoid a backfill.
-3. A one-off script for a genuine rename. `realOrParody` to `chantType` (2026-07-02) was applied across the Dart model, submit screen, functions, seed script, validation, seed data, and tests, and the stale key was stripped from every live chant document by a one-off migration. That script is not in the repository.
-
-Old and new client versions coexist only where the relevant model explicitly defaults missing fields. Counters, booleans, and chant variations have documented defaults; this is not a universal property of every model field. The one hard coupling is the policy version: a client with a newer `kCurrentPolicyVersion` than the deployed rules will gate its users behind a screen whose acceptance the rules then reject as stale, so **the rules and functions must be deployed before the app build that bumps the version**.
-
-**Retention, deletion, export, and restore.** Deletion is `deleteAccount`, covered above, with `userReports` as a known omission. There is **no data export path** of any kind, which is a GDPR/CCPA subject-access gap for a product with a UK-first audience. There is **no retention policy** on `auditLog` or `feedback`; both grow without bound. Firestore's own point-in-time recovery and scheduled backups are project-level settings that could not be verified from the repository. No backup or restore has been tested, and no evidence of one exists in the tree.
+No repository retention job exists for audit or feedback. No user-data export exists. No backup or restore configuration is checked in. Those are operational and regulatory gaps, not hidden implementation features.
 
 ## Invariants and failure behavior
 
-| Invariant or failure condition | Enforcement point | Verification |
+| Invariant | Current enforcement | Review result |
 |---|---|---|
-| One vote per user per chant | Doc ID `{uid}_{chantId}` plus `firestore.rules:119` asserting the ID shape | `test_rules :: "rejects create with wrong doc ID"` (**not executed here**) |
-| Vote value is exactly 1 or -1 | `firestore.rules:120` and `:124` on both create and update | `test_rules :: "rejects create with value other than 1 or -1"` |
-| One like per user per comment; like value always 1 | Doc ID plus `firestore.rules:178-179` | `test_rules` commentLikes assertions |
-| One report per reporter per target, all three report types | Doc ID plus `firestore.rules:137`, `:196`, `:210` | `test_rules :: "denies a second report from the same reporter against the same user"` |
-| A user cannot report themselves | `firestore.rules:208` | `test_rules :: "denies reporting yourself"` |
-| A user cannot become an operator | `role` pinned to `'user'` on create and in the update blocklist, `firestore.rules:60` and `:73` | `test_rules :: "denies create with role 'operator' (privilege escalation)"` and `:: "denies owner changing own role"` |
-| A banned user cannot unban themselves | `banned` pinned false on create, in the update blocklist | `test_rules :: "denies banned user setting own banned to false (Fix 1)"` |
-| A banned user cannot create chants, comments, votes, or reports | `isNotBanned()` on those create rules; **deliberately absent** from feedback create | `test_rules :: describe("ban enforcement")`, 6 assertions |
-| A user cannot post without accepting the current policy | `hasAcceptedPolicy()` on chant and comment create, `firestore.rules:82` and `:151` | `test_rules :: describe("policy acceptance gate")`, 5 assertions |
-| Policy acceptance cannot be forged by the client | The two fields must be absent on create and are in the update blocklist; only `acceptPolicy` (Admin SDK) writes them | `test_rules :: "denies create with acceptedPolicyVersion set directly"`; `functions/test/accept_policy.test.ts` |
-| A user cannot inflate or erase their own report count | `userReportCount` pinned to 0 on create, in the update blocklist | `test_rules :: "denies create with userReportCount != 0"` and `:: "denies owner updating own userReportCount"` |
-| A client cannot write any chant counter, flag, or visibility field | Pinned to 0/false on create, blocklisted on author update, `firestore.rules:85-91` and `:106-108` | `test_rules :: "rejects create if counters are not zero"`, `:: "denies author changing counters"` |
-| An author cannot self-promote a chant to canonical | `status` pinned to `'community'` on create and blocklisted on author update | `test_rules :: "denies author self-promoting their own chant"` |
-| A chant query without both visibility filters is rejected entirely | Firestore query-shape evaluation against `firestore.rules:79` | `test_rules :: "denies list query WITHOUT hidden/removed filters"` and the partial-filter case |
-| Hidden or removed content is unreadable by non-operators | `isVisible(resource) \|\| isOperator()` on chants and comments | `test_rules :: "denies public read of hidden chants"` |
-| Clients cannot write the audit log at all | `firestore.rules:143`, `allow write: if false` | `test_rules :: "denies any client write"` |
-| Feedback is insert-only and unreadable by other users | `firestore.rules:215-221` | `test_rules :: "denies user reading another's feedback"`, `:: "denies update on feedback"` |
-| A comment author can only soft-delete, never edit | `hasOnly(['removed'])` plus `removed == true`, `firestore.rules:164-167` | `test_rules` comment update assertions |
-| Vote counters converge under duplicate trigger delivery | Recompute from ground truth in `handleVoteWritten` | `functions/test/on_vote_written.test.ts :: "IDEMPOTENCY"`, executed here, passing |
-| Vote counters converge under a burst of rapid flips | Same | `functions/test/on_vote_written.test.ts :: "BURST"`, executed here, passing |
-| The `appliedValue` write-back does not loop | Early return when `upDelta` and `downDelta` are both 0, `functions/src/index.ts:335` | `functions/test/on_vote_written.test.ts :: "NO-OP: re-trigger stages NOTHING and commits nothing"` |
-| Like counters converge; a like on a deleted comment is a no-op | Recompute plus an existence guard in `handleCommentLikeWritten` | `functions/test/on_comment_like_written.test.ts :: "GUARD: comment doc missing"`, executed here, passing |
-| A user report against a deleted profile does not error | Existence guard in `handleUserReportCreated` | `functions/test/on_user_report_created.test.ts :: "GUARD"`, executed here, passing |
-| `acceptPolicy` on a missing profile reports not-accepted rather than creating one | `handleAcceptPolicy` returns `{accepted:false}`, the callable throws `not-found` | `functions/test/accept_policy.test.ts :: "missing profile: makes no write"` |
-| Repeat policy acceptance is safe | Unconditional re-stamp | `functions/test/accept_policy.test.ts :: "repeat acceptance is safe"` |
-| A reseed never resets chant counters or moderation state | Content-field allowlist in `seed/chant_identity.ts :: upsertSeededChantInTransaction` | `seed/chant_identity.test.ts` proves a safe update excludes non-allowlisted `score`, executed here, passing |
-| Duplicate player slugs, explicit chant IDs, and normalized chant titles are rejected before club writes | `seed/validate.ts :: validateClub` | `seed/validate.test.ts`, executed here, passing |
-| A title change preserves seeded chant identity and an unsafe target cannot be overwritten | Explicit `chants[].id`, preflight, and transaction-time ownership check | `seed/chant_identity.test.ts`, including red-check evidence in `docs/changes/2026-08-21-stable-seeded-chant-identity.md` |
-| A player chant must name a real squad member; a non-player chant must have a null player | `seed/validate.ts` bidirectional check | `seed/validate.test.ts`, 3 assertions, passing |
-| A stream error on the profile read never locks a user out | `_SignedInGate` error branch renders Home | `test/app/app_gate_test.dart`, executed here, passing |
-| A brand-new user is never flashed the acceptance gate before their profile lands | `data(null)` and `loading` both render a neutral screen | `test/app/app_gate_test.dart` |
-| Rapid vote taps produce at most two writes and settle on the last intent | Busy guard plus boolean latch in `_VoteControlsState` | `test/presentation/shared/vote_controls_widget_test.dart`, executed here, passing |
-| A like arriving mid-build does not crash the comment section | Reconciliation moved out of `build` into the stream listener | `test/presentation/comments/comment_section_like_crash_test.dart`, executed here, passing |
-| `flagCount` converges under duplicate and racing trigger delivery | Transactional query of pending reports plus an absolute target write | `functions/test/on_report_written.test.ts`; duplicate delivery proven |
-| Chant length limits hold for the lifetime of the document | `validChantContent` applies on create and author update | 106-pass emulator suite includes create/update boundaries |
-| A raw SDK cannot backdate a new rate-limited row outside the one-hour query | `validRecentClientTimestamp` on profile, chant, comment, vote, and like creates | Rules suite executed; full rate-trigger integration remains absent |
-| Account classification is monotonic in account age | `isNewAccount(accountAgeMs)` has no submission-count input | Functions classification test |
-| Chant merge preserves its full comment/reply thread | Every source comment receives the target `chantId` before source deletion | TypeScript compile; end-to-end callable test still absent |
-| `subjectTag`, `chantType`, and `mediaType` use supported values | `validChantContent` membership checks | Rules suite executed |
-| Report transaction retries do not write duplicate audit entries | Audit writes occur after the counter transaction and only on creates | Source inspection; audit store still lacks an integration test |
+| A direct client cannot set role, ban, consent, age, or report-count authority | Exact profile schema and update allowlist in rules | PASS |
+| A rule-valid public document must deserialize in the shipped Dart client | Exact user chant keys, types, bounds, hierarchy, media, and variations checks | PASS, 131-case hostile rules suite |
+| Function-owned reconciliation fields cannot be client-authored | Vote and like create omit `appliedValue`; update may change only `value` | PASS |
+| Hidden or removed content disappears from actionable live browse | Query removal plus permission-denied, absence, hidden, and removed Discover handling | PASS |
+| External sharing uses a current visible chant | All live-target actions require active, error-free, current visible data | PASS |
+| Duplicate trigger delivery converges | Absolute counter recomputes and transactional report counts | PASS |
+| A child trigger tolerates a missing parent | Vote and comment-like parent guards run before aggregate work | PASS |
+| One reply level only | `validReplyParent` checks parent visibility, Team relation, and parent depth | PASS |
+| Failed network reads do not escape as unhandled UI errors | Like hydration retries after contained failure; failed Undo shows recovery copy | PASS in focused widget tests |
+| Launch viewport and enlarged text do not overflow | Empty comments pass at 390 by 844 and 1.8x; stale Player golden inspected | PASS for remediated states |
+| Saved content is UID-isolated and bounded | Access callback, encoded file name, schema, count, and byte bounds | PASS in repository tests |
+| Stable seed identity survives title edits | Explicit source ID plus preflight and transaction recheck | PASS locally; live preflight unverified |
+| A green analysis job means analysis ran | CI writes secret or deterministic example, then always invokes analysis | PASS by workflow inspection; clean-runner proof pending |
+| Store release uses production signing | Android release explicitly selects debug signing | **FAIL, release gate** |
 
 ## Security and privacy
 
-**Identity and authorization.** Firebase Auth, email and password only. Authorization is entirely in `firestore.rules` for direct data access and in explicit Admin-SDK role checks inside the four callables. Every callable rejects unauthenticated calls first (`HttpsError("unauthenticated")`), then derives the acting UID from `request.auth.uid`, never from a parameter. `onModerationAction` and `mergeChants` additionally re-read the caller's profile through the Admin SDK to confirm `role == 'operator'`; they do not trust a client-side operator flag or a claim.
+Firestore rules deny unmatched paths. Privileged client writes are constrained, public content visibility is rule-enforced, private interaction reads are owner/operator only, and callable operators are reauthorized server-side.
 
-**Tenant isolation.** There are no tenants. The isolation boundary is per-user ownership, enforced by the `request.auth.uid == userId` pattern on profiles, `resource.data.userId == request.auth.uid` on votes, likes, and comment updates, and the composite doc-ID assertions. Verified by the `test_rules` suite structure, which seeds privileged state through `withSecurityRulesDisabled` and then asserts from an ordinary authenticated context, so it tests what a real client can reach rather than what the harness can reach.
+Direct-write structural validation now matches the shipped client capability. Chants, comments, votes, likes, reports, user reports, and feedback reject unknown or wrongly typed fields; chant references and v1 media and variations are constrained; and server reconciliation stamps are not client-owned. The remaining abuse gap is request velocity for reports and feedback, not arbitrary stored shape.
 
-**Input and output trust boundaries.** Server-side validation covers chant content lengths on create and update, supported subject/type/media values, comment body and reply relationships, feedback/display-name lengths, vote/like values, report status and target existence, deterministic IDs, and recent timestamps on rate-limited creates. Team/player/sport/competition referential integrity is still incomplete: `teamId` is type/non-empty checked, but those reference IDs are not all proven with `exists()`. Output encoding is not a concern in a Flutter client (no HTML rendering, `WebView`, or `dart:html`); user content renders as Flutter `Text`.
+App Check is activated non-blockingly in `lib/main.dart`, with debug providers in debug and platform attestation in release. Whether enforcement is enabled in Firebase is unverified. Client Firebase identifiers are gitignored configuration, not Admin credentials. Seed Admin credentials are also gitignored; no credential file was read.
 
-**Sensitive data.** Deliberately minimal. Collected: email and password (held by Firebase Auth, never in Firestore), display name, and a date of birth that is used once and never persisted. Derived and stored: `ageConfirmed17Plus`, `acceptedPolicyVersion`, `acceptedPolicyAt`. `docs/DECISIONS.md` records Crashlytics as adding a crash-diagnostics line to the privacy declaration.
+The app stores display names on comments and block rows. DOB is not stored. Saved Songbook files contain public reading snapshots scoped by UID but are not encrypted by application code. Protection at rest relies on the mobile operating system's application container.
 
-Two client-side logging concerns. `lib/presentation/auth/sign_in_screen.dart` and `sign_up_screen.dart` both `debugPrint` the full `FirebaseAuthException` including code and message on failure, and `lib/main.dart` debug-prints App Check activation state. `debugPrint` is compiled out of release builds by the Flutter framework's default `debugPrint` implementation only in the sense that it still runs; it is not stripped. These lines log auth error metadata, not credentials, so the exposure is low, but they should be gated on `kDebugMode`.
-
-The broad read-permission finding is resolved. Profiles, votes, and comment likes are owner/operator-readable. Public comment display names remain denormalized on comment documents, so the app does not need public profile reads. Directional block rows are readable only by the blocker.
-
-**Secrets and external services.** The current setup gitignores `lib/firebase_options.dart`, `android/app/google-services.json`, and `ios/Runner/GoogleService-Info.plist` (`.gitignore:70-74`). Those files contain Firebase client configuration and public project identifiers, not Admin credentials; their safety depends on Security Rules, App Check, and API-key restrictions. Actual secrets such as `serviceAccountKey.json`, `*-firebase-adminsdk-*.json`, and `.env*` are also gitignored. `lib/firebase_options.dart.example` is the checked-in template. The seed and reconcile scripts require an Admin SDK service account key, held only on the operator's machine; no rotation procedure is documented. `git log --diff-filter=A` was not audited for a historically committed credential.
-
-**Public and admin endpoints, abuse cases.** There are no HTTP endpoints. The four callables require auth; two additionally require the operator role. Abuse controls include App Check, ban enforcement, structural report dedup, target-existence checks, reversible user blocking, and two soft rate limiters whose client timestamps can no longer be backdated outside the query. Remaining gaps: report and feedback submission are not rate-limited, there is no CAPTCHA or email verification, and three colluding accounts can still hide content until an operator reviews it.
-
-**Supply chain.** Four lockfiles: `pubspec.lock`, `functions/package-lock.json`, `seed/package-lock.json`, `test_rules/package-lock.json`. All are committed. CI uses `npm ci` (lockfile-exact) for all three Node projects. No SBOM, no dependency scanning, no Dependabot or Renovate configuration, and no `npm audit` step in CI. Build and release authority is entirely manual: `firebase deploy` from an operator machine, and store builds from Xcode/Gradle. There is no signed or reproducible release path, and `android/app/build.gradle.kts` still signs release builds with the debug keystore per the unresolved Flutter scaffold TODO.
+No current dependency advisory conclusion is claimed. The audit request was blocked before completion because separate disclosure authorization was absent.
 
 ## Dependency, platform, and infrastructure inventory
 
-Versions below are read from manifests and lockfiles in the tree at this baseline. No outdated or advisory check was executed: `flutter pub outdated` and `npm audit` were **not run**, and no network calls to advisory databases were made while producing this document. The "Freshness/security evidence" column states that honestly rather than implying a check that did not happen.
+| Surface | Declared dependency or config | Role | Current evidence and risk |
+|---|---|---|---|
+| Flutter/Dart | `pubspec.yaml`, SDK `^3.10.8` | Client runtime | Verified on Flutter 3.44.8 and Dart 3.12.2; CI uses movable stable |
+| Riverpod | `flutter_riverpod ^2.6.1` | DI and async state | Hand-written providers; codegen packages are unused |
+| Firebase client | core, auth, Firestore, Functions, App Check, Crashlytics | Auth, data, callable, integrity, errors | Native compilation incomplete; live enforcement unverified |
+| `url_launcher ^6.3.2` | External evidence | Opens normalized provider URL | Failure translated in UI tests |
+| `path_provider ^2.1.6` | Local Songbook | Application-support directory | Physical lifecycle unverified |
+| `share_plus ^11.1.0` | Native share sheet | Plain-text operating-system handoff | Gateway and widgets pass; native compile/device gate pending |
+| Functions Node 20 | `firebase-admin ^13`, `firebase-functions ^6.3` | Server authority | 36 local tests pass |
+| Seed Node | `firebase-admin ^13` | Manual Admin writes | 42 tests and `tsc --noEmit` pass |
+| Rules test | Firebase emulator, Java in CI and local Homebrew runtime | Authorization assertions | 131 passed locally; remediation clean-runner result pending |
+| Android Gradle | AGP 8.11.1, Kotlin 2.2.20 | Android build | User has unstaged Crashlytics plugin changes; release signs debug |
+| iOS | deployment target 15.0, CocoaPods scaffold | iOS build | Prior simulator compilation failed in inherited Cloud Firestore Swift package sources |
 
-| Surface | Manifest/config/IaC path | Pinned or resolved version | Role and compatibility constraint | Freshness/security evidence with date | Decision |
-|---|---|---|---|---|---|
-| Dart SDK | `pubspec.yaml :: environment.sdk` | `^3.10.8` (running 3.12.2) | Language and toolchain floor for the whole client | Toolchain version read from `flutter --version`, 2026-08-17. No advisory check run. | Keep |
-| Flutter | `.github/workflows/ci.yml` uses `channel: stable`, unpinned | local 3.44.8 | UI framework | Version observed locally 2026-08-17 | **Investigate.** CI tracks `stable` with no version pin, so a Flutter release can break CI with no repo change. Pin the channel to a version. |
-| firebase_core | `pubspec.yaml`, `pubspec.lock` | `^4.9.0` | Firebase initialization; gates the versions of every other Firebase plugin | Lockfile read 2026-08-17. No advisory check run. | Keep |
-| firebase_auth | `pubspec.yaml` | `^6.5.1` | All identity | Same | Keep |
-| cloud_firestore | `pubspec.yaml` | `^6.4.1` | All data access and the rules contract | Same | Keep |
-| cloud_functions | `pubspec.yaml` | `^6.3.1` | Callable invocation, region-pinned to `europe-west2` in `ModerationRepository` | Same | Keep |
-| firebase_app_check | `pubspec.yaml` | `^0.4.4+1` | Client attestation. **Pre-1.0**, so minor bumps may break | Same | Keep, watch. A 0.x dependency on an abuse control is worth pinning exactly. |
-| firebase_crashlytics | `pubspec.yaml` | `^5.2.2` | Crash reporting. Requires the Android Gradle plugin, which is **uncommitted** | Same | Keep, and commit the Gradle wiring. |
-| flutter_riverpod | `pubspec.yaml` | `^2.6.1` | State management | Same | Keep |
-| riverpod_annotation / riverpod_generator / build_runner / custom_lint / riverpod_lint | `pubspec.yaml` | `^2.6.1` / `^2.6.3` / `^2.4.14` / `^0.7.5` / `^2.6.3` | Declared for code generation | Grepped the tree 2026-08-17: **no annotated providers, no `.g.dart` files** | **Investigate / remove.** Five dev dependencies remain for a codegen pipeline that is not used. |
-| mockito | `pubspec.yaml` | `^5.4.5` | Test doubles in widget tests | Same | Keep |
-| flutter_lints | `pubspec.yaml` | `^6.0.0` | Lint ruleset via `analysis_options.yaml`; no custom rules are enabled | Same | Keep. Consider enabling project-specific rules; the file is entirely default. |
-| flutter_launcher_icons / flutter_native_splash | `pubspec.yaml` | `^0.14.3` / `^2.4.6` | Build-time asset generation for icons and splash | Same | Keep |
-| Node runtime (functions) | `functions/package.json :: engines.node` | `20` | Cloud Functions runtime. Firebase deprecates Node runtimes on a schedule | Declared version read 2026-08-17. **Deprecation status not checked against Firebase's runtime support page.** | **Investigate.** Confirm Node 20 is still a supported Functions runtime before the next deploy. |
-| firebase-functions | `functions/package.json` | `^6.3.0` | v2 trigger and callable API | Lockfile read 2026-08-17 | Keep |
-| firebase-admin | `functions/package.json`, `seed/package.json` | `^13.0.0` in both | Server-side Firestore and Auth access | Same | Keep |
-| TypeScript | `functions/`, `seed/`, `test_rules/` | `^5.7.0` in all three | Compilation for all Node code | Same | Keep |
-| mocha | all three Node projects | `^11.0.0` | Test runner | Same | Keep |
-| ts-node | `functions/`, `seed/`, `test_rules/` | `^10.9.0` | Direct TS execution for seed and rules tests | Same | Keep |
-| firebase-functions-test | `functions/package.json` | `^3.4.0` | Declared but **not used**: the suite uses hand-written fakes | Grepped `functions/test/` 2026-08-17, no import found | **Remove** or start using it. |
-| ts-mocha | `functions/package.json` | `^11.1.0` | Declared but unused: `npm test` compiles with `tsc` then runs plain mocha | Read `functions/package.json :: scripts.test` 2026-08-17 | **Remove** |
-| @firebase/rules-unit-testing | `test_rules/package.json` | `^4.0.0` | The rules harness | Lockfile read 2026-08-17 | Keep |
-| firebase-tools | `.github/workflows/ci.yml` | `@15`, installed globally in CI only | Runs the Firestore emulator for the rules job | Commit `b0bf2e2` records that Java 21 is required by this version | Keep |
-| Java | `.github/workflows/ci.yml :: rules`, local Homebrew OpenJDK | Temurin 21 in CI; Homebrew JDK locally | Firestore emulator runtime | CI config and successful local emulator run checked 2026-08-17 | Keep. The local run needs `JAVA_HOME` pointed at Homebrew OpenJDK. |
-| Android Gradle Plugin | `android/settings.gradle.kts` | `8.11.1` | Android build | Read 2026-08-17 | Keep |
-| Kotlin | `android/settings.gradle.kts` | `2.2.20` | Android build | Same | Keep |
-| google-services plugin | `android/settings.gradle.kts` | `4.3.15` | Firebase config injection | Same | Keep |
-| firebase-crashlytics Gradle plugin | `android/settings.gradle.kts` | `3.0.7` | Crashlytics symbol upload | **Uncommitted working-tree change** | **Commit it.** Until then it is not part of any reproducible build. |
-| Java compatibility (Android) | `android/app/build.gradle.kts` | source/target/jvmTarget 17 | Android toolchain | Same | Keep |
-| Android signing | `android/app/build.gradle.kts :: buildTypes.release` | **debug keystore** | Release signing | Scaffold TODO still present, read 2026-08-17 | **Blocker for release.** Not tracked in `docs/ROADMAP.md`. |
-| Application ID / namespace | `android/app/build.gradle.kts` | `com.chants.chants` | Store identity | Read 2026-08-17 | Keep |
-| Firebase project | `firebase.json` | `chants-f95b4`, region `europe-west2` | The only deployment target | Project ID read from `firebase.json`; **live project not inspected** | Keep |
-| Firestore indexes | `firestore.indexes.json` | two composite indexes | `teamId+hidden+removed+score desc` for club ranking, `status+hidden+removed+score desc` for promotion candidates | File read 2026-08-17; **build state in the live project not verified** | Keep |
-| Emulator config | `firebase.json :: emulators` | auth 9099, firestore 8080, storage 9199, UI 4000 | Local rules testing | Read 2026-08-17 | Keep |
-| GitHub Actions | `.github/workflows/ci.yml` | `actions/checkout@v4`, `subosito/flutter-action@v2`, `actions/setup-node@v4`, `actions/setup-java@v4` | CI | All major-version tags, read 2026-08-17. No SHA pinning. | Keep, but note that major-tag pinning on a third-party action (`subosito/flutter-action`) is a supply-chain trust decision. |
-| Terraform / IaC | none | n/a | No infrastructure as code exists | Confirmed by tree search 2026-08-17 | Accept. All Firebase project configuration is dashboard state except rules, indexes, and functions. |
+Removal and update ownership is Andrew's. Dependency freshness and advisories need a separately authorized maintenance pass before release.
 
 ## Performance, scale, and cost
 
-**Expected workload.** Not documented anywhere in the repository. Inferable from the seed: one competition, twenty clubs, roughly five to twelve chants each, so on the order of 100 to 250 chants at full seed. `docs/DECISIONS.md` sizes several decisions against "~100 chants" and "at most ~30 chants per team". `docs/ROADMAP.md` describes a closed beta of one to two weeks before public promotion, with no user-count target. Concurrency is unbounded in principle and expected to be tiny in practice.
+No production metrics or cost exports were inspected. All scale statements below are code-derived.
 
-**Potential limiting resources.** Firestore reads dominate. Four specific hot spots:
+- `ChantRepository.discoveryChants()` reads every visible chant, then shuffles client-side. Cost and latency grow linearly with the full archive.
+- Vote and like Functions query every interaction row for the parent on each write. Correctness is strong; write amplification grows with popularity.
+- Report transactions query every report row for the target. The deterministic reporter-target key bounds one account's contribution, not the number of accounts.
+- `mergeChants` and `deleteAccount` perform sequential per-document operations and can exceed callable limits at volume.
+- Saved Songbook codec work is bounded at 500 unique chants and 2 MiB. The full suite measured a 500-chant encode/decode workload around 98 ms on this workstation, but timing is not a CI correctness gate.
 
-1. `ChantRepository.discoveryChants()` fetches **every visible chant with no limit** on every home-screen load and every shuffle tap, then displays 20. `docs/DECISIONS.md` records this with an explicit revisit trigger ("paginate or add a random-seed field when volume outgrows a single fetch"), which is the right instrumentation of a known shortcut.
-2. `DiscoverySection` then opens a **live per-document stream for each of the 20 displayed cards**, on top of the initial bulk fetch. `docs/DECISIONS.md` 2026-07-02 justifies this ("per-card streams are fine at the 20-card cap") and it is the fix for a real staleness bug, but it means the home screen holds 21 concurrent listeners.
-3. Every counter recompute is a full collection query. A chant with 10,000 votes costs a 10,000-document read **per vote cast**, and this is the deliberate price of idempotency. There is no threshold at which the code switches strategy and no monitoring that would reveal the crossover.
-4. `deleteAccount` is sequential per document across seven collections inside a callable with a 60-second default timeout.
-
-Search is client-side over the already-fetched Discover list, so it neither costs reads nor searches the full archive. `docs/DECISIONS.md` defers real full-text search to an external index (Algolia or Typesense via the Firebase extension) and notes that it is additive rather than a rewrite, so deferring costs nothing.
-
-**Measured evidence.** **Not measured.** No benchmark, no profile, no query-plan capture, no Firestore usage export, and no bill appears anywhere in the repository. No scalability claim in this document is derived from anything but code inspection, and none should be treated as validated.
-
-**Budget.** No latency, throughput, or storage target is defined. The only cost control recorded is `docs/DECISIONS.md` C15: escalating Firebase budget alerts with a billing kill-switch as a last-resort circuit breaker, with the explicit note that tripping it takes the app offline by design and that thresholds should be retuned with real cost-per-user data after launch. Whether those alerts exist in the live project **could not be verified**; they are dashboard state.
+Before public volume, establish query/read budgets for Discover and counters, Function error alerts, and a resumable destructive-work model.
 
 ## Verification performed
 
-The milestone baseline commands ran from the repository root on macOS (Darwin 25.5.0), 2026-08-17, on Flutter 3.44.8 / Dart 3.12.2 / Node v20.20.2. The stable-identity seed suite and compiler were rerun on 2026-08-21; its red-check and structural comparison are recorded in `docs/changes/2026-08-21-stable-seeded-chant-identity.md`.
-
-| Command/scenario | Target/config/environment | Result | Artifact/evidence checked |
+| Command or probe | Environment | Result | Claim supported |
 |---|---|---|---|
-| `flutter test` | full `test/` tree, no Firebase config | **PASS, 183 tests** | Complete suite, including both goldens and the bounded golden-comparator guard. One expected `[core/no-app]` debug line remains in the offline sign-up test |
-| `cd functions && npm test` | `tsconfig.test.json` compile plus mocha over `lib-test/test/**` | **PASS, 26 tests** | Includes report-counter duplicate delivery/status changes, monotonic account classification, and audited unban behavior |
-| `cd seed && npm test` | mocha over `seed/*.test.ts` via ts-node | **PASS, 42 tests** | Stable identity, read-only execution order and failure, collision preflight, transaction-time ownership, actual Arsenal source validation, ID and normalized-title validation, and counter reconciliation |
-| Firestore emulator plus `cd test_rules && npm test` | Firestore emulator on 127.0.0.1:8080, Homebrew OpenJDK | **PASS, 106 assertions** | Includes reply depth/relationship failures, blocks in both directions, private reads, and interaction target existence |
-| `flutter analyze` | whole tree with a populated local `build/` | 115 issues, **all in generated `build/ios/SourcePackages/` content** | Full-tree analyze is not clean in this working tree; filtering diagnostic text is not a valid gate |
-| `flutter analyze lib test` | project source and tests | **PASS, no issues** | Clean project-code analysis. A future analyzer cleanup should exclude generated `build/**` paths explicitly |
-| `git status --short`, `git diff` | working tree vs `f780628` | 3 tracked files modified, 2 untracked paths | Crashlytics Gradle plugin (2 files), 5 transitive lockfile bumps, `AGENTS.md`, `.codex/` |
-| `git log --oneline -20` | branch history | reviewed | Confirms CI, compliance, and hardening commit sequence matches `docs/ROADMAP.md` |
-| Source read of `firestore.rules` | 330 lines, all 15 collection blocks | reviewed and executed | Every changed boundary has emulator assertions |
-| Source read of `functions/src/index.ts` | 1,105 lines, 11 exports plus extracted handlers | reviewed and compiled | Source export count established; live deployment not inspected |
-| Focused unban verification | `functions/test/user_ban_action.test.ts` plus client repository and operator UI inspection | **PASS** | Confirms the server writes `banned: false`, records the operator audit payload, and rejects a missing profile |
-| Grep for `ChantMatcher` outside its own file and test | whole tree | **zero** | Confirms the matcher is unwired |
-| Grep for `serverTimestamp` in `lib/` | whole client | **one match** (`comment_repository.dart :: submitCommentReport`) | Confirms every other client write uses a device clock |
-| Grep for `.g.dart` and `@riverpod` | whole tree | **zero** | Confirms the codegen dependencies are vestigial; canonical agent guidance was corrected |
-| JSON inspection of `seed_data/clubs/arsenal.json` | the only seed club file | 27 squad members, 12 chants, 1 with variations | Confirms seed scope |
+| `flutter test` | Local macOS, Flutter 3.44.8 | PASS, 282 | Current remediated Flutter suite |
+| `flutter analyze lib test` | Same | PASS | Project Dart source has no analyzer issue |
+| `flutter analyze` | Same, with ignored prior native-build outputs present | FAIL outside first-party source | Analyzer traversed `build/ios/SourcePackages` and reported third-party package example errors; clean-runner gate pending |
+| `cd functions && npm test` | Node 20.20.2 | PASS, 36 | Extracted handlers compile and pass, including missing vote parent |
+| `cd seed && npm test` | Node 20.20.2 | PASS, 42 | Seed identity, plan, validation, reconciliation |
+| `cd seed && npx tsc --noEmit` | Node 20.20.2 | PASS | Full seed TypeScript type check |
+| `git diff --check main...HEAD` | Git | PASS | Combined committed diff has no whitespace error |
+| `firebase emulators:exec --only firestore ...` | Local OpenJDK 26, emulator 1.21.0 | PASS, 131 | Current shapes accepted and hostile raw writes denied |
+| Discover and detail authority tests | Local Flutter renderer | PASS | Denial removes stale card; all live-target actions wait for current authority |
+| comments resilience tests | Local Flutter renderer | PASS, 8 focused | Like-read retry, Undo failure, and 1.8x empty state are contained |
+| submit tests and two goldens | Local Flutter renderer | PASS, 10 focused plus 2 goldens | Stale and failed Player data recover without assertion or clipping |
+| `dart format --output=none --set-exit-if-changed lib test` | Dart 3.12.2 | FAIL, 56 files would change | Formatting is not normalized or gated; output mode preserved files |
+| exact-head draft PR 9 CI | GitHub Actions | Previously PASS: Flutter, analyze, Functions, seed, 117 rules | Clean Linux evidence for stack base; remediation CI still pending |
 
-**How new or changed gates were proven capable of failing.** The reply-order widget guard was run against a deliberate temporary production mutation that reversed reply chronology; it failed on the expected vertical-order assertion. After restoring oldest-first sorting, the same named test passed. Existing vote guards retain their historical red/green evidence in `docs/DECISIONS.md`.
+The earlier review probes supplied red evidence for stale Discover retention, escaping like hydration, and the 430-pixel overflow. Permanent regression coverage passes after the implementation. The final worktree contains the approved remediation plus the same three pre-existing user modifications.
 
-**Checks skipped and why.** `flutter pub outdated`, `npm outdated`, and `npm audit` were not run because dependency changes were out of scope. `firebase deploy --dry-run` and live-project inspection were not run because repository implementation did not authorize deployment or live-state access. `git log --diff-filter=A` was not audited for historical secrets. A 390 x 844 engine-rendered golden was inspected, but a booted-device keyboard/offline/moderation walkthrough remains pending.
+Skipped or blocked:
+
+- Android build: no Android SDK.
+- iOS build: prior inherited Cloud Firestore Swift package compile failure.
+- Repository-wide local analysis: ignored iOS SourcePackages from that prior attempt are present; scoped first-party analysis passes and clean-runner proof is pending.
+- Live Firebase, deploy, seed, merge, release, and device actions: not authorized.
+- npm production advisory audit: network failed in sandbox and elevated disclosure was rejected.
 
 ## Deployment, operations, and recovery
 
-**Environments and deployment path.** Repository configuration describes a developer emulator setup and one Firebase project (`chants-f95b4`) with Functions configured for `europe-west2`. No staging configuration exists in the tree. Rules, indexes, and functions are deployed with `firebase deploy` from an operator machine; there is no deployment automation and CI does not deploy anything. The app ships as store builds from Xcode and Gradle. The live project topology and Firestore location were not inspected.
+CI does not deploy. The repository identifies one Firebase project and no staging environment. The safe application rollout order is indexes, rules, Functions, then clients. Stable seed identity preflight must precede any remaining club write.
 
-**Configuration authority.** Split, and this is the most important operational fact in this section. **In the repository:** security rules, Firestore indexes, Cloud Function code and regions, emulator ports, all client constants. **Dashboard-only:** whether Email/Password auth is enabled, email templates, App Check enforcement mode, billing alerts and kill-switch, Firestore backup and PITR settings, Blaze-plan status, and the current `FIREBASE_OPTIONS_DART` secret. Those dashboard states were not inspected. The latest GitHub Actions run at HEAD did execute analyze and pass, which proves only that the secret was available to that run.
+Healthy-state evidence is weak outside tests. Crashlytics records application errors, but no Function error alert, usage dashboard, release smoke test, or incident runbook is stored here. App Check, backup/PITR, API restrictions, billing, authentication templates, and deployed parity are dashboard-only and unverified.
 
-**Deploy and migration order.** Not documented anywhere in the repository, which is a gap given one hard ordering constraint exists: **rules and functions must be deployed before shipping an app build that bumps `kCurrentPolicyVersion`**, or the client will gate users behind an acceptance screen whose result the deployed rules still reject as stale. The safe order is: deploy indexes, then rules, then functions, then release the app build. Seeding is a separate manual step with its own service account key.
+Recovery paths:
 
-**Healthy signals and observation window.** Crashlytics is wired for Flutter and platform errors (`lib/main.dart`). There is no custom logging, no metrics, no alerting on function errors, and no dashboard. `docs/ROADMAP.md` lists Firebase Performance Monitoring and Analytics as "next", meaning not done. The observation window for App Check is defined (`docs/DECISIONS.md` D6: one to two weeks of clean telemetry before flipping from soft to full enforcement); no other observation window is defined for anything.
-
-**Rollback or forward recovery.** Rules and functions roll back by redeploying a previous commit. An app build rolls back only by shipping a new build, so a client-side regression is not recoverable within store review latency. Content-level recovery paths that do exist: operator `unhide` for a wrong auto-hide, operator `unban` for a wrong ban, and `seed/reconcile.ts` for vote-counter drift. The `mergeChants` audit payload is partial and cannot restore related interactions, so it is not a complete rollback. Recovery paths that do not exist include reversal of `remove`, reliable continuation of a partial `deleteAccount`, and automatic repair of comments orphaned by a merge.
-
-**Backups and restore evidence.** **Unverified.** No backup configuration exists in the repository, no restore has been performed or documented, and Firestore's scheduled-backup and point-in-time-recovery settings are project-level dashboard state that was not inspected. For a product whose entire value is an archive of hand-verified cultural content that exists nowhere else in this form, this is the largest single operational gap in the system. The mitigating factor is real but partial: seeded canonical content is reproducible from `seed_data/` in the repository, so a total loss would cost every user submission, every vote, every comment, and every account, but not the canonical archive.
-
-**Runbooks and owners.** There are no operational runbooks. Ownership is a single person, the author, for every role: development, operator moderation, seeding, deployment, and incident response. `AGENTS.md`, the canonical documentation lifecycle, and `.codex/agents/reviewer.toml` document development process rather than incident response.
+- Code rollback: redeploy earlier rules/Functions; ship a new client build.
+- Seed content: reproduce canonical source from reviewed JSON.
+- Counter drift: `seed/reconcile.ts` repairs chant vote counters.
+- Wrong hide/ban: operator unhide/unban paths exist and audit.
+- Merge: no complete undo snapshot or resumable marker.
+- Account deletion: no resumable marker or compensating end-to-end recovery.
+- User data: no repository-backed backup restoration or export procedure.
 
 ## Documentation consistency
 
-Checked against the tree at the original baseline. The table preserves discrepancies found during the audit; README, roadmap, and agent-guidance rows were corrected during the 2026-08-17 framework adoption. Remaining code and older-document discrepancies stay open.
-
-| Document | Claim | Reality | Severity |
-|---|---|---|---|
-| `README.md:107` | "Nine deployed functions", table lists nine | **Eleven** deployed exports in `functions/src/index.ts`; `acceptPolicy` and `onUserReportCreated` are missing from the table | Material. A reviewer working from the README would miss two functions, one of which is the policy-consent source of truth |
-| Historical `README.md` unban claim | Operator tools include "unban" | **Resolved.** Unban now exists through the operator-only callable, client repository, and moderation UI | The earlier material mismatch is closed by implementation rather than removing the capability claim |
-| `README.md` Engineering Highlights | "141 Flutter tests" | **174** | Minor, but it is a measured claim and `docs/DECISIONS.md :: Standing Rules` requires counts to be taken seconds before typing them |
-| `CLAUDE.md :: Gotchas` and `AGENTS.md` | "Riverpod providers are code-generated. After editing an annotated provider, run `dart run build_runner build`" | No annotated providers, no generated files, `lib/app/providers.dart` is hand-written | Material for an agent-facing document. It instructs a step that does nothing and implies a pattern the code does not use |
-| `lib/presentation/moderation/moderation_screen.dart:19` | Comment: "Query chants with flagCount > 0 or hidden or removed" | Query is `where('hidden', isEqualTo: true)` only. Sub-threshold flagged chants and removed chants never surface | Material. The comment describes the intended review queue; the code implements a narrower one |
-| `docs/KNOWN_ISSUES.md` | Dated June, latest entry June 29 | Omits the July 4 vote-drift fix, the July 4 comment-crash fix, and all August compliance work, all of which are in `docs/DECISIONS.md` and the commit log | Material. It reads as current and is two months stale |
-| `docs/ROADMAP.md :: Status (as of June 2026)` | "CI/CD via GitHub Actions. Status: in progress" | CI shipped in `f271d17` with five jobs and is referenced as green elsewhere **in the same document** | Minor, but self-contradictory within one file |
-| `docs/ROADMAP.md :: Status` | "Not yet done: ... v1.1 social layer (frontend)" alongside a later section stating flat comments with likes are now v1 and shipped | Comments shipped. The Status block predates the 2026-07-01 decision that moved them into v1 | Minor, resolved further down the same document |
-| `lib/presentation/content_policy/content_policy_screen.dart` | Renders "The full content policy will appear here before submissions go live" | This is the repository's active acceptance-screen text; live deployment was not inspected | Material and compliance-relevant. Correctly tracked as open in `docs/ROADMAP.md` |
-| `README.md` Architecture | "Nine deployed functions (all `europe-west2`)" region claim | Region claim is **correct**; all eleven specify `region: "europe-west2"` | No defect, recorded because it was checked |
-| `docs/DECISIONS.md` | Whole document | Valuable historical record through 2026-07-18, but it omits August work and includes an overstated merge-snapshot claim | Historical archive. New decisions live in `docs/decisions/` |
-| `CLAUDE.md` vs `AGENTS.md` | Two duplicate files at the original baseline | Resolved: `AGENTS.md` is canonical and `CLAUDE.md` is a compatibility pointer | Closed by the framework-adoption change |
-
-Dashboard claims that could not be verified and are therefore recorded as unverified rather than accepted: App Check soft-enforce status, billing alerts and kill-switch existence, the current `FIREBASE_OPTIONS_DART` secret state, Firestore index build state, and live Firebase deployment state. The latest GitHub Actions run at HEAD passed all five jobs, but `main` was not branch-protected when checked.
+| Document or claim | Current source reality | Action |
+|---|---|---|
+| README test counts and feature status | Current counts are 282 Flutter, 131 rules, 36 Functions, and 42 seed; Songbook/Lab, Saved, Share, and duplicate nudge are built | Corrected in this block |
+| Roadmap duplicate and remediation state | Duplicate nudge is wired; authority remediation is locally complete | Corrected in this block |
+| CI analysis state | Five jobs exist and analysis now runs with secret or deterministic fixture | Corrected; clean-runner result still pending |
+| Function merge comments | Audit payload is bounded and cannot reverse the operation | Corrected source comments; historical archive retained |
+| `docs/KNOWN_ISSUES.md` | Clearly labels itself a legacy snapshot | No longer an authority defect |
+| `docs/CHANGE_SPEC.md` | Remediation contract is approved, implemented, and locally verified | Retain until independent review and clean-runner CI close the block |
 
 ## Known compromises, gaps, and uncertainty
 
-| Item | User/operational consequence | Why accepted now | Owner | Revisit trigger |
-|---|---|---|---|---|
-| Full moderation callable lacks an emulator-level end-to-end test | Focused handlers and rules are tested, but callable auth wiring is verified by source inspection | Existing callable pattern, now with a tested user ban-state handler | Andrew | Before moderation is delegated to another operator |
-| Reports are not rate-limited at all | Three colluding accounts can hide any chant in the archive, and account creation has no friction (no email verification, no CAPTCHA) | The report path was built for the honest case; the abuse case is not addressed anywhere | Andrew | Any observed coordinated flagging, or before public launch |
-| `deleteAccount` is non-atomic, sequential, and has no progress marker | A timeout can leave partial cleanup even though omitted collections and counter drift are now repaired | Cross-collection Auth/Firestore deletion cannot be one transaction; the v1 path favors retryable ordering | Andrew | Before larger beta volume or any observed timeout. Batch/chunk work and persist resumable progress |
-| No data export path | No subject-access request can be served without manual Firestore work | Never scoped | Andrew | First subject-access request, or UK/EU launch, whichever comes first |
-| Backups unverified; no restore ever tested | A project-level accident loses every submission, vote, comment, and account. Canonical seed content survives in the repo | Not a recorded decision. Firebase's defaults were presumably assumed sufficient | Andrew | Before any real user content exists that is not reproducible from `seed_data/` |
-| Content policy text is a placeholder | Users are consenting to unwritten terms, which is the weakest link in an otherwise well-built consent mechanism | Correctly tracked as an open blocker in `docs/ROADMAP.md` | Andrew | Before store submission. Note it forces a version bump that re-gates every existing account |
-| `flutter-analyze` CI job exits 0 when the secret is missing | A silently-passing gate. Whether it is currently live is unknown | Written as a convenience so forks and secret-less runs do not fail | Andrew | Immediate. Make it fail loudly, or make the job conditional and visibly skipped |
-| CI tracks Flutter `stable` unpinned | A Flutter release can break CI with no change in this repository | Not a recorded decision | Andrew | First unexplained CI failure |
-| `ChantMatcher` is dead code | 84 lines and 13 tests carried with no caller | Deliberate: `docs/ROADMAP.md` Phase 3 pins the dedup nudge UI as a v1.1 item | Andrew | When the v1.1 submit-flow nudge is built |
-| Five unused codegen dev dependencies, plus `ts-mocha` and `firebase-functions-test` | Unused dependency surface | Vestigial from an approach that was abandoned. Canonical guidance no longer tells agents to run code generation | Andrew | Next dependency pass |
-| Android release signs with the debug keystore | Blocks any real store release | The Flutter scaffold TODO was never resolved | Andrew | Immediate, and it should be added to the `docs/ROADMAP.md` launch checklist, where it currently does not appear |
-| Crashlytics Gradle wiring is uncommitted | Android release builds do not upload symbols, so crash reports are unsymbolicated | Work in progress at this baseline | Andrew | Immediate |
-| Two implementations of the reconciliation protocol (`OptimisticVoteState` mutable, `CommentLikeState` immutable) | A future reconciliation bug must be found and fixed twice | The divergence is not explained anywhere. The differing shape is defensible; the differing idiom is not | Andrew | Third reconciliation surface, or the next bug in either |
-| No staging environment | Rules and function changes go straight to the project that holds real data | Single-developer project on a free-tier-adjacent plan | Andrew | First user cohort beyond the closed beta |
-| Nothing has been measured | Every scale and cost statement in this document is inference from code | Pre-launch, no traffic to measure | Andrew | Closed beta. Firestore usage export plus one Crashlytics-clean week would establish a baseline |
-| Claims inherited from prior sessions and **not** re-verified here | Live-project state: App Check mode, billing alerts and kill-switch, index build state, seeded content beyond `arsenal.json`, and current CI secret state | No credentials and no live-system access during this pass. The latest HEAD workflow run was checked separately and passed all five jobs | Andrew | Any release review, where dashboard state should be captured with screenshots or CLI output and recorded in a current change record |
+| Item | Consequence | Owner | Revisit trigger |
+|---|---|---|---|
+| No report/feedback velocity limit | Automated accounts can create storage and moderation load | Andrew | Before public launch or any abuse signal |
+| Sequential merge and deletion | Partial destructive workflow can require manual repair | Andrew | Before volume or delegating moderation |
+| Android debug signing | Store release blocked | Andrew | Before production build |
+| Placeholder policy | User consent and store compliance incomplete | Andrew | Before any public submission release |
+| Remediation clean-runner result pending | Local correctness lacks independent Linux and Java confirmation for this exact worktree | Andrew | Before review completion |
+| 56 files not formatter-normalized | Mechanical churn and inconsistent style | Andrew | Separate normalization commit before adding format gate |
+| No staging, runbook, backup proof, or data export | Incident and regulatory recovery depend on manual console work | Andrew | Before public beta or real irreproducible content |
+| Discover full fetch and ground-truth counter scans | Linear reads and write amplification | Andrew | When closed-beta metrics show meaningful volume |
+| Dependency advisories unverified | Current supply-chain risk is unknown | Andrew | Separately authorize registry audit before release |
 
 ## Material files and generated artifacts
 
-**Access control and server logic**
-- `firestore.rules` (224 lines). The real trust boundary. Fourteen collection blocks, five helper functions. Every security property of the system.
-- `functions/src/index.ts` (999 lines). Eleven Functions exports in source plus four extracted testable handlers. Counter recompute, rate limiting, moderation dispatch, account deletion, policy consent, chant merge.
-- `functions/src/audit.ts` (18 lines). Single append-only audit writer. Uses the global Admin SDK handle, which is why the extracted handlers deliberately do not call it.
-- `storage.rules` (10 lines). Deny-all placeholder held for whenever media upload ships.
-- `firestore.indexes.json`. Two composite indexes for the two score-ordered queries.
+**Current authority and server logic**
 
-**Client, load-bearing**
-- `lib/app/app.dart :: _SignedInGate`. The policy gate and its four carefully chosen edge behaviors.
-- `lib/app/policy.dart`. One constant, triplicated across three languages by necessity.
-- `lib/app/providers.dart` (82 lines). Every dependency-injection seam the tests use.
-- `lib/presentation/shared/vote_controls.dart :: OptimisticVoteState`. Four rounds of bug history in 60 lines.
-- `lib/presentation/comments/comment_card.dart :: CommentLikeState`. The same protocol, second implementation.
-- `lib/presentation/comments/comment_section.dart`. Manual `StreamSubscription` and the reason it is not a `StreamBuilder`.
-- `lib/data/repositories/chant_repository.dart :: _visibleChants`. The single client-side enforcement point for the visibility-filter contract.
-- `lib/data/services/chant_ranking.dart`, `age.dart`, `chant_matcher.dart`. The three pure services; the third is currently unwired.
-- `lib/presentation/moderation/moderation_screen.dart` (647 lines). The entire operator surface, and the one screen that bypasses the repository layer.
+- `firestore.rules`
+- `functions/src/index.ts`
+- `functions/src/chant_trust.ts`
+- `functions/src/audit.ts`
+- `firestore.indexes.json`
+- `storage.rules`
 
-**Seed pipeline**
-- `seed/seed.ts :: preflightChantIdentities`, `:: upsert`, `:: reportOrphans`. Identity collision reads before club writes, allowlisted reference-data updates, and orphan reporting without deletion.
-- `seed/chant_identity.ts`. Explicit seeded identity, collision classification, and transaction-time ownership checks.
-- `seed/seed_plan.ts`. CLI option parsing and the enforced split between read-only preflight and normal write order.
-- `seed/validate.ts :: validateClub`. Explicit-ID, normalized-title, slug-collision, and referential-consistency validation that the security rules do not perform for operator seed input.
-- `seed/slugify.ts`. Deterministic team and player IDs plus legacy chant-ID compatibility checks.
-- `seed/reconcile.ts`. Manual counter repair.
-- `seed_data/clubs/arsenal.json`. The only club file. 27 squad members, 12 chants.
+**Load-bearing client boundaries**
 
-**Tests**
-- `test_rules/firestore_rules.test.ts` (1781 lines, 106 assertions). The broadest suite and the only one that needs infrastructure.
-- `test/presentation/shared/vote_controls_widget_test.dart`, `test/presentation/comments/comment_section_like_crash_test.dart`, `test/presentation/comments/like_reconciliation_test.dart`. The three regression guards named for the bugs they exist to catch.
-- `test/app/app_gate_test.dart`. Policy gate across all four async branches.
-- `functions/test/*.test.ts` (6 files, 26 cases). Idempotency, burst, no-op, guard, report-counter, rate-classification, and user-ban-state coverage for extracted handlers.
+- `lib/app/app.dart`, `providers.dart`, `policy.dart`
+- `lib/data/models/chant.dart`, `saved_songbook.dart`
+- `lib/data/repositories/chant_repository.dart`, `saved_songbook_repository.dart`, `songbook_storage.dart`
+- `lib/data/services/chant_browse.dart`, `chant_evidence.dart`, `chant_matcher.dart`, `chant_share.dart`, `saved_songbook_service.dart`
+- `lib/presentation/browse/discovery_section.dart`, `team_screen.dart`, `player_screen.dart`, `chant_detail_screen.dart`
+- `lib/presentation/comments/comment_section.dart`, `comment_card.dart`
+- `lib/presentation/submit/submit_chant_screen.dart`
+- `lib/presentation/moderation/moderation_screen.dart`
 
-**Configuration and process**
-- `.github/workflows/ci.yml`. Five jobs; the analyze job is the one with a silent-pass condition.
-- `firebase.json`. Rules, indexes, functions, emulator ports, and the project's platform app IDs.
-- `AGENTS.md`. Canonical agent-facing guardrails. `CLAUDE.md` is a short compatibility pointer.
-- `.codex/agents/reviewer.toml`, `.codex/hooks/run_tests.sh`. Uncommitted. A skeptical-reviewer prompt and a stop hook that blocks on a failing `flutter test` with a documented exit-code contract.
+**Seed and tests**
 
-**Documentation**
-- `docs/CHANGE_SPEC.md`, `docs/changes/`, `docs/decisions/`. Canonical proposal, completed-change, and durable-decision lifecycle.
-- `docs/DECISIONS.md` (30KB). Historical archive through 2026-07-18, valuable for prior rationale but not the current decision authority.
-- `docs/ROADMAP.md`. Launch phases with explicit exit triggers, and the store-compliance gate list with two items correctly still open.
-- `docs/BLOCK_RECAPS.md` (58KB), `docs/CHANTS_SPEC.md`, `docs/HANDBOOK.md`, `docs/WISHLIST.md`, `docs/DESIGN_DIRECTION*.md`. Session history, product spec, plain-language feature manual, deferred ideas, and visual direction. Not audited line by line for this document.
-- `docs/KNOWN_ISSUES.md`. Two months stale; reads as current.
-- `ENGINEERING_OVERVIEW.md`. The narrative companion to this document.
+- `seed/seed.ts`, `chant_identity.ts`, `seed_plan.ts`, `validate.ts`, `reconcile.ts`
+- `seed_data/clubs/arsenal.json`
+- `test/`, `functions/test/`, `test_rules/firestore_rules.test.ts`
 
-**Generated or vendored, excluded from review**
-- `build/` (Flutter output; the sole source of all 115 local `flutter analyze` findings), `.dart_tool/`, `functions/lib-test/`, all three `node_modules/` trees, `firestore-debug.log` (an untracked local emulator artifact).
+**Process and review records**
+
+- `.github/workflows/ci.yml`
+- `AGENTS.md`
+- `docs/CHANGE_SPEC.md`
+- `docs/EXECUTION.md`
+- `ENGINEERING_OVERVIEW.md`
+- `docs/IMPLEMENTATION_RATIONALE.md`
+
+Generated `build/`, `.dart_tool/`, `functions/lib-test/`, and dependency trees were excluded except where their existence affected a tool result.

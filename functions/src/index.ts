@@ -454,6 +454,13 @@ export async function handleVoteWritten(
 
   if (upDelta === 0 && downDelta === 0) return;
 
+  // The parent may already be gone when a delayed vote event arrives after
+  // an account cleanup or duplicate merge. Do not recreate it or retry a
+  // batch that can never succeed.
+  const chantRef = firestore.collection("chants").doc(chantId);
+  const chantSnap = await chantRef.get();
+  if (!chantSnap.exists) return;
+
   // Recompute counters from the actual vote docs (ground truth).
   const votesSnap = await firestore
     .collection("votes")
@@ -471,7 +478,7 @@ export async function handleVoteWritten(
   // before appliedValue is written and double-count the delta (-2 flash).
   const batch = firestore.batch();
 
-  batch.update(firestore.collection("chants").doc(chantId), {
+  batch.update(chantRef, {
     upvotes,
     downvotes,
     score: upvotes - downvotes,
@@ -689,7 +696,8 @@ export const acceptPolicy = onCall(
 // --- mergeChants (callable) ---
 // Operator-only. Merges a duplicate chant (source) into a keeper (target).
 // Moves votes and reports, deletes the source, reconciles target counters,
-// and logs the full source payload for undo capability.
+// and logs a bounded source summary for investigation. The operation is not
+// atomic, resumable, or automatically reversible.
 export const mergeChants = onCall(
   { region: "europe-west2" },
   async (request) => {
@@ -737,7 +745,7 @@ export const mergeChants = onCall(
       );
     }
 
-    // Snapshot the source for audit (Addition A: full payload for undo capability)
+    // Capture a bounded source summary for audit and incident investigation.
     const sourcePayload = {
       title: sourceData.title,
       lyrics: sourceData.lyrics,
@@ -831,7 +839,7 @@ export const mergeChants = onCall(
     await reconcileChantCounters(targetId);
     await recomputeCommentCount(targetId);
 
-    // Step 6: Audit log with full source payload (Addition A)
+    // Step 6: Audit log with the bounded source summary and move counts.
     await writeAuditEntry({
       actorId: actorUid,
       action: "merge_chants",
