@@ -1,6 +1,6 @@
 # Change spec: V1 Home hierarchy refresh
 
-**Status:** Packaged in draft PR 15; replacement clean-runner CI pending after a bounded Linux golden calibration
+**Status:** Packaged in draft PR 15 and replacement clean-runner green; review and native walkthrough pending
 **Updated:** 2026-08-26
 **Risk lane:** Lane 1, bounded client presentation and deterministic visual evidence
 **Base:** Locally stacked above the completed V1 core-journey interface-readiness block on `codex/framework-ui-readiness`

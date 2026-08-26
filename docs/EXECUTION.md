@@ -15,7 +15,7 @@ This is the chronological evidence trail for substantial engineering work. It re
 
 ### 2026-08-26T20:25:18Z Implement the approved V1 Home hierarchy refresh
 
-- **Status:** Packaged in draft PR 15; replacement clean-runner CI pending after a bounded Linux golden calibration
+- **Status:** Packaged in draft PR 15 and replacement clean-runner green; review and native walkthrough pending
 - **Scope:** Adapt the approved refined Home direction into the existing Flutter architecture, make the final typography and spacing judgment, add deterministic route and responsive evidence, and refresh framework truth. No global navigation, new query, repository, backend, rules, seed, dependency, Firebase, native build, device action, deployment, signing, release, or production mutation.
 - **Approval:** Andrew selected the redesign direction, approved the V1 core-journey interface-readiness spec, directed Codex to use judgment over fun and basic clarity, then supplied Vouch only as modern native-app layout inspiration for one final visual-potential pass on 2026-08-26.
 - **Operator:** Codex
@@ -32,10 +32,11 @@ This is the chronological evidence trail for substantial engineering work. It re
 | 20:36:00 | Packaged and published the complete bounded change | Git and private GitHub repository | Created commit `cd54107`, pushed `codex/framework-ui-readiness`, and opened draft PR 15 against `main`. The commit contains no Functions, rules, seed, dependency, or native-path change. |
 | 20:40:00 | Watched the first six-job clean-runner attempt | GitHub Actions run `33011415224` | Project governance, analysis, Functions, seed, and 136-assertion Firestore rules jobs passed. Flutter reported 352 passing tests and one Home golden difference: Linux stable Flutter rendered 2.40 percent of pixels differently from the inspected macOS baseline, just above the scoped 2.20 percent ceiling. All Home interaction and responsive tests passed. |
 | 20:42:00 | Calibrated the core-journey cross-renderer ceiling and reran focused evidence | `core_journey_golden_test.dart`, local Flutter | Raised only the three-baseline comparator from 2.20 to 3.00 percent, which is above the observed Linux drift while remaining narrow. The comparator's known-bad regression guard still rejects a complete image change. Comparator plus all five core-journey tests passed locally, six total. Replacement clean-runner evidence is pending. |
+| 20:47:00 | Watched replacement clean-runner CI to completion | GitHub Actions run `33011936510` on `a2e463c` | PASS: project governance, 353 Flutter tests, repository-wide Flutter analysis, 78 Functions tests, 42 seed tests, and 136 Java-backed Firestore rules assertions. No job failed or was skipped. |
 
 - **Files/artifacts:** Four runtime files, two focused test files, updated Home golden, V2 product concept, V3 final visual-potential concept and both prompt records, active spec, interface decision, completed rationale, roadmap, overview, repository rationale, README, and this execution entry.
 - **Skipped:** Native compilation, device walk, Firebase, seed writes, deployment, signing, merge, release, and production mutation remain outside this block.
-- **Final state:** The Home redesign is implemented and packaged in draft PR 15 with existing routes and authority. Five clean-runner jobs are green on the first head; one narrow test-only calibration awaits replacement clean-runner proof. The combined device walk remains the release evidence gate.
+- **Final state:** The Home redesign is implemented and packaged in draft PR 15 with existing routes and authority. Replacement clean-runner CI is fully green on `a2e463c`. Independent review and the combined device walk remain the next gates.
 
 ### 2026-08-26T19:15:24Z Align the completed Codex framework and define the V1 interface-readiness block
 

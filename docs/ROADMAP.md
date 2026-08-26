@@ -18,7 +18,7 @@ The path from code-complete to public launch, with concrete triggers on every ga
 - Visual identity: complete "matchnight, warmed with playful" redesign, tokenized, AA contrast proven.
 
 **Not yet done:**
-- Close replacement Flutter CI on draft PR 15 after the measured Linux golden calibration; the other five clean-runner jobs already pass.
+- Review draft PR 15 and complete the combined native walkthrough; replacement clean-runner CI is green.
 - Visual sign-off on device and the v1 flow walk-through.
 - The read-only live chant-identity preflight before the next production seed write.
 - The remaining verified club seed.
@@ -64,7 +64,7 @@ V1 is a trusted songbook and a creator workshop. The work is sequenced as bounde
 
 The accepted product boundary is in `docs/decisions/004-songbook-and-chant-lab.md`. Each state-changing block gets the framework's Lane 2 change spec, execution log, tests, UI evidence, scoped rationale, and rollback plan. Unlimited nesting, notifications, scheduled challenges, collaborative lyric suggestions, creator follows, and hosted media remain later work.
 
-The full engineering stack is merged and frozen at `2df9fa0`, and exact-main run `32993748570` is green. The bounded V1 interface-readiness and Home hierarchy pass is packaged in draft PR 15. Its first clean-runner attempt passed governance, analysis, Functions, seed, and rules; replacement Flutter evidence is pending after a measured renderer calibration. The native combined walkthrough remains the gate that turns automated confidence into release sign-off.
+The full engineering stack is merged and frozen at `2df9fa0`, and exact-main run `32993748570` is green. The bounded V1 interface-readiness and Home hierarchy pass is packaged in draft PR 15, and replacement run `33011936510` passed all six jobs. Independent review and the native combined walkthrough remain the gates that turn automated confidence into release sign-off.
 
 **Trigger to exit:** The current device walk passes; provenance and promotion rules work end to end; Songbook and Chant Lab remain understandable on club and player screens; Saved Matchday Songbook survives airplane-mode relaunch; the dedup nudge works on the seeded archive; and share-out never produces a broken destination.
 

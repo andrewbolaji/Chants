@@ -77,7 +77,7 @@ The change groups the already-fetched discovery list by status and takes one ite
 - Scoped Flutter analysis over all changed Home runtime and focused test files reports no issues.
 - Touched Dart files are formatter-clean.
 
-Functions, rules, and seed suites were not rerun locally for this presentation-only block. Their exact merged-main evidence remains GitHub Actions run `32993748570` at `2df9fa0`. Draft PR 15 run `33011415224` also passed governance, analysis, Functions, seed, and rules. Its Flutter job passed 352 tests and found only a measured 2.40 percent Linux Home golden difference against the original 2.20 percent ceiling. The scoped ceiling is now 3.00 percent, the comparator's known-bad guard still passes, and replacement clean-runner proof is pending.
+Functions, rules, and seed suites were not rerun locally for this presentation-only block. Their exact merged-main evidence remains GitHub Actions run `32993748570` at `2df9fa0`. Draft PR 15 run `33011415224` passed governance, analysis, Functions, seed, and rules, while Flutter found a measured 2.40 percent Linux Home golden difference against the original 2.20 percent ceiling. The scoped ceiling is now 3.00 percent, the comparator's known-bad guard still passes, and replacement run `33011936510` passed all six jobs.
 
 ## Rollout, observation, and recovery
 
