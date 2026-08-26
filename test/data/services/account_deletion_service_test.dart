@@ -21,9 +21,11 @@ void main() {
   test('success removes the active UID snapshot and tombstone', () async {
     final storage = MemorySongbookStorage()..active['fan'] = '{broken';
     final moderation = FakeModerationRepository();
+    var signOutCalls = 0;
     final service = AccountDeletionService(
       moderationRepository: moderation,
       savedSongbookRepository: SavedSongbookRepository(storage: storage),
+      signOut: () async => signOutCalls += 1,
     );
 
     await service.deleteAccount('fan');
@@ -31,6 +33,7 @@ void main() {
     expect(moderation.calls, 1);
     expect(storage.active, isEmpty);
     expect(storage.tombstones, isEmpty);
+    expect(signOutCalls, 1);
   });
 
   test(
@@ -39,15 +42,18 @@ void main() {
       final storage = MemorySongbookStorage()..active['fan'] = '{broken';
       final moderation = FakeModerationRepository()
         ..error = StateError('callable failed');
+      var signOutCalls = 0;
       final service = AccountDeletionService(
         moderationRepository: moderation,
         savedSongbookRepository: SavedSongbookRepository(storage: storage),
+        signOut: () async => signOutCalls += 1,
       );
 
       await expectLater(service.deleteAccount('fan'), throwsStateError);
 
       expect(storage.active['fan'], '{broken');
       expect(storage.tombstones, isEmpty);
+      expect(signOutCalls, 0);
     },
   );
 
@@ -56,13 +62,64 @@ void main() {
       ..active['fan'] = '{}'
       ..failStage = true;
     final moderation = FakeModerationRepository();
+    var signOutCalls = 0;
     final service = AccountDeletionService(
       moderationRepository: moderation,
       savedSongbookRepository: SavedSongbookRepository(storage: storage),
+      signOut: () async => signOutCalls += 1,
     );
 
     await expectLater(service.deleteAccount('fan'), throwsStateError);
     expect(moderation.calls, 0);
     expect(storage.active['fan'], '{}');
+    expect(signOutCalls, 0);
+  });
+
+  test(
+    'accepted deletion signs out when tombstone cleanup is deferred',
+    () async {
+      final storage = MemorySongbookStorage()
+        ..active['fan'] = '{}'
+        ..failFinish = true;
+      final moderation = FakeModerationRepository();
+      var signOutCalls = 0;
+      final service = AccountDeletionService(
+        moderationRepository: moderation,
+        savedSongbookRepository: SavedSongbookRepository(storage: storage),
+        signOut: () async => signOutCalls += 1,
+      );
+
+      await service.deleteAccount('fan');
+
+      expect(moderation.calls, 1);
+      expect(signOutCalls, 1);
+      expect(storage.active, isEmpty);
+      expect(storage.tombstones['fan'], '{}');
+
+      storage.failFinish = false;
+      await storage.cleanupDeletionTombstones();
+      expect(storage.tombstones, isEmpty);
+    },
+  );
+
+  test('sign-out failure never misreports or restores accepted deletion', () async {
+    final storage = MemorySongbookStorage()..active['fan'] = '{}';
+    final moderation = FakeModerationRepository();
+    var signOutCalls = 0;
+    final service = AccountDeletionService(
+      moderationRepository: moderation,
+      savedSongbookRepository: SavedSongbookRepository(storage: storage),
+      signOut: () async {
+        signOutCalls += 1;
+        throw StateError('sign out failed');
+      },
+    );
+
+    await service.deleteAccount('fan');
+
+    expect(moderation.calls, 1);
+    expect(signOutCalls, 1);
+    expect(storage.active, isEmpty);
+    expect(storage.tombstones, isEmpty);
   });
 }

@@ -6,7 +6,9 @@ import 'package:chants/app/router.dart';
 import 'package:chants/app/theme.dart';
 import 'package:chants/app/colors.dart';
 import 'package:chants/app/providers.dart';
+import 'package:chants/data/models/user_profile.dart';
 import 'package:chants/presentation/auth/policy_acceptance_gate_screen.dart';
+import 'package:chants/presentation/auth/account_deletion_pending_screen.dart';
 import 'package:chants/presentation/auth/sign_in_screen.dart';
 import 'package:chants/presentation/home/home_screen.dart';
 
@@ -33,7 +35,7 @@ class ChantApp extends ConsumerWidget {
       onGenerateRoute: AppRouter.onGenerateRoute,
       home: authState.when(
         data: (user) => user != null
-            ? _SignedInGate(uid: user.uid)
+            ? _SignedInGate(key: ValueKey(user.uid), uid: user.uid)
             : const SignInScreen(),
         loading: () => const _NeutralLoadingScreen(),
         error: (_, _) => const SignInScreen(),
@@ -48,29 +50,55 @@ class ChantApp extends ConsumerWidget {
 /// - loading (no snapshot yet), or data(null) (profile doc not written yet,
 ///   e.g. the brief window right after sign-up before createProfile lands):
 ///   neutral loading, never the gate and never home.
-/// - error: fail open to HomeScreen. A transient read failure here must
-///   never lock a user out of the app.
+/// - error after a verified profile: keep that last verified gate state.
+/// - error before any verified profile: neutral loading, never home.
 /// - data(profile) with a stale or missing acceptedPolicyVersion: the gate.
 /// - data(profile) accepted at the current version: HomeScreen.
-class _SignedInGate extends ConsumerWidget {
+class _SignedInGate extends ConsumerStatefulWidget {
   final String uid;
 
-  const _SignedInGate({required this.uid});
+  const _SignedInGate({super.key, required this.uid});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final profileAsync = ref.watch(userProfileProvider(uid));
+  ConsumerState<_SignedInGate> createState() => _SignedInGateState();
+}
+
+class _SignedInGateState extends ConsumerState<_SignedInGate> {
+  UserProfile? _lastVerifiedProfile;
+
+  @override
+  void didUpdateWidget(covariant _SignedInGate oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.uid != widget.uid) _lastVerifiedProfile = null;
+  }
+
+  Widget _screenFor(UserProfile profile) {
+    if (profile.deletionPending) {
+      return AccountDeletionPendingScreen(
+        onSignOut: ref.read(authRepositoryProvider).signOut,
+      );
+    }
+    if (profile.acceptedPolicyVersion != kCurrentPolicyVersion) {
+      return const PolicyAcceptanceGateScreen();
+    }
+    return const HomeScreen();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final profileAsync = ref.watch(userProfileProvider(widget.uid));
 
     return profileAsync.when(
       data: (profile) {
-        if (profile == null) return const _NeutralLoadingScreen();
-        if (profile.acceptedPolicyVersion != kCurrentPolicyVersion) {
-          return const PolicyAcceptanceGateScreen();
-        }
-        return const HomeScreen();
+        _lastVerifiedProfile = profile;
+        return profile == null
+            ? const _NeutralLoadingScreen()
+            : _screenFor(profile);
       },
       loading: () => const _NeutralLoadingScreen(),
-      error: (_, _) => const HomeScreen(),
+      error: (_, _) => _lastVerifiedProfile == null
+          ? const _NeutralLoadingScreen()
+          : _screenFor(_lastVerifiedProfile!),
     );
   }
 }

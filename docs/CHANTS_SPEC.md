@@ -135,6 +135,7 @@ Hierarchy is **Sport contains Competition contains Team contains Chant,** modele
 - `reports`: { id, chantId, reportedBy, reason, createdAt, status }
 - `commentReports` and `userReports`: the same server-owned pending report contract with their target-specific ID field.
 - `safetyRateLimits`: private server-only anchored report and feedback window state, one bounded row per submitting UID.
+- `accountDeletionJobs`: private server-only deletion cursor, one deterministic row per pending UID with schema version, phase, requested time, and updated time.
 - `auditLog`: { id, actorId, action, targetType, targetId, detail, createdAt }. Moderation actions especially.
 - `feedback`: the suggestion box. { id, userId, category (suggestion | bug | question | other), message (<= 1000 chars), followUpOk, resolved, createdAt }
 
@@ -149,6 +150,7 @@ Hierarchy is **Sport contains Competition contains Team contains Chant,** modele
 - `reports`, `commentReports`, `userReports`, and `feedback`: no direct client creates. Authenticated callable Functions validate the profile and target, derive identity and server fields, atomically apply the private budget, and create accepted rows. Existing owner or operator read boundaries remain collection-specific.
 - Moderation (hide, remove, ban, unban, and promote to canonical): operator-only and audit logged. Promotion of a user submission must reject missing or invalid evidence after the provenance block ships.
 - Rate-limits and fail-safe defaults: reports share 5 accepted entries per anchored hour for accounts under 24 hours and 20 for older accounts; feedback allows 3 per anchored 24 hours; content past a flag threshold auto-hides pending review.
+- Account deletion: an authenticated empty request first creates the private durable job and marks the profile pending. Pending identity cannot create active data or use operator authority. A retry-enabled worker deletes private interactions, anonymizes retained contributions, deletes Auth, and finalizes profile plus job without depending on the client remaining open.
 
 ---
 
@@ -161,6 +163,7 @@ Mobile first. Drill-down navigation and simplest sensible placement. The current
 - **Submission:** Select club or player context, declare Already sung or I made this, enter the chant, see a soft duplicate nudge, attach optional evidence, and recover the draft after a failed write.
 - **Saved:** A local-first Matchday Songbook states what is saved, when it was last refreshed, and whether the device is offline or the snapshot may be stale.
 - **Operator:** Review reports, remove content, ban or unban users, and promote only when the verification contract is satisfied.
+- **Account deletion:** Confirmation states the retained-anonymized boundary and local Songbook removal. Durable acceptance signs out; a retained pending session sees only deletion-in-progress and Sign out.
 
 Show only what makes sense at each level. Never dump everything at once. One obvious tap to find, learn, save, create, or share.
 

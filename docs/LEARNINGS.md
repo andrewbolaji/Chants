@@ -12,6 +12,17 @@ This is durable, evidence-backed project memory. It prevents the same failure or
 
 ## Entries
 
+### 2026-08-25T21:22:57Z Authentication cannot be the retry token for account deletion
+
+- **Status:** promoted
+- **Scope:** Destructive workflows that remove the identity or authority needed to invoke them
+- **Observed:** The synchronous deletion callable could remove interactions and Firebase Auth before its final profile cleanup. If execution then failed, the user had no durable phase and no longer had the authentication required to retry.
+- **Evidence:** The old eleven-stage source order reproduced the authority gap. New failure-injection tests prove the job survives a failed batch, Auth deletion followed by failed finalization, duplicate delivery, and a missing Auth user. The next invocation resumes from stored server phase without client participation.
+- **Learning:** A destructive workflow must persist its recovery authority and cursor before it destroys the caller's authority. Idempotent steps are necessary, but they do not replace a durable progress record and bounded retry ownership.
+- **Applied control:** `deleteAccount` creates `accountDeletionJobs/{uid}` and the pending marker transactionally; `onAccountDeletionJobWritten` owns bounded retry through final profile-and-job deletion; decision 011 preserves the boundary.
+- **Revisit when:** A shared workflow service replaces the Firestore cursor, legal policy changes retained content, or operational data shows a need for dead-letter handling and an operator recovery console.
+- **Related:** `functions/src/account_deletion.ts`, `docs/decisions/011-durable-account-deletion-recovery.md`
+
 ### 2026-08-25T19:29:54Z Post-write triggers cannot enforce an admission budget
 
 - **Status:** promoted

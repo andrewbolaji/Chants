@@ -23,8 +23,22 @@ This is the current design contract and decision history for Chants. Read the re
 | Submission form | Preserve entered work on validation or network failure; distinguish required from optional fields; denied and banned states explain the next action; clear a stale prefilled Player with recovery copy instead of asserting or spinning | Every choice has a text label and semantic group; subject labels stay on one line at 390 by 844; keyboard never hides the active field or submit result | `lib/presentation/submit/submit_chant_screen.dart` |
 | Comments and replies | One visible reply level, recoverable failed writes and preference reads, reporting, blocking and failed Undo recovery, moderation disappearance, and no orphan promotion | Reply context and hierarchy are announced without indentation alone; tap targets and empty states remain usable at 390 by 844 and 1.8x text | `lib/presentation/comments/`, `docs/decisions/002-comment-reply-depth-and-retention.md` |
 | Reports and feedback | Submit through one server-authoritative boundary. Duplicate reports use `You already reported this.`; report and feedback limits explain that several items were sent recently; other failures retain the existing retry copy. Every failure keeps the entered category, note or message, and follow-up choice, then restores the submit control | Error copy appears in the existing snackbar pattern without replacing or clearing the form. Controls retain stable placement and labels; no limit state relies on color alone | `lib/presentation/report/report_sheet.dart`, `lib/presentation/feedback/feedback_screen.dart`, decision 010 |
+| Account deletion | Confirmation states what is removed, what stays anonymized, that the local Songbook is removed, and that completion may continue briefly. After durable acceptance the client signs out. A retained pending session shows only a queued-state explanation and Sign out, never Home or policy acceptance | The recovery state uses text, icon, and one stable action; it scrolls without clipping at 390 by 844 and 1.8x text; failures leave the Sign out action retryable | `lib/presentation/home/home_screen.dart`, `lib/presentation/auth/account_deletion_pending_screen.dart`, decision 011 |
 
 ## Decision log
+
+### 2026-08-25T21:22:57Z Show account deletion as queued, not instantly finished
+
+- **Status:** active
+- **Surface and user problem:** Durable deletion is accepted before every remote row is physically removed. A delayed sign-out or reopened session must not expose the app or falsely claim completion.
+- **Decision:** The confirmation explains the retained anonymized contributions, removed local Songbook, and brief background completion. After acceptance the normal path signs out. If a pending session remains, the app gate replaces Home and policy acceptance with one deletion-in-progress screen and a retryable Sign out action.
+- **Why:** The interface should describe the real durability boundary without exposing internal phases or giving the user controls that cannot safely cancel server cleanup.
+- **Alternatives considered:** Claim immediate deletion, which is false; show worker phases and counters, which exposes private operational state and implies control; leave Home visible until finalization, which conflicts with the pending-account authority boundary.
+- **Required states:** Confirmation, request failure with account and Songbook retained, accepted and signed out, pending fallback, sign-out pending, and sign-out failure with retry.
+- **Accessibility/responsive impact:** The queued meaning is stated in words and not color alone. The centered content is scrollable, constrained in width, and verified at 390 by 844 with normal and 1.8x text.
+- **Implementation evidence:** Service, repository, app-gate, copy, and screen tests plus an inspected 390 by 844 golden. The complete local Flutter suite passes 310 tests.
+- **Revisit when:** Deletion gains undo, progress becomes user-actionable, localization makes the copy exceed the current layout, or support data shows users misunderstand anonymized retention.
+- **Related:** `docs/decisions/011-durable-account-deletion-recovery.md`, `docs/changes/2026-08-25-v1-account-deletion-recovery.md`
 
 ### 2026-08-25T19:29:54Z Keep safety failure recovery inside the existing form
 

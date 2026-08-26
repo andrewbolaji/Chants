@@ -114,8 +114,10 @@ void main() {
         'createdAt': Timestamp.fromDate(now),
         'updatedAt': Timestamp.fromDate(now),
       };
-      expect(UserProfile.fromJson(defaultJson, id: 'uid1').ageConfirmed17Plus,
-          false);
+      expect(
+        UserProfile.fromJson(defaultJson, id: 'uid1').ageConfirmed17Plus,
+        false,
+      );
 
       final profile = UserProfile(
         id: 'uid1',
@@ -163,6 +165,25 @@ void main() {
       expect(profile.acceptedPolicyAt, acceptedAt);
     });
 
+    test('deletionPending is server-owned, absent-safe, and copyable', () {
+      final now = DateTime(2026, 5, 24);
+      final base = {
+        'displayName': 'Test',
+        'role': 'user',
+        'createdAt': Timestamp.fromDate(now),
+        'updatedAt': Timestamp.fromDate(now),
+      };
+
+      expect(UserProfile.fromJson(base, id: 'uid1').deletionPending, false);
+      final pending = UserProfile.fromJson({
+        ...base,
+        'deletionPending': true,
+      }, id: 'uid1');
+      expect(pending.deletionPending, true);
+      expect(pending.toJson().containsKey('deletionPending'), false);
+      expect(pending.copyWith(displayName: 'Changed').deletionPending, true);
+    });
+
     test('copyWith preserves new fields', () {
       final now = DateTime(2026, 5, 24);
       final profile = UserProfile(
@@ -170,6 +191,7 @@ void main() {
         displayName: 'Old',
         role: 'user',
         ageConfirmed17Plus: true,
+        deletionPending: true,
         acceptedPolicyVersion: 'v1',
         acceptedPolicyAt: now,
         createdAt: now,
@@ -179,6 +201,7 @@ void main() {
       expect(updated.ageConfirmed17Plus, true);
       expect(updated.acceptedPolicyVersion, 'v1');
       expect(updated.acceptedPolicyAt, now);
+      expect(updated.deletionPending, true);
     });
   });
 }

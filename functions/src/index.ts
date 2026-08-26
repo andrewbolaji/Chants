@@ -1,5 +1,9 @@
 import * as admin from "firebase-admin";
-import { onDocumentCreated, onDocumentWritten } from "firebase-functions/v2/firestore";
+import {
+  onDocumentCreated,
+  onDocumentDeleted,
+  onDocumentWritten,
+} from "firebase-functions/v2/firestore";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { writeAuditEntry } from "./audit";
 import {
@@ -8,11 +12,14 @@ import {
   planChantTrustAction,
 } from "./chant_trust";
 import {
-  deleteSafetyRateState,
   handleSubmitFeedback,
   handleSubmitReport,
   requireAuthenticatedUid,
 } from "./safety_submission";
+import {
+  processAccountDeletionStep,
+  requestAccountDeletion,
+} from "./account_deletion";
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -256,7 +263,11 @@ export const onModerationAction = onCall(
 
     // Verify operator role via Admin SDK
     const actorProfile = await db.collection("profiles").doc(actorUid).get();
-    if (!actorProfile.exists || actorProfile.data()?.role !== "operator") {
+    if (
+      !actorProfile.exists ||
+      actorProfile.data()?.role !== "operator" ||
+      actorProfile.data()?.deletionPending === true
+    ) {
       throw new HttpsError("permission-denied", "Operator access required.");
     }
 
@@ -540,137 +551,39 @@ export const onVoteWritten = onDocumentWritten(
   }
 );
 
-// --- deleteAccount (callable) ---
-// Deletes the calling user's account and all associated data.
-// Apple 5.1.1(v) and Google Play require in-app account deletion.
-// Actor derived from auth context. A user can only delete their own account.
+// --- deleteAccount (callable plus retry worker) ---
+// Durably requests deletion for the calling UID. The retry-enabled job worker
+// advances one bounded phase or page per event, so completion does not depend
+// on the client remaining connected or authenticating again.
 export const deleteAccount = onCall(
   { region: "europe-west2" },
   async (request) => {
     if (!request.auth) {
       throw new HttpsError("unauthenticated", "Sign in required.");
     }
-    const uid = request.auth.uid;
-
-    // 1. Delete all votes by this user and reconcile affected chants
-    const votes = await db.collection("votes").where("userId", "==", uid).get();
-    const affectedChantIds = new Set<string>();
-    for (const voteDoc of votes.docs) {
-      affectedChantIds.add(voteDoc.data().chantId);
-      await voteDoc.ref.delete();
-    }
-
-    // Reconcile counters on each affected chant
-    for (const chantId of affectedChantIds) {
-      await reconcileChantCounters(chantId);
-    }
-
-    // 2. Delete all chant reports by this user and reconcile flag counters
-    const reports = await db.collection("reports").where("reportedBy", "==", uid).get();
-    const reportedChantIds = new Set<string>();
-    for (const reportDoc of reports.docs) {
-      reportedChantIds.add(reportDoc.data().chantId as string);
-      await reportDoc.ref.delete();
-    }
-    for (const chantId of reportedChantIds) {
-      await handleChantReportWritten({ chantId }, undefined, db);
-    }
-
-    // 3. Delete all feedback by this user
-    const feedback = await db.collection("feedback").where("userId", "==", uid).get();
-    for (const fbDoc of feedback.docs) {
-      await fbDoc.ref.delete();
-    }
-    await deleteSafetyRateState(uid, db);
-
-    // 4. Anonymize createdBy on all chants by this user
-    const chants = await db.collection("chants").where("createdBy", "==", uid).get();
-    for (const chantDoc of chants.docs) {
-      await chantDoc.ref.update({ createdBy: "deleted-user" });
-    }
-
-    // 5. Anonymize comments by this user and recompute commentCounts
-    const comments = await db.collection("comments").where("userId", "==", uid).get();
-    const commentChantIds = new Set<string>();
-    for (const commentDoc of comments.docs) {
-      commentChantIds.add(commentDoc.data().chantId);
-      await commentDoc.ref.update({
-        userId: "deleted-user",
-        displayName: "Deleted user",
-      });
-    }
-
-    // 6. Delete comment likes by this user and recompute affected likeCounts
-    const commentLikes = await db.collection("commentLikes").where("userId", "==", uid).get();
-    const affectedCommentIds = new Set<string>();
-    for (const likeDoc of commentLikes.docs) {
-      affectedCommentIds.add(likeDoc.data().commentId);
-      await likeDoc.ref.delete();
-    }
-    for (const commentId of affectedCommentIds) {
-      await recomputeCommentLikeCount(commentId);
-    }
-
-    // 7. Delete comment reports by this user and reconcile flag counters
-    const commentReports = await db.collection("commentReports").where("reportedBy", "==", uid).get();
-    const reportedCommentIds = new Set<string>();
-    for (const crDoc of commentReports.docs) {
-      reportedCommentIds.add(crDoc.data().commentId as string);
-      await crDoc.ref.delete();
-    }
-    for (const commentId of reportedCommentIds) {
-      await handleCommentReportWritten({ commentId }, undefined, db);
-    }
-
-    // 8. Delete user reports filed by or against this user. Recompute the
-    // surviving targets' counters from ground truth.
-    const userReportsBy = await db.collection("userReports")
-      .where("reportedBy", "==", uid).get();
-    const userReportsAgainst = await db.collection("userReports")
-      .where("reportedUserId", "==", uid).get();
-    const userReportDocs = new Map<string, admin.firestore.QueryDocumentSnapshot>();
-    const affectedReportedUsers = new Set<string>();
-    for (const reportDoc of userReportsBy.docs) {
-      userReportDocs.set(reportDoc.ref.path, reportDoc);
-      affectedReportedUsers.add(reportDoc.data().reportedUserId as string);
-    }
-    for (const reportDoc of userReportsAgainst.docs) {
-      userReportDocs.set(reportDoc.ref.path, reportDoc);
-    }
-    for (const reportDoc of userReportDocs.values()) {
-      await reportDoc.ref.delete();
-    }
-    affectedReportedUsers.delete(uid);
-    for (const reportedUserId of affectedReportedUsers) {
-      await handleUserReportCreated(reportedUserId, db);
-    }
-
-    // 9. Delete both directions of block relationships involving this user.
-    const blocksBy = await db.collection("blocks").where("blockerId", "==", uid).get();
-    const blocksAgainst = await db.collection("blocks").where("blockedUserId", "==", uid).get();
-    const blockRefs = new Map<string, admin.firestore.DocumentReference>();
-    for (const blockDoc of [...blocksBy.docs, ...blocksAgainst.docs]) {
-      blockRefs.set(blockDoc.ref.path, blockDoc.ref);
-    }
-    for (const blockRef of blockRefs.values()) {
-      await blockRef.delete();
-    }
-
-    // 10. Audit before deleting Auth so the actor remains attributable.
-    await writeAuditEntry({
-      actorId: uid,
-      action: "delete-account",
-      targetType: "user",
-      targetId: uid,
-      detail: `User deleted their own account. ${votes.size} votes removed, ${chants.size} chants anonymized, ${comments.size} comments anonymized, ${commentLikes.size} comment likes removed, ${userReportDocs.size} user reports removed, ${blockRefs.size} blocks removed.`,
+    return requestAccountDeletion({
+      uid: request.auth.uid,
+      data: request.data,
+      firestore: db,
+      now: () => admin.firestore.Timestamp.now(),
     });
+  }
+);
 
-    // 11. Delete Auth before the profile. If Auth deletion fails, the user
-    // can still sign in and retry instead of being stranded without a profile.
-    await admin.auth().deleteUser(uid);
-    await db.collection("profiles").doc(uid).delete();
-
-    return { success: true };
+export const onAccountDeletionJobWritten = onDocumentWritten(
+  {
+    document: "accountDeletionJobs/{uid}",
+    region: "europe-west2",
+    retry: true,
+  },
+  async (event) => {
+    if (!event.data?.after.exists) return;
+    await processAccountDeletionStep({
+      uid: event.params.uid,
+      firestore: db,
+      auth: admin.auth(),
+      now: () => admin.firestore.Timestamp.now(),
+    });
   }
 );
 
@@ -691,6 +604,9 @@ export async function handleAcceptPolicy(
   const profileSnap = await profileRef.get();
   if (!profileSnap.exists) {
     return { accepted: false };
+  }
+  if (profileSnap.data()?.deletionPending === true) {
+    throw new HttpsError("failed-precondition", "Account deletion is in progress.");
   }
 
   await profileRef.update({
@@ -741,7 +657,11 @@ export const mergeChants = onCall(
 
     // Operator check: read role from Firestore profile, same pattern as onModerationAction
     const actorProfile = await db.collection("profiles").doc(actorUid).get();
-    if (!actorProfile.exists || actorProfile.data()?.role !== "operator") {
+    if (
+      !actorProfile.exists ||
+      actorProfile.data()?.role !== "operator" ||
+      actorProfile.data()?.deletionPending === true
+    ) {
       throw new HttpsError("permission-denied", "Operator access required.");
     }
 
@@ -1116,6 +1036,25 @@ export const onUserReportCreated = onDocumentCreated(
   }
 );
 
+// Account deletion removes user reports in bounded background pages. Deletes
+// need their own convergence trigger because the legacy create-only trigger
+// cannot repair a surviving target's count after the report disappears.
+export async function handleUserReportDeleted(
+  reportData: admin.firestore.DocumentData | undefined,
+  firestore: admin.firestore.Firestore
+): Promise<void> {
+  const reportedUserId = reportData?.reportedUserId as string | undefined;
+  if (!reportedUserId) return;
+  await handleUserReportCreated(reportedUserId, firestore);
+}
+
+export const onUserReportDeleted = onDocumentDeleted(
+  { document: "userReports/{reportId}", region: "europe-west2" },
+  async (event) => {
+    await handleUserReportDeleted(event.data?.data(), db);
+  }
+);
+
 // --- Helper: recompute commentCount on a chant from ground truth ---
 async function recomputeCommentCount(chantId: string): Promise<void> {
   const commentsSnap = await db
@@ -1127,21 +1066,6 @@ async function recomputeCommentCount(chantId: string): Promise<void> {
   await db.collection("chants").doc(chantId).update({
     commentCount: commentsSnap.size,
   });
-}
-
-// --- Helper: recompute likeCount on a comment from ground truth ---
-async function recomputeCommentLikeCount(commentId: string): Promise<void> {
-  const commentSnap = await db.collection("comments").doc(commentId).get();
-  if (!commentSnap.exists) return;
-  const likesSnap = await db
-    .collection("commentLikes")
-    .where("commentId", "==", commentId)
-    .get();
-  let likeCount = 0;
-  for (const doc of likesSnap.docs) {
-    if (doc.data().value === 1) likeCount++;
-  }
-  await db.collection("comments").doc(commentId).update({ likeCount });
 }
 
 // --- Helper: resolve comment reports ---

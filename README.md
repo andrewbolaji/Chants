@@ -35,7 +35,7 @@ Chants is a mobile app where football fans find and learn terrace songs, contrib
 - **Search.** Filter chants by title, lyrics, tune name, or club name with results updating as you type.
 - **Saved Matchday Songbook.** Save one chant or a club's Songbook as a bounded device copy for quick offline reading at the ground.
 - **Share-out.** Send a complete, honestly labelled chant through the native share sheet without inventing a dead public link.
-- **Account management.** Email/password auth, password reset, and in-app account deletion with contribution anonymization and counter reconciliation. Remaining lifecycle gaps are tracked in the engineering review documents.
+- **Account management.** Email/password auth, password reset, and durable in-app account deletion with pending-account denial, bounded retry, contribution anonymization, local Songbook cleanup, and counter reconciliation.
 
 ---
 
@@ -102,7 +102,7 @@ Chants are stored in a single flat Firestore collection with denormalized IDs. T
 
 ### Cloud Functions
 
-Thirteen Functions exports in source (all configured for `europe-west2`; live deployment state is verified separately):
+Fifteen Functions exports in source (all configured for `europe-west2`; live deployment state is verified separately):
 
 | Function | Trigger | Purpose |
 |----------|---------|---------|
@@ -115,10 +115,12 @@ Thirteen Functions exports in source (all configured for `europe-west2`; live de
 | `onReportCreated` | Report doc write | Recompute pending-report flagCount, auto-hide at threshold |
 | `onCommentReportCreated` | CommentReport doc write | Recompute pending-report flagCount on comment, auto-hide at threshold |
 | `onModerationAction` | HTTPS callable | Operator hide/unhide/remove/ban and promote/demote actions with audit log |
-| `deleteAccount` | HTTPS callable | Account deletion, data cleanup, anonymization, and counter reconciliation |
+| `deleteAccount` | HTTPS callable | Durably accept account deletion and mark the profile pending |
+| `onAccountDeletionJobWritten` | AccountDeletionJob doc write | Advance one bounded retryable cleanup phase or page |
 | `mergeChants` | HTTPS callable | Operator duplicate merge that moves votes, reports, comments, and replies |
 | `acceptPolicy` | HTTPS callable | Validate and record acceptance of the current content policy |
 | `onUserReportCreated` | UserReport doc create | Recompute the reported user's distinct-report count |
+| `onUserReportDeleted` | UserReport doc delete | Repair a surviving reported user's count after cleanup |
 
 ---
 
@@ -132,7 +134,7 @@ Thirteen Functions exports in source (all configured for `europe-west2`; live de
 
 **Content integrity.** All seed content (lyrics, squads, cultural context) is externally sourced and verified by hand. The build process can only transform supplied data in place; it never generates or rewrites content. This is a standing rule with the highest priority in the project.
 
-**Test coverage across layers.** 294 Flutter tests, 132 Firestore security-rules assertions, 56 Cloud Functions tests, and 42 seed-pipeline tests. Regression guards cover timing-sensitive UI, moderation revocation, atomic safety intake, direct-write abuse, trigger deletion races, responsive comment states, stale Player recovery, reply grouping, and offline snapshot reconstruction.
+**Test coverage across layers.** 310 Flutter tests, 135 Firestore security-rules assertions, 69 Cloud Functions tests, and 42 seed-pipeline tests. Regression guards cover timing-sensitive UI, moderation revocation, atomic safety intake, durable account deletion, direct-write abuse, trigger deletion races, responsive comment states, stale Player recovery, reply grouping, and offline snapshot reconstruction.
 
 ---
 
@@ -162,7 +164,7 @@ Thirteen Functions exports in source (all configured for `europe-west2`; live de
    flutter run
    ```
 
-For an existing installation, follow the reviewed rollout contract: Functions first, a compatible client second, and the restrictive report and feedback rules last. Do not use a rules-first partial rollout with an older client.
+For an installation still using direct report and feedback writes, migrate that boundary first: Functions, compatible client, then the restrictive report and feedback rules. Once that PR 12 contract is established, add durable deletion in its reviewed order: backward-compatible pending-account rules, Functions, then client. Verify the actual deployed baseline before choosing either sequence.
 
 ### Running tests
 

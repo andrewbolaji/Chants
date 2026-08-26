@@ -8,7 +8,11 @@ service cloud.firestore {
 
     function isOperator() {
       return isAuth() &&
-        get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.role == 'operator';
+        exists(/databases/$(database)/documents/profiles/$(request.auth.uid))
+        && !exists(/databases/$(database)/documents/accountDeletionJobs/$(request.auth.uid))
+        && get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.role == 'operator'
+        && (!('deletionPending' in get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data)
+            || get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.deletionPending == false);
     }
 
     function isVisible(res) {
@@ -17,7 +21,10 @@ service cloud.firestore {
 
     function isNotBanned() {
       return exists(/databases/$(database)/documents/profiles/$(request.auth.uid))
-        && get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.banned == false;
+        && !exists(/databases/$(database)/documents/accountDeletionJobs/$(request.auth.uid))
+        && get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.banned == false
+        && (!('deletionPending' in get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data)
+            || get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.deletionPending == false);
     }
 
     // Must match CURRENT_POLICY_VERSION in functions/src/index.ts and
@@ -248,6 +255,7 @@ service cloud.firestore {
       allow get: if isAuth() && (request.auth.uid == userId || isOperator());
       allow list: if isOperator();
       allow create: if isAuth() && request.auth.uid == userId
+        && !exists(/databases/$(database)/documents/accountDeletionJobs/$(request.auth.uid))
         && request.resource.data.keys().hasOnly(
             ['displayName', 'role', 'banned', 'ageConfirmed17Plus',
              'userReportCount', 'createdAt', 'updatedAt'])
@@ -263,6 +271,9 @@ service cloud.firestore {
         && validRecentClientTimestamp(request.resource.data.createdAt)
         && validRecentClientTimestamp(request.resource.data.updatedAt);
       allow update: if isAuth() && request.auth.uid == userId
+        && !exists(/databases/$(database)/documents/accountDeletionJobs/$(request.auth.uid))
+        && (!('deletionPending' in resource.data)
+            || resource.data.deletionPending == false)
         && request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['displayName', 'updatedAt'])
         && request.resource.data.displayName is string
@@ -291,6 +302,7 @@ service cloud.firestore {
       // Authors can edit an explicit content allowlist only while community.
       // Origin and evidence are immutable from the direct client path.
       allow update: if isAuth()
+        && isNotBanned()
         && resource.data.createdBy == request.auth.uid
         && resource.data.status == 'community'
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
@@ -460,6 +472,7 @@ service cloud.firestore {
     match /blocks/{blockId} {
       allow read: if isAuth() && resource.data.blockerId == request.auth.uid;
       allow create: if isAuth()
+        && isNotBanned()
         && request.resource.data.keys().hasOnly(
             ['blockerId', 'blockedUserId', 'blockedDisplayName', 'createdAt'])
         && request.resource.data.blockerId == request.auth.uid
@@ -485,6 +498,11 @@ service cloud.firestore {
 
     // Private server-owned anchored-window counters for safety submissions.
     match /safetyRateLimits/{userId} {
+      allow read, write: if false;
+    }
+
+    // Private server-owned cursors for retryable account deletion.
+    match /accountDeletionJobs/{userId} {
       allow read, write: if false;
     }
   }

@@ -1,11 +1,33 @@
 import 'package:cloud_functions/cloud_functions.dart';
 
-class ModerationRepository {
-  final FirebaseFunctions _functions;
+typedef AccountDeletionInvoker = Future<Object?> Function();
 
-  ModerationRepository({FirebaseFunctions? functions})
-    : _functions =
-          functions ?? FirebaseFunctions.instanceFor(region: 'europe-west2');
+class ModerationRepository {
+  final FirebaseFunctions? _functionsOverride;
+  final AccountDeletionInvoker _deleteAccountRequest;
+
+  ModerationRepository({
+    FirebaseFunctions? functions,
+    AccountDeletionInvoker? accountDeletionInvoker,
+  }) : _functionsOverride = functions,
+       _deleteAccountRequest =
+           accountDeletionInvoker ??
+           _firebaseDeleteAccountInvoker(
+             functions ?? FirebaseFunctions.instanceFor(region: 'europe-west2'),
+           );
+
+  FirebaseFunctions get _functions =>
+      _functionsOverride ??
+      FirebaseFunctions.instanceFor(region: 'europe-west2');
+
+  static AccountDeletionInvoker _firebaseDeleteAccountInvoker(
+    FirebaseFunctions functions,
+  ) {
+    return () async {
+      final result = await functions.httpsCallable('deleteAccount').call({});
+      return result.data;
+    };
+  }
 
   Future<void> hideChant(String chantId) async {
     await _functions.httpsCallable('onModerationAction').call({
@@ -85,7 +107,10 @@ class ModerationRepository {
   }
 
   Future<void> deleteAccount() async {
-    await _functions.httpsCallable('deleteAccount').call({});
+    final data = await _deleteAccountRequest();
+    if (data is! Map || data['accepted'] != true) {
+      throw StateError('Account deletion was not durably accepted.');
+    }
   }
 
   /// Records that the caller accepted the current content policy version.

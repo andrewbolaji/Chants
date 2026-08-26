@@ -1,7 +1,7 @@
 import { describe, it, beforeEach } from "mocha";
 import * as assert from "assert";
 import * as admin from "firebase-admin";
-import { handleUserReportCreated } from "../src/index";
+import { handleUserReportCreated, handleUserReportDeleted } from "../src/index";
 
 // --- In-memory Firestore stub: userReports store (queryable) + profiles
 // store (get/update), same shape as the fakes in on_vote_written.test.ts
@@ -154,5 +154,21 @@ describe("handleUserReportCreated", () => {
     const result = await handleUserReportCreated("baduser", fakeDb);
 
     assert.strictEqual(result.userReportCount, 1);
+  });
+
+  it("DELETE: recomputes the surviving target count without an audit path", async () => {
+    profilesStore["baduser"] = { role: "user", banned: false, userReportCount: 2 };
+    userReportsStore["reporter1_baduser"] = {
+      reportedUserId: "baduser", reportedBy: "reporter1", reason: "a", status: "pending",
+    };
+    userReportsStore["reporter2_baduser"] = {
+      reportedUserId: "baduser", reportedBy: "reporter2", reason: "b", status: "pending",
+    };
+    delete userReportsStore["reporter1_baduser"];
+
+    await handleUserReportDeleted({ reportedUserId: "baduser" }, fakeDb);
+
+    assert.strictEqual(profileUpdateCalls.length, 1);
+    assert.strictEqual(profileUpdateCalls[0].data.userReportCount, 1);
   });
 });

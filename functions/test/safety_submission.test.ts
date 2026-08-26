@@ -200,6 +200,16 @@ describe("handleSubmitReport", () => {
       firestore: banned.firestore,
       clock: () => NOW,
     }), "permission-denied");
+
+    const deleting = makeHarness();
+    seedReporter(deleting, { deletionPending: true });
+    deleting.seed("chants", "chant-1", { hidden: false, removed: false });
+    await expectCode(handleSubmitReport({
+      uid: "reporter",
+      data: reportData("chant", "chant-1"),
+      firestore: deleting.firestore,
+      clock: () => NOW,
+    }), "failed-precondition");
   });
 
   it("rejects missing, hidden, and removed content targets without spending budget", async () => {

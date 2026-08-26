@@ -285,7 +285,14 @@ class SavedSongbookRepository {
         }
         Error.throwWithStackTrace(primaryError, primaryStack);
       }
-      if (staged) await _storage.finishAccountDeletion(uid);
+      if (staged) {
+        try {
+          await _storage.finishAccountDeletion(uid);
+        } catch (_) {
+          // The tombstone is already unreadable as an active Songbook. The
+          // next repository initialization retries its best-effort cleanup.
+        }
+      }
     });
   }
 }

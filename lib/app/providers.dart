@@ -91,6 +91,7 @@ final accountDeletionServiceProvider = Provider<AccountDeletionService>((ref) {
   return AccountDeletionService(
     moderationRepository: ref.watch(moderationRepositoryProvider),
     savedSongbookRepository: ref.watch(savedSongbookRepositoryProvider),
+    signOut: ref.watch(authRepositoryProvider).signOut,
   );
 });
 

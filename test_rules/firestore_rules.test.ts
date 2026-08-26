@@ -88,6 +88,41 @@ async function seedBannedUser(uid: string) {
   });
 }
 
+async function seedDeletionPendingUser(uid: string, role = "user") {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    await setDoc(doc(db, "profiles", uid), {
+      displayName: "DeletingUser",
+      role,
+      banned: false,
+      deletionPending: true,
+      ageConfirmed17Plus: true,
+      userReportCount: 0,
+      acceptedPolicyVersion: "v1",
+      acceptedPolicyAt: Timestamp.now(),
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    });
+    await setDoc(doc(db, "accountDeletionJobs", uid), {
+      schemaVersion: 1,
+      phase: "delete-votes",
+      requestedAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    });
+  });
+}
+
+async function seedDeletionJob(uid: string) {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    await setDoc(doc(context.firestore(), "accountDeletionJobs", uid), {
+      schemaVersion: 1,
+      phase: "disable-auth",
+      requestedAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    });
+  });
+}
+
 async function seedTeam(
   teamId = "t1",
   sportId = "s1",
@@ -1366,6 +1401,136 @@ describe("safety rate limits", () => {
     await assertFails(getDoc(doc(operatorDb, "safetyRateLimits", "user1")));
     await assertFails(setDoc(doc(operatorDb, "safetyRateLimits", "user1"), {
       reportCount: 0,
+    }));
+  });
+});
+
+describe("account deletion jobs and pending authority", () => {
+  it("keeps deletion jobs private from owners and operators", async () => {
+    await seedUserProfile("user1");
+    await seedOperator("op1");
+    await seedDeletionJob("user1");
+    const userDb = testEnv.authenticatedContext("user1").firestore();
+    const operatorDb = testEnv.authenticatedContext("op1").firestore();
+
+    await assertFails(getDoc(doc(userDb, "accountDeletionJobs", "user1")));
+    await assertFails(updateDoc(doc(userDb, "accountDeletionJobs", "user1"), {
+      phase: "finalize",
+    }));
+    await assertFails(getDoc(doc(operatorDb, "accountDeletionJobs", "user1")));
+    await assertFails(deleteDoc(doc(operatorDb, "accountDeletionJobs", "user1")));
+  });
+
+  it("denies a late profile create after a deletion job exists", async () => {
+    await seedDeletionJob("late-user");
+    const db = testEnv.authenticatedContext("late-user").firestore();
+    await assertFails(setDoc(doc(db, "profiles", "late-user"), {
+      displayName: "Late user",
+      role: "user",
+      banned: false,
+      ageConfirmed17Plus: true,
+      userReportCount: 0,
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    }));
+  });
+
+  it("blocks pending writes and operator authority but permits cleanup deletes", async () => {
+    await seedTeam();
+    await seedDeletionPendingUser("deleting");
+    await seedDeletionPendingUser("deleting-operator", "operator");
+    await seedUserProfile("target");
+    await seedUserProfile("target2");
+    await seedVisibleChant("authored", "deleting", {
+      origin: "originalIdea",
+    });
+    await seedVisibleChant("target-chant", "target", {
+      origin: "originalIdea",
+    });
+    await seedVisibleChant("target-chant-2", "target", {
+      origin: "originalIdea",
+    });
+    await seedComment("own-comment", "target-chant", "deleting");
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const adminDb = context.firestore();
+      await setDoc(doc(adminDb, "votes", "deleting_target-chant"), {
+        chantId: "target-chant",
+        userId: "deleting",
+        value: 1,
+        createdAt: Timestamp.now(),
+      });
+      await setDoc(doc(adminDb, "commentLikes", "deleting_own-comment"), {
+        commentId: "own-comment",
+        userId: "deleting",
+        value: 1,
+        createdAt: Timestamp.now(),
+      });
+      await setDoc(doc(adminDb, "blocks", "deleting_target"), {
+        blockerId: "deleting",
+        blockedUserId: "target",
+        blockedDisplayName: "Target",
+        createdAt: Timestamp.now(),
+      });
+    });
+
+    const db = testEnv.authenticatedContext("deleting").firestore();
+    await assertFails(updateDoc(doc(db, "profiles", "deleting"), {
+      deletionPending: false,
+    }));
+    await assertFails(updateDoc(doc(db, "profiles", "deleting"), {
+      displayName: "Still here",
+      updatedAt: Timestamp.now(),
+    }));
+    await assertFails(setDoc(
+      doc(db, "chants", "new-chant"),
+      validNewChantData("deleting"),
+    ));
+    await assertFails(updateDoc(doc(db, "chants", "authored"), {
+      title: "Changed while deleting",
+      updatedAt: Timestamp.now(),
+    }));
+    await assertFails(setDoc(doc(db, "votes", "deleting_target-chant-2"), {
+      chantId: "target-chant",
+      userId: "deleting",
+      value: 1,
+      createdAt: Timestamp.now(),
+    }));
+    await assertFails(setDoc(doc(db, "comments", "new-comment"), {
+      chantId: "target-chant",
+      userId: "deleting",
+      displayName: "DeletingUser",
+      body: "Too late",
+      parentCommentId: null,
+      createdAt: Timestamp.now(),
+      likeCount: 0,
+      flagCount: 0,
+      hidden: false,
+      removed: false,
+    }));
+    await assertFails(setDoc(doc(db, "commentLikes", "deleting_other-comment"), {
+      commentId: "own-comment",
+      userId: "deleting",
+      value: 1,
+      createdAt: Timestamp.now(),
+    }));
+    await assertFails(setDoc(doc(db, "blocks", "deleting_target2"), {
+      blockerId: "deleting",
+      blockedUserId: "target2",
+      blockedDisplayName: "Target 2",
+      createdAt: Timestamp.now(),
+    }));
+
+    const operatorDb = testEnv.authenticatedContext("deleting-operator").firestore();
+    await assertFails(setDoc(doc(operatorDb, "sports", "rugby"), {
+      name: "Rugby",
+      enabled: true,
+    }));
+
+    await assertSucceeds(deleteDoc(doc(db, "votes", "deleting_target-chant")));
+    await assertSucceeds(deleteDoc(doc(db, "commentLikes", "deleting_own-comment")));
+    await assertSucceeds(deleteDoc(doc(db, "blocks", "deleting_target")));
+    await assertSucceeds(updateDoc(doc(db, "comments", "own-comment"), {
+      removed: true,
     }));
   });
 });
