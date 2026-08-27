@@ -36,7 +36,7 @@ The prior fail-open analysis path is also closed. `.github/workflows/ci.yml :: f
 
 Two later stacked blocks closed risks that the earlier review identified. `functions/src/safety_submission.ts` and decision 010 move report and feedback admission behind atomic private budgets. `functions/src/account_deletion.ts` and decision 011 replace synchronous deletion with a private bounded retry job, pending-account authority, and recoverable Auth finalization. Decisions 012 through 016 record the additional freeze corrections and audit-retention boundary.
 
-The engineering stack through PR 15 is merged and exact-main clean-runner green. The independent-review correction and iOS native-readiness block are locally green at their verified boundaries and still need packaging, clean-runner CI, and one combined independent closure. The product is not release-ready: Android compilation, signing credentials, final policy wording, live deployment, operational configuration, seed completion, and the combined device walk require separate owner input or authorization.
+The engineering stack through PR 15 is merged and exact-main clean-runner green. The independent-review correction and iOS native-readiness block are packaged in draft PR 16; its implementation head passed all six clean-runner jobs. The workflow then moved deprecated Node 20 action majors to their direct official Node 24 successors, so replacement exact-head CI and one combined independent closure remain. The product is not release-ready: Android compilation, signing credentials, final policy wording, live deployment, operational configuration, seed completion, and the combined device walk require separate owner input or authorization.
 
 ## What the product is now
 
@@ -181,6 +181,7 @@ Local verification on 2026-08-26:
 | governance regression harness | RED before correction on a documentation path containing spaces; PASS after path, index, and error handling corrections |
 | `flutter build ios --simulator --debug --no-pub` | RED on automatic mixed SwiftPM Firestore bridge sources; PASS on the project-pinned CocoaPods graph, producing `Runner.app` |
 | scoped RunnerTests boundary | Runner and RunnerTests compile, embed, sign locally, and validate; CoreSimulator blocks before XCTest launch, so no assertion is claimed |
+| PR 16 GitHub Actions run `33025135738` at `41d23b5` | PASS: governance/native contract, 356 Flutter tests, full analysis, 78 Functions tests, 42 seed tests, and 136 rules assertions |
 | final `main` GitHub Actions run `33012771517` at `9189c71` | Exact merged-head PASS: project governance, 353 Flutter tests, analysis, 78 Functions tests, 42 seed tests, and 136 rules assertions |
 
 The earlier remediation first proved its affected boundaries red. The final closure also captures direct red evidence for both late deletion error classes after Home disposal, then passes those guards with the pending screen still authoritative. The interface block reproduced the immutable-list crash before correction. PR 15 run `33011415224` measured a 2.40 percent Linux Home render difference against a 2.20 percent golden ceiling while its other five jobs passed. After a 3.00 percent calibration, replacement run `33011936510` and exact-main run `33012771517` passed all six jobs. Independent review then proved that the broad comparator could absorb a missing trust word and that Home hardcoded Rising. The correction keeps 3.00 percent only for Home, restores 2.20 percent for competition and player, adds semantic trust assertions, and passes 356 local Flutter tests. Clean-runner evidence for the correction is pending.
@@ -220,7 +221,7 @@ Crashlytics is wired, and `docs/RUNBOOK.md` now records first response and known
 - No live stable-ID preflight or seed write ran.
 - No Android build succeeded locally because the Android SDK is unavailable. The iOS simulator app now compiles after pinning the project to CocoaPods; RunnerTests execution remains unverified because CoreSimulator rejected the app before XCTest spawned.
 - No iPhone, Android, or iPad walkthrough ran in this review.
-- Exact merged `main` at `9189c71` passed all six jobs in run `33012771517`, including project governance, 353 Flutter tests, analysis, Functions, seed, and 136 rules assertions. The local correction has no clean-runner result yet.
+- Exact merged `main` at `9189c71` passed all six jobs in run `33012771517`. PR 16 implementation head `41d23b5` passed all six jobs in run `33025135738`; replacement CI for the Node 24 action-maintenance closure is pending.
 - Android release signing remains debug-only in the tracked configuration.
 - The content policy remains placeholder copy.
 - Dependency freshness and current security-advisory state are unverified.

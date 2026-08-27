@@ -96,7 +96,7 @@ Green evidence:
 - `git diff --check` passes.
 - `pubspec.lock` matches the base and is not part of the change.
 
-Functions, rules, and seed were not rerun locally because their source, tests, manifests, and contracts do not change. Exact merged PR 15 evidence remains GitHub Actions run `33012771517` at `9189c71`. Correction clean-runner CI remains pending.
+Functions, rules, and seed were not rerun locally because their source, tests, manifests, and contracts do not change. Exact merged PR 15 evidence remains GitHub Actions run `33012771517` at `9189c71`. The later combined PR 16 run `33025135738` passed all six jobs at implementation head `41d23b5`; replacement CI for the Node 24 action-maintenance closure remains pending.
 
 ## Rollout, observation, and recovery
 
@@ -107,7 +107,7 @@ Functions, rules, and seed were not rerun locally because their source, tests, m
 
 ## Known gaps
 
-- Clean-runner CI has not run for this correction.
+- The combined implementation head is clean-runner green; the Node 24 action-maintenance closure still needs its replacement exact-head run.
 - The correction has not received independent closure review.
 - Native fonts, touch behavior, route transitions, and device lifecycle remain unverified until the combined walkthrough.
 - Discover still reads the complete visible collection and shuffles locally. That remains a measured-volume trigger, not a defect in this bounded correction.

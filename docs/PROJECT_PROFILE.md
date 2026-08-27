@@ -73,7 +73,7 @@ The project has proved the Flutter, Functions, seed, rules, analysis, and clean-
 | Rules emulator | `test_rules/package.json`, `firebase.json` | `test_rules/package-lock.json`; CI pins Java 21 and firebase-tools 15 | Firebase emulator release notes when reviewed | Andrew |
 | Android client | `android/` Gradle files | Gradle wrapper and plugin versions in source | Android and Flutter release guidance when reviewed | Andrew |
 | iOS client | `ios/Podfile`, Xcode project, Flutter-generated configuration | iOS deployment target 15; local CocoaPods resolution | Apple and Flutter release guidance when reviewed | Andrew |
-| GitHub Actions | `.github/workflows/ci.yml` | Referenced action major versions | Action release and security advisories when changed | Andrew |
+| GitHub Actions | `.github/workflows/ci.yml` | Checkout, Node setup, and Java setup v5 on the Node 24 action runtime | Action release and security advisories when changed | Andrew |
 
 No version in this table is an instruction to upgrade. A change needs a compatibility, security, support, or measured product reason.
 

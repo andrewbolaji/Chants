@@ -1,6 +1,6 @@
 # Change spec: V1 native build readiness
 
-**Status:** Implemented and locally compiled; packaging, clean-runner CI, combined device walk, and final independent review pending
+**Status:** Packaged in draft PR 16; first clean-runner head green; Node 24 action maintenance replacement CI, combined device walk, and final independent review pending
 **Updated:** 2026-08-26
 **Risk lane:** Lane 1, bounded native compilation and release-readiness evidence
 **Base:** `9189c71d99c52539cb3d1b02f51701fa4334c144`, merged PR 15 on `main`, plus the locally verified post-interface correction batch
@@ -10,7 +10,7 @@
 
 - **Problem:** Flutter, Functions, rules, seed, and interface tests are green, but the current merged application has not yet been compiled across its native V1 boundary. The repository also lacks checked-in production Firebase configuration by design, and this Mac has no Android SDK.
 - **Desired behavior:** Prove that the iOS simulator target compiles from the current combined source with temporary non-secret local fixtures, diagnose and correct only repository-owned native blockers, preserve an honest Android environment gate, and leave a reproducible final-review record.
-- **Non-goals:** Production signing, physical-device installation, live Firebase access, seed writes, Functions or rules deployment, App Store or Play Console work, Android SDK installation, package upgrades, new product features, or visual redesign.
+- **Non-goals:** Production signing, physical-device installation, live Firebase access, seed writes, Functions or rules deployment, App Store or Play Console work, Android SDK installation, application or native package upgrades, new product features, or visual redesign.
 - **Review boundary:** Native project source and configuration needed to compile, scoped native tests, temporary ignored fixtures, generated-file cleanup, current engineering records, and the already approved correction batch. The independent review happens once at the final pre-release engineering head rather than after this block.
 
 ## Acceptance criteria and invariants
@@ -32,6 +32,7 @@
 - The first build reproduced Flutter's automatic mixed SwiftPM migration compiling `cloud_firestore 6.4.1` against incompatible Firebase bridge APIs. The project now pins Flutter's supported project-level SwiftPM setting off and keeps the V1 graph on CocoaPods.
 - `ios/Podfile.lock` now includes the native `share_plus` and `url_launcher_ios` pods already declared by the merged V1 Dart dependencies. Existing Firebase pod versions remain pinned.
 - CI now fails if the project loses its CocoaPods ownership flag, loses either merged native plugin pod, or tracks generated Flutter SwiftPM state.
+- PR 16 clean-runner run `33025135738` passed all six jobs at implementation head `41d23b5`, including 356 Flutter tests, full analysis, 78 Functions tests, 42 seed tests, and 136 rules assertions. That run also showed every v4 GitHub setup action being forced from deprecated Node 20 onto Node 24, so the workflow now uses the official v5 Node 24 action majors; replacement exact-head CI is the remaining automated gate.
 - The current Flutter UIScene migration is retained: `AppDelegate` registers plugins through `FlutterImplicitEngineDelegate`, `Info.plist` declares the Flutter scene, and the obsolete framework minimum-version override is removed.
 - The Runner app and RunnerTests bundle both compile and validate. Two signed, single-destination RunnerTests launches were blocked before XCTest began because CoreSimulator denied or lost the app-launch service. The inherited `testExample` assertion is therefore not claimed as executed.
 - Android remains environment-blocked because this Mac has no Android SDK. No SDK was installed.
