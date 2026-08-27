@@ -16,7 +16,7 @@ Home no longer equates Chant Lab membership with momentum. The community preview
 
 The Terrace Proven empty state no longer offers a shuffle that cannot help. Discovery already fetches the complete visible set, so zero canonical rows remains zero after reordering. The empty action now opens the existing Premier League club route with its existing arguments.
 
-Home trust words have direct widget assertions independent of pixel comparison. The measured 3 percent Linux renderer allowance applies only to Home; competition and player return to the earlier 2.2 percent ceiling.
+Home trust words have direct widget assertions independent of pixel comparison. The measured 3 percent Linux renderer allowance applies only to Home. The later final freeze closure moves competition and player from the earlier 2.2 percent ceiling to the shared 1.5 percent default because no separate drift was measured.
 
 Project governance now says what it can prove. CI checks required memory structure and tracked prose, then runs durable script regressions. Change-to-execution linkage remains the explicit manual `--staged` pre-handoff check because CI cannot infer a confirmed Lane 0 exception from a diff alone. The staged script consumes NUL-delimited paths. The writing script scans tracked index prose and treats execution errors as failures.
 
@@ -25,7 +25,7 @@ Project governance now says what it can prove. CI checks required memory structu
 | Finding | Correction | Evidence |
 |---|---|---|
 | H1 false Rising | Derive with `isRisingChant(live, now: evaluationTime)` | Stale score-zero and live score-transition widget tests |
-| M1 broad golden tolerance | Reinstall 2.2 percent comparator after Home and add semantic trust assertions | Core Home, competition, and player golden test plus exact text checks |
+| M1 broad golden tolerance | Scope 3 percent to Home, add semantic assertions, and later restore competition/player to the shared 1.5 percent ceiling | Core Home, competition, and player golden test plus exact text checks |
 | M2 impossible empty action | Replace shuffle with Premier League club browse | Exact message, action, route name, and route argument regression |
 | M3 overstated memory enforcement | State structure CI and manual staged linkage separately | AGENTS, project profile, script contract, and governance harness |
 | L1 path splitting | Consume `git diff --cached -z` through a Bash NUL loop | Documentation-only path containing spaces passes as one path |
@@ -62,7 +62,7 @@ Automatic staged enforcement would require CI to infer the approved risk lane or
 | No canonical chant exists | Honest empty copy and real Premier League browse action |
 | Both trust lanes exist | Existing one-card hierarchy and routes remain |
 | Home image | 3 percent renderer tolerance plus semantic assertions |
-| Competition and player images | 2.2 percent renderer tolerance |
+| Competition and player images | Shared 1.5 percent renderer tolerance after final closure |
 | Documentation path contains spaces | Staged memory classification remains documentation-only |
 | Implementation without staged execution record | Manual staged gate fails |
 | Forbidden punctuation in tracked prose | Writing check fails |
@@ -96,7 +96,7 @@ Green evidence:
 - `git diff --check` passes.
 - `pubspec.lock` matches the base and is not part of the change.
 
-Functions, rules, and seed were not rerun locally because their source, tests, manifests, and contracts do not change. Exact merged PR 15 evidence remains GitHub Actions run `33012771517` at `9189c71`. The later combined PR 16 run `33025135738` passed all six jobs at implementation head `41d23b5`; replacement CI for the Node 24 action-maintenance closure remains pending.
+Functions, rules, and seed were not rerun locally because their source, tests, manifests, and contracts do not change. Exact merged PR 15 evidence remains run `33012771517` at `9189c71`. Later PR 16 runs `33025135738` and `33025564912` passed all six jobs; replacement CI for the final evidence-only closure remains pending.
 
 ## Rollout, observation, and recovery
 

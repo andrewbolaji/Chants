@@ -30,7 +30,14 @@ else
   fi
 fi
 
-if git -C "$native_project_root" ls-files -- 'ios/**/Package.resolved' | grep -q .; then
+native_resolved_paths=$(mktemp "${TMPDIR:-/tmp}/chants-native-resolved.XXXXXX")
+trap 'rm -f "$native_resolved_paths"' EXIT HUP INT TERM
+if ! git -C "$native_project_root" ls-files -z -- \
+  'ios/Package.resolved' \
+  ':(glob)ios/**/Package.resolved' >"$native_resolved_paths"; then
+  native_fail 'tracked iOS source could not be scanned for SwiftPM resolution files'
+fi
+if [ -s "$native_resolved_paths" ]; then
   native_fail 'a generated SwiftPM resolution file is tracked under ios/'
 fi
 

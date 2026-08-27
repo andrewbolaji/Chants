@@ -13,6 +13,27 @@ This is the chronological evidence trail for substantial engineering work. It re
 
 ## Entries
 
+### 2026-08-27T00:25:16Z Close the final independent freeze review
+
+- **Status:** Implemented and locally verified; packaging and replacement exact-head CI pending
+- **Scope:** Close the final Claude review's one medium evidence defect and directly related low native-guard gaps, tighten unmeasured visual evidence, and refresh freeze truth. No production behavior, service, data, seed, release, or device change.
+- **Reference:** `docs/CODE_REVIEW_FINAL_FREEZE_2026-08.md`, `docs/CHANGE_SPEC.md`
+- **Approval:** Andrew directed one complete final-review correction batch rather than repeated reviews.
+- **Operator:** Codex
+
+| UTC time | Action | Target/environment | Result and evidence |
+|---|---|---|---|
+| 00:12:00 | Read and independently checked the supplied final Claude review | PR 16 range `9189c71...e810318` and clean local branch | Accepted M1 and related L2-L5 evidence findings. Preserved the review's freeze-defensible judgement and release-only watch items. Confirmed run `33025564912` passed all six jobs at exact reviewed head `e810318`. |
+| 00:17:00 | Corrected the native check and its evidence harness | Local Bash and temporary Git fixtures | The marker fixture now reaches the marker guard. Resolution scans distinguish Git failure from absence and cover root plus nested locations. Independent fixtures prove both pod assertions. Every negative case asserts its intended error text. |
+| 00:22:00 | Tightened unmeasured core goldens | Local Flutter renderer | Competition and player moved from 2.2 percent to the shared 1.5 percent ceiling. Home retains only its measured 3 percent exception. The focused core-journey suite passed all 8 tests. |
+| 00:25:16 | Refreshed final review and release truth | Project memory | Added the durable independent-review artifact and completed rationale. Exact-head run `33025564912` is recorded green; Share and evidence-link launch lead the later device walk; Flutter 3.44.8 is named as verified without inventing a lower bound. |
+| 00:32:52 | Ran the complete local client and governance matrix | Local macOS, Flutter 3.44.8, Dart 3.12.2, Bash | PASS: 356 Flutter tests, focused 1.5 percent goldens, native contract, governance regressions, memory structure, shell syntax, and whitespace checks. |
+
+- **Files/artifacts:** Two governance scripts, one golden test, final review artifact, active spec, completed rationale, execution and learning memory, overview, rationale, roadmap, project profile, interface memory, and README.
+- **Skipped:** Backend, rules, seed, Android, native build, devices, Firebase, signing, deployment, stores, and production actions are outside this evidence-only closure.
+- **Current state:** Final-review corrections pass local focused evidence. Packaging, push, and replacement exact-head CI remain.
+- **Follow-up:** Package one closure commit, push PR 16, require all six jobs green, then move the PR from draft to owner merge review without another incremental Claude pass unless new material behavior appears.
+
 ### 2026-08-26T23:50:13Z Prove V1 native iOS build readiness
 
 - **Status:** iOS simulator compilation complete; RunnerTests launch and Android compilation environment-blocked; packaging and final combined review pending

@@ -586,7 +586,10 @@ void main() {
       testFile: Uri.base.resolve(
         'test/presentation/browse/core_journey_golden_test.dart',
       ),
-      precisionTolerance: 0.022,
+      // Competition and player showed no measured clean-runner drift. Keep
+      // both on the shared 1.5% cross-renderer ceiling rather than carrying
+      // Home's text-heavy exception into unrelated baselines.
+      precisionTolerance: 0.015,
     );
 
     await tester.pumpWidget(

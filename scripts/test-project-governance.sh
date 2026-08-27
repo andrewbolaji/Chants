@@ -10,6 +10,22 @@ fail() {
   exit 1
 }
 
+assert_native_failure() {
+  local repo_path=$1
+  local expected_message=$2
+  local fixture_name=$3
+  local failure_output="$governance_temp_root/$fixture_name.stderr"
+
+  if "$repo_path/scripts/check-native-project.sh" \
+    >/dev/null 2>"$failure_output"; then
+    fail "$fixture_name unexpectedly passed the native contract"
+  fi
+  if ! grep -Fx "Native project contract failed: $expected_message" \
+    "$failure_output" >/dev/null 2>&1; then
+    fail "$fixture_name failed at the wrong native-contract boundary"
+  fi
+}
+
 initialize_memory_repo() {
   local repo_path=$1
   mkdir -p "$repo_path/docs" "$repo_path/scripts"
@@ -122,14 +138,87 @@ initialize_native_repo "$native_clean_repo"
 
 native_flag_repo="$governance_temp_root/native-flag"
 initialize_native_repo "$native_flag_repo" true
-if "$native_flag_repo/scripts/check-native-project.sh" >/dev/null 2>&1; then
-  fail 'a project without the CocoaPods ownership flag passed'
-fi
+assert_native_failure \
+  "$native_flag_repo" \
+  'pubspec.yaml must keep the V1 iOS graph on CocoaPods' \
+  'native-flag'
 
 native_marker_repo="$governance_temp_root/native-marker"
-initialize_native_repo "$native_marker_repo" true true
-if "$native_marker_repo/scripts/check-native-project.sh" >/dev/null 2>&1; then
-  fail 'tracked Flutter SwiftPM integration passed the native contract'
+initialize_native_repo "$native_marker_repo" false true
+assert_native_failure \
+  "$native_marker_repo" \
+  'tracked iOS source contains generated Flutter SwiftPM integration' \
+  'native-marker'
+
+native_root_resolution_repo="$governance_temp_root/native-root-resolution"
+initialize_native_repo "$native_root_resolution_repo"
+printf '%s\n' '{}' >"$native_root_resolution_repo/ios/Package.resolved"
+git -C "$native_root_resolution_repo" add ios/Package.resolved
+assert_native_failure \
+  "$native_root_resolution_repo" \
+  'a generated SwiftPM resolution file is tracked under ios/' \
+  'native-root-resolution'
+
+native_nested_resolution_repo="$governance_temp_root/native-nested-resolution"
+initialize_native_repo "$native_nested_resolution_repo"
+mkdir -p "$native_nested_resolution_repo/ios/Runner.xcworkspace/xcshareddata/swiftpm"
+printf '%s\n' '{}' \
+  >"$native_nested_resolution_repo/ios/Runner.xcworkspace/xcshareddata/swiftpm/Package.resolved"
+git -C "$native_nested_resolution_repo" add \
+  ios/Runner.xcworkspace/xcshareddata/swiftpm/Package.resolved
+assert_native_failure \
+  "$native_nested_resolution_repo" \
+  'a generated SwiftPM resolution file is tracked under ios/' \
+  'native-nested-resolution'
+
+native_share_pod_repo="$governance_temp_root/native-share-pod"
+initialize_native_repo "$native_share_pod_repo"
+printf '%s\n' \
+  'PODS:' \
+  '  - url_launcher_ios (0.0.1):' \
+  >"$native_share_pod_repo/ios/Podfile.lock"
+assert_native_failure \
+  "$native_share_pod_repo" \
+  'ios/Podfile.lock is missing share_plus (0.0.1)' \
+  'native-share-pod'
+
+native_url_pod_repo="$governance_temp_root/native-url-pod"
+initialize_native_repo "$native_url_pod_repo"
+printf '%s\n' \
+  'PODS:' \
+  '  - share_plus (0.0.1):' \
+  >"$native_url_pod_repo/ios/Podfile.lock"
+assert_native_failure \
+  "$native_url_pod_repo" \
+  'ios/Podfile.lock is missing url_launcher_ios (0.0.1)' \
+  'native-url-pod'
+
+native_git_error_repo="$governance_temp_root/native-git-error"
+initialize_native_repo "$native_git_error_repo"
+native_fake_bin="$governance_temp_root/native-fake-bin"
+mkdir -p "$native_fake_bin"
+printf '%s\n' \
+  '#!/usr/bin/env bash' \
+  'for native_git_arg in "$@"; do' \
+  '  if [ "$native_git_arg" = ls-files ]; then' \
+  '    exit 2' \
+  '  fi' \
+  'done' \
+  'exec "$GOVERNANCE_REAL_GIT" "$@"' \
+  >"$native_fake_bin/git"
+chmod +x "$native_fake_bin/git"
+governance_real_git=$(command -v git)
+native_git_error_output="$governance_temp_root/native-git-error.stderr"
+if PATH="$native_fake_bin:$PATH" \
+  GOVERNANCE_REAL_GIT="$governance_real_git" \
+  "$native_git_error_repo/scripts/check-native-project.sh" \
+  >/dev/null 2>"$native_git_error_output"; then
+  fail 'a Git ls-files error was treated as no tracked SwiftPM resolution'
+fi
+if ! grep -Fx \
+  'Native project contract failed: tracked iOS source could not be scanned for SwiftPM resolution files' \
+  "$native_git_error_output" >/dev/null 2>&1; then
+  fail 'the Git ls-files error failed at the wrong native-contract boundary'
 fi
 
 echo 'Project governance regressions pass.'

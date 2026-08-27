@@ -65,7 +65,7 @@ The project has proved the Flutter, Functions, seed, rules, analysis, and clean-
 
 | Surface | Authoritative manifest or config | Lock or deployed identity | Support or security source | Owner |
 |---|---|---|---|---|
-| Flutter and Dart | `pubspec.yaml` | `pubspec.lock`; CI currently follows Flutter stable | Flutter SDK and package registry release notes when an upgrade is proposed | Andrew |
+| Flutter and Dart | `pubspec.yaml` | `pubspec.lock`; Flutter 3.44.8 and Dart 3.12.2 are the verified native toolchain; CI follows movable stable | Flutter SDK and package registry release notes when an upgrade is proposed; no lower Flutter bound is claimed for `FlutterImplicitEngineDelegate` | Andrew |
 | Firebase mobile SDKs | `pubspec.yaml`, `firebase.json` | `pubspec.lock`; project ID `chants-f95b4` in source config | Firebase and package advisories when reviewed | Andrew |
 | Riverpod | `pubspec.yaml` | `pubspec.lock` | Package release notes when reviewed | Andrew |
 | Cloud Functions | `functions/package.json`, `functions/tsconfig.json`, `firebase.json` | `functions/package-lock.json`; Node 20 | Firebase, Node, and npm advisories when reviewed | Andrew |

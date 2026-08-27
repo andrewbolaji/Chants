@@ -5,13 +5,13 @@
 ## Document identity and completeness
 
 - **Product:** Chants, a Flutter and Firebase mobile app for learning trusted football chants and publishing new chant ideas.
-- **External review boundary:** Claude independently reviewed the freeze ranges through final closure, then reviewed merged PR 15 at `2df9fa0...9189c71`. The latest review accepted the interface boundary overall and found one blocking false Home trust label plus three medium evidence, recovery, and governance findings.
+- **External review boundary:** Claude independently reviewed the earlier freeze closures, merged PR 15, and finally the complete PR 16 range `9189c71...e810318`. The one-shot final review judged the production range freeze-defensible and found one medium native-test evidence defect plus related low guard gaps.
 - **Current stack head:** Final merged `main` at `9189c71d99c52539cb3d1b02f51701fa4334c144`, plus the locally verified `codex/post-interface-review-corrections` branch.
-- **Review type:** Current whole-project milestone snapshot after the independent freeze reviews, merged Home hierarchy, exact-main clean-runner CI, and the locally corrected independent interface findings. It is not a clean-runner, native, or release sign-off for the correction branch.
+- **Review type:** Current whole-project milestone snapshot after the independent final source review, exact-head clean-runner CI, iOS simulator compilation, and the locally corrected final evidence findings. It is not Android, device, deployment, or release sign-off.
 - **Coverage:** Flutter client, Cloud Functions, Firestore rules and tests, seed pipeline, native configuration, CI, framework docs, and release boundaries.
 - **Excluded:** Vendored `node_modules`, generated Flutter and TypeScript output, live Firebase data and dashboard state, deployed artifacts, store dashboards, and operating-system device behavior.
 - **Preserved unrelated work:** Andrew's older `android/app/build.gradle.kts`, `android/settings.gradle.kts`, `pubspec.lock`, and private freeze-note work remains untouched in its original worktree.
-- **Current status:** The V1 engineering stack through PR 15 is merged and exact-main clean-runner green. The post-interface correction passes 356 Flutter tests, scoped analysis, and governance regressions locally. Packaging, clean-runner CI, independent correction closure, native compilation, the combined device walk, live stable-identity preflight, remaining verified seed, production configuration, signing, and release remain pending.
+- **Current status:** The V1 stack through PR 15 is merged and exact-main green. PR 16 reviewed head `e810318` passed all six jobs in run `33025564912`, compiles for the iOS simulator, and is independently judged freeze-defensible. One evidence-only closure is locally green; replacement CI, Android, the combined device walk, live stable-identity preflight, remaining verified seed, production configuration, signing, and release remain pending.
 
 ## Repository coverage ledger
 
@@ -33,7 +33,7 @@
 | Saved Matchday Songbook | UID-isolated bounded local JSON snapshots, explicit refresh, offline read-only routes | Maximum 500 unique chants and 2 MiB; active matching UID; case-safe SHA-256 path; unknown deletion state unreadable; accepted marker removed after every other artifact | Model, repository, migration, service, widget, lifecycle, SHA-boundary, and golden tests | Physical force-stop/airplane-mode persistence unverified; no cross-device sync by design |
 | Share-out | Plain-text native sheet from live detail in `chant_share.dart` and `chant_detail_screen.dart` | No public URL or delivery claim; every live-target action requires server-confirmed non-cache visible authority | Payload, gateway, cache authority, enlarged-text, and golden tests | Native device destination behavior unverified |
 | Seed | Explicit stable chant IDs, read-only preflight, transaction ownership recheck, validation, orphan report | Source content is human supplied; seed may transform but never invent lyrics or context | 42 seed tests plus TypeScript | Only Arsenal JSON exists; no live preflight or remaining club write ran |
-| CI | Six GitHub Actions jobs in `.github/workflows/ci.yml`; the correction adds governance-script regressions to the governance job | Tests, rules, analysis, memory structure, tracked prose, and governance-script behavior must fail closed in CI; change-to-execution linkage remains an explicit manual staged gate | Exact-main run `33012771517` at `9189c71` passed all six jobs; local governance regressions pass on the correction branch | Correction clean-runner result pending; Flutter version is unpinned; no Dart format gate |
+| CI | Six GitHub Actions jobs in `.github/workflows/ci.yml`; governance includes native-contract regressions | Tests, rules, analysis, memory structure, tracked prose, and governance-script behavior must fail closed in CI; change-to-execution linkage remains an explicit manual staged gate | Runs `33012771517` at `9189c71` and `33025564912` at `e810318` passed all six jobs; final evidence fixtures pass locally | Evidence-closure replacement CI pending; Flutter version is unpinned; no Dart format gate |
 | Native release | Flutter Android/iOS shells and plugin registration | Store signing and native compilation are separate release gates | Source inspection and prior attempted builds | Android uses debug signing; Android SDK unavailable locally; inherited iOS Firestore Swift sources failed compile |
 
 ## System overview and architecture
@@ -175,7 +175,7 @@ No current dependency advisory conclusion is claimed. The audit request was bloc
 
 | Surface | Declared dependency or config | Role | Current evidence and risk |
 |---|---|---|---|
-| Flutter/Dart | `pubspec.yaml`, SDK `^3.10.8` | Client runtime | Verified on Flutter 3.44.8 and Dart 3.12.2; CI uses movable stable |
+| Flutter/Dart | `pubspec.yaml`, SDK `^3.10.8` | Client runtime | Verified on Flutter 3.44.8 and Dart 3.12.2; CI uses movable stable; no lower Flutter bound is claimed for the current iOS entry point |
 | Riverpod | `flutter_riverpod ^2.6.1` | DI and async state | Hand-written providers; codegen packages are unused |
 | Firebase client | core, auth, Firestore, Functions, App Check, Crashlytics | Auth, data, callable, integrity, errors | iOS simulator compilation passes on CocoaPods; live enforcement unverified |
 | `url_launcher ^6.3.2` | External evidence | Opens normalized provider URL | Failure translated in UI tests |
@@ -223,10 +223,11 @@ Before public volume, establish query/read budgets for Discover and counters, Fu
 | project memory and writing checks | Local Bash | PASS for structure and tracked index | CI's structure boundary and the manual staged handoff boundary are stated separately and execute as documented |
 | repository formatter measurement | Dart 3.12.2, read-only output | Expected nonzero, 41 of 143 | Current residual measured without writing files; earlier 46-of-142 result remains historical |
 | PR 15 replacement clean-runner CI | GitHub Actions run `33011936510` on `a2e463c` | PASS: all six jobs | Governance, 353 Flutter tests, repository-wide analysis, 78 Functions tests, 42 seed tests, and 136 rules assertions pass on the packaged interface head |
-| PR 16 combined implementation CI | GitHub Actions run `33025135738` on `41d23b5` | PASS: all six jobs | Native/project governance, 356 Flutter tests, full analysis, 78 Functions tests, 42 seed tests, and 136 rules assertions pass; Node 24 action-maintenance replacement is pending |
+| PR 16 combined implementation CI | GitHub Actions run `33025135738` on `41d23b5` | PASS: all six jobs | Native/project governance, 356 Flutter tests, full analysis, 78 Functions tests, 42 seed tests, and 136 rules assertions pass; the next row supersedes its action-runtime warning |
+| PR 16 reviewed exact-head CI | GitHub Actions run `33025564912` on `e810318` | PASS: all six jobs | Same full matrix passes on Node 24 action majors with zero Node 20 action-runtime warnings |
 | Exact-main PR 15 CI | GitHub Actions run `33012771517` on `9189c71d99c52539cb3d1b02f51701fa4334c144` | PASS: all six jobs | Clean Linux and Java evidence for the exact merged Home hierarchy before the local review correction |
 
-The earlier freeze blocks captured red evidence before their implementations. The final closure also proved both disposed-Home error paths red before moving the mounted guard, then passed the focused and complete matrix. The readiness baseline reproduced mutation of an immutable competition snapshot before the list-copy correction. The post-interface correction then reproduced the false Rising badge, impossible empty action, and spaced-path governance failure before correction. Exact merged `main` remains the remote baseline; correction clean-runner evidence is pending.
+The earlier freeze blocks captured red evidence before their implementations. The final closure also proved both disposed-Home error paths red before moving the mounted guard, then passed the focused and complete matrix. The readiness baseline reproduced mutation of an immutable competition snapshot before the list-copy correction. The post-interface correction reproduced the false Rising badge, impossible empty action, and spaced-path governance failure. The final independent review then proved the marker fixture was vacuous by removing its guard while the harness stayed green; the corrected fixture reaches and asserts that exact boundary.
 
 Skipped or blocked:
 
@@ -257,11 +258,11 @@ Recovery paths:
 | Document or claim | Current source reality | Action |
 |---|---|---|
 | README test counts and feature status | Correction branch passes 356 Flutter; merged PR 15 baseline passes 136 rules, 78 Functions, and 42 seed; exact merged `main` passed CI | Distinguishes local correction evidence from run `33012771517` at `9189c71` |
-| Roadmap freeze state | PRs 4 through 15 are merged; independent PR 15 review reopened one bounded local correction, followed by local iOS native readiness | Packaging, clean-runner CI, one combined final review, Android, and the device walk remain explicit |
-| CI analysis and governance state | Exact main has six green jobs; correction adds governance-script regressions and truthful manual staged semantics | Run `33012771517` passed all six at `9189c71`; correction CI pending |
+| Roadmap freeze state | PRs 4 through 15 are merged; PR 16 is independently judged freeze-defensible with one evidence-only closure | Replacement CI, Android, and the device walk remain explicit |
+| CI analysis and governance state | Exact main and reviewed PR 16 head have six green jobs; final evidence fixtures pass locally | Runs `33012771517` and `33025564912` are green; evidence-closure CI pending |
 | Function merge comments | Audit payload is bounded and cannot reverse the operation | Corrected source comments; historical archive retained |
 | `docs/KNOWN_ISSUES.md` | Clearly labels itself a legacy snapshot | No longer an authority defect |
-| `docs/CHANGE_SPEC.md` | Approved V1 native build-readiness contract after the completed correction | iOS simulator compile complete; packaging, clean-runner CI, combined walkthrough, and final review pending |
+| `docs/CHANGE_SPEC.md` | Approved final freeze independent-review closure | Evidence-only implementation local-green; packaging and replacement CI pending |
 
 ## Known compromises, gaps, and uncertainty
 

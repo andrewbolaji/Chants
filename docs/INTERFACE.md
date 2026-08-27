@@ -30,12 +30,12 @@ This is the current design contract and decision history for Chants. Read the re
 
 ### 2026-08-26T21:26:27Z Derive Home momentum and keep empty actions useful
 
-- **Status:** locally corrected after independent review; clean-runner and native walkthrough pending
+- **Status:** independently accepted for source freeze; final evidence-only closure and native walkthrough pending
 - **Surface and user problem:** Home granted `RISING` to every community preview, including stale zero-score ideas, because lane membership was passed as the badge value. Its empty Terrace Proven action reshuffled a complete visible set and could not surface a canonical chant when none existed.
 - **Decision:** Evaluate `isRisingChant` against the current live chant and an injectable time. Preserve `ORIGINAL IDEA` independently. Route an empty Terrace Proven lane to the existing Premier League club browse destination. Keep direct trust-word assertions separate from golden comparison and apply the measured 3 percent image tolerance only to Home.
 - **Why:** Community placement and community momentum are different facts. A trust or trend label must come from the same predicate everywhere, and recovery copy must lead to an action capable of helping.
 - **Required states:** Qualifying recent idea, stale zero-score idea, a live score transition out of Rising, no canonical content, both lanes populated, and representative Home rendering.
-- **Implementation evidence:** Pre-fix widget regressions reproduced the false badge and impossible action. The corrected focused suite covers static and live truth, exact route arguments, semantic trust words, and per-image golden tolerance.
+- **Implementation evidence:** Pre-fix widget regressions reproduced the false badge and impossible action. The corrected focused suite covers static and live truth, exact route arguments, semantic trust words, a measured Home-only 3 percent ceiling, and the shared 1.5 percent ceiling for competition and player. Claude independently confirmed the regressions fail on the prior implementation.
 - **Revisit when:** The Rising formula changes, Home receives a different community projection, or pagination changes what an empty discovery result means.
 - **Related:** `docs/CODE_REVIEW_INTERFACE_READINESS_2026-08.md`, `docs/CHANGE_SPEC.md`
 
@@ -139,7 +139,7 @@ This is the current design contract and decision history for Chants. Read the re
 - **Alternatives considered:** A guessed website link, which is broken; title-only promotional copy, which is not useful to the recipient; generated cards or direct social integrations, which add media, permissions, SDK, and platform-policy scope.
 - **Required states:** Current stream value, known or absent team, all provenance states, pending duplicate tap, dismissed or unavailable platform result, invocation failure, invalid source rectangle, and hidden or removed chant.
 - **Accessibility/responsive impact:** The control is labeled `Share this chant`, uses the native sheet, passes the button's laid-out global rectangle for iPad, and remains reachable with Save and Report at 390 by 844 and 1.8x text.
-- **Implementation evidence:** Pure payload and gateway tests, real-detail widget tests, a deliberate missing-lyrics red check, the current-live authority regression, 282 passing Flutter tests, an inspected launch-viewport golden, and green replacement CI on draft PR 9. Native compilation, remediation review, and device sharing remain pending.
+- **Implementation evidence:** Pure payload and gateway tests, real-detail widget tests, a deliberate missing-lyrics red check, the current-live authority regression, 282 passing Flutter tests, an inspected launch-viewport golden, green replacement CI on draft PR 9, and successful PR 16 iOS simulator linkage. Share-sheet launch remains a first-priority device assertion.
 - **Revisit when:** A stable HTTPS chant route exists, recipients need richer previews, device testing finds platform-specific payload loss, or direct publishing has evidence strong enough to justify its account and SDK surface.
 - **Related:** `docs/decisions/008-native-text-share-before-public-links.md`, `docs/CHANGE_SPEC.md`
 
@@ -152,7 +152,7 @@ This is the current design contract and decision history for Chants. Read the re
 - **Alternatives considered:** Generic cloud favorites, which do not prove lyrics are present offline; Firestore cache, which is incidental and lifecycle-unclear; background downloads, which add scheduling and consent surface before demand is proven.
 - **Required states:** Loading, empty, populated, individually saved, saved with club, cache-disabled save, busy, refresh failure with retained copy, zero-item refreshed club, corrupt, unsupported version, UID mismatch, removal confirmation, and account-deletion cleanup.
 - **Accessibility/responsive impact:** Bookmark ownership and freshness are explicit text and semantics. Destructive actions require confirmation. Read-only detail follows the live lyric hierarchy without vote, comment, report, evidence, or media affordances. The overview and detail goldens pass at 390 by 844, and the overview passes at 1.6x text.
-- **Implementation evidence:** The approved Lane 2 implementation, focused widget and persistence tests, deliberate reconstruction red check, two inspected goldens, and green clean-runner CI are recorded in `docs/changes/2026-08-22-saved-matchday-songbook.md`. Native compilation, PR review, and the live airplane-mode device walk remain pending.
+- **Implementation evidence:** The approved Lane 2 implementation, focused widget and persistence tests, deliberate reconstruction red check, two inspected goldens, green clean-runner CI, and successful PR 16 iOS simulator compilation are recorded in the change history. The live airplane-mode device walk remains pending.
 - **Revisit when:** Users expect cross-device sync, snapshot volume approaches the 2 MiB or 500-ID boundary, moderation requires online revocation stronger than refresh, or offline audio and video are separately approved.
 - **Related:** `docs/decisions/003-saved-matchday-songbook-offline-v1.md`, `docs/CHANGE_SPEC.md`
 

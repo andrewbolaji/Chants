@@ -62,7 +62,8 @@ Reverting UIScene would cause the current Flutter tool to migrate the project ag
 - PASS: existing Firebase pod pins were preserved; only merged native share and URL-launcher plugin pods were added.
 - PASS: the native-project check and its clean, missing-flag, and tracked-SwiftPM regression fixtures enforce the dependency-manager boundary in CI.
 - PASS: PR 16 run `33025135738` passed all six jobs at implementation head `41d23b5`, including the new native contract.
-- PENDING: exact-head replacement CI after moving GitHub checkout, Node setup, and Java setup from deprecated Node 20 action majors to their official v5 Node 24 majors.
+- PASS: PR 16 run `33025564912` passed all six jobs at exact reviewed head `e810318` after moving GitHub checkout, Node setup, and Java setup to their official v5 Node 24 majors. The run emitted no Node 20 action-runtime warning.
+- PENDING: replacement CI for the later evidence-only final-review closure.
 
 ## Rollout, recovery, and remaining gates
 

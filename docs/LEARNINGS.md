@@ -12,6 +12,17 @@ This is durable, evidence-backed project memory. It prevents the same failure or
 
 ## Entries
 
+### 2026-08-27T00:25:16Z Negative evidence must fail at the intended boundary
+
+- **Status:** promoted
+- **Scope:** Regression harnesses for layered validation and repository governance
+- **Observed:** The SwiftPM-marker fixture also set an invalid dependency-manager flag. It failed before reaching the marker guard, so deleting the marker guard left the harness green even though durable records claimed that guard was proved.
+- **Evidence:** The independent review mutated away the marker guard and the old harness still passed. With a valid flag, marker present, and exact error assertion, removing the guard makes the corrected harness fail.
+- **Learning:** A negative test is not evidence merely because it exits nonzero. Its fixture must satisfy all earlier preconditions and assert the failure class or message belonging to the boundary it names. Repository-read errors must also be distinct from successful empty results.
+- **Applied control:** Native-contract fixtures assert exact messages for the flag, marker, root and nested resolution files, both required pods, and a forced Git `ls-files` error.
+- **Revisit when:** A new ordered native-project guard, parser gate, or governance predicate is added.
+- **Related:** `scripts/check-native-project.sh`, `scripts/test-project-governance.sh`, final freeze independent review
+
 ### 2026-08-26T23:50:13Z Native dependency-manager choice must be project-owned
 
 - **Status:** promoted

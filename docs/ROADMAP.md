@@ -14,12 +14,12 @@ The path from code-complete to public launch, with concrete triggers on every ga
 - Final merged `main` is `9189c71d99c52539cb3d1b02f51701fa4334c144`, including PR 15. GitHub Actions run `33012771517` passed project governance, 353 Flutter tests, analysis, 78 Functions tests, 42 seed tests, and 136 Firestore rules assertions for that exact SHA.
 - Claude independently reviewed the freeze ranges through final closure. The last review approved the minimal disposed-Home correction and dormant merge privacy gate with no new defect.
 - The approved V1 core-journey interface-readiness and bounded Home hierarchy blocks are merged through PR 15. Home, competition, and player have inspected 390 by 844 baselines; the immutable competition-list crash is fixed; recovery copy is truthful; and Home explains Matchday Songbook, Terrace Proven, and Chant Lab without new navigation or data authority.
-- Independent review of PR 15 found one false Home `RISING` label, a golden-evidence weakness, one impossible empty action, and governance-script accuracy issues. The approved correction and iOS native-readiness block are packaged in draft PR 16. Run `33025135738` passed all six jobs at implementation head `41d23b5`. Replacement CI after direct Node 24 GitHub action maintenance, combined device evidence, and one final review remain pending.
+- Claude's one-shot review of `9189c71...e810318` judged draft PR 16 freeze-defensible with no production defect. Exact-head run `33025564912` passed all six jobs. One evidence-only closure for the native harness and unmeasured golden ceilings is locally green; its replacement CI and the combined device evidence remain pending.
 - Dedup matching engine (backend only): token-overlap matcher exists. Operator `mergeChants` is disabled because its retained sequential implementation has no resumable cursor or complete undo snapshot. Its legacy audit payload also embeds authored source content and raw `createdBy`; any re-enable must redesign that payload and re-review the deletion-retention allowlist.
 - Visual identity: complete "matchnight, warmed with playful" redesign, tokenized, AA contrast proven.
 
 **Not yet done:**
-- Package and clean-runner verify the combined correction and native-readiness range, then complete the combined device walkthrough and one final independent review.
+- Package and clean-runner verify the final evidence-only closure, then complete the combined device walkthrough.
 - Visual sign-off on device and the v1 flow walk-through.
 - The read-only live chant-identity preflight before the next production seed write.
 - The remaining verified club seed.
@@ -66,9 +66,9 @@ V1 is a trusted songbook and a creator workshop. The work is sequenced as bounde
 
 The accepted product boundary is in `docs/decisions/004-songbook-and-chant-lab.md`. Each state-changing block gets the framework's Lane 2 change spec, execution log, tests, UI evidence, scoped rationale, and rollback plan. Unlimited nesting, notifications, scheduled challenges, collaborative lyric suggestions, creator follows, and hosted media remain later work.
 
-The V1 stack through Home hierarchy is merged at `9189c71`, and exact-main run `33012771517` is green across all six jobs. Independent review reopened the freeze for one bounded correction, now locally green at 356 Flutter tests. The iOS simulator app also compiles on the corrected CocoaPods graph. Combined packaging, clean-runner CI, one final independent closure, Android evidence, and the device walkthrough remain the gates that turn automated confidence into release sign-off.
+The V1 stack through Home hierarchy is merged at `9189c71`, and exact-main run `33012771517` is green across all six jobs. PR 16 reviewed head `e810318` also passed all six jobs in run `33025564912`; Claude judged the source range freeze-defensible. The iOS simulator app compiles on the corrected CocoaPods graph. Replacement CI for the evidence-only closure, Android evidence, and the combined device walkthrough remain the gates that turn automated confidence into release sign-off.
 
-**Trigger to exit:** The current device walk passes; provenance and promotion rules work end to end; Songbook and Chant Lab remain understandable on club and player screens; Saved Matchday Songbook survives airplane-mode relaunch; the dedup nudge works on the seeded archive; and share-out never produces a broken destination.
+**Trigger to exit:** The current device walk starts by proving native Share and external evidence opening, then passes the remaining journeys; provenance and promotion rules work end to end; Songbook and Chant Lab remain understandable on club and player screens; Saved Matchday Songbook survives airplane-mode relaunch; the dedup nudge works on the seeded archive; and share-out never produces a broken destination.
 
 ---
 
