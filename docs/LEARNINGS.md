@@ -12,6 +12,39 @@ This is durable, evidence-backed project memory. It prevents the same failure or
 
 ## Entries
 
+### 2026-08-27T00:25:16Z Negative evidence must fail at the intended boundary
+
+- **Status:** promoted
+- **Scope:** Regression harnesses for layered validation and repository governance
+- **Observed:** The SwiftPM-marker fixture also set an invalid dependency-manager flag. It failed before reaching the marker guard, so deleting the marker guard left the harness green even though durable records claimed that guard was proved.
+- **Evidence:** The independent review mutated away the marker guard and the old harness still passed. With a valid flag, marker present, and exact error assertion, removing the guard makes the corrected harness fail.
+- **Learning:** A negative test is not evidence merely because it exits nonzero. Its fixture must satisfy all earlier preconditions and assert the failure class or message belonging to the boundary it names. Repository-read errors must also be distinct from successful empty results.
+- **Applied control:** Native-contract fixtures assert exact messages for the flag, marker, root and nested resolution files, both required pods, and a forced Git `ls-files` error.
+- **Revisit when:** A new ordered native-project guard, parser gate, or governance predicate is added.
+- **Related:** `scripts/check-native-project.sh`, `scripts/test-project-governance.sh`, final freeze independent review
+
+### 2026-08-26T23:50:13Z Native dependency-manager choice must be project-owned
+
+- **Status:** promoted
+- **Scope:** Flutter iOS projects that already use CocoaPods while Flutter can automatically enable Swift Package Manager
+- **Observed:** A global Flutter default silently introduced a mixed SwiftPM and CocoaPods graph. SwiftPM resolved a different Firebase iOS SDK family and `cloud_firestore 6.4.1` failed on Objective-C bridge initializers even though the pinned CocoaPods graph was internally compatible.
+- **Evidence:** The inherited simulator build failed at `FLTPipelineParser.m`. With Flutter's supported project-level SwiftPM flag disabled and the CocoaPods graph reconstructed, the exact simulator build produced `Runner.app` and the RunnerTests bundle compiled and validated.
+- **Learning:** A repository must own its native dependency manager. Ambient tool defaults must not be allowed to migrate a pinned native graph during an ordinary build. Switching managers belongs in one explicit dependency change with a clean generated-state rebuild.
+- **Applied control:** `pubspec.yaml` pins `enable-swift-package-manager: false`; generated SwiftPM project and resolution state is absent; CocoaPods remains the V1 iOS graph.
+- **Revisit when:** The FlutterFire versions and Firebase iOS SDK are verified together under SwiftPM, or the project deliberately migrates dependency managers through a separately reviewed change.
+- **Related:** `pubspec.yaml`, `ios/Podfile.lock`, `docs/changes/2026-08-26-v1-native-build-readiness.md`
+
+### 2026-08-26T21:26:27Z Derive labels from the rendered entity, not its lane
+
+- **Status:** promoted
+- **Scope:** Trust and momentum labels on live Flutter projections
+- **Observed:** Home passed `rising: true` to every community preview. A stale zero-score 2024 idea therefore rendered `RISING`, while the same entity failed the shared `isRisingChant` predicate used elsewhere.
+- **Evidence:** A focused Home regression failed on the hardcoded badge. A second regression starts with a qualifying idea, emits an authoritative score-zero live snapshot, and proves the corrected badge disappears while `ORIGINAL IDEA` remains.
+- **Learning:** A collection lane identifies classification, not every derived property of its members. Compute user-visible status from the current rendered entity through the canonical predicate, and inject time when the predicate is time-dependent.
+- **Applied control:** Home-mode `_LiveChantCard` evaluates `isRisingChant` against its live chant and a deterministic evaluation time. Semantic assertions protect trust words independently of golden tolerance.
+- **Revisit when:** The Rising formula, live-card authority model, or Home projection changes.
+- **Related:** `lib/presentation/browse/discovery_section.dart`, `test/presentation/browse/core_journey_golden_test.dart`, independent interface-readiness review
+
 ### 2026-08-26T14:18:08Z Mounted guards must dominate Consumer ref access
 
 - **Status:** promoted

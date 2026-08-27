@@ -11,19 +11,20 @@ The path from code-complete to public launch, with concrete triggers on every ga
 - v1 hardening in source: account deletion, App Check client wiring, and Crashlytics wiring. Live enforcement and dashboard controls remain release-verification items.
 - Stable seeded chant identity in source: explicit immutable IDs, collision preflight, and transactional ownership checks. The separately authorized live preflight remains pending.
 - The complete V1 feature and remediation stack from PRs 4 through 10 and 12 through 14 is merged to `main`. It includes provenance and evidence, Songbook and Chant Lab, Saved Matchday Songbook, Basic Share-Out, parser-safe authority boundaries, server-authoritative report and feedback intake, durable account deletion, and the final freeze corrections.
-- Final merged `main` is `2df9fa04a839f88a19fe43c2bcc8ed9a583627c3`. GitHub Actions run `32993748570` passed Flutter tests, analysis, Functions, seed, and 136 Firestore rules assertions for that exact SHA.
+- Final merged `main` is `9189c71d99c52539cb3d1b02f51701fa4334c144`, including PR 15. GitHub Actions run `33012771517` passed project governance, 353 Flutter tests, analysis, 78 Functions tests, 42 seed tests, and 136 Firestore rules assertions for that exact SHA.
 - Claude independently reviewed the freeze ranges through final closure. The last review approved the minimal disposed-Home correction and dormant merge privacy gate with no new defect.
-- The approved V1 core-journey interface-readiness and bounded Home hierarchy blocks are locally complete on `codex/framework-ui-readiness`: 353 Flutter tests pass; Home, competition, and player have inspected 390 by 844 baselines; the immutable competition-list crash is fixed; recovery copy is truthful; Home now explains Matchday Songbook, Terrace Proven, and Chant Lab without new navigation or data authority; and the framework governance checks are wired into a proposed sixth CI job.
+- The approved V1 core-journey interface-readiness and bounded Home hierarchy blocks are merged through PR 15. Home, competition, and player have inspected 390 by 844 baselines; the immutable competition-list crash is fixed; recovery copy is truthful; and Home explains Matchday Songbook, Terrace Proven, and Chant Lab without new navigation or data authority.
+- Claude's one-shot review of `9189c71...e810318` judged draft PR 16 freeze-defensible with no production defect. Exact-head run `33025564912` passed all six jobs. One evidence-only closure for the native harness and unmeasured golden ceilings is locally green; its replacement CI and the combined device evidence remain pending.
 - Dedup matching engine (backend only): token-overlap matcher exists. Operator `mergeChants` is disabled because its retained sequential implementation has no resumable cursor or complete undo snapshot. Its legacy audit payload also embeds authored source content and raw `createdBy`; any re-enable must redesign that payload and re-review the deletion-retention allowlist.
 - Visual identity: complete "matchnight, warmed with playful" redesign, tokenized, AA contrast proven.
 
 **Not yet done:**
-- Review draft PR 15 and complete the combined native walkthrough; replacement clean-runner CI is green.
+- Package and clean-runner verify the final evidence-only closure, then complete the combined device walkthrough.
 - Visual sign-off on device and the v1 flow walk-through.
 - The read-only live chant-identity preflight before the next production seed write.
 - The remaining verified club seed.
-- Saved Matchday Songbook native client compilation and airplane-mode device walk.
-- Basic share-out native compilation and device destination walk.
+- Saved Matchday Songbook airplane-mode device walk; its iOS client compilation now passes.
+- Basic share-out device destination walk; its iOS native plugin linkage now passes.
 - Store launch prep.
 
 ---
@@ -55,18 +56,19 @@ V1 is a trusted songbook and a creator workshop. The work is sequenced as bounde
 1. **Close the current interaction block.** Replies, blocking, lifecycle fixes, and audited unban are done in source and automated checks. Complete the device walk in `docs/CHANGE_SPEC.md`, then archive its implementation rationale before replacing the active spec.
 2. **Add provenance end to end.** Merged and exact-main CI verified. Submission requires Already sung or I made this. Evidence is optional at posting, an Already sung claim without one stays visibly unverified, and a user submission needs valid evidence plus operator review before Terrace Proven promotion. The device walk remains.
 3. **Expose Songbook and Chant Lab.** Merged and exact-main CI verified. Club and player journeys distinguish Terrace Proven content from community work, with Top and New in Chant Lab and a non-verification Rising signal. The device walk remains.
-4. **Build Saved Matchday Songbook.** Merged and exact-main CI verified. One chant or a club's current visible Songbook can be stored as a UID-scoped device snapshot, refreshed explicitly, read without live social dependencies, and removed locally. Native compilation and the airplane-mode force-stop and relaunch walk remain. Cross-device sync stays deferred.
-5. **Add basic share-out.** Merged and exact-main CI verified. Live chant detail uses the platform share sheet with a complete text-only rendition and honest trust wording. Current builds emit no URL because no public resolver exists. Native compilation and the device walk remain.
+4. **Build Saved Matchday Songbook.** Merged and exact-main CI verified. One chant or a club's current visible Songbook can be stored as a UID-scoped device snapshot, refreshed explicitly, read without live social dependencies, and removed locally. iOS simulator compilation passes; the airplane-mode force-stop and relaunch walk remains. Cross-device sync stays deferred.
+5. **Add basic share-out.** Merged and exact-main CI verified. Live chant detail uses the platform share sheet with a complete text-only rendition and honest trust wording. Current builds emit no URL because no public resolver exists. iOS native plugin linkage passes; the destination device walk remains.
 6. **Close report and feedback velocity abuse.** Merged, independently reviewed as part of the freeze range, and exact-main CI verified. Admission uses authenticated callables with server-owned fields and atomic anchored-window budgets. Direct client creates remain denied and failed forms retain entered work.
 7. **Make account deletion recoverable.** Merged, independently reviewed through final closure, and exact-main CI verified. Durable acceptance precedes local cleanup and sign-out; one retry-enabled server worker performs bounded idempotent cleanup while pending accounts lose active authority.
-8. **Establish core interface readiness.** Locally complete. Home, competition, and player now have current baseline renders and state coverage. One immutable-list crash and four misleading recovery messages are corrected.
-9. **Refresh the V1 Home hierarchy.** Locally complete. Home keeps existing routes and providers while surfacing Matchday Songbook, Premier League browse, one Terrace Proven chant, and one Chant Lab idea. Persistent navigation, View all, and teamless Add remain deferred.
+8. **Establish core interface readiness.** Merged and exact-main CI verified. Home, competition, and player have current baseline renders and state coverage. One immutable-list crash and four misleading recovery messages are corrected.
+9. **Refresh the V1 Home hierarchy.** Merged and exact-main CI verified. Home keeps existing routes and providers while surfacing Matchday Songbook, Premier League browse, one Terrace Proven chant, and one Chant Lab idea. Persistent navigation, View all, and teamless Add remain deferred.
+10. **Close the independent interface review.** Locally complete. Home derives Rising from the current live community chant, empty Terrace Proven recovery opens real club browse, semantic trust assertions sit outside golden tolerance, and governance checks state and test their real manual and CI boundaries. Packaging, clean-runner CI, and correction review remain.
 
 The accepted product boundary is in `docs/decisions/004-songbook-and-chant-lab.md`. Each state-changing block gets the framework's Lane 2 change spec, execution log, tests, UI evidence, scoped rationale, and rollback plan. Unlimited nesting, notifications, scheduled challenges, collaborative lyric suggestions, creator follows, and hosted media remain later work.
 
-The full engineering stack is merged and frozen at `2df9fa0`, and exact-main run `32993748570` is green. The bounded V1 interface-readiness and Home hierarchy pass is packaged in draft PR 15, and replacement run `33011936510` passed all six jobs. Independent review and the native combined walkthrough remain the gates that turn automated confidence into release sign-off.
+The V1 stack through Home hierarchy is merged at `9189c71`, and exact-main run `33012771517` is green across all six jobs. PR 16 reviewed head `e810318` also passed all six jobs in run `33025564912`; Claude judged the source range freeze-defensible. The iOS simulator app compiles on the corrected CocoaPods graph. Replacement CI for the evidence-only closure, Android evidence, and the combined device walkthrough remain the gates that turn automated confidence into release sign-off.
 
-**Trigger to exit:** The current device walk passes; provenance and promotion rules work end to end; Songbook and Chant Lab remain understandable on club and player screens; Saved Matchday Songbook survives airplane-mode relaunch; the dedup nudge works on the seeded archive; and share-out never produces a broken destination.
+**Trigger to exit:** The current device walk starts by proving native Share and external evidence opening, then passes the remaining journeys; provenance and promotion rules work end to end; Songbook and Chant Lab remain understandable on club and player screens; Saved Matchday Songbook survives airplane-mode relaunch; the dedup nudge works on the seeded archive; and share-out never produces a broken destination.
 
 ---
 
@@ -121,7 +123,7 @@ The implementation boundary and remaining verification gate live in `docs/CHANGE
 
 **Approved product contract:** Chants keeps Terrace Proven content in the trusted Songbook and gives original or not-yet-verified submissions a visible Chant Lab. Submission origin is required. Evidence is optional to post and required to promote a user submission to Terrace Proven. Votes rank ideas but never verify a factual claim.
 
-**Implementation status:** The provenance slice, browse split, Saved Matchday Songbook, Basic Share-Out, authority remediation, report and feedback abuse controls, durable account deletion, and final freeze remediation are merged to `main` and exact-main clean-runner green. Native compilation and the combined device walk remain.
+**Implementation status:** The provenance slice, browse split, Saved Matchday Songbook, Basic Share-Out, authority remediation, report and feedback abuse controls, durable account deletion, and final freeze remediation are merged to `main` and exact-main clean-runner green. iOS simulator compilation passes locally; Android compilation and the combined device walk remain.
 
 **Source of truth:** `docs/decisions/004-songbook-and-chant-lab.md` and the interface contract in `docs/INTERFACE.md`.
 

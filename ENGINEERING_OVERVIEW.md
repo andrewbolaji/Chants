@@ -1,10 +1,10 @@
 # Chants engineering overview
 
-This is the current whole-project map for Chants. It describes final merged `main` at `2df9fa04a839f88a19fe43c2bcc8ed9a583627c3` plus the locally verified `codex/framework-ui-readiness` and bounded Home hierarchy changes. Claude independently reviewed `c57815c...f5cb748`, `f5cb748...c893cd0`, and `c893cd0...fe93e20`; the final closure at `0b64dcf` was then reviewed with both prior findings closed and no new defect. Every material claim names the implementation path and symbol that supports it.
+This is the current whole-project map for Chants. It describes final merged `main` at `9189c71d99c52539cb3d1b02f51701fa4334c144` plus draft PR 16 on `codex/post-interface-review-corrections`. Claude independently reviewed the complete `9189c71...e810318` range and judged its production behavior defensible for the engineering freeze, with one medium evidence defect and related low native-guard gaps. Those final evidence corrections are locally green and awaiting replacement exact-head CI. Every material claim names the implementation path and symbol that supports it.
 
-This document is descriptive, not an approval record. `docs/CHANGE_SPEC.md` contains the approved Home hierarchy contract. `docs/EXECUTION.md` records review and implementation evidence. `docs/IMPLEMENTATION_RATIONALE.md` is the companion coverage ledger and verification record. Completed reasoning lives in `docs/changes/`, and durable decisions live in `docs/decisions/`.
+This document is descriptive, not an approval record. `docs/CHANGE_SPEC.md` contains the approved final freeze evidence closure. The completed native-readiness contract lives in `docs/changes/2026-08-26-v1-native-build-readiness.md`. `docs/EXECUTION.md` records review and implementation evidence. `docs/IMPLEMENTATION_RATIONALE.md` is the companion coverage ledger and verification record. Completed reasoning lives in `docs/changes/`, and durable decisions live in `docs/decisions/`.
 
-The framework and interface-readiness change is isolated in a clean worktree from final `main`. Andrew's older Gradle, settings, lockfile, and private freeze-note work remains untouched in its original worktree.
+The correction is isolated in a clean worktree from merged PR 15. Andrew's older Gradle, settings, lockfile, and private freeze-note work remains untouched in its original worktree.
 
 ## Review outcome
 
@@ -22,6 +22,7 @@ The V1 freeze review found concurrency, acknowledgement, storage-identity, and c
 8. **Late deletion response.** Both deletion error handlers check that Home remains mounted before accessing Riverpod or scaffold state. A pending profile can therefore replace Home while an older request completes without producing an unhandled disposed-consumer error.
 9. **Core interface readiness.** Home, competition, and player have current 390 by 844 baselines and focused state evidence. Competition copies an immutable snapshot before sorting; browse failures no longer promise a nonexistent pull-down gesture; and Home search exposes a stable clear-control label.
 10. **Bounded Home hierarchy.** `HomeScreen`, Home-mode `DiscoverySection`, and the optional Home presentation in `ChantCard` surface signed-in matchday utility, Premier League browse, one Terrace Proven chant, and one Chant Lab idea without changing provider, route, current-live authority, persistence, or backend contracts. Search remains one combined result list.
+11. **Independent interface and evidence correction.** Home-mode `_LiveChantCard` derives Rising from the currently rendered live chant through `isRisingChant` and a deterministic evaluation time. A stale zero-score idea keeps `ORIGINAL IDEA` without `RISING`; a live score change removes the badge. Empty Terrace Proven recovery opens real Premier League browse. Direct semantic assertions protect trust words outside the Home-only measured 3 percent golden allowance; competition and player use the shared 1.5 percent ceiling. Governance scripts preserve spaced paths, fail closed on scan errors, scan tracked index prose, and require each negative native fixture to reach its named boundary.
 
 The disabled merge's legacy audit detail is not wholly generated moderation text. It includes source title, lyrics, context, tune, and raw `createdBy`. Any future re-enable must pair resumable mutation design with a privacy-safe audit payload and a fresh retained-action allowlist review.
 
@@ -29,13 +30,13 @@ Release gates also remain outside those defects:
 
 - `android/app/build.gradle.kts :: android.buildTypes.release` signs with the debug keystore, which blocks a store release.
 - `lib/presentation/content_policy/content_policy_screen.dart :: ContentPolicyBody` still tells users the full policy is coming later.
-- Native client compilation and the combined iPhone, Android, iPad share, keyboard, moderation, account deletion, and airplane-mode walk remain incomplete.
+- Android compilation and the combined iPhone, Android, iPad share, keyboard, moderation, account deletion, and airplane-mode walk remain incomplete. The iOS simulator app itself now compiles on CocoaPods.
 
 The prior fail-open analysis path is also closed. `.github/workflows/ci.yml :: flutter-analyze` now uses the secret when present or copies `lib/firebase_options.dart.example`, then always runs analysis.
 
 Two later stacked blocks closed risks that the earlier review identified. `functions/src/safety_submission.ts` and decision 010 move report and feedback admission behind atomic private budgets. `functions/src/account_deletion.ts` and decision 011 replace synchronous deletion with a private bounded retry job, pending-account authority, and recoverable Auth finalization. Decisions 012 through 016 record the additional freeze corrections and audit-retention boundary.
 
-The engineering stack is merged and exact-main clean-runner green. It is still not release-ready: signing credentials, final policy wording, native compilation, live deployment, operational configuration, seed completion, and the combined device walk require separate owner input or authorization.
+The engineering stack through PR 15 is merged and exact-main clean-runner green. Draft PR 16 exact reviewed head `e810318` passed all six jobs in run `33025564912`, and Claude judged the production range freeze-defensible. One final evidence-only closure corrects the vacuous marker fixture, resolution and pod coverage, and unmeasured golden ceilings; replacement exact-head CI remains. The product is not release-ready: Android compilation, signing credentials, final policy wording, live deployment, operational configuration, seed completion, and the combined device walk require separate owner input or authorization.
 
 ## What the product is now
 
@@ -165,8 +166,8 @@ Local verification on 2026-08-26:
 
 | Check | Result |
 |---|---|
-| `flutter test` | PASS, 353 tests on the interface and Home-hierarchy branch |
-| scoped `flutter analyze` over the Home change boundary | PASS, no issues |
+| `flutter test --no-pub` | PASS, 356 tests on the post-interface correction branch |
+| `flutter analyze --no-pub lib test` | PASS, no issues |
 | `cd functions && npm test` | PASS, 78 tests |
 | `cd seed && npm test` | PASS, 42 tests |
 | `cd seed && npx tsc --noEmit` | PASS |
@@ -176,9 +177,14 @@ Local verification on 2026-08-26:
 | focused final closure regressions | RED before fix at both disposed-Consumer invalidations; PASS after fix, 19 app-gate tests including both late error classes |
 | focused core-journey and inherited authority suites | RED before fix on immutable competition input; PASS, 24 tests after correction |
 | focused Home hierarchy, route, enlarged-text, Songbook-entry, card, and inherited authority suites | PASS, including the inspected updated 390 by 844 Home golden |
-| final `main` GitHub Actions run `32993748570` at `2df9fa0` | Exact merged-head PASS: Flutter tests, analysis, Functions, seed, and 136 rules assertions |
+| post-interface trust and empty-action regressions | RED before correction on false `RISING` and impossible `SHUFFLE`; PASS, 8 core-journey tests after correction |
+| governance regression harness | RED before correction on a documentation path containing spaces; PASS after path, index, and error handling corrections |
+| `flutter build ios --simulator --debug --no-pub` | RED on automatic mixed SwiftPM Firestore bridge sources; PASS on the project-pinned CocoaPods graph, producing `Runner.app` |
+| scoped RunnerTests boundary | Runner and RunnerTests compile, embed, sign locally, and validate; CoreSimulator blocks before XCTest launch, so no assertion is claimed |
+| PR 16 GitHub Actions run `33025135738` at `41d23b5` | PASS: governance/native contract, 356 Flutter tests, full analysis, 78 Functions tests, 42 seed tests, and 136 rules assertions |
+| final `main` GitHub Actions run `33012771517` at `9189c71` | Exact merged-head PASS: project governance, 353 Flutter tests, analysis, 78 Functions tests, 42 seed tests, and 136 rules assertions |
 
-The earlier remediation first proved its affected boundaries red. The final closure also captures direct red evidence for both late deletion error classes after Home disposal, then passes those guards with the pending screen still authoritative. The interface block reproduced the immutable-list crash before correction and proved both governance gates against known-bad fixtures. The approved Home hierarchy then passed exact-route, signed-state, search, enlarged-text, authority, and visual evidence without a new data or navigation boundary. The current local Flutter suite and exact merged baseline suites pass. Exact merged `main` passed all five original clean-runner jobs. PR 15 run `33011415224` measured a 2.40 percent Linux Home render difference against a 2.20 percent golden ceiling while its other five jobs passed. After a scoped 3.00 percent calibration, replacement run `33011936510` passed all six jobs.
+The earlier remediation first proved its affected boundaries red. The final closure also captures direct red evidence for both late deletion error classes after Home disposal, then passes those guards with the pending screen still authoritative. The interface block reproduced the immutable-list crash before correction. PR 15 run `33011415224` measured a 2.40 percent Linux Home render difference against a 2.20 percent golden ceiling while its other five jobs passed. After a Home-only 3.00 percent calibration, replacement run `33011936510` and exact-main run `33012771517` passed all six jobs. Independent review then proved that the broad comparator could absorb a missing trust word and that Home hardcoded Rising. The correction adds semantic assertions; the final freeze closure keeps 3.00 percent only for Home and moves competition and player to the shared 1.50 percent ceiling. The focused eight-test and complete 356-test suites pass locally; replacement clean-runner evidence is pending.
 
 The first independent review recorded that 46 of 142 Dart files would change. The current read-only `dart format --output=none --set-exit-if-changed lib test` check identifies 41 of 143 after intervening touched-file formatting and the two new Dart test files. It made no files writable because output was disabled. Formatting is not a CI gate today; this correction formats only its touched files and keeps the larger mechanical rewrite separate.
 
@@ -205,7 +211,7 @@ Crashlytics is wired, and `docs/RUNBOOK.md` now records first response and known
 
 1. **The strict author-update boundary.** Review exact current-schema enforcement against any real legacy documents before rollout; legacy reads remain compatible, but invalid legacy documents cannot use direct author editing until normalized.
 2. **Moderation and offline semantics.** Confirm on device that readable route fallback, Discover disappearance, Saved Songbook copies, and disabled live actions communicate their different authority clearly.
-3. **Release configuration.** The real policy, Android release signing, native compilation, App Check dashboard state, and device walk are release blockers even though local and clean-runner suites are green.
+3. **Release configuration.** The real policy, Android build and release signing, App Check dashboard state, and device walk are release blockers even though the iOS simulator compile and automated suites are green.
 4. **Remaining destructive workflow.** `mergeChants` is disabled because its implementation is sequential, partially audited, non-resumable, and retains authored source fields plus raw creator identity in its legacy audit detail. Account deletion is bounded and resumable, but retained-job operations still need production alerting.
 5. **Scale boundaries.** Discover's full fetch and ground-truth counter scans need measured budgets before community volume makes linear reads material.
 
@@ -213,9 +219,9 @@ Crashlytics is wired, and `docs/RUNBOOK.md` now records first response and known
 
 - Deployed rules, indexes, Functions, Firebase Auth settings, App Check enforcement, Crashlytics symbol upload, billing alerts, backup/PITR, and live data were not inspected.
 - No live stable-ID preflight or seed write ran.
-- No Android build succeeded locally because the Android SDK is unavailable. No iOS build succeeded because inherited Cloud Firestore Swift Package sources failed compilation in the prior native check. No native file mutation from that attempt remains.
+- No Android build succeeded locally because the Android SDK is unavailable. The iOS simulator app now compiles after pinning the project to CocoaPods; RunnerTests execution remains unverified because CoreSimulator rejected the app before XCTest spawned.
 - No iPhone, Android, or iPad walkthrough ran in this review.
-- Clean-runner CI passed all five original jobs for final merged `main` at `2df9fa0` in run `32993748570`. Draft PR 15 replacement run `33011936510` passed all six jobs, including the new governance gate, 353 Flutter tests, analysis, Functions, seed, and 136 rules assertions.
+- Exact merged `main` at `9189c71` passed all six jobs in run `33012771517`. PR 16 reviewed head `e810318` passed all six jobs in run `33025564912` without Node action-runtime warnings. Replacement CI for the final evidence-only closure is pending.
 - Android release signing remains debug-only in the tracked configuration.
 - The content policy remains placeholder copy.
 - Dependency freshness and current security-advisory state are unverified.

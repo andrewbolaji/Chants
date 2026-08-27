@@ -27,9 +27,13 @@ firebase emulators:exec --only firestore --project chants-f95b4 "cd test_rules &
 cp lib/firebase_options.dart.example lib/firebase_options.dart   # then add real keys
 flutter run
 
-# Framework memory and writing checks.
+# Framework structure and tracked-prose checks.
 ./scripts/check-project-memory.sh
 ./scripts/check-writing-style.sh
+
+# After staging an implementation handoff.
+./scripts/check-project-memory.sh --staged
+./scripts/test-project-governance.sh
 ```
 
 ## Architecture map
@@ -64,10 +68,11 @@ flutter run
 - After `.codex/hooks.json` or a referenced hook script changes, review and trust the new repo-local hook definition through Codex's `/hooks` screen before expecting it to run.
 - Treat persistent schema changes, moderation or authorization changes, external media links, migrations, and cross-service contracts as Lane 2 work. Complete and approve the written change spec before implementation.
 - Project memory must never contain prompts, chain-of-thought, secrets, credentials, personal data, or raw production payloads.
+- CI runs the project-memory structure mode. After staging a handoff, run `./scripts/check-project-memory.sh --staged` manually so implementation changes require a staged `docs/EXECUTION.md` update. A confirmed Lane 0 mechanical change may use `PROJECT_MEMORY_LANE=0`. The writing check scans tracked prose from the Git index, so run it after staging the intended diff.
 
 ## Definition of done
 
-A change is done only when: the required plan and approval for its risk lane are recorded; tests pass and changed behavior has evidence capable of failing on the prior implementation; `flutter analyze lib test` and every touched suite are clean; the resulting artifact and full diff were inspected; material UI changes are verified at representative viewport, state, accessibility, and runtime boundaries; `./scripts/check-project-memory.sh` and `./scripts/check-writing-style.sh` pass; the completed record is written under `docs/changes/`; and any durable decision is recorded under `docs/decisions/`. Prepare a clean commit handoff, but commit or push only when Andrew explicitly asks.
+A change is done only when: the required plan and approval for its risk lane are recorded; tests pass and changed behavior has evidence capable of failing on the prior implementation; `flutter analyze lib test` and every touched suite are clean; the resulting artifact and full diff were inspected; material UI changes are verified at representative viewport, state, accessibility, and runtime boundaries; the intended handoff is staged; `./scripts/check-project-memory.sh --staged`, `./scripts/check-writing-style.sh`, and `./scripts/test-project-governance.sh` pass against that staged boundary; the completed record is written under `docs/changes/`; and any durable decision is recorded under `docs/decisions/`. Prepare a clean commit handoff, but commit or push only when Andrew explicitly asks.
 
 ## House style
 

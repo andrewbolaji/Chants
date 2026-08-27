@@ -6,6 +6,7 @@ import 'package:chants/app/router.dart';
 import 'package:chants/app/spacing.dart';
 import 'package:chants/data/models/chant.dart';
 import 'package:chants/data/repositories/chant_repository.dart';
+import 'package:chants/data/services/chant_browse.dart';
 import 'package:chants/presentation/shared/chant_card.dart';
 import 'package:chants/presentation/shared/empty_state.dart';
 import 'package:chants/presentation/shared/error_state.dart';
@@ -32,11 +33,13 @@ bool isChantPermissionDenied(Object? error) {
 class DiscoverySection extends ConsumerWidget {
   final String searchQuery;
   final bool groupByTrust;
+  final DateTime? risingEvaluationTime;
 
   const DiscoverySection({
     super.key,
     this.searchQuery = '',
     this.groupByTrust = false,
+    this.risingEvaluationTime,
   });
 
   @override
@@ -86,6 +89,7 @@ class DiscoverySection extends ConsumerWidget {
         }
 
         if (groupByTrust && !isSearching) {
+          final risingNow = risingEvaluationTime ?? DateTime.now();
           final terraceProven = filtered
               .where((chant) => chant.status == 'canonical')
               .take(1)
@@ -105,9 +109,16 @@ class DiscoverySection extends ConsumerWidget {
               ),
               if (terraceProven.isEmpty)
                 _HomeGroupEmpty(
-                  message: 'No Terrace Proven chant in this mix.',
-                  actionLabel: 'SHUFFLE',
-                  onAction: () => ref.invalidate(discoveryProvider),
+                  message: 'No Terrace Proven chants are published yet.',
+                  actionLabel: 'BROWSE CLUBS',
+                  onAction: () => Navigator.pushNamed(
+                    context,
+                    AppRouter.competition,
+                    arguments: const {
+                      'id': 'premier-league',
+                      'name': 'Premier League',
+                    },
+                  ),
                 )
               else
                 ...terraceProven.map(
@@ -143,7 +154,7 @@ class DiscoverySection extends ConsumerWidget {
                     key: ValueKey(chant.id),
                     initialChant: chant,
                     teamName: teamNames[chant.teamId],
-                    rising: true,
+                    risingEvaluationTime: risingNow,
                     homePreview: true,
                   ),
                 ),
@@ -201,14 +212,14 @@ class DiscoverySection extends ConsumerWidget {
 class _LiveChantCard extends ConsumerWidget {
   final Chant initialChant;
   final String? teamName;
-  final bool rising;
+  final DateTime? risingEvaluationTime;
   final bool homePreview;
 
   const _LiveChantCard({
     super.key,
     required this.initialChant,
     this.teamName,
-    this.rising = false,
+    this.risingEvaluationTime,
     this.homePreview = false,
   });
 
@@ -241,7 +252,9 @@ class _LiveChantCard extends ConsumerWidget {
         return ChantCard(
           chant: live,
           teamName: teamName,
-          rising: rising,
+          rising:
+              risingEvaluationTime != null &&
+              isRisingChant(live, now: risingEvaluationTime!),
           actionsEnabled: hasAuthoritativeValue,
           homePreview: homePreview,
           margin: homePreview
