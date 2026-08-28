@@ -45,6 +45,8 @@ class AccountActionsMenu extends ConsumerWidget {
                 Navigator.pushNamed(context, AppRouter.contentPolicy);
               case 'blocked':
                 Navigator.pushNamed(context, AppRouter.blockedUsers);
+              case 'signin':
+                Navigator.pushNamed(context, AppRouter.signInMethods);
               case 'signout':
                 ref.read(authRepositoryProvider).signOut();
               case 'delete':
@@ -70,6 +72,16 @@ class AccountActionsMenu extends ConsumerWidget {
                 ),
               ),
             ),
+            if (user != null)
+              PopupMenuItem(
+                value: 'signin',
+                child: Text(
+                  'Sign-in methods',
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: AppColors.textHeadline,
+                  ),
+                ),
+              ),
             if (user != null)
               PopupMenuItem(
                 value: 'blocked',

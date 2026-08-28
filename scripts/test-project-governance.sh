@@ -61,7 +61,11 @@ initialize_native_repo() {
   local repo_path=$1
   local swiftpm_flag=${2:-false}
   local swiftpm_marker=${3:-false}
-  mkdir -p "$repo_path/ios/Runner.xcodeproj" "$repo_path/scripts"
+  mkdir -p \
+    "$repo_path/ios/Runner.xcodeproj" \
+    "$repo_path/ios/Runner" \
+    "$repo_path/android/app/src/main" \
+    "$repo_path/scripts"
   cp "$governance_script_dir/check-native-project.sh" "$repo_path/scripts/"
   printf '%s\n' \
     'flutter:' \
@@ -70,14 +74,44 @@ initialize_native_repo() {
   printf '%s\n' \
     'PODS:' \
     '  - share_plus (0.0.1):' \
-    '  - url_launcher_ios (0.0.1):' >"$repo_path/ios/Podfile.lock"
+    '  - url_launcher_ios (0.0.1):' \
+    '  - app_links (7.0.0):' \
+    '  - firebase_auth (6.6.1):' \
+    '  - flutter_facebook_auth (7.1.5):' \
+    '  - google_sign_in_ios (0.0.1):' \
+    '  - shared_preferences_foundation (0.0.1):' \
+    >"$repo_path/ios/Podfile.lock"
   if [ "$swiftpm_marker" = true ]; then
     printf '%s\n' 'FlutterGeneratedPluginSwiftPackage' \
       >"$repo_path/ios/Runner.xcodeproj/project.pbxproj"
   else
-    printf '%s\n' '// CocoaPods project' \
+    printf '%s\n' \
+      '// CocoaPods project' \
+      'CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;' \
       >"$repo_path/ios/Runner.xcodeproj/project.pbxproj"
   fi
+  printf '%s\n' \
+    'com.apple.developer.applesignin' \
+    'applinks:auth.chantsfc.com' \
+    'applinks:chantsfc.com' >"$repo_path/ios/Runner/Runner.entitlements"
+  printf '%s\n' \
+    '<manifest>' \
+    'android.permission.INTERNET' \
+    'android:autoVerify="true"' \
+    'android:host="auth.chantsfc.com"' \
+    'android:pathPrefix="/finish-sign-in"' \
+    'android:host="chantsfc.com"' \
+    'android:pathPrefix="/chants/"' \
+    'android:pathPrefix="/performances/"' \
+    'android:pathPrefix="/creators/"' \
+    '</manifest>' >"$repo_path/android/app/src/main/AndroidManifest.xml"
+  printf '%s\n' \
+    'throw GradleException("Release signing is not configured.")' \
+    'gradle.taskGraph.whenReady {}' \
+    >"$repo_path/android/app/build.gradle.kts"
+  printf '%s\n' '{}' >"$repo_path/android/app/google-services.json.example"
+  printf '%s\n' '<plist/>' \
+    >"$repo_path/ios/Runner/GoogleService-Info.plist.example"
   git -C "$repo_path" init -q
   git -C "$repo_path" config user.email tests@chants.invalid
   git -C "$repo_path" config user.name 'Chants tests'
@@ -188,6 +222,11 @@ initialize_native_repo "$native_share_pod_repo"
 printf '%s\n' \
   'PODS:' \
   '  - url_launcher_ios (0.0.1):' \
+  '  - app_links (7.0.0):' \
+  '  - firebase_auth (6.6.1):' \
+  '  - flutter_facebook_auth (7.1.5):' \
+  '  - google_sign_in_ios (0.0.1):' \
+  '  - shared_preferences_foundation (0.0.1):' \
   >"$native_share_pod_repo/ios/Podfile.lock"
 assert_native_failure \
   "$native_share_pod_repo" \
@@ -199,11 +238,51 @@ initialize_native_repo "$native_url_pod_repo"
 printf '%s\n' \
   'PODS:' \
   '  - share_plus (0.0.1):' \
+  '  - app_links (7.0.0):' \
+  '  - firebase_auth (6.6.1):' \
+  '  - flutter_facebook_auth (7.1.5):' \
+  '  - google_sign_in_ios (0.0.1):' \
+  '  - shared_preferences_foundation (0.0.1):' \
   >"$native_url_pod_repo/ios/Podfile.lock"
 assert_native_failure \
   "$native_url_pod_repo" \
   'ios/Podfile.lock is missing url_launcher_ios (0.0.1)' \
   'native-url-pod'
+
+native_android_debug_signing_repo="$governance_temp_root/native-android-debug-signing"
+initialize_native_repo "$native_android_debug_signing_repo"
+printf '%s\n' 'signingConfig = signingConfigs.getByName("debug")' \
+  >>"$native_android_debug_signing_repo/android/app/build.gradle.kts"
+assert_native_failure \
+  "$native_android_debug_signing_repo" \
+  'the Android release build still uses debug signing' \
+  'native-android-debug-signing'
+
+native_android_aggregate_signing_repo="$governance_temp_root/native-android-aggregate-signing"
+initialize_native_repo "$native_android_aggregate_signing_repo"
+sed -i.bak '/gradle.taskGraph.whenReady/d' \
+  "$native_android_aggregate_signing_repo/android/app/build.gradle.kts"
+assert_native_failure \
+  "$native_android_aggregate_signing_repo" \
+  'an aggregate Android build can bypass the release signing gate' \
+  'native-android-aggregate-signing'
+
+native_android_link_repo="$governance_temp_root/native-android-link"
+initialize_native_repo "$native_android_link_repo"
+printf '%s\n' \
+  '<manifest>' \
+  'android.permission.INTERNET' \
+  'android:autoVerify="true"' \
+  'android:host="auth.chantsfc.com"' \
+  'android:host="chantsfc.com"' \
+  'android:pathPrefix="/chants/"' \
+  'android:pathPrefix="/performances/"' \
+  'android:pathPrefix="/creators/"' \
+  '</manifest>' >"$native_android_link_repo/android/app/src/main/AndroidManifest.xml"
+assert_native_failure \
+  "$native_android_link_repo" \
+  'the Android app-link contract is missing android:pathPrefix="/finish-sign-in"' \
+  'native-android-link'
 
 native_git_error_repo="$governance_temp_root/native-git-error"
 initialize_native_repo "$native_git_error_repo"

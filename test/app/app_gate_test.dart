@@ -21,14 +21,32 @@ import 'package:chants/presentation/auth/account_deletion_pending_screen.dart';
 import 'package:chants/presentation/auth/account_deletion_recovery_screen.dart';
 import 'package:chants/presentation/auth/policy_acceptance_gate_screen.dart';
 import 'package:chants/presentation/auth/sign_in_screen.dart';
+import 'package:chants/presentation/auth/email_verification_screen.dart';
+import 'package:chants/presentation/auth/onboarding_screen.dart';
 import 'package:chants/presentation/profile/creator_profile_screen.dart';
 import 'package:chants/presentation/shell/app_shell.dart';
 
 // --- Fakes (write boundary only, no logic reimplementation) ---
 
 class _MockUser extends Mock implements User {
+  final bool verified;
+
+  _MockUser({this.verified = true});
+
   @override
   String get uid => 'test-user-1';
+
+  @override
+  bool get emailVerified => verified;
+
+  @override
+  String? get email => 'supporter@example.com';
+
+  @override
+  String? get phoneNumber => null;
+
+  @override
+  List<UserInfo> get providerData => const [];
 }
 
 class _FakeAuthRepository extends Mock implements AuthRepository {
@@ -37,6 +55,20 @@ class _FakeAuthRepository extends Mock implements AuthRepository {
   @override
   Future<void> signOut() async {
     signOutCalls += 1;
+  }
+
+  @override
+  bool isContactVerified(User user) {
+    if (user.emailVerified || (user.phoneNumber?.isNotEmpty ?? false)) {
+      return true;
+    }
+    return user.providerData.any(
+      (provider) => const {
+        'apple.com',
+        'google.com',
+        'facebook.com',
+      }.contains(provider.providerId),
+    );
   }
 }
 
@@ -234,8 +266,7 @@ void main() {
     });
 
     testWidgets(
-      'signed in, profile doc not written yet (data(null)) shows neutral '
-      'loading, not the gate',
+      'verified account with no profile enters recoverable onboarding',
       (tester) async {
         await tester.pumpWidget(
           wrap(
@@ -243,12 +274,30 @@ void main() {
             makeProfileStream: () => Stream.value(null),
           ),
         );
-        await tester.pump();
+        await tester.pumpAndSettle();
 
-        expect(find.byType(CircularProgressIndicator), findsOneWidget);
+        expect(find.byType(OnboardingScreen), findsOneWidget);
         expect(find.byType(PolicyAcceptanceGateScreen), findsNothing);
+        expect(find.byType(AppShell), findsNothing);
       },
     );
+
+    testWidgets('unverified account waits for email verification', (
+      tester,
+    ) async {
+      final unverifiedUser = _MockUser(verified: false);
+      await tester.pumpWidget(
+        wrap(
+          authStream: Stream.value(unverifiedUser as User?),
+          makeProfileStream: () => Stream.value(null),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(EmailVerificationScreen), findsOneWidget);
+      expect(find.byType(OnboardingScreen), findsNothing);
+      expect(find.byType(AppShell), findsNothing);
+    });
 
     testWidgets(
       'signed in, profile has not accepted the current policy version '

@@ -15,8 +15,9 @@ import {
 import {
   handleSubmitFeedback,
   handleSubmitReport,
-  requireAuthenticatedUid,
+  requireVerifiedUid,
 } from "./safety_submission";
+import { handleCompleteOnboarding } from "./onboarding";
 import {
   processAccountDeletionStep,
   requestAccountDeletion,
@@ -81,7 +82,7 @@ const CURRENT_POLICY_VERSION = "v1";
 export const submitReport = onCall(
   { region: "europe-west2" },
   async (request) => {
-    const uid = requireAuthenticatedUid(request.auth);
+    const uid = requireVerifiedUid(request.auth);
     return handleSubmitReport({
       uid,
       data: request.data,
@@ -94,7 +95,7 @@ export const submitReport = onCall(
 export const submitFeedback = onCall(
   { region: "europe-west2" },
   async (request) => {
-    const uid = requireAuthenticatedUid(request.auth);
+    const uid = requireVerifiedUid(request.auth);
     return handleSubmitFeedback({
       uid,
       data: request.data,
@@ -107,7 +108,7 @@ export const submitFeedback = onCall(
 export const updateCreatorProfile = onCall(
   { region: "europe-west2" },
   async (request) => {
-    const uid = requireAuthenticatedUid(request.auth);
+    const uid = requireVerifiedUid(request.auth);
     return handleUpdateCreatorProfile({
       uid,
       data: request.data,
@@ -120,7 +121,7 @@ export const updateCreatorProfile = onCall(
 export const setCreatorFollow = onCall(
   { region: "europe-west2" },
   async (request) => {
-    const uid = requireAuthenticatedUid(request.auth);
+    const uid = requireVerifiedUid(request.auth);
     return handleSetCreatorFollow({
       uid,
       data: request.data,
@@ -133,7 +134,7 @@ export const setCreatorFollow = onCall(
 export const markCreatorNotificationRead = onCall(
   { region: "europe-west2" },
   async (request) => {
-    const uid = requireAuthenticatedUid(request.auth);
+    const uid = requireVerifiedUid(request.auth);
     return handleMarkCreatorNotificationRead({
       uid,
       data: request.data,
@@ -146,7 +147,7 @@ export const markCreatorNotificationRead = onCall(
 export const moderatePublishedPerformance = onCall(
   { region: "europe-west2" },
   async (request) => {
-    const actorUid = requireAuthenticatedUid(request.auth);
+    const actorUid = requireVerifiedUid(request.auth);
     return handlePublishedPerformanceModeration({
       actorUid,
       data: request.data,
@@ -219,7 +220,7 @@ export const publicPerformanceMedia = onRequest(
 export const createPerformanceDraft = onCall(
   { region: "europe-west2" },
   async (request) => {
-    const uid = requireAuthenticatedUid(request.auth);
+    const uid = requireVerifiedUid(request.auth);
     return handleCreatePerformanceDraft({
       uid,
       data: request.data,
@@ -233,7 +234,7 @@ export const createPerformanceDraft = onCall(
 export const submitPerformanceDraft = onCall(
   { region: "europe-west2", timeoutSeconds: 60 },
   async (request) => {
-    const uid = requireAuthenticatedUid(request.auth);
+    const uid = requireVerifiedUid(request.auth);
     return handleSubmitPerformanceDraft({
       uid,
       data: request.data,
@@ -247,7 +248,7 @@ export const submitPerformanceDraft = onCall(
 export const cancelPerformanceDraft = onCall(
   { region: "europe-west2" },
   async (request) => {
-    const uid = requireAuthenticatedUid(request.auth);
+    const uid = requireVerifiedUid(request.auth);
     return handleCancelPerformanceDraft({
       uid,
       data: request.data,
@@ -261,7 +262,7 @@ export const cancelPerformanceDraft = onCall(
 export const moderatePerformance = onCall(
   { region: "europe-west2", timeoutSeconds: 60 },
   async (request) => {
-    const actorUid = requireAuthenticatedUid(request.auth);
+    const actorUid = requireVerifiedUid(request.auth);
     return handleModeratePerformance({
       actorUid,
       data: request.data,
@@ -275,7 +276,7 @@ export const moderatePerformance = onCall(
 export const resolvePerformancePlayback = onCall(
   { region: "europe-west2" },
   async (request) => {
-    const actorUid = requireAuthenticatedUid(request.auth);
+    const actorUid = requireVerifiedUid(request.auth);
     return handleResolvePerformancePlayback({
       actorUid,
       data: request.data,
@@ -289,7 +290,7 @@ export const resolvePerformancePlayback = onCall(
 export const setPerformanceLike = onCall(
   { region: "europe-west2" },
   async (request) => {
-    const uid = requireAuthenticatedUid(request.auth);
+    const uid = requireVerifiedUid(request.auth);
     return handleSetPerformanceLike({
       uid,
       data: request.data,
@@ -302,7 +303,7 @@ export const setPerformanceLike = onCall(
 export const recordPerformanceShare = onCall(
   { region: "europe-west2" },
   async (request) => {
-    const uid = requireAuthenticatedUid(request.auth);
+    const uid = requireVerifiedUid(request.auth);
     return handleRecordPerformanceShare({
       uid,
       data: request.data,
@@ -315,7 +316,7 @@ export const recordPerformanceShare = onCall(
 export const recordQualifiedPerformanceView = onCall(
   { region: "europe-west2" },
   async (request) => {
-    const uid = requireAuthenticatedUid(request.auth);
+    const uid = requireVerifiedUid(request.auth);
     return handleRecordQualifiedPerformanceView({
       uid,
       data: request.data,
@@ -328,7 +329,7 @@ export const recordQualifiedPerformanceView = onCall(
 export const createPerformanceComment = onCall(
   { region: "europe-west2" },
   async (request) => {
-    const uid = requireAuthenticatedUid(request.auth);
+    const uid = requireVerifiedUid(request.auth);
     return handleCreatePerformanceComment({
       uid,
       data: request.data,
@@ -341,7 +342,7 @@ export const createPerformanceComment = onCall(
 export const deletePerformanceComment = onCall(
   { region: "europe-west2" },
   async (request) => {
-    const uid = requireAuthenticatedUid(request.auth);
+    const uid = requireVerifiedUid(request.auth);
     return handleDeletePerformanceComment({
       uid,
       data: request.data,
@@ -354,7 +355,7 @@ export const deletePerformanceComment = onCall(
 export const resolvePerformanceDraftPlayback = onCall(
   { region: "europe-west2" },
   async (request) => {
-    const actorUid = requireAuthenticatedUid(request.auth);
+    const actorUid = requireVerifiedUid(request.auth);
     return handleResolvePerformanceDraftPlayback({
       actorUid,
       data: request.data,
@@ -714,10 +715,7 @@ export const onModerationAction = onCall(
   { region: "europe-west2" },
   async (request) => {
     // Derive actor from auth context (hardening: never trust client-supplied UID)
-    if (!request.auth) {
-      throw new HttpsError("unauthenticated", "Sign in required.");
-    }
-    const actorUid = request.auth.uid;
+    const actorUid = requireVerifiedUid(request.auth);
 
     // Verify operator role via Admin SDK
     const actorProfile = await db.collection("profiles").doc(actorUid).get();
@@ -1078,10 +1076,7 @@ export async function handleAcceptPolicy(
 export const acceptPolicy = onCall(
   { region: "europe-west2" },
   async (request) => {
-    if (!request.auth) {
-      throw new HttpsError("unauthenticated", "Sign in required.");
-    }
-    const uid = request.auth.uid;
+    const uid = requireVerifiedUid(request.auth);
 
     const result = await handleAcceptPolicy(uid, db);
     if (!result.accepted) {
@@ -1100,6 +1095,20 @@ export const acceptPolicy = onCall(
   }
 );
 
+export const completeOnboarding = onCall(
+  { region: "europe-west2" },
+  async (request) => {
+    const uid = requireVerifiedUid(request.auth);
+    return handleCompleteOnboarding({
+      uid,
+      data: request.data,
+      firestore: db,
+      now: () => admin.firestore.Timestamp.now(),
+      policyVersion: CURRENT_POLICY_VERSION,
+    });
+  }
+);
+
 // --- mergeChants (callable) ---
 // Operator-only. Merges a duplicate chant (source) into a keeper (target).
 // Moves votes and reports, deletes the source, reconciles target counters,
@@ -1115,10 +1124,7 @@ export function requireMergeChantsEnabled(): void {
 export const mergeChants = onCall(
   { region: "europe-west2" },
   async (request) => {
-    if (!request.auth) {
-      throw new HttpsError("unauthenticated", "Sign in required.");
-    }
-    const actorUid = request.auth.uid;
+    const actorUid = requireVerifiedUid(request.auth);
 
     // Operator check: read role from Firestore profile, same pattern as onModerationAction
     const actorProfile = await db.collection("profiles").doc(actorUid).get();

@@ -8,6 +8,7 @@ import {
   handleSubmitReport,
   planAnchoredWindow,
   requireAuthenticatedUid,
+  requireVerifiedUid,
 } from "../src/safety_submission";
 
 type Store = Record<string, Record<string, unknown>>;
@@ -143,6 +144,58 @@ describe("handleSubmitReport", () => {
     await expectCode(Promise.resolve().then(
       () => requireAuthenticatedUid(undefined)
     ), "unauthenticated");
+  });
+
+  it("requires verified contact or a trusted federated identity", () => {
+    assert.strictEqual(
+      requireVerifiedUid({
+        uid: "email-user",
+        token: { email_verified: true },
+      }),
+      "email-user"
+    );
+    assert.strictEqual(
+      requireVerifiedUid({
+        uid: "phone-user",
+        token: { phone_number: "+447000000000" },
+      }),
+      "phone-user"
+    );
+    for (const provider of ["apple.com", "google.com", "facebook.com"]) {
+      assert.strictEqual(
+        requireVerifiedUid({
+          uid: `${provider}-user`,
+          token: { firebase: { sign_in_provider: provider } },
+        }),
+        `${provider}-user`
+      );
+    }
+    assert.strictEqual(
+      requireVerifiedUid({
+        uid: "linked-facebook-user",
+        token: {
+          firebase: {
+            sign_in_provider: "password",
+            identities: { "facebook.com": ["facebook-id"] },
+          },
+        },
+      }),
+      "linked-facebook-user"
+    );
+    for (const auth of [
+      { uid: "missing-token" },
+      { uid: "unverified", token: { email_verified: false } },
+      { uid: "empty-phone", token: { phone_number: "  " } },
+      {
+        uid: "empty-federated-identity",
+        token: { firebase: { identities: { "google.com": [] } } },
+      },
+    ]) {
+      assert.throws(
+        () => requireVerifiedUid(auth),
+        (error: { code?: string }) => error.code === "permission-denied"
+      );
+    }
   });
 
   it("rejects unauthoritative payload fields and malformed values", async () => {

@@ -17,6 +17,17 @@ const BUCKET = `gs://${PROJECT_ID}.appspot.com`;
 
 let testEnv: RulesTestEnvironment;
 
+function verifiedContext(
+  uid: string,
+  claims: Record<string, unknown> = {},
+) {
+  return testEnv.authenticatedContext(uid, {
+    email: `${uid}@example.com`,
+    email_verified: true,
+    ...claims,
+  });
+}
+
 before(async () => {
   testEnv = await initializeTestEnvironment({
     projectId: PROJECT_ID,
@@ -69,6 +80,21 @@ async function seedUploadTicket(
   });
 }
 
+async function seedOperator(uid: string) {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    await context.firestore().collection("profiles").doc(uid).set({
+      displayName: "Operator",
+      role: "operator",
+      banned: false,
+      deletionPending: false,
+      ageConfirmed17Plus: true,
+      acceptedPolicyVersion: "v1",
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    });
+  });
+}
+
 function uploadMetadata(uid: string, draftId: string) {
   return {
     contentType: "video/mp4",
@@ -89,7 +115,7 @@ function upload(
 describe("performance media storage", () => {
   it("accepts only the owner ticket's exact first upload", async () => {
     await seedUploadTicket("fan", "draft-1");
-    const owner = testEnv.authenticatedContext("fan").storage(BUCKET);
+    const owner = verifiedContext("fan").storage(BUCKET);
     const path = "performance-staging/fan/draft-1/source";
     const reference = owner.ref(path);
 
@@ -106,9 +132,9 @@ describe("performance media storage", () => {
   it("rejects forged ownership, metadata, type, size, and inactive accounts", async () => {
     await seedUploadTicket("fan", "draft-1");
     await seedUploadTicket("banned", "draft-2", { banned: true });
-    const fan = testEnv.authenticatedContext("fan").storage(BUCKET);
-    const attacker = testEnv.authenticatedContext("attacker").storage(BUCKET);
-    const banned = testEnv.authenticatedContext("banned").storage(BUCKET);
+    const fan = verifiedContext("fan").storage(BUCKET);
+    const attacker = verifiedContext("attacker").storage(BUCKET);
+    const banned = verifiedContext("banned").storage(BUCKET);
 
     await assertFails(
       upload(
@@ -156,10 +182,45 @@ describe("performance media storage", () => {
     );
   });
 
+  it("denies an upload until the owner has a verified contact", async () => {
+    await seedUploadTicket("unverified", "draft-unverified");
+    const storage = testEnv.authenticatedContext("unverified", {
+      email: "unverified@example.com",
+      email_verified: false,
+    }).storage(BUCKET);
+
+    await assertFails(
+      upload(
+        storage.ref("performance-staging/unverified/draft-unverified/source"),
+        new Uint8Array([1, 2, 3]),
+        uploadMetadata("unverified", "draft-unverified"),
+      ),
+    );
+
+    await seedUploadTicket("linked-facebook", "draft-linked");
+    const linkedStorage = testEnv.authenticatedContext("linked-facebook", {
+      email: "linked@example.com",
+      email_verified: false,
+      firebase: {
+        sign_in_provider: "password",
+        identities: { "facebook.com": ["facebook-id"] },
+      },
+    }).storage(BUCKET);
+    await assertSucceeds(
+      upload(
+        linkedStorage.ref(
+          "performance-staging/linked-facebook/draft-linked/source",
+        ),
+        new Uint8Array([1, 2, 3]),
+        uploadMetadata("linked-facebook", "draft-linked"),
+      ),
+    );
+  });
+
   it("keeps staged objects private and canonical objects off the client path", async () => {
     await seedUploadTicket("fan", "draft-private");
-    const owner = testEnv.authenticatedContext("fan").storage(BUCKET);
-    const other = testEnv.authenticatedContext("other").storage(BUCKET);
+    const owner = verifiedContext("fan").storage(BUCKET);
+    const other = verifiedContext("other").storage(BUCKET);
     const staged = owner.ref("performance-staging/fan/draft-private/source");
     await assertSucceeds(
       upload(
@@ -182,5 +243,28 @@ describe("performance media storage", () => {
     await assertFails(
       owner.ref("performance-media/performance-1/source").getDownloadURL(),
     );
+  });
+
+  it("requires verified contact for operator staging previews", async () => {
+    await seedUploadTicket("fan", "draft-review");
+    await seedOperator("operator");
+    const path = "performance-staging/fan/draft-review/source";
+    const owner = verifiedContext("fan").storage(BUCKET);
+    await assertSucceeds(
+      upload(
+        owner.ref(path),
+        new Uint8Array([1, 2, 3]),
+        uploadMetadata("fan", "draft-review"),
+      ),
+    );
+
+    const unverifiedOperator = testEnv.authenticatedContext("operator", {
+      email: "operator@example.com",
+      email_verified: false,
+    }).storage(BUCKET);
+    await assertFails(unverifiedOperator.ref(path).getDownloadURL());
+
+    const verifiedOperator = verifiedContext("operator").storage(BUCKET);
+    await assertSucceeds(verifiedOperator.ref(path).getDownloadURL());
   });
 });
