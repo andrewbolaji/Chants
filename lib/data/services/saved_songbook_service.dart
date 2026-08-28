@@ -83,8 +83,12 @@ class SavedSongbookService {
     required ChantRepository chantRepository,
     required TeamRepository teamRepository,
     DateTime Function()? now,
-  }) : _savedRepository = savedRepository,
+  }) : // Keep public dependency names readable outside this library.
+       // ignore: prefer_initializing_formals
+       _savedRepository = savedRepository,
+       // ignore: prefer_initializing_formals
        _chantRepository = chantRepository,
+       // ignore: prefer_initializing_formals
        _teamRepository = teamRepository,
        _now = now ?? DateTime.now;
 

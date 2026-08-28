@@ -41,6 +41,9 @@ void main() {
       testFile: Uri.base.resolve(
         'test/presentation/profile/creator_profile_golden_test.dart',
       ),
+      // Ubuntu Flutter 3.47.2 differs from the inspected macOS 3.44.8
+      // baseline by 1.70% for this text-heavy full-screen image.
+      precisionTolerance: 0.018,
     );
     await _loadFonts();
     await tester.binding.setSurfaceSize(const Size(390, 844));
