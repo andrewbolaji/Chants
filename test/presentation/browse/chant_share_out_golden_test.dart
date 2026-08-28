@@ -12,6 +12,7 @@ import 'package:chants/data/models/vote.dart';
 import 'package:chants/data/repositories/chant_repository.dart';
 import 'package:chants/data/repositories/comment_repository.dart';
 import 'package:chants/data/repositories/profile_repository.dart';
+import 'package:chants/data/repositories/public_share_repository.dart';
 import 'package:chants/data/repositories/vote_repository.dart';
 import 'package:chants/data/services/chant_share.dart';
 import 'package:chants/presentation/browse/chant_detail_screen.dart';
@@ -145,6 +146,12 @@ void main() {
             (ref, uid) async => SavedSongbook.empty(),
           ),
           chantShareGatewayProvider.overrideWithValue(_ShareGateway()),
+          publicShareRepositoryProvider.overrideWithValue(
+            PublicShareRepository(
+              resolver: (_, id) async =>
+                  Uri.parse('https://chantsfc.com/chants/$id'),
+            ),
+          ),
         ],
         child: MaterialApp(
           debugShowCheckedModeBanner: false,

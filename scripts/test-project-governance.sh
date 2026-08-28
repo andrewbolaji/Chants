@@ -106,6 +106,18 @@ git -C "$memory_impl_repo" add docs/EXECUTION.md
 "$memory_impl_repo/scripts/check-project-memory.sh" --staged >/dev/null || \
   fail 'an implementation change with staged execution evidence was rejected'
 
+git -C "$memory_impl_repo" commit -qm 'implementation with execution memory'
+memory_range_base=$(git -C "$memory_impl_repo" rev-parse HEAD^)
+"$memory_impl_repo/scripts/check-project-memory.sh" --range "$memory_range_base" >/dev/null || \
+  fail 'an implementation range with execution evidence was rejected'
+
+printf '%s\n' 'void additionalChange() {}' >>"$memory_impl_repo/lib/change.dart"
+git -C "$memory_impl_repo" add lib/change.dart
+git -C "$memory_impl_repo" commit -qm 'implementation without execution memory'
+if "$memory_impl_repo/scripts/check-project-memory.sh" --range HEAD^ >/dev/null 2>&1; then
+  fail 'an implementation range passed without an execution update'
+fi
+
 memory_error_repo="$governance_temp_root/memory-error"
 initialize_memory_repo "$memory_error_repo"
 if GIT_INDEX_FILE="$memory_error_repo/.git" \

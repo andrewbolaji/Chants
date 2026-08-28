@@ -345,6 +345,92 @@ describe("account deletion recovery", () => {
     });
   });
 
+  it("removes private performance activity and anonymizes retained content", async () => {
+    for (const [phase, collection, ownerField] of [
+      ["delete-performance-likes", "performanceLikes", "userId"],
+      ["delete-performance-views", "performanceViews", "userId"],
+      ["delete-performance-shares", "performanceShares", "userId"],
+      ["delete-performance-playback-sessions", "performancePlaybackSessions", "userId"],
+      ["delete-performance-reports", "performanceReports", "reportedBy"],
+      [
+        "delete-performance-comment-reports",
+        "performanceCommentReports",
+        "reportedBy",
+      ],
+    ] as const) {
+      db.set("accountDeletionJobs", "fan", job(phase));
+      db.set(collection, "private-source", {
+        [ownerField]: "fan",
+        performanceId: "live",
+      });
+      await processAccountDeletionStep({
+        uid: "fan", firestore: db.firestore, auth, now,
+      });
+      assert.strictEqual(db.get(collection, "private-source"), undefined);
+    }
+
+    db.set("accountDeletionJobs", "fan", job("anonymize-performance-comments"));
+    db.set("performanceComments", "comment", {
+      userId: "fan",
+      creatorHandle: "northbankleo",
+      creatorDisplayName: "North Bank Leo",
+      performanceId: "live",
+      body: "Retained comment",
+    });
+    await processAccountDeletionStep({
+      uid: "fan", firestore: db.firestore, auth, now,
+    });
+    assert.deepStrictEqual(db.get("performanceComments", "comment"), {
+      userId: "deleted-user",
+      creatorHandle: "deleted",
+      creatorDisplayName: "Deleted creator",
+      performanceId: "live",
+      body: "Retained comment",
+    });
+
+    db.set("accountDeletionJobs", "fan", job("anonymize-performances"));
+    db.set("performances", "live", {
+      creatorId: "fan",
+      creatorHandle: "northbankleo",
+      creatorDisplayName: "North Bank Leo",
+      caption: "Retained performance",
+    });
+    await processAccountDeletionStep({ uid: "fan", firestore: db.firestore, auth, now });
+    assert.deepStrictEqual(db.get("performances", "live"), {
+      creatorId: "deleted-user",
+      creatorHandle: "deleted",
+      creatorDisplayName: "Deleted creator",
+      caption: "Retained performance",
+    });
+
+    db.set("accountDeletionJobs", "fan", job("delete-performance-drafts"));
+    db.set("performanceDrafts", "draft", {
+      ownerId: "fan",
+      uploadPath: "performance-staging/fan/draft/source",
+    });
+    await processAccountDeletionStep({ uid: "fan", firestore: db.firestore, auth, now });
+    assert.strictEqual(db.get("performanceDrafts", "draft"), undefined);
+  });
+
+  it("removes both sides of follows and creator notification privacy", async () => {
+    for (const [phase, collection, field] of [
+      ["delete-follows-by", "creatorFollows", "followerId"],
+      ["delete-follows-against", "creatorFollows", "followedId"],
+      ["delete-notifications-owned", "creatorNotifications", "ownerId"],
+      ["delete-notifications-acted", "creatorNotifications", "actorId"],
+    ] as const) {
+      db.set("accountDeletionJobs", "fan", job(phase));
+      db.set(collection, `${phase}-source`, {
+        [field]: "fan",
+        retainedField: "must not survive",
+      });
+      await processAccountDeletionStep({
+        uid: "fan", firestore: db.firestore, auth, now,
+      });
+      assert.strictEqual(db.get(collection, `${phase}-source`), undefined);
+    }
+  });
+
   it("advances every empty page phase in order", async () => {
     const pagePhases = [
       "delete-votes",
@@ -358,6 +444,19 @@ describe("account deletion recovery", () => {
       "delete-user-reports-against",
       "delete-blocks-by",
       "delete-blocks-against",
+      "delete-follows-by",
+      "delete-follows-against",
+      "delete-notifications-owned",
+      "delete-notifications-acted",
+      "delete-performance-likes",
+      "delete-performance-views",
+      "delete-performance-shares",
+      "delete-performance-playback-sessions",
+      "delete-performance-reports",
+      "delete-performance-comment-reports",
+      "anonymize-performance-comments",
+      "anonymize-performances",
+      "delete-performance-drafts",
       "anonymize-audit-by",
     ] as const;
 
@@ -505,6 +604,8 @@ describe("account deletion recovery", () => {
   it("recovers after Auth deletion and finalization failures", async () => {
     db.set("accountDeletionJobs", "fan", job("delete-auth"));
     db.set("profiles", "fan", { deletionPending: true });
+    db.set("creatorProfiles", "fan", { handle: "northbankfan" });
+    db.set("creatorHandles", "northbankfan", { uid: "fan" });
     db.failNextTransaction = true;
 
     await assert.rejects(
@@ -530,7 +631,24 @@ describe("account deletion recovery", () => {
     });
     assert.strictEqual(result?.complete, true);
     assert.strictEqual(db.get("profiles", "fan"), undefined);
+    assert.strictEqual(db.get("creatorProfiles", "fan"), undefined);
+    assert.strictEqual(db.get("creatorHandles", "northbankfan"), undefined);
     assert.strictEqual(db.get("accountDeletionJobs", "fan"), undefined);
+  });
+
+  it("does not delete a handle reservation owned by another account", async () => {
+    db.set("accountDeletionJobs", "fan", job("finalize"));
+    db.set("profiles", "fan", { deletionPending: true });
+    db.set("creatorProfiles", "fan", { handle: "contested" });
+    db.set("creatorHandles", "contested", { uid: "other-fan" });
+
+    const result = await processAccountDeletionStep({
+      uid: "fan", firestore: db.firestore, auth, now,
+    });
+
+    assert.strictEqual(result?.complete, true);
+    assert.strictEqual(db.get("creatorProfiles", "fan"), undefined);
+    assert.strictEqual(db.get("creatorHandles", "contested")?.uid, "other-fan");
   });
 
   it("fails closed on a malformed server-owned job", async () => {

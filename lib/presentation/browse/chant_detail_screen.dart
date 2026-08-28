@@ -6,6 +6,7 @@ import 'package:chants/data/models/chant.dart';
 import 'package:chants/data/models/saved_songbook.dart';
 import 'package:chants/data/models/team.dart';
 import 'package:chants/data/repositories/chant_repository.dart';
+import 'package:chants/data/repositories/public_share_repository.dart';
 import 'package:chants/data/services/chant_share.dart';
 import 'package:chants/presentation/comments/comment_section.dart';
 import 'package:chants/presentation/report/report_sheet.dart';
@@ -48,9 +49,14 @@ class _ChantDetailScreenState extends ConsumerState<ChantDetailScreen> {
 
     setState(() => _sharing = true);
     try {
+      final publicUrl = await ref
+          .read(publicShareRepositoryProvider)
+          .resolve(PublicShareTarget.chant, chant.id);
+      if (!mounted) return;
       final payload = ChantSharePayload.fromChant(
         chant: chant,
         teamName: widget.team?.name,
+        publicUrl: publicUrl,
       );
       await ref
           .read(chantShareGatewayProvider)
@@ -300,6 +306,29 @@ class _ChantDetailScreenState extends ConsumerState<ChantDetailScreen> {
                   evidence: live.evidence,
                   showMediaPlaceholder: live.mediaType != 'none',
                 ),
+                if (user != null)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      Spacing.lg,
+                      0,
+                      Spacing.lg,
+                      Spacing.xl,
+                    ),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        onPressed: actionsEnabled
+                            ? () => Navigator.pushNamed(
+                                context,
+                                AppRouter.performChant,
+                                arguments: live,
+                              )
+                            : null,
+                        icon: const Icon(Icons.videocam_outlined),
+                        label: const Text('PERFORM THIS CHANT'),
+                      ),
+                    ),
+                  ),
                 CommentSection(
                   chantId: live.id,
                   commentCount: live.commentCount,

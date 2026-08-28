@@ -20,8 +20,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class TeamScreen extends ConsumerStatefulWidget {
   final Team team;
+  final DateTime? risingEvaluationTime;
 
-  const TeamScreen({super.key, required this.team});
+  const TeamScreen({super.key, required this.team, this.risingEvaluationTime});
 
   @override
   ConsumerState<TeamScreen> createState() => _TeamScreenState();
@@ -232,7 +233,7 @@ class _TeamScreenState extends ConsumerState<TeamScreen>
                 'Be the first fan to start an idea for ${widget.team.name}.',
             signedOutEmptyMessage:
                 'No ideas yet. Sign in to start the first chant for ${widget.team.name}.',
-            now: DateTime.now(),
+            now: widget.risingEvaluationTime ?? DateTime.now(),
             onChantTap: _openChant,
             onStartChant: _startChant,
           ),

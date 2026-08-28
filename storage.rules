@@ -1,8 +1,83 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    // Deny all reads and writes by default.
-    // Media upload rules will be added in Block 3.
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function accountIsActive(uid) {
+      let profile = firestore.get(
+        /databases/(default)/documents/profiles/$(uid)
+      );
+      return firestore.exists(
+          /databases/(default)/documents/profiles/$(uid)
+        )
+        && profile.data.banned == false
+        && profile.data.ageConfirmed17Plus == true
+        && profile.data.acceptedPolicyVersion == 'v1'
+        && profile.data.deletionPending != true
+        && !firestore.exists(
+          /databases/(default)/documents/accountDeletionJobs/$(uid)
+        );
+    }
+
+    function isOperator() {
+      return isSignedIn()
+        && firestore.get(
+          /databases/(default)/documents/profiles/$(request.auth.uid)
+        ).data.role == 'operator'
+        && accountIsActive(request.auth.uid);
+    }
+
+    function ownsUploadTicket(uid, draftId) {
+      let draft = firestore.get(
+        /databases/(default)/documents/performanceDrafts/$(draftId)
+      );
+      return firestore.exists(
+          /databases/(default)/documents/performanceDrafts/$(draftId)
+        )
+        && draft.data.schemaVersion == 1
+        && draft.data.ownerId == uid
+        && draft.data.state == 'awaiting_upload'
+        && draft.data.uploadPath ==
+          'performance-staging/' + uid + '/' + draftId + '/source'
+        && draft.data.claimedSizeBytes == request.resource.size
+        && draft.data.claimedContentType == request.resource.contentType;
+    }
+
+    // A callable creates a single-use ticket before the client uploads. The
+    // path, byte count, MIME type, owner, and custom metadata must all agree
+    // with that server-owned draft. Direct replacement and deletion are off.
+    match /performance-staging/{uid}/{draftId}/source {
+      allow create: if isSignedIn()
+        && request.auth.uid == uid
+        && accountIsActive(uid)
+        && resource == null
+        && request.resource.size > 0
+        && request.resource.size <= 50 * 1024 * 1024
+        && request.resource.contentType in [
+          'video/mp4', 'video/quicktime', 'video/x-m4v'
+        ]
+        && request.resource.metadata.keys().hasOnly([
+          'ownerId', 'draftId', 'schemaVersion'
+        ])
+        && request.resource.metadata.ownerId == uid
+        && request.resource.metadata.draftId == draftId
+        && request.resource.metadata.schemaVersion == '1'
+        && ownsUploadTicket(uid, draftId);
+      allow read: if isSignedIn()
+        && (request.auth.uid == uid || isOperator());
+      allow update, delete: if false;
+    }
+
+    // Approved playback uses a short-lived URL minted only after a fresh
+    // server check of the performance projection. Firebase client reads stay
+    // closed so cached feed data cannot authorize playback after moderation.
+    match /performance-media/{performanceId}/source {
+      allow read, write: if false;
+    }
+
+    // Deny everything outside the explicitly ticketed paths.
     match /{allPaths=**} {
       allow read, write: if false;
     }

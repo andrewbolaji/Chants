@@ -5,6 +5,7 @@ import {
   onDocumentWritten,
 } from "firebase-functions/v2/firestore";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { onRequest } from "firebase-functions/v2/https";
 import { writeAuditEntry, writePrivacySafeReportAuditEntry } from "./audit";
 import {
   ChantTrustAction,
@@ -20,9 +21,48 @@ import {
   processAccountDeletionStep,
   requestAccountDeletion,
 } from "./account_deletion";
+import { handleUpdateCreatorProfile } from "./creator_profile";
+import {
+  handleSetCreatorFollow,
+  recomputeCreatorFollowCounts,
+} from "./creator_follow";
+import { handleMarkCreatorNotificationRead } from "./creator_notification";
+import { handlePublishedPerformanceModeration } from "./published_performance_moderation";
+import {
+  firebasePerformanceMediaGateway,
+  handleCancelPerformanceDraft,
+  handleCreatePerformanceDraft,
+  handleModeratePerformance,
+  handleResolvePerformancePlayback,
+  handleResolvePerformanceDraftPlayback,
+  handleSetPerformanceLike,
+  handleRecordPerformanceShare,
+  handleRecordQualifiedPerformanceView,
+  handleCreatePerformanceComment,
+  handleDeletePerformanceComment,
+  handleSubmitPerformanceDraft,
+  cleanupDeletedPerformanceDraft,
+  recomputePerformanceLikeCounts,
+  recomputePerformanceViewCounts,
+  recomputePerformanceCommentCount,
+  recomputePerformanceShareCounts,
+} from "./performance";
+import {
+  handleResolvePublicShareDestination,
+  handleResolvePublicPerformanceMedia,
+  performanceIdFromPublicMediaPath,
+  renderPublicPage,
+  resolvePublicPage,
+} from "./public_share";
 
 admin.initializeApp();
 const db = admin.firestore();
+
+function performanceMediaGateway() {
+  // Resolve the configured bucket only when a media callable runs. The test
+  // harness imports this module without production Firebase options.
+  return firebasePerformanceMediaGateway(admin.storage().bucket());
+}
 
 const AUTO_HIDE_THRESHOLD = 3;
 
@@ -53,6 +93,337 @@ export const submitFeedback = onCall(
       data: request.data,
       firestore: db,
       clock: () => admin.firestore.Timestamp.now(),
+    });
+  }
+);
+
+export const updateCreatorProfile = onCall(
+  { region: "europe-west2" },
+  async (request) => {
+    const uid = requireAuthenticatedUid(request.auth);
+    return handleUpdateCreatorProfile({
+      uid,
+      data: request.data,
+      firestore: db,
+      now: () => admin.firestore.Timestamp.now(),
+    });
+  }
+);
+
+export const setCreatorFollow = onCall(
+  { region: "europe-west2" },
+  async (request) => {
+    const uid = requireAuthenticatedUid(request.auth);
+    return handleSetCreatorFollow({
+      uid,
+      data: request.data,
+      firestore: db,
+      now: () => admin.firestore.Timestamp.now(),
+    });
+  }
+);
+
+export const markCreatorNotificationRead = onCall(
+  { region: "europe-west2" },
+  async (request) => {
+    const uid = requireAuthenticatedUid(request.auth);
+    return handleMarkCreatorNotificationRead({
+      uid,
+      data: request.data,
+      firestore: db,
+      now: () => admin.firestore.Timestamp.now(),
+    });
+  }
+);
+
+export const moderatePublishedPerformance = onCall(
+  { region: "europe-west2" },
+  async (request) => {
+    const actorUid = requireAuthenticatedUid(request.auth);
+    return handlePublishedPerformanceModeration({
+      actorUid,
+      data: request.data,
+      firestore: db,
+      now: () => admin.firestore.Timestamp.now(),
+      newAuditId: () => db.collection("auditLog").doc().id,
+    });
+  }
+);
+
+export const resolvePublicShareDestination = onCall(
+  { region: "europe-west2" },
+  async (request) => {
+    return handleResolvePublicShareDestination({
+      data: request.data,
+      firestore: db,
+    });
+  }
+);
+
+export const publicSharePage = onRequest(
+  { region: "europe-west2" },
+  async (request, response) => {
+    const page = await resolvePublicPage({ path: request.path, firestore: db });
+    response
+      .status(page.status)
+      .set("Cache-Control", "no-store")
+      .set(
+        "Content-Security-Policy",
+        "default-src 'none'; style-src 'unsafe-inline'; img-src https:; " +
+          "media-src https:; " +
+          "base-uri 'none'; frame-ancestors 'none'; form-action 'none'"
+      )
+      .set("Referrer-Policy", "no-referrer")
+      .set("X-Content-Type-Options", "nosniff")
+      .type("html")
+      .send(renderPublicPage(page));
+  }
+);
+
+export const publicPerformanceMedia = onRequest(
+  { region: "europe-west2" },
+  async (request, response) => {
+    const performanceId = performanceIdFromPublicMediaPath(request.path);
+    try {
+      const destination = await handleResolvePublicPerformanceMedia({
+        performanceId,
+        firestore: db,
+        media: performanceMediaGateway(),
+        nowMs: Date.now,
+      });
+      response
+        .status(302)
+        .set("Cache-Control", "private,no-store,max-age=0")
+        .set("Referrer-Policy", "no-referrer")
+        .set("X-Content-Type-Options", "nosniff")
+        .redirect(destination.url);
+    } catch (_) {
+      response
+        .status(404)
+        .set("Cache-Control", "private,no-store,max-age=0")
+        .set("Referrer-Policy", "no-referrer")
+        .set("X-Content-Type-Options", "nosniff")
+        .type("text")
+        .send("This performance is unavailable.");
+    }
+  }
+);
+
+export const createPerformanceDraft = onCall(
+  { region: "europe-west2" },
+  async (request) => {
+    const uid = requireAuthenticatedUid(request.auth);
+    return handleCreatePerformanceDraft({
+      uid,
+      data: request.data,
+      firestore: db,
+      now: () => admin.firestore.Timestamp.now(),
+      newId: () => db.collection("performanceDrafts").doc().id,
+    });
+  }
+);
+
+export const submitPerformanceDraft = onCall(
+  { region: "europe-west2", timeoutSeconds: 60 },
+  async (request) => {
+    const uid = requireAuthenticatedUid(request.auth);
+    return handleSubmitPerformanceDraft({
+      uid,
+      data: request.data,
+      firestore: db,
+      media: performanceMediaGateway(),
+      now: () => admin.firestore.Timestamp.now(),
+    });
+  }
+);
+
+export const cancelPerformanceDraft = onCall(
+  { region: "europe-west2" },
+  async (request) => {
+    const uid = requireAuthenticatedUid(request.auth);
+    return handleCancelPerformanceDraft({
+      uid,
+      data: request.data,
+      firestore: db,
+      media: performanceMediaGateway(),
+      now: () => admin.firestore.Timestamp.now(),
+    });
+  }
+);
+
+export const moderatePerformance = onCall(
+  { region: "europe-west2", timeoutSeconds: 60 },
+  async (request) => {
+    const actorUid = requireAuthenticatedUid(request.auth);
+    return handleModeratePerformance({
+      actorUid,
+      data: request.data,
+      firestore: db,
+      media: performanceMediaGateway(),
+      now: () => admin.firestore.Timestamp.now(),
+    });
+  }
+);
+
+export const resolvePerformancePlayback = onCall(
+  { region: "europe-west2" },
+  async (request) => {
+    const actorUid = requireAuthenticatedUid(request.auth);
+    return handleResolvePerformancePlayback({
+      actorUid,
+      data: request.data,
+      firestore: db,
+      media: performanceMediaGateway(),
+      now: () => admin.firestore.Timestamp.now(),
+    });
+  }
+);
+
+export const setPerformanceLike = onCall(
+  { region: "europe-west2" },
+  async (request) => {
+    const uid = requireAuthenticatedUid(request.auth);
+    return handleSetPerformanceLike({
+      uid,
+      data: request.data,
+      firestore: db,
+      now: () => admin.firestore.Timestamp.now(),
+    });
+  }
+);
+
+export const recordPerformanceShare = onCall(
+  { region: "europe-west2" },
+  async (request) => {
+    const uid = requireAuthenticatedUid(request.auth);
+    return handleRecordPerformanceShare({
+      uid,
+      data: request.data,
+      firestore: db,
+      now: () => admin.firestore.Timestamp.now(),
+    });
+  }
+);
+
+export const recordQualifiedPerformanceView = onCall(
+  { region: "europe-west2" },
+  async (request) => {
+    const uid = requireAuthenticatedUid(request.auth);
+    return handleRecordQualifiedPerformanceView({
+      uid,
+      data: request.data,
+      firestore: db,
+      now: () => admin.firestore.Timestamp.now(),
+    });
+  }
+);
+
+export const createPerformanceComment = onCall(
+  { region: "europe-west2" },
+  async (request) => {
+    const uid = requireAuthenticatedUid(request.auth);
+    return handleCreatePerformanceComment({
+      uid,
+      data: request.data,
+      firestore: db,
+      now: () => admin.firestore.Timestamp.now(),
+    });
+  }
+);
+
+export const deletePerformanceComment = onCall(
+  { region: "europe-west2" },
+  async (request) => {
+    const uid = requireAuthenticatedUid(request.auth);
+    return handleDeletePerformanceComment({
+      uid,
+      data: request.data,
+      firestore: db,
+      now: () => admin.firestore.Timestamp.now(),
+    });
+  }
+);
+
+export const resolvePerformanceDraftPlayback = onCall(
+  { region: "europe-west2" },
+  async (request) => {
+    const actorUid = requireAuthenticatedUid(request.auth);
+    return handleResolvePerformanceDraftPlayback({
+      actorUid,
+      data: request.data,
+      firestore: db,
+      media: performanceMediaGateway(),
+      now: () => admin.firestore.Timestamp.now(),
+    });
+  }
+);
+
+export const onPerformanceDraftDeleted = onDocumentDeleted(
+  { document: "performanceDrafts/{draftId}", region: "europe-west2" },
+  async (event) => {
+    await cleanupDeletedPerformanceDraft(
+      event.data?.data(),
+      performanceMediaGateway()
+    );
+  }
+);
+
+export const onPerformanceLikeWritten = onDocumentWritten(
+  { document: "performanceLikes/{likeId}", region: "europe-west2" },
+  async (event) => {
+    await recomputePerformanceLikeCounts({
+      before: event.data?.before.data(),
+      after: event.data?.after.data(),
+      firestore: db,
+      now: () => admin.firestore.Timestamp.now(),
+    });
+  }
+);
+
+export const onPerformanceViewWritten = onDocumentWritten(
+  { document: "performanceViews/{viewId}", region: "europe-west2" },
+  async (event) => {
+    await recomputePerformanceViewCounts({
+      before: event.data?.before.data(),
+      after: event.data?.after.data(),
+      firestore: db,
+      now: () => admin.firestore.Timestamp.now(),
+    });
+  }
+);
+
+export const onPerformanceShareWritten = onDocumentWritten(
+  { document: "performanceShares/{shareId}", region: "europe-west2" },
+  async (event) => {
+    await recomputePerformanceShareCounts({
+      before: event.data?.before.data(),
+      after: event.data?.after.data(),
+      firestore: db,
+      now: () => admin.firestore.Timestamp.now(),
+    });
+  }
+);
+
+export const onPerformanceCommentWritten = onDocumentWritten(
+  { document: "performanceComments/{commentId}", region: "europe-west2" },
+  async (event) => {
+    await recomputePerformanceCommentCount({
+      before: event.data?.before.data(),
+      after: event.data?.after.data(),
+      firestore: db,
+      now: () => admin.firestore.Timestamp.now(),
+    });
+  }
+);
+
+export const onCreatorFollowWritten = onDocumentWritten(
+  { document: "creatorFollows/{followId}", region: "europe-west2" },
+  async (event) => {
+    await recomputeCreatorFollowCounts({
+      before: event.data?.before.data(),
+      after: event.data?.after.data(),
+      firestore: db,
+      now: () => admin.firestore.Timestamp.now(),
     });
   }
 );

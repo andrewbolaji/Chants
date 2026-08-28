@@ -13,6 +13,34 @@ This is the chronological evidence trail for substantial engineering work. It re
 
 ## Entries
 
+### 2026-08-28T01:24:55Z Start the creator platform expansion
+
+- **Status:** Implemented and locally verified; packaging, exact-head CI, independent review, native completion, and release gates pending
+- **Scope:** Build the approved Chant Stage feed direction and Product Clear navigation, including public creator identity, 30-second moderated performances, popularity, public destinations, private follows, activity, mentions, continued performance threads, and integration hardening. No live Firebase, deployment, signing, seed write, store, or production action is authorized by this entry.
+- **Reference:** `docs/CHANGE_SPEC.md`
+- **Approval:** Andrew selected Feed Pass 3 and Navigation Pass 3 and explicitly approved starting the build on 2026-08-27.
+- **Operator:** Codex
+
+| UTC time | Action | Target/environment | Result and evidence |
+|---|---|---|---|
+| 01:24:55 | Established the implementation boundary | Clean worktree `chants-creator-platform` at merged main `86603c2` | Created branch `codex/v1-creator-platform-foundation`. The protected owner worktree and its Gradle, settings, lockfile, and private untracked documents remain untouched. |
+| 01:24:55 | Recorded the approved Lane 2 contract | `docs/CHANGE_SPEC.md` | Captured the product hierarchy, public/private data split, unique identity boundary, media admission, popularity meaning, follows, public links, threaded conversation, abuse cases, cost budgets, rollout, and review checkpoints before runtime implementation. |
+| 02:05:00 | Implemented Product Clear and public creator identity | Flutter, Functions, Firestore rules | Added the five-tab shell, Create and You surfaces, unique normalized handle reservation, public profile allowlist, bio editing, owner states, aggregate placeholders, deletion cleanup, and focused model, repository, callable, rules, widget, responsive, and golden tests. |
+| 03:00:00 | Implemented performance admission and Chant Stage | Flutter, Functions, Firestore, Storage | Added camera or library selection, 30-second and 50-MiB bounds, private draft and exact staging path, progress, cancel and retry, manual operator approval, public projections, bounded Rising, New, Terrace and Following pages, explicit playback, likes, qualified views, comments, unique shares, weekly winner, and private draft activity. |
+| 03:35:00 | Implemented public and social destinations | Functions, Hosting, Flutter | Added current-authority chant, performance, and creator URLs with escaped previews; public no-autoplay performance media through a two-minute signed route; public creator profiles; private follows and aggregate totals; validated mentions; continued performance replies with focused deep threads; and recipient-only activity navigation. |
+| 04:10:00 | Integrated published-media safety and deletion | Functions, Firestore rules, Flutter moderation | Extended report admission, blocking, operator queues, dismiss, hide, remove, restore, audit, preview, account-deletion phases, and lifecycle tests to performances, performance comments, creator graph, notifications, and private drafts. |
+| 04:25:00 | Closed interface and authority evidence gaps | Flutter and emulator suites | Corrected large-text winner layout, highlighted current notification comments, proved operator blocked-media preview, added hostile public and report assertions, regenerated and inspected chant detail, Stage, and creator profile goldens, and removed eight untracked intentional-failure PNGs. |
+| 04:40:00 | Ran the local automated matrix | Flutter 3.44.8, Node 20, Java-backed Firebase emulator | PASS: 415 Flutter tests, 122 Functions tests, 157 Firestore and Storage assertions, 42 seed tests, full Flutter analysis exit 0 with the CI fixture, and governance regressions. |
+| 04:50:00 | Corrected clean-runner contract coverage | GitHub Actions and Bash | CI now runs Firestore plus Storage and checks implementation-to-execution memory across the PR or push range. The regression harness proves accepted and rejected `--range` cases as well as the existing staged cases. |
+| 04:55:00 | Resolved the native iOS dependency graph | CocoaPods, FlutterFire, Firebase iOS 12.18 | The prior 12.13 snapshot could not satisfy the new Storage plugin. `pod update --repo-update` resolved every FlutterFire plugin to Firebase iOS 12.18 and installed Storage, image picker, and video player pods. |
+| 05:00:00 | Attempted current native builds | Local Xcode and Flutter; local Android environment | iOS entered Xcode compilation after successful pod resolution but was terminated after an extended silent wait without source error. Android stopped immediately because no SDK is installed. Both remain honest handoff gates. |
+| 05:06:46 | Refreshed durable current truth | Decisions 018 through 021, interface, roadmap, project profile, overview, rationale, and change record | Replaced foundation-only claims with the complete creator-platform architecture, evidence, compromises, rollout order, recovery, reviewer focus, and remaining gates. |
+| 05:15:00 | Corrected an expired Rising fixture discovered by the final suite | `TeamScreen` and `team_screen_test.dart` | On the first August 28 run, a fixed August 21 community chant no longer qualified for the seven-day Rising window. Added an optional production-defaulted evaluation time and injected August 27 in the test. The exact regression and complete 415-test suite then passed. |
+| 05:40:20 | Repeated the iOS compile with warm caches and closed local artifacts | Local Xcode and worktree | The retry skipped pod resolution and again remained silent in Xcode compilation until the bounded stop, with no source diagnostic. Removed the ignored non-secret Firebase analysis fixture and confirmed no golden failure directories remain. |
+
+- **Current state:** The approved creator-platform source is implemented locally with the final automated matrix green. Nothing has been committed, pushed, deployed, or written to live Firebase.
+- **Follow-up:** Run final style, formatting, diff, and focused reruns; finish native compilation if the local environment permits; then package only on Andrew's instruction, obtain clean-runner CI, and give Claude the requested exact-range independent review.
+
 ### 2026-08-27T00:25:16Z Close the final independent freeze review
 
 - **Status:** Implemented and locally verified; packaging and replacement exact-head CI pending

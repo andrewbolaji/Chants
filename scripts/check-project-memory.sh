@@ -3,8 +3,13 @@ set -euo pipefail
 
 memory_mode=${1:-structure}
 
-if [ "$memory_mode" != "structure" ] && [ "$memory_mode" != "--staged" ]; then
-  echo "Usage: $0 [--staged]" >&2
+if [ "$memory_mode" != "structure" ] && [ "$memory_mode" != "--staged" ] && [ "$memory_mode" != "--range" ]; then
+  echo "Usage: $0 [--staged | --range <base>]" >&2
+  exit 2
+fi
+
+if [ "$memory_mode" = "--range" ] && [ "$#" -ne 2 ]; then
+  echo "Usage: $0 --range <base>" >&2
   exit 2
 fi
 
@@ -42,22 +47,38 @@ if [ "$memory_failed" -ne 0 ]; then
   exit 1
 fi
 
-if [ "$memory_mode" = "--staged" ]; then
+if [ "$memory_mode" = "--staged" ] || [ "$memory_mode" = "--range" ]; then
   if ! git -C "$memory_project_root" rev-parse --git-dir >/dev/null 2>&1; then
-    echo "--staged requires a Git repository" >&2
+    echo "$memory_mode requires a Git repository" >&2
     exit 2
   fi
 
   memory_has_implementation_change=0
   memory_staged_paths=$(mktemp "${TMPDIR:-/tmp}/project-memory-paths.XXXXXX")
   trap 'rm -f "$memory_staged_paths"' EXIT HUP INT TERM
-  if ! git -C "$memory_project_root" diff \
-    --cached \
-    --name-only \
-    --diff-filter=ACMR \
-    -z >"$memory_staged_paths"; then
-    echo "Could not read staged paths for the project-memory check." >&2
-    exit 2
+  if [ "$memory_mode" = "--staged" ]; then
+    if ! git -C "$memory_project_root" diff \
+      --cached \
+      --name-only \
+      --diff-filter=ACMR \
+      -z >"$memory_staged_paths"; then
+      echo "Could not read staged paths for the project-memory check." >&2
+      exit 2
+    fi
+  else
+    memory_base=$2
+    if ! git -C "$memory_project_root" rev-parse --verify "$memory_base^{commit}" >/dev/null 2>&1; then
+      echo "Project-memory range base is not a commit: $memory_base" >&2
+      exit 2
+    fi
+    if ! git -C "$memory_project_root" diff \
+      "$memory_base...HEAD" \
+      --name-only \
+      --diff-filter=ACMR \
+      -z >"$memory_staged_paths"; then
+      echo "Could not read changed paths for the project-memory range check." >&2
+      exit 2
+    fi
   fi
 
   while IFS= read -r -d '' memory_path; do
@@ -71,8 +92,17 @@ if [ "$memory_mode" = "--staged" ]; then
   done <"$memory_staged_paths"
 
   if [ "$memory_has_implementation_change" -eq 1 ] && [ "${PROJECT_MEMORY_LANE:-}" != "0" ]; then
-    if git -C "$memory_project_root" diff --cached --quiet -- docs/EXECUTION.md; then
-      echo "Staged implementation changes require a staged docs/EXECUTION.md update." >&2
+    memory_execution_unchanged=no
+    if [ "$memory_mode" = "--staged" ]; then
+      if git -C "$memory_project_root" diff --cached --quiet -- docs/EXECUTION.md; then
+        memory_execution_unchanged=yes
+      fi
+    elif git -C "$memory_project_root" diff "$memory_base...HEAD" --quiet -- docs/EXECUTION.md; then
+      memory_execution_unchanged=yes
+    fi
+
+    if [ "$memory_execution_unchanged" = "yes" ]; then
+      echo "Implementation changes require a docs/EXECUTION.md update in the same review range." >&2
       echo "For a confirmed Lane 0 mechanical change, rerun with PROJECT_MEMORY_LANE=0." >&2
       exit 1
     fi

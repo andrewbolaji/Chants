@@ -15,7 +15,12 @@ const FEEDBACK_CATEGORIES = new Set([
   "other",
 ]);
 
-type ReportTargetType = "chant" | "comment" | "user";
+type ReportTargetType =
+  | "chant"
+  | "comment"
+  | "user"
+  | "performance"
+  | "performanceComment";
 
 type Clock = () => admin.firestore.Timestamp;
 
@@ -26,9 +31,24 @@ type AnchoredWindowPlan = {
 };
 
 type ReportTargetConfig = {
-  targetCollection: "chants" | "comments" | "profiles";
-  reportCollection: "reports" | "commentReports" | "userReports";
-  targetField: "chantId" | "commentId" | "reportedUserId";
+  targetCollection:
+    | "chants"
+    | "comments"
+    | "profiles"
+    | "performances"
+    | "performanceComments";
+  reportCollection:
+    | "reports"
+    | "commentReports"
+    | "userReports"
+    | "performanceReports"
+    | "performanceCommentReports";
+  targetField:
+    | "chantId"
+    | "commentId"
+    | "reportedUserId"
+    | "performanceId"
+    | "performanceCommentId";
 };
 
 const REPORT_TARGET_CONFIG: Record<ReportTargetType, ReportTargetConfig> = {
@@ -46,6 +66,16 @@ const REPORT_TARGET_CONFIG: Record<ReportTargetType, ReportTargetConfig> = {
     targetCollection: "profiles",
     reportCollection: "userReports",
     targetField: "reportedUserId",
+  },
+  performance: {
+    targetCollection: "performances",
+    reportCollection: "performanceReports",
+    targetField: "performanceId",
+  },
+  performanceComment: {
+    targetCollection: "performanceComments",
+    reportCollection: "performanceCommentReports",
+    targetField: "performanceCommentId",
   },
 };
 
@@ -144,7 +174,11 @@ function parseReportPayload(data: unknown): {
   const rawTargetId = data.targetId;
   const rawReason = data.reason;
   if (
-    (targetType !== "chant" && targetType !== "comment" && targetType !== "user") ||
+    (targetType !== "chant" &&
+      targetType !== "comment" &&
+      targetType !== "user" &&
+      targetType !== "performance" &&
+      targetType !== "performanceComment") ||
     typeof rawTargetId !== "string" ||
     typeof rawReason !== "string"
   ) {
@@ -278,6 +312,14 @@ export async function handleSubmitReport(params: {
       const target = targetSnapshot.data()!;
       if (target.hidden !== false || target.removed !== false) {
         throw new HttpsError("failed-precondition", "Report target is unavailable.");
+      }
+      if (
+        (payload.targetType === "performance" &&
+          target.creatorId === params.uid) ||
+        (payload.targetType === "performanceComment" &&
+          target.userId === params.uid)
+      ) {
+        throw new HttpsError("invalid-argument", "You cannot report your own content.");
       }
     }
     if (reportSnapshot.exists) {

@@ -6,7 +6,7 @@ import {
 } from "@firebase/rules-unit-testing";
 import { readFileSync } from "fs";
 import { resolve } from "path";
-import { Timestamp, setDoc, getDoc, doc, collection, addDoc, updateDoc, deleteDoc, deleteField, query, where, getDocs } from "firebase/firestore";
+import { Timestamp, setDoc, getDoc, doc, collection, addDoc, updateDoc, deleteDoc, deleteField, query, where, orderBy, limit, getDocs } from "firebase/firestore";
 
 const PROJECT_ID = "chants-test";
 
@@ -68,6 +68,130 @@ async function seedUserProfile(uid: string) {
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
     });
+  });
+}
+
+async function seedCreatorProfile(
+  uid: string,
+  options: { hidden?: boolean; removed?: boolean } = {},
+) {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    await setDoc(doc(db, "creatorProfiles", uid), {
+      handle: `handle_${uid}`,
+      displayName: "Test Creator",
+      bio: "Football and away ends.",
+      followerCount: 0,
+      followingCount: 0,
+      performanceCount: 0,
+      likeCount: 0,
+      shareCount: 0,
+      hidden: options.hidden ?? false,
+      removed: options.removed ?? false,
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    });
+  });
+}
+
+async function seedPerformance(
+  id: string,
+  options: { hidden?: boolean; removed?: boolean; malformed?: boolean } = {},
+) {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    const payload: Record<string, unknown> = {
+      schemaVersion: 1,
+      chantId: "chant-1",
+      chantTitle: "North London Forever",
+      teamId: "arsenal",
+      teamName: "Arsenal",
+      playerName: null,
+      chantStatus: "canonical",
+      creatorId: "creator-1",
+      creatorHandle: "northbankleo",
+      creatorDisplayName: "North Bank Leo",
+      caption: "One take from the away end.",
+      mediaPath: `performance-media/${id}/source`,
+      durationMs: 18000,
+      publicationState: "approved",
+      viewCount: 19,
+      likeCount: 7,
+      commentCount: 3,
+      shareCount: 4,
+      uniqueSharerCount: 4,
+      weeklyUniqueSharerCount: 4,
+      weeklyLikeCount: 7,
+      weeklyQualifiedViewCount: 12,
+      rankingWeek: "2026-08-24",
+      hidden: options.hidden ?? false,
+      removed: options.removed ?? false,
+      createdAt: Timestamp.now(),
+      approvedAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    };
+    if (options.malformed) payload.privateModerationNote = "must not leak";
+    await setDoc(doc(db, "performances", id), payload);
+  });
+}
+
+async function seedPerformanceDraft(
+  id: string,
+  ownerId: string,
+  state = "pending_review",
+) {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    await setDoc(doc(db, "performanceDrafts", id), {
+      schemaVersion: 1,
+      ownerId,
+      chantId: "chant-1",
+      chantTitle: "North London Forever",
+      teamId: "arsenal",
+      teamName: "Arsenal",
+      playerName: null,
+      chantStatus: "community",
+      creatorHandle: "northbankleo",
+      creatorDisplayName: "North Bank Leo",
+      caption: "First take.",
+      uploadPath: `performance-staging/${ownerId}/${id}/source`,
+      claimedContentType: "video/mp4",
+      claimedSizeBytes: 3,
+      claimedDurationMs: 18000,
+      state,
+      moderationReason: null,
+      sourceGeneration: "generation-1",
+      verifiedContentType: "video/mp4",
+      verifiedSizeBytes: 3,
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+      submittedAt: Timestamp.now(),
+      reviewedAt: null,
+    });
+  });
+}
+
+async function seedPerformanceComment(
+  id: string,
+  options: { hidden?: boolean; removed?: boolean; malformed?: boolean } = {},
+) {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    const payload: Record<string, unknown> = {
+      schemaVersion: 1,
+      performanceId: "performance-1",
+      performanceCreatorId: "creator-1",
+      userId: "commenter",
+      creatorHandle: "commenter",
+      creatorDisplayName: "Commenter",
+      body: "This one could reach the terrace.",
+      hidden: options.hidden ?? false,
+      removed: options.removed ?? false,
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    };
+    if (options.malformed) payload.privateReportCount = 7;
+    await setDoc(doc(db, "performanceComments", id), payload);
   });
 }
 
@@ -615,6 +739,498 @@ describe("profiles", () => {
     await assertFails(updateDoc(doc(db, "profiles", "user15"), {
       userReportCount: 5,
     }));
+  });
+});
+
+// ===================== CREATOR PROFILES =====================
+
+describe("creator profiles", () => {
+  it("allows public reads only for visible creator identity", async () => {
+    await seedCreatorProfile("visible");
+    await seedCreatorProfile("hidden", { hidden: true });
+    await seedCreatorProfile("removed", { removed: true });
+    const unauth = testEnv.unauthenticatedContext().firestore();
+
+    await assertSucceeds(getDoc(doc(unauth, "creatorProfiles", "visible")));
+    await assertFails(getDoc(doc(unauth, "creatorProfiles", "hidden")));
+    await assertFails(getDoc(doc(unauth, "creatorProfiles", "removed")));
+  });
+
+  it("allows the owner and an operator to inspect a hidden creator profile", async () => {
+    await seedUserProfile("owner");
+    await seedCreatorProfile("owner", { hidden: true });
+    await seedOperator("operator");
+
+    const ownerDb = testEnv.authenticatedContext("owner").firestore();
+    const operatorDb = testEnv.authenticatedContext("operator").firestore();
+    await assertSucceeds(getDoc(doc(ownerDb, "creatorProfiles", "owner")));
+    await assertSucceeds(getDoc(doc(operatorDb, "creatorProfiles", "owner")));
+  });
+
+  it("requires visibility predicates for a public creator query", async () => {
+    await seedCreatorProfile("visible");
+    const unauth = testEnv.unauthenticatedContext().firestore();
+
+    await assertSucceeds(getDocs(query(
+      collection(unauth, "creatorProfiles"),
+      where("hidden", "==", false),
+      where("removed", "==", false),
+    )));
+    await assertFails(getDocs(collection(unauth, "creatorProfiles")));
+  });
+
+  it("denies every direct creator profile and handle mutation", async () => {
+    await seedUserProfile("owner");
+    await seedCreatorProfile("owner");
+    const ownerDb = testEnv.authenticatedContext("owner").firestore();
+    const payload = {
+      handle: "forged",
+      displayName: "Forged",
+      bio: "",
+      followerCount: 999,
+      followingCount: 999,
+      performanceCount: 999,
+      likeCount: 999,
+      shareCount: 999,
+      hidden: false,
+      removed: false,
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    };
+
+    await assertFails(setDoc(doc(ownerDb, "creatorProfiles", "new"), payload));
+    await assertFails(updateDoc(doc(ownerDb, "creatorProfiles", "owner"), {
+      bio: "Bypass",
+    }));
+    await assertFails(deleteDoc(doc(ownerDb, "creatorProfiles", "owner")));
+    await assertFails(setDoc(doc(ownerDb, "creatorHandles", "forged"), {
+      uid: "owner",
+    }));
+    await assertFails(getDoc(doc(ownerDb, "creatorHandles", "forged")));
+  });
+});
+
+describe("creator social privacy", () => {
+  it("keeps follow edges private to the follower and server-authored", async () => {
+    await seedUserProfile("follower");
+    await seedUserProfile("target");
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await setDoc(doc(db, "creatorFollows", "follower_target"), {
+        schemaVersion: 1,
+        followerId: "follower",
+        followedId: "target",
+        createdAt: Timestamp.now(),
+      });
+    });
+    const followerDb = testEnv.authenticatedContext("follower").firestore();
+    const targetDb = testEnv.authenticatedContext("target").firestore();
+
+    await assertSucceeds(getDoc(doc(
+      followerDb,
+      "creatorFollows",
+      "follower_target",
+    )));
+    await assertSucceeds(getDocs(query(
+      collection(followerDb, "creatorFollows"),
+      where("followerId", "==", "follower"),
+      orderBy("createdAt", "desc"),
+      limit(30),
+    )));
+    await assertFails(getDoc(doc(
+      targetDb,
+      "creatorFollows",
+      "follower_target",
+    )));
+    await assertFails(getDocs(collection(followerDb, "creatorFollows")));
+    await assertFails(setDoc(doc(
+      followerDb,
+      "creatorFollows",
+      "follower_other",
+    ), {
+      followerId: "follower",
+      followedId: "other",
+    }));
+    await assertFails(deleteDoc(doc(
+      followerDb,
+      "creatorFollows",
+      "follower_target",
+    )));
+  });
+
+  it("keeps notification rows private and denies direct read-state writes", async () => {
+    await seedUserProfile("owner");
+    await seedUserProfile("actor");
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await setDoc(doc(db, "creatorNotifications", "follow_actor_owner"), {
+        schemaVersion: 1,
+        ownerId: "owner",
+        actorId: "actor",
+        actorHandle: "actor_handle",
+        actorDisplayName: "Actor",
+        type: "creator_follow",
+        performanceId: null,
+        commentId: null,
+        read: false,
+        createdAt: Timestamp.now(),
+        readAt: null,
+      });
+    });
+    const ownerDb = testEnv.authenticatedContext("owner").firestore();
+    const actorDb = testEnv.authenticatedContext("actor").firestore();
+
+    await assertSucceeds(getDoc(doc(
+      ownerDb,
+      "creatorNotifications",
+      "follow_actor_owner",
+    )));
+    await assertSucceeds(getDocs(query(
+      collection(ownerDb, "creatorNotifications"),
+      where("ownerId", "==", "owner"),
+      orderBy("createdAt", "desc"),
+      limit(50),
+    )));
+    await assertFails(getDoc(doc(
+      actorDb,
+      "creatorNotifications",
+      "follow_actor_owner",
+    )));
+    await assertFails(updateDoc(doc(
+      ownerDb,
+      "creatorNotifications",
+      "follow_actor_owner",
+    ), { read: true }));
+  });
+});
+
+// ===================== PERFORMANCES =====================
+
+describe("performances", () => {
+  it("allows public reads only for approved visible parser-safe projections", async () => {
+    await seedPerformance("visible");
+    await seedPerformance("hidden", { hidden: true });
+    await seedPerformance("removed", { removed: true });
+    await seedPerformance("malformed", { malformed: true });
+    const unauth = testEnv.unauthenticatedContext().firestore();
+
+    await assertSucceeds(getDoc(doc(unauth, "performances", "visible")));
+    await assertFails(getDoc(doc(unauth, "performances", "hidden")));
+    await assertFails(getDoc(doc(unauth, "performances", "removed")));
+    await assertFails(getDoc(doc(unauth, "performances", "malformed")));
+  });
+
+  it("requires every publication and visibility predicate for feed queries", async () => {
+    await seedPerformance("visible");
+    const unauth = testEnv.unauthenticatedContext().firestore();
+    const visibleQuery = query(
+      collection(unauth, "performances"),
+      where("schemaVersion", "==", 1),
+      where("publicationState", "==", "approved"),
+      where("hidden", "==", false),
+      where("removed", "==", false),
+    );
+
+    await assertSucceeds(getDocs(visibleQuery));
+    await assertFails(getDocs(query(
+      collection(unauth, "performances"),
+      where("hidden", "==", false),
+      where("removed", "==", false),
+    )));
+  });
+
+  it("lets an operator inspect restricted projections", async () => {
+    await seedOperator("operator");
+    await seedPerformance("hidden", { hidden: true });
+    await seedPerformanceComment("hidden-comment", { hidden: true });
+    await seedPerformance("malformed", { malformed: true });
+    const operatorDb = testEnv.authenticatedContext("operator").firestore();
+
+    await assertSucceeds(getDoc(doc(operatorDb, "performances", "hidden")));
+    await assertSucceeds(getDoc(doc(operatorDb, "performances", "malformed")));
+    await assertSucceeds(getDocs(query(
+      collection(operatorDb, "performances"),
+      where("hidden", "==", true),
+    )));
+    await assertSucceeds(getDocs(query(
+      collection(operatorDb, "performanceComments"),
+      where("hidden", "==", true),
+    )));
+  });
+
+  it("denies every direct performance mutation", async () => {
+    await seedUserProfile("creator-1");
+    await seedPerformance("performance-1");
+    const ownerDb = testEnv.authenticatedContext("creator-1").firestore();
+
+    await assertFails(setDoc(doc(ownerDb, "performances", "forged"), {
+      publicationState: "approved",
+      hidden: false,
+      removed: false,
+    }));
+    await assertFails(updateDoc(doc(ownerDb, "performances", "performance-1"), {
+      viewCount: 999999,
+    }));
+    await assertFails(deleteDoc(doc(ownerDb, "performances", "performance-1")));
+  });
+
+  it("keeps performance drafts owner-or-operator private", async () => {
+    await seedUserProfile("owner");
+    await seedPerformanceDraft("draft-1", "owner");
+    await seedOperator("operator");
+    const ownerDb = testEnv.authenticatedContext("owner").firestore();
+    const otherDb = testEnv.authenticatedContext("other").firestore();
+    const operatorDb = testEnv.authenticatedContext("operator").firestore();
+
+    await assertSucceeds(getDoc(doc(ownerDb, "performanceDrafts", "draft-1")));
+    await assertFails(getDoc(doc(otherDb, "performanceDrafts", "draft-1")));
+    await assertSucceeds(getDoc(doc(operatorDb, "performanceDrafts", "draft-1")));
+    await assertSucceeds(getDocs(query(
+      collection(ownerDb, "performanceDrafts"),
+      where("ownerId", "==", "owner"),
+    )));
+    await assertFails(getDocs(collection(ownerDb, "performanceDrafts")));
+    await assertSucceeds(getDocs(query(
+      collection(operatorDb, "performanceDrafts"),
+      where("state", "==", "pending_review"),
+    )));
+  });
+
+  it("denies direct draft and upload-limit access to owners and operators", async () => {
+    await seedUserProfile("owner");
+    await seedPerformanceDraft("draft-1", "owner");
+    await seedOperator("operator");
+    const ownerDb = testEnv.authenticatedContext("owner").firestore();
+    const operatorDb = testEnv.authenticatedContext("operator").firestore();
+
+    await assertFails(updateDoc(doc(ownerDb, "performanceDrafts", "draft-1"), {
+      state: "approved",
+    }));
+    await assertFails(deleteDoc(doc(ownerDb, "performanceDrafts", "draft-1")));
+    await assertFails(updateDoc(doc(operatorDb, "performanceDrafts", "draft-1"), {
+      state: "approved",
+    }));
+    await assertFails(setDoc(doc(ownerDb, "performanceUploadLimits", "forged"), {
+      count: 0,
+    }));
+    await assertFails(getDoc(doc(operatorDb, "performanceUploadLimits", "forged")));
+  });
+
+  it("keeps interaction sources private and server-authored", async () => {
+    await seedUserProfile("owner");
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await setDoc(doc(db, "performanceLikes", "owner_performance-1"), {
+        schemaVersion: 1,
+        performanceId: "performance-1",
+        userId: "owner",
+        creatorId: "creator-1",
+        rankingEligible: true,
+        rankingWeek: "2026-08-24",
+        createdAt: Timestamp.now(),
+      });
+      await setDoc(doc(db, "performanceViews", "owner_performance-1"), {
+        userId: "owner",
+      });
+      await setDoc(doc(db, "performanceShares", "owner_performance-1"), {
+        userId: "owner",
+      });
+      await setDoc(doc(db, "performancePlaybackSessions", "owner_performance-1"), {
+        userId: "owner",
+      });
+    });
+    const ownerDb = testEnv.authenticatedContext("owner").firestore();
+    const otherDb = testEnv.authenticatedContext("other").firestore();
+
+    await assertSucceeds(getDoc(doc(
+      ownerDb,
+      "performanceLikes",
+      "owner_performance-1",
+    )));
+    await assertFails(getDoc(doc(
+      otherDb,
+      "performanceLikes",
+      "owner_performance-1",
+    )));
+    await assertFails(getDocs(collection(ownerDb, "performanceLikes")));
+    await assertFails(setDoc(doc(ownerDb, "performanceLikes", "forged"), {
+      userId: "owner",
+      performanceId: "performance-1",
+    }));
+    await assertFails(deleteDoc(doc(
+      ownerDb,
+      "performanceLikes",
+      "owner_performance-1",
+    )));
+    await assertFails(getDoc(doc(
+      ownerDb,
+      "performanceViews",
+      "owner_performance-1",
+    )));
+    await assertFails(getDoc(doc(
+      ownerDb,
+      "performanceShares",
+      "owner_performance-1",
+    )));
+    await assertFails(getDoc(doc(
+      ownerDb,
+      "performancePlaybackSessions",
+      "owner_performance-1",
+    )));
+  });
+
+  it("exposes only visible parser-safe performance comment documents", async () => {
+    await seedPerformanceComment("visible");
+    await seedPerformanceComment("hidden", { hidden: true });
+    await seedPerformanceComment("removed", { removed: true });
+    await seedPerformanceComment("malformed", { malformed: true });
+    const unauth = testEnv.unauthenticatedContext().firestore();
+
+    await assertSucceeds(getDoc(doc(unauth, "performanceComments", "visible")));
+    await assertFails(getDoc(doc(unauth, "performanceComments", "hidden")));
+    await assertFails(getDoc(doc(unauth, "performanceComments", "removed")));
+    await assertFails(getDoc(doc(unauth, "performanceComments", "malformed")));
+  });
+
+  it("requires current visibility predicates for performance comment queries", async () => {
+    await seedPerformanceComment("visible");
+    const unauth = testEnv.unauthenticatedContext().firestore();
+
+    await assertSucceeds(getDocs(query(
+      collection(unauth, "performanceComments"),
+      where("schemaVersion", "==", 1),
+      where("performanceId", "==", "performance-1"),
+      where("hidden", "==", false),
+      where("removed", "==", false),
+      orderBy("createdAt", "desc"),
+      limit(50),
+    )));
+    await assertFails(getDocs(collection(unauth, "performanceComments")));
+  });
+
+  it("reads additive threaded comments without accepting malformed projections", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await setDoc(doc(db, "performanceComments", "threaded"), {
+        schemaVersion: 2,
+        performanceId: "performance-1",
+        performanceCreatorId: "creator-1",
+        userId: "commenter",
+        creatorHandle: "commenter",
+        creatorDisplayName: "Commenter",
+        body: "@another_fan keep it going.",
+        parentCommentId: "parent-1",
+        rootCommentId: "root-1",
+        depth: 4,
+        mentionedHandles: ["another_fan"],
+        hidden: false,
+        removed: false,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      });
+      await setDoc(doc(db, "performanceComments", "bad-thread"), {
+        schemaVersion: 2,
+        performanceId: "performance-1",
+        performanceCreatorId: "creator-1",
+        userId: "commenter",
+        creatorHandle: "commenter",
+        creatorDisplayName: "Commenter",
+        body: "Bad depth",
+        parentCommentId: "parent-1",
+        rootCommentId: "root-1",
+        depth: 900,
+        mentionedHandles: [],
+        hidden: false,
+        removed: false,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      });
+    });
+    const unauth = testEnv.unauthenticatedContext().firestore();
+
+    await assertSucceeds(getDoc(doc(
+      unauth,
+      "performanceComments",
+      "threaded",
+    )));
+    await assertFails(getDoc(doc(
+      unauth,
+      "performanceComments",
+      "bad-thread",
+    )));
+    await assertSucceeds(getDocs(query(
+      collection(unauth, "performanceComments"),
+      where("schemaVersion", "in", [1, 2]),
+      where("performanceId", "==", "performance-1"),
+      where("hidden", "==", false),
+      where("removed", "==", false),
+      orderBy("createdAt", "desc"),
+      limit(100),
+    )));
+  });
+
+  it("denies every direct performance comment mutation", async () => {
+    await seedPerformanceComment("comment-1");
+    await seedUserProfile("commenter");
+    const commenterDb = testEnv.authenticatedContext("commenter").firestore();
+
+    await assertFails(setDoc(doc(commenterDb, "performanceComments", "forged"), {
+      performanceId: "performance-1",
+      body: "Forged",
+    }));
+    await assertFails(updateDoc(
+      doc(commenterDb, "performanceComments", "comment-1"),
+      { removed: true },
+    ));
+    await assertFails(deleteDoc(
+      doc(commenterDb, "performanceComments", "comment-1"),
+    ));
+  });
+
+  it("keeps published-media report rows operator-only and server-authored", async () => {
+    await seedOperator("operator");
+    await seedUserProfile("reporter");
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await setDoc(doc(db, "performanceReports", "reporter_performance-1"), {
+        performanceId: "performance-1",
+        reportedBy: "reporter",
+        reason: "harassment",
+        details: null,
+        status: "pending",
+        createdAt: Timestamp.now(),
+      });
+      await setDoc(doc(
+        db,
+        "performanceCommentReports",
+        "reporter_comment-1",
+      ), {
+        performanceCommentId: "comment-1",
+        reportedBy: "reporter",
+        reason: "spam",
+        details: null,
+        status: "pending",
+        createdAt: Timestamp.now(),
+      });
+    });
+    const operatorDb = testEnv.authenticatedContext("operator").firestore();
+    const reporterDb = testEnv.authenticatedContext("reporter").firestore();
+
+    for (const [collectionName, reportId] of [
+      ["performanceReports", "reporter_performance-1"],
+      ["performanceCommentReports", "reporter_comment-1"],
+    ] as const) {
+      await assertSucceeds(getDocs(collection(operatorDb, collectionName)));
+      await assertFails(getDocs(collection(reporterDb, collectionName)));
+      await assertFails(setDoc(
+        doc(reporterDb, collectionName, "forged"),
+        { status: "pending" },
+      ));
+      await assertFails(updateDoc(
+        doc(reporterDb, collectionName, reportId),
+        { status: "resolved" },
+      ));
+    }
   });
 });
 

@@ -99,6 +99,18 @@ void main() {
             type: SafetyReportTargetType.user,
             id: 'bad-actor-1',
           ),
+          (
+            target: const ReportPerformance('performance-1'),
+            title: 'Report this performance',
+            type: SafetyReportTargetType.performance,
+            id: 'performance-1',
+          ),
+          (
+            target: const ReportPerformanceComment('performance-comment-1'),
+            title: 'Report this comment',
+            type: SafetyReportTargetType.performanceComment,
+            id: 'performance-comment-1',
+          ),
         ];
 
     for (final testCase in targets) {
@@ -172,6 +184,5 @@ void main() {
         expect(button.onPressed, isNotNull);
       });
     }
-
   });
 }

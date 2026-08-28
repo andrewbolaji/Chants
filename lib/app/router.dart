@@ -18,6 +18,10 @@ import 'package:chants/presentation/saved/saved_club_screen.dart';
 import 'package:chants/presentation/saved/saved_songbook_screen.dart';
 import 'package:chants/presentation/submit/submit_chant_screen.dart';
 import 'package:chants/presentation/settings/blocked_users_screen.dart';
+import 'package:chants/presentation/profile/edit_creator_profile_screen.dart';
+import 'package:chants/presentation/profile/public_creator_profile_screen.dart';
+import 'package:chants/presentation/profile/creator_notifications_screen.dart';
+import 'package:chants/presentation/create/perform_chant_screen.dart';
 
 class ChantDetailRouteArguments {
   final Chant chant;
@@ -62,6 +66,10 @@ class AppRouter {
   static const String savedSongbook = '/saved';
   static const String savedClub = '/saved/club';
   static const String savedChant = '/saved/chant';
+  static const String editCreatorProfile = '/creator/edit';
+  static const String creatorProfile = '/creator';
+  static const String creatorNotifications = '/creator/activity';
+  static const String performChant = '/perform';
 
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -135,6 +143,25 @@ class AppRouter {
             chantId: arguments.chantId,
             teamId: arguments.teamId,
           ),
+        );
+      case editCreatorProfile:
+        final uid = settings.arguments as String;
+        return MaterialPageRoute(
+          builder: (_) => EditCreatorProfileScreen(uid: uid),
+        );
+      case creatorProfile:
+        final creatorId = settings.arguments as String;
+        return MaterialPageRoute(
+          builder: (_) => PublicCreatorProfileScreen(creatorId: creatorId),
+        );
+      case creatorNotifications:
+        return MaterialPageRoute(
+          builder: (_) => const CreatorNotificationsScreen(),
+        );
+      case performChant:
+        final chant = settings.arguments as Chant;
+        return MaterialPageRoute(
+          builder: (_) => PerformChantScreen(chant: chant),
         );
       case home:
       default:

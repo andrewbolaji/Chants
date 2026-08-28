@@ -1,9 +1,20 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chants/data/models/user_profile.dart';
+import 'package:chants/data/models/creator_profile.dart';
 import 'package:chants/data/models/blocked_user.dart';
 import 'package:chants/data/repositories/auth_repository.dart';
 import 'package:chants/data/repositories/profile_repository.dart';
+import 'package:chants/data/repositories/creator_profile_repository.dart';
+import 'package:chants/data/repositories/creator_follow_repository.dart';
+import 'package:chants/data/repositories/creator_notification_repository.dart';
+import 'package:chants/data/repositories/performance_repository.dart';
+import 'package:chants/data/repositories/performance_interaction_repository.dart';
+import 'package:chants/data/repositories/public_share_repository.dart';
+import 'package:chants/data/repositories/performance_draft_repository.dart';
+import 'package:chants/data/services/performance_media_selection.dart';
+import 'package:chants/data/services/performance_share.dart';
+import 'package:chants/data/services/creator_share.dart';
 import 'package:chants/data/repositories/sport_repository.dart';
 import 'package:chants/data/repositories/competition_repository.dart';
 import 'package:chants/data/repositories/team_repository.dart';
@@ -28,6 +39,48 @@ final authRepositoryProvider = Provider<AuthRepository>(
 
 final profileRepositoryProvider = Provider<ProfileRepository>(
   (ref) => ProfileRepository(),
+);
+
+final creatorProfileRepositoryProvider = Provider<CreatorProfileRepository>(
+  (ref) => CreatorProfileRepository(),
+);
+
+final creatorFollowRepositoryProvider = Provider<CreatorFollowRepository>(
+  (ref) => CreatorFollowRepository.firebase(),
+);
+
+final creatorNotificationRepositoryProvider =
+    Provider<CreatorNotificationRepository>(
+      (ref) => CreatorNotificationRepository.firebase(),
+    );
+
+final performanceRepositoryProvider = Provider<PerformanceRepository>(
+  (ref) => PerformanceRepository(),
+);
+
+final performanceInteractionRepositoryProvider =
+    Provider<PerformanceInteractionRepository>(
+      (ref) => PerformanceInteractionRepository.firebase(),
+    );
+
+final publicShareRepositoryProvider = Provider<PublicShareRepository>(
+  (ref) => PublicShareRepository(),
+);
+
+final performanceShareGatewayProvider = Provider<PerformanceShareGateway>(
+  (ref) => PlatformPerformanceShareGateway(),
+);
+
+final creatorShareGatewayProvider = Provider<CreatorShareGateway>(
+  (ref) => PlatformCreatorShareGateway(),
+);
+
+final performanceDraftRepositoryProvider = Provider<PerformanceDraftRepository>(
+  (ref) => PerformanceDraftRepository(),
+);
+
+final performanceMediaSelectorProvider = Provider<PerformanceMediaSelector>(
+  (ref) => PerformanceMediaSelector(),
 );
 
 final sportRepositoryProvider = Provider<SportRepository>(
@@ -137,6 +190,13 @@ final userProfileProvider = StreamProvider.family<UserProfile?, String>((
   uid,
 ) {
   return ref.watch(profileRepositoryProvider).profileStream(uid);
+});
+
+final creatorProfileProvider = StreamProvider.family<CreatorProfile?, String>((
+  ref,
+  uid,
+) {
+  return ref.watch(creatorProfileRepositoryProvider).profileStream(uid);
 });
 
 final blockedUsersProvider = StreamProvider.family<List<BlockedUser>, String>((

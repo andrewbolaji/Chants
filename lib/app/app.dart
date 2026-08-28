@@ -12,7 +12,7 @@ import 'package:chants/presentation/auth/account_deletion_recovery_screen.dart';
 import 'package:chants/presentation/auth/policy_acceptance_gate_screen.dart';
 import 'package:chants/presentation/auth/account_deletion_pending_screen.dart';
 import 'package:chants/presentation/auth/sign_in_screen.dart';
-import 'package:chants/presentation/home/home_screen.dart';
+import 'package:chants/presentation/shell/app_shell.dart';
 
 class ChantApp extends ConsumerWidget {
   const ChantApp({super.key});
@@ -48,8 +48,8 @@ class ChantApp extends ConsumerWidget {
   }
 }
 
-/// Decides HomeScreen vs the one-time policy acceptance gate for a signed-in
-/// user, from their live profile stream.
+/// Decides the product shell vs the one-time policy acceptance gate for a
+/// signed-in user, from their live profile stream.
 ///
 /// - loading (no snapshot yet), or data(null) (profile doc not written yet,
 ///   e.g. the brief window right after sign-up before createProfile lands):
@@ -57,7 +57,7 @@ class ChantApp extends ConsumerWidget {
 /// - error after a verified profile: keep that last verified gate state.
 /// - error before any verified profile: neutral loading, never home.
 /// - data(profile) with a stale or missing acceptedPolicyVersion: the gate.
-/// - data(profile) accepted at the current version: HomeScreen.
+/// - data(profile) accepted at the current version: AppShell.
 class _SignedInGate extends ConsumerStatefulWidget {
   final String uid;
 
@@ -107,7 +107,7 @@ class _SignedInGateState extends ConsumerState<_SignedInGate> {
     if (profile.acceptedPolicyVersion != kCurrentPolicyVersion) {
       return const PolicyAcceptanceGateScreen();
     }
-    return const HomeScreen();
+    return AppShell(uid: widget.uid);
   }
 
   @override

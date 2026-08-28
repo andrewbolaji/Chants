@@ -32,6 +32,16 @@ class ReportUser extends ReportTarget {
   const ReportUser(this.userId);
 }
 
+class ReportPerformance extends ReportTarget {
+  final String performanceId;
+  const ReportPerformance(this.performanceId);
+}
+
+class ReportPerformanceComment extends ReportTarget {
+  final String commentId;
+  const ReportPerformanceComment(this.commentId);
+}
+
 void showReportSheet({
   required BuildContext context,
   required ReportTarget target,
@@ -48,10 +58,7 @@ class _ReportSheetContent extends StatefulWidget {
   final ReportTarget target;
   final WidgetRef ref;
 
-  const _ReportSheetContent({
-    required this.target,
-    required this.ref,
-  });
+  const _ReportSheetContent({required this.target, required this.ref});
 
   @override
   State<_ReportSheetContent> createState() => _ReportSheetContentState();
@@ -74,6 +81,8 @@ class _ReportSheetContentState extends State<_ReportSheetContent> {
       ReportChant() => 'Report this chant',
       ReportComment() => 'Report this comment',
       ReportUser() => 'Report this user',
+      ReportPerformance() => 'Report this performance',
+      ReportPerformanceComment() => 'Report this comment',
     };
   }
 
@@ -95,6 +104,14 @@ class _ReportSheetContentState extends State<_ReportSheetContent> {
           commentId,
         ),
         ReportUser(:final userId) => (SafetyReportTargetType.user, userId),
+        ReportPerformance(:final performanceId) => (
+          SafetyReportTargetType.performance,
+          performanceId,
+        ),
+        ReportPerformanceComment(:final commentId) => (
+          SafetyReportTargetType.performanceComment,
+          commentId,
+        ),
       };
       await widget.ref
           .read(safetySubmissionRepositoryProvider)
@@ -117,9 +134,9 @@ class _ReportSheetContentState extends State<_ReportSheetContent> {
           'You have sent several reports recently. Try again later.',
         _ => 'Could not send your report. Try again.',
       };
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
     }
   }
 
@@ -128,7 +145,11 @@ class _ReportSheetContentState extends State<_ReportSheetContent> {
     if (_submitted) {
       return Padding(
         padding: EdgeInsets.fromLTRB(
-            24, 24, 24, MediaQuery.of(context).viewInsets.bottom + 24),
+          24,
+          24,
+          24,
+          MediaQuery.of(context).viewInsets.bottom + 24,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -147,15 +168,16 @@ class _ReportSheetContentState extends State<_ReportSheetContent> {
 
     return Padding(
       padding: EdgeInsets.fromLTRB(
-          24, 24, 24, MediaQuery.of(context).viewInsets.bottom + 24),
+        24,
+        24,
+        24,
+        MediaQuery.of(context).viewInsets.bottom + 24,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            _title,
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
+          Text(_title, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: Spacing.sm),
           const Text('Something off about this one? Tell us why.'),
           const SizedBox(height: Spacing.lg),
@@ -163,11 +185,15 @@ class _ReportSheetContentState extends State<_ReportSheetContent> {
             groupValue: _selectedCategory ?? '',
             onChanged: (v) => setState(() => _selectedCategory = v),
             child: Column(
-              children: _reportCategories.map((cat) => RadioListTile<String>(
-                title: Text(cat),
-                value: cat,
-                dense: true,
-              )).toList(),
+              children: _reportCategories
+                  .map(
+                    (cat) => RadioListTile<String>(
+                      title: Text(cat),
+                      value: cat,
+                      dense: true,
+                    ),
+                  )
+                  .toList(),
             ),
           ),
           const SizedBox(height: Spacing.sm),
@@ -183,8 +209,9 @@ class _ReportSheetContentState extends State<_ReportSheetContent> {
           ),
           const SizedBox(height: Spacing.lg),
           FilledButton(
-            onPressed:
-                _selectedCategory != null && !_submitting ? _submit : null,
+            onPressed: _selectedCategory != null && !_submitting
+                ? _submit
+                : null,
             child: _submitting
                 ? const SizedBox(
                     height: 20,
