@@ -33,6 +33,13 @@ dependencies:
   video_player: ^2.14.0
   image_picker: ^1.2.3
 
+  # Authentication entry and return paths. Provider UI remains fail-closed
+  # until its native and dashboard configuration is explicitly enabled.
+  google_sign_in: ^7.2.0
+  flutter_facebook_auth: ^7.2.0
+  app_links: ^7.2.1
+  shared_preferences: ^2.5.5
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

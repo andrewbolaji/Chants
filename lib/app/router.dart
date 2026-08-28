@@ -3,8 +3,11 @@ import 'package:chants/data/models/chant.dart';
 import 'package:chants/data/models/player.dart';
 import 'package:chants/data/models/team.dart';
 import 'package:chants/presentation/auth/sign_in_screen.dart';
+import 'package:chants/presentation/auth/email_sign_in_screen.dart';
 import 'package:chants/presentation/auth/sign_up_screen.dart';
 import 'package:chants/presentation/auth/password_reset_screen.dart';
+import 'package:chants/presentation/auth/magic_link_screen.dart';
+import 'package:chants/presentation/auth/phone_auth_screen.dart';
 import 'package:chants/presentation/browse/chant_detail_screen.dart';
 import 'package:chants/presentation/browse/competition_screen.dart';
 import 'package:chants/presentation/browse/player_screen.dart';
@@ -18,6 +21,7 @@ import 'package:chants/presentation/saved/saved_club_screen.dart';
 import 'package:chants/presentation/saved/saved_songbook_screen.dart';
 import 'package:chants/presentation/submit/submit_chant_screen.dart';
 import 'package:chants/presentation/settings/blocked_users_screen.dart';
+import 'package:chants/presentation/settings/sign_in_methods_screen.dart';
 import 'package:chants/presentation/profile/edit_creator_profile_screen.dart';
 import 'package:chants/presentation/profile/public_creator_profile_screen.dart';
 import 'package:chants/presentation/profile/creator_notifications_screen.dart';
@@ -51,8 +55,11 @@ class SavedChantRouteArguments {
 
 class AppRouter {
   static const String signIn = '/sign-in';
+  static const String emailSignIn = '/sign-in/email';
   static const String signUp = '/sign-up';
   static const String passwordReset = '/password-reset';
+  static const String magicLink = '/sign-in/email-link';
+  static const String phoneAuth = '/sign-in/phone';
   static const String home = '/';
   static const String contentPolicy = '/content-policy';
   static const String competition = '/competition';
@@ -63,6 +70,7 @@ class AppRouter {
   static const String moderation = '/moderation';
   static const String feedback = '/feedback';
   static const String blockedUsers = '/blocked-users';
+  static const String signInMethods = '/sign-in-methods';
   static const String savedSongbook = '/saved';
   static const String savedClub = '/saved/club';
   static const String savedChant = '/saved/chant';
@@ -75,10 +83,22 @@ class AppRouter {
     switch (settings.name) {
       case signIn:
         return MaterialPageRoute(builder: (_) => const SignInScreen());
+      case emailSignIn:
+        return MaterialPageRoute(builder: (_) => const EmailSignInScreen());
       case signUp:
         return MaterialPageRoute(builder: (_) => const SignUpScreen());
       case passwordReset:
         return MaterialPageRoute(builder: (_) => const PasswordResetScreen());
+      case magicLink:
+        final linkToCurrentUser = settings.arguments as bool? ?? false;
+        return MaterialPageRoute(
+          builder: (_) => MagicLinkScreen(linkToCurrentUser: linkToCurrentUser),
+        );
+      case phoneAuth:
+        final linkToCurrentUser = settings.arguments as bool? ?? false;
+        return MaterialPageRoute(
+          builder: (_) => PhoneAuthScreen(linkToCurrentUser: linkToCurrentUser),
+        );
       case contentPolicy:
         return MaterialPageRoute(builder: (_) => const ContentPolicyScreen());
       case competition:
@@ -126,6 +146,8 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const FeedbackScreen());
       case blockedUsers:
         return MaterialPageRoute(builder: (_) => const BlockedUsersScreen());
+      case signInMethods:
+        return MaterialPageRoute(builder: (_) => const SignInMethodsScreen());
       case savedSongbook:
         final uid = settings.arguments as String;
         return MaterialPageRoute(builder: (_) => SavedSongbookScreen(uid: uid));

@@ -1,86 +1,64 @@
 import 'package:chants/app/colors.dart';
 import 'package:chants/app/providers.dart';
+import 'package:chants/app/router.dart';
 import 'package:chants/app/spacing.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class SignUpScreen extends ConsumerStatefulWidget {
-  const SignUpScreen({super.key});
+class EmailSignInScreen extends ConsumerStatefulWidget {
+  const EmailSignInScreen({super.key});
 
   @override
-  ConsumerState<SignUpScreen> createState() => _SignUpScreenState();
+  ConsumerState<EmailSignInScreen> createState() => _EmailSignInScreenState();
 }
 
-class _SignUpScreenState extends ConsumerState<SignUpScreen> {
+class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
   bool _loading = false;
   bool _obscurePassword = true;
-  bool _obscureConfirm = true;
   String? _error;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
-    _confirmPasswordController.dispose();
     super.dispose();
   }
 
-  String _createError(Object error) {
-    if (error is FirebaseAuthException) {
-      return switch (error.code) {
-        'email-already-in-use' =>
-          'That email already has an account. Sign in instead.',
-        'invalid-email' => 'Enter a valid email address.',
-        'weak-password' =>
-          'Use a stronger password with at least 8 characters.',
-        'network-request-failed' =>
-          'You appear to be offline. Reconnect and try again.',
-        'too-many-requests' =>
-          'Too many attempts. Wait a moment before trying again.',
-        _ => 'Your account could not be created. Try again.',
-      };
-    }
-    return 'Your account could not be created. Try again.';
-  }
-
-  Future<void> _signUp() async {
+  Future<void> _signIn() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() {
       _loading = true;
       _error = null;
     });
-
     try {
       await ref
           .read(authRepositoryProvider)
-          .signUp(
+          .signIn(
             email: _emailController.text.trim(),
             password: _passwordController.text,
           );
-      try {
-        await ref.read(authRepositoryProvider).sendEmailVerification();
-      } catch (_) {
-        // The app gate now owns recovery. It shows a resend action without
-        // deleting the successfully created Firebase account.
-      }
     } catch (error) {
       if (!mounted) return;
       setState(() {
+        _error =
+            error is FirebaseAuthException &&
+                error.code == 'network-request-failed'
+            ? 'You appear to be offline. Reconnect and try again.'
+            : 'Wrong email or password. Check both and try again.';
         _loading = false;
-        _error = _createError(error);
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final config = ref.watch(authFeatureConfigProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('CREATE ACCOUNT')),
+      appBar: AppBar(title: const Text('EMAIL')),
       body: SafeArea(
         child: Form(
           key: _formKey,
@@ -93,13 +71,12 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             ),
             children: [
               Text(
-                'JOIN THE TERRACE',
+                'WELCOME BACK',
                 style: Theme.of(context).textTheme.headlineMedium,
               ),
               const SizedBox(height: Spacing.sm),
               const Text(
-                'Create your login first. We will verify your email, then '
-                'set up your supporter profile.',
+                'Sign in to your Stage, clubs, and matchday Songbook.',
                 style: TextStyle(color: AppColors.textBody),
               ),
               const SizedBox(height: Spacing.xl),
@@ -122,54 +99,29 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 controller: _passwordController,
                 decoration: InputDecoration(
                   labelText: 'Password',
-                  helperText: 'At least 8 characters.',
                   suffixIcon: IconButton(
                     tooltip: _obscurePassword
                         ? 'Show password'
                         : 'Hide password',
+                    onPressed: () =>
+                        setState(() => _obscurePassword = !_obscurePassword),
                     icon: Icon(
                       _obscurePassword
                           ? Icons.visibility_off_outlined
                           : Icons.visibility_outlined,
                     ),
-                    onPressed: () =>
-                        setState(() => _obscurePassword = !_obscurePassword),
                   ),
                 ),
                 obscureText: _obscurePassword,
-                autofillHints: const [AutofillHints.newPassword],
-                textInputAction: TextInputAction.next,
-                validator: (value) => value == null || value.length < 8
-                    ? 'At least 8 characters.'
-                    : null,
-              ),
-              const SizedBox(height: Spacing.md),
-              TextFormField(
-                controller: _confirmPasswordController,
-                decoration: InputDecoration(
-                  labelText: 'Confirm password',
-                  suffixIcon: IconButton(
-                    tooltip: _obscureConfirm
-                        ? 'Show confirmation password'
-                        : 'Hide confirmation password',
-                    icon: Icon(
-                      _obscureConfirm
-                          ? Icons.visibility_off_outlined
-                          : Icons.visibility_outlined,
-                    ),
-                    onPressed: () =>
-                        setState(() => _obscureConfirm = !_obscureConfirm),
-                  ),
-                ),
-                obscureText: _obscureConfirm,
-                autofillHints: const [AutofillHints.newPassword],
-                onFieldSubmitted: (_) => _loading ? null : _signUp(),
-                validator: (value) => value != _passwordController.text
-                    ? 'Passwords do not match.'
+                autofillHints: const [AutofillHints.password],
+                textInputAction: TextInputAction.done,
+                onFieldSubmitted: (_) => _loading ? null : _signIn(),
+                validator: (value) => value == null || value.isEmpty
+                    ? 'Enter your password.'
                     : null,
               ),
               if (_error != null) ...[
-                const SizedBox(height: Spacing.lg),
+                const SizedBox(height: Spacing.md),
                 Semantics(
                   liveRegion: true,
                   child: Text(
@@ -180,14 +132,37 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               ],
               const SizedBox(height: Spacing.xl),
               FilledButton(
-                onPressed: _loading ? null : _signUp,
+                onPressed: _loading ? null : _signIn,
                 child: _loading
                     ? const SizedBox(
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('CREATE ACCOUNT'),
+                    : const Text('SIGN IN'),
+              ),
+              const SizedBox(height: Spacing.sm),
+              TextButton(
+                onPressed: () =>
+                    Navigator.pushNamed(context, AppRouter.passwordReset),
+                child: const Text('FORGOT PASSWORD?'),
+              ),
+              if (config.magicLinkEnabled)
+                OutlinedButton.icon(
+                  onPressed: () => Navigator.pushNamed(
+                    context,
+                    AppRouter.magicLink,
+                    arguments: false,
+                  ),
+                  icon: const Icon(Icons.mail_outline),
+                  label: const Text('EMAIL ME A SIGN-IN LINK'),
+                ),
+              const SizedBox(height: Spacing.lg),
+              const Divider(),
+              const SizedBox(height: Spacing.md),
+              TextButton(
+                onPressed: () => Navigator.pushNamed(context, AppRouter.signUp),
+                child: const Text('NEW HERE? CREATE AN ACCOUNT'),
               ),
             ],
           ),

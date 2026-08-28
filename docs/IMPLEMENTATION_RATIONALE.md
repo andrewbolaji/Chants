@@ -1,24 +1,24 @@
 # Repository implementation rationale
 
-This document explains the current Chants repository, including inherited systems, the independently reviewed creator-platform range `86603c22...946ab0c`, and the approved takedown correction packaged by the commit carrying this record, based on merged `main` at `86603c22fbd7647f89c9276af9a60a0b3d63113b`. It is a reviewer map, not proof of deployment or release readiness.
+This document explains the current Chants repository, including inherited systems, the independently reviewed creator-platform work through exact correction head `8b457d8`, and the locally implemented launch authentication, onboarding, and Android-readiness block based on that head. It is a reviewer map, not proof of deployment or release readiness.
 
 ## Document identity and completeness
 
 - **Current change:** `docs/CHANGE_SPEC.md`
-- **Completed change reasoning:** `docs/changes/2026-08-27-creator-platform-foundation.md` and `docs/changes/2026-08-28-pr17-post-review-takedown-integrity.md`
-- **Durable creator decisions:** 017 through 022
+- **Completed change reasoning:** `docs/changes/2026-08-27-creator-platform-foundation.md`, `docs/changes/2026-08-28-pr17-post-review-takedown-integrity.md`, and `docs/changes/2026-08-28-v1-launch-auth-onboarding-android.md`
+- **Durable creator and identity decisions:** 017 through 023
 - **Execution evidence:** `docs/EXECUTION.md`
 - **Interface memory:** `docs/INTERFACE.md`
-- **Known missing evidence:** correction exact-head CI and narrow closure review, both native builds, combined device walk, production configuration, policy, deploy, seed completion, signing, and release
+- **Known missing evidence:** launch-block full-suite and exact-head CI, Android artifact, final iOS compile result, consolidated independent review, combined device walk, provider and production configuration, policy, deploy, seed completion, signing, and release
 
 ## Repository coverage ledger
 
 | Area | Read and accounted for | Current role |
 |---|---|---|
-| `lib/app/` | Yes | Theme, providers, routing, policy and deletion gates, five-tab shell composition |
+| `lib/app/` | Yes | Theme, providers, routing, deletion, verification, onboarding and policy gates, five-tab shell composition |
 | `lib/data/models/` | Yes | Chant, creator, performance, comment, draft, notification, saved and private-account parsing |
-| `lib/data/repositories/` | Yes | Firestore, Functions, Storage, local file, share, social, and interaction boundaries |
-| `lib/data/services/` | Yes | Media selection, sharing, evidence, ranking, matching, deletion, hashing, and Songbook logic |
+| `lib/data/repositories/` | Yes | Auth and provider linking, onboarding, Firestore, Functions, Storage, local file, share, social, and interaction boundaries |
+| `lib/data/services/` | Yes | Auth-link coordination, media selection, sharing, evidence, ranking, matching, deletion, hashing, and Songbook logic |
 | `lib/presentation/` | Yes | Auth, Stage, clubs, creation, profiles, activity, moderation, comments, saved, reports, and settings |
 | `functions/src/` | Yes | Admission, moderation, counters, public pages, follows, notifications, safety, audit, deletion, trust, and disabled merge |
 | `firestore.rules` | Yes | Public and private read boundaries, hostile direct-write denial, query requirements |
@@ -28,7 +28,7 @@ This document explains the current Chants repository, including inherited system
 | `seed/`, `seed_data/` | Yes | Stable IDs, validation, preflight, Admin writes, and counter reconciliation |
 | `.github/`, `scripts/` | Yes | Clean-runner jobs, memory contract, writing, native contract, and governance regressions |
 | `test/`, `functions/test/`, `test_rules/` | Yes | Unit, widget, golden, handler, overlap, authority, and lifecycle evidence |
-| Android and iOS projects | Yes in source | Plugins, permissions, deployment target, CocoaPods lock, signing and SDK gaps |
+| Android and iOS projects | Yes in source | Auth plugins, permissions, deep links, entitlements, deployment target, CocoaPods lock, fail-closed release signing, compile fixtures, and remaining SDK or provider gates |
 
 Generated build outputs and installed dependency trees are excluded except when a tool result depends on them.
 
@@ -44,9 +44,15 @@ The roles share navigation and chant identity but not trust authority. A popular
 
 ## Critical path: authentication to product shell
 
-Firebase Auth establishes identity. `lib/app/app.dart :: _SignedInGate` reads private profile, policy, and deletion state before mounting `lib/presentation/shell/app_shell.dart :: AppShell`. Unknown or prepared deletion state replaces the product with recovery. Current policy version is required before mutation. Only then do Feed, Clubs, Create, Songbook, and You become reachable.
+`lib/presentation/auth/sign_in_screen.dart :: SignInScreen` introduces Watch, Learn, and Create before credentials. `lib/data/models/auth_feature_config.dart :: AuthFeatureConfig` keeps Apple, Google, Facebook, magic link, and phone invisible by default; an operator compile-time flag is the source-level assertion that the matching external setup is ready. Email and password remain complete, and reset distinguishes unknown-account privacy from known transport or quota failure.
 
-This ordering is inherited and unchanged in meaning. The creator expansion adds destinations behind the gate rather than bypassing it.
+Firebase Auth owns the UID, credential, verification, and linked-provider state. `functions/src/safety_submission.ts :: requireVerifiedUid`, `firestore.rules :: hasVerifiedContact`, and `storage.rules :: hasVerifiedContact` accept a verified email, verified phone, current trusted federated provider, or nonempty linked Apple, Google, or Facebook identity. An ordinary unverified password account stays read-recoverable but cannot perform protected mutations.
+
+`lib/app/app.dart :: _SignedInGate` evaluates durable deletion recovery first. It then sends an unverified password account to `EmailVerificationScreen`, a verified missing-profile account to `OnboardingScreen`, a policy-stale profile to the inherited policy gate, and only a coherent account to `AppShell`. Verification reloads on app resume or explicit action, with no polling.
+
+`functions/src/onboarding.ts :: handleCompleteOnboarding` is the only initial profile writer. It accepts an exact three-field confirmation, derives UID and verified authority from callable auth, rejects deletion or incoherent existing profiles, and transactionally writes the pinned private profile plus deterministic policy audit. Duplicate completion does not overwrite existing authority. Date of birth is evaluated in the current device form and never enters the payload.
+
+`lib/presentation/settings/sign_in_methods_screen.dart :: SignInMethodsScreen` deliberately links providers to the current UID and refuses removal of the final usable method. Collision copy does not claim an email-based merge. Magic-link pending email and linking UID remain device-local for one hour. Phone entry includes explicit Google processing disclosure, resend controls, manual code entry, and late Android auto-verification recovery.
 
 ## Critical path: public creator identity
 
@@ -114,7 +120,10 @@ The phase set now removes creator handle and profile, drafts and staging referen
 
 | State | Visibility | Writer |
 |---|---|---|
-| `profiles` | Owner and operator only | Narrow client allowlist plus server authority |
+| Firebase Auth identity and provider links | Current authenticated user through Firebase SDK | Firebase Auth provider and explicit signed-in link operations |
+| `profiles` initial state | Owner and operator only | `completeOnboarding` server transaction only |
+| `profiles` later display-name state | Owner and operator only | Narrow verified-owner allowlist plus server authority |
+| Pending magic-link email, time, and optional UID | Current device only, one-hour maximum | Local `MagicLinkStore` |
 | `creatorProfiles` | Visible public profiles; owner/operator restricted inspection | Creator-profile callable and server counters |
 | `creatorHandles` | No client read | Server transaction |
 | `performanceDrafts` | Owner and operator | Server callables |
@@ -133,6 +142,12 @@ The phase set now removes creator handle and profile, drafts and staging referen
 
 | Invariant | Enforcement | Current local evidence |
 |---|---|---|
+| Unverified password identity cannot create a profile or mutate protected data | Server-only initial profile create plus callable, Firestore, and Storage verified-contact checks | Functions tests, rules TypeScript, app-gate tests; Java-backed rules pending clean CI |
+| Linked trusted identity remains authoritative after later password sign-in | Firebase linked identity claims accepted at server and provider data mirrored by app gate | Functions and rules regressions |
+| Initial onboarding cannot choose protected fields or split age and policy state | Exact callable payload and one Firestore transaction | Onboarding handler and repository tests |
+| Birth date does not leave the current onboarding form | Client computes only the 17-plus result and callable schema has no birth-date field | Widget, payload, and handler tests |
+| Provider availability fails closed | Compile-time flags default false and native or dashboard state is not inferred | Provider hierarchy and native contract tests |
+| Linking preserves UID and never removes the last method | Firebase link operations and repository unlink guard | Focused repository and interface review; real-provider device proof pending |
 | Private account authority never enters public creator identity | Separate schemas, exact public allowlist, callable-only writes | Functions and rules tests |
 | Pending or rejected media is not public | Draft collection, Storage path, public visibility predicate | Functions plus Firestore and Storage emulator tests |
 | A performance does not alter chant trust | Separate model and moderation write set | Handler and model tests |
@@ -155,6 +170,8 @@ Firestore denies unmatched paths. New public projections have explicit schemas, 
 
 Every callable reauthorizes from private actor state and relevant current target sources. UI visibility and denormalized eligibility are never treated as sufficient live authority. App Check remains client-wired but production enforcement is unverified.
 
+Authentication adds no credential logging or provider discovery. Raw provider exceptions are converted to bounded user copy. Magic-link email stays local and is removed on completion, cancellation, terminal invalidity, malformed state, or expiry. Phone and federated methods remain invisible until their external privacy and abuse controls are verified.
+
 Public pages omit lyrics, private UIDs, raw Storage paths, report state, and unrestricted user HTML. Creator bios are escaped. Hidden and missing public targets are indistinguishable. Signed media creates a bounded two-minute residual after moderation.
 
 The product stores user-created video. Policy, privacy, takedown, retention, moderation staffing, and billing controls are not optional documentation polish; they are release gates.
@@ -168,8 +185,12 @@ The product stores user-created video. Policy, privacy, takedown, retention, mod
 | `video_player` | In-app approved and operator-preview playback | Explicit play, no autoplay, retry state |
 | Existing Firebase plugins | Auth, Firestore, Functions, App Check, Crashlytics | Resolved together in Flutter and Firebase iOS 12.18 lock graphs |
 | `share_plus` | Operating-system share handoff | Destination resolver precedes public URL sharing |
+| `google_sign_in` | Native Google account selection and Firebase credential exchange | Hidden until client IDs, Firebase provider, fingerprints, and device proof are verified |
+| `flutter_facebook_auth` | Native Meta login and Firebase credential exchange | Hidden until Meta app, callback, policy, and deletion configuration are verified |
+| `app_links` | Initial and resumed HTTPS magic-link delivery | Source paths exist; hosted Apple and Android association is not deployed or claimed |
+| `shared_preferences` | Short-lived device-local pending magic-link identity | One-hour maximum with terminal and malformed-state clearing |
 
-iOS remains on the project-owned CocoaPods path. The new graph resolves successfully, but the bounded Xcode attempt did not finish. Android SDK is unavailable locally. CocoaPods reports Firebase Apple SDK pod publication will stop after October 2026; a Swift Package Manager migration needs a separate compatibility decision because the project previously rejected automatic mixed ownership.
+iOS remains on the project-owned CocoaPods path. The auth graph resolves 18 direct dependencies and 56 total pods. Google Sign-In 9.2 uses `GTMSessionFetcher` 3.5.0, which remains inside Firebase Storage's accepted range. The current full simulator compile result is recorded in `docs/EXECUTION.md` when it completes. Android SDK is unavailable locally, so Android compilation is delegated to the new clean-runner job. CocoaPods reports Firebase Apple SDK pod publication will stop after October 2026; a Swift Package Manager migration needs a separate compatibility decision because the project previously rejected automatic mixed ownership.
 
 ## Performance, scale, and cost
 
@@ -181,6 +202,7 @@ iOS remains on the project-owned CocoaPods path. The new graph resolves successf
 - Interaction totals recompute from all source rows for a performance, which favors correctness over large-scale write cost.
 - Creator and chant changes scan dependent performances and execute one current-source transaction per row. Creator performance totals scan that creator's performance rows. These paths favor convergence over globally bounded work and have no measured production budget.
 - Manual review limits admission throughput.
+- Phone production cost is controlled by provider quotas, permitted regions, test numbers, billing alerts, and first-cohort observation, not the source cooldown alone. Phone remains disabled until those gates exist.
 - Production reads, writes, signing, storage, egress, moderation time, and cost are unmeasured.
 
 The launch must set billing alerts, staged-object cleanup, Function alerts, moderation response expectations, and an admission pause procedure.
@@ -189,17 +211,18 @@ The launch must set billing alerts, staged-object cleanup, Function alerts, mode
 
 | Command or probe | Result |
 |---|---|
-| `flutter test` | PASS, 422 at the correction commit |
-| `flutter analyze` with the deterministic non-secret fixture | PASS with zero issues at the correction commit |
-| `functions/npm test` | PASS, 135 at the correction commit |
-| Firestore plus Storage emulator | Correction suite blocked locally because Java is absent; prior reviewed head PASS, 157 |
+| Focused Flutter auth, onboarding, app-gate, reset, magic-link, provider cancellation, phone-race, stale-session, provider hierarchy, and narrow 1.8x tests | PASS at the final uncommitted launch implementation state |
+| Full `flutter test` | PASS, 454 tests at the final local source state |
+| `flutter analyze` with the deterministic non-secret fixture | PASS with zero issues at the launch implementation state |
+| `functions/npm test` | PASS, 142 including overlapping onboarding and explicit transaction-retry state |
+| Firestore plus Storage emulator | Launch rules type-check locally; Java-backed replacement run pending. Prior PR 17 exact-head run passed 157 assertions |
 | `seed/npm test` | PASS, 42 |
-| `scripts/check-project-memory.sh` and `scripts/test-project-governance.sh` | PASS locally at the correction commit |
-| `git diff --check` | PASS after the correction documentation refresh |
-| GitHub Actions run `33181165940` | PASS at initial implementation head `641281e`; correction exact-head run pending |
+| Memory, writing-style, native-contract, and governance-regression scripts | PASS locally at the uncommitted launch implementation state |
+| `git diff --check` | PASS at the uncommitted launch implementation state |
+| GitHub Actions run `33190943182` | PASS, all six inherited jobs at exact PR 17 correction head `8b457d8`; launch-block replacement run pending |
 | Three targeted goldens | Updated, passing, and visually inspected |
-| CocoaPods resolution | PASS on Firebase iOS 12.18 |
-| iOS simulator compile | Incomplete after extended silent Xcode compilation |
+| CocoaPods resolution | PASS, 18 direct dependencies and 56 total pods on Firebase iOS 12.18 |
+| iOS simulator compile | PASS, final incremental build produced `Runner.app` with bundle ID `com.chants.chants` |
 | Android debug compile | Blocked by missing Android SDK |
 
 ## Deployment and recovery
@@ -214,11 +237,11 @@ Recovery options are additive. Pause performance admission without removing Song
 
 | Record | Current meaning |
 |---|---|
-| `docs/CHANGE_SPEC.md` | Approved creator-platform scope, completed local blocks, and remaining gates |
-| `docs/changes/2026-08-27-creator-platform-foundation.md` and the 2026-08-28 correction record | Initial implementation plus accepted review corrections |
-| Decisions 017 through 022 | Shell, identity, performance, public, social, safety, and source eligibility architecture |
-| `docs/INTERFACE.md` | Current Stage, creator, conversation, moderation, and inherited interaction contract |
-| `docs/ROADMAP.md` | Initial creator source reviewed; correction CI and closure, native, policy, configuration, seed, and release remain |
+| `docs/CHANGE_SPEC.md` | Approved launch authentication, onboarding, and Android source scope plus remaining gates |
+| Three change records dated 2026-08-27 and 2026-08-28 | Creator implementation, takedown correction, and launch authentication extension |
+| Decisions 017 through 023 | Shell, creator, performance, public, social, safety, source eligibility, and verified identity architecture |
+| `docs/INTERFACE.md` | Current launch, Stage, creator, conversation, moderation, and inherited interaction contract |
+| `docs/ROADMAP.md` | Launch source implementation in progress; native evidence, provider configuration, policy, seed, and release remain |
 | `ENGINEERING_OVERVIEW.md` | Reviewer-oriented current code map |
 
 ## Known compromises and uncertainty
@@ -233,18 +256,22 @@ Recovery options are additive. Pause performance admission without removing Song
 | No automated media screening | Harm detection depends on humans | When queue or incident volume justifies a reviewed provider contract |
 | No domain or store association | Public pages cannot yet guarantee app opening | Before release emits links |
 | Native build evidence incomplete | Plugin linkage is not yet fully proved | Before source freeze |
+| Requested providers are source-complete but disabled | Launch breadth depends on external console, credential, callback, privacy, cost, and device proof | Before enabling each provider flag |
+| No cross-UID account merge | A user with two existing accounts must choose one and link only credentials not already owned | When measured support demand justifies a separately reviewed recovery system |
 | Placeholder policy and no production cost controls | Public UGC release is blocked | Before public submission |
 | No staging, restore proof, or export | Operational recovery remains manual | Before public beta or meaningful user data |
 
 ## Material files
 
 - `lib/presentation/shell/`, `feed/`, `create/`, `profile/`, `moderation/`, `report/`
+- `lib/presentation/auth/`, `lib/presentation/settings/sign_in_methods_screen.dart`, `lib/app/app.dart`
+- `lib/data/repositories/auth_repository.dart`, `magic_link_store.dart`, `onboarding_repository.dart`
 - `lib/data/models/creator_*`, `performance*`
 - `lib/data/repositories/creator_*`, `performance_*`, `public_share_repository.dart`
 - `functions/src/creator_profile.ts`, `creator_follow.ts`, `creator_notification.ts`, `performance.ts`, `performance_source.ts`, `public_share.ts`, `published_performance_moderation.ts`
-- `functions/src/safety_submission.ts`, `account_deletion.ts`, and `index.ts`
+- `functions/src/onboarding.ts`, `safety_submission.ts`, `account_deletion.ts`, and `index.ts`
 - `firestore.rules`, `storage.rules`, `firestore.indexes.json`, `firebase.json`, `hosting/`
-- `.github/workflows/ci.yml`, `scripts/check-project-memory.sh`, `scripts/test-project-governance.sh`
+- `.github/workflows/ci.yml`, Android and iOS native source, `scripts/check-native-project.sh`, `scripts/check-project-memory.sh`, `scripts/test-project-governance.sh`
 - `pubspec.yaml`, `pubspec.lock`, `ios/Podfile.lock`, `ios/Runner/Info.plist`
 
 The most valuable review targets are listed in `ENGINEERING_OVERVIEW.md :: Where I most want your eyes`.

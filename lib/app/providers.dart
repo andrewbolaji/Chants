@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chants/data/models/user_profile.dart';
+import 'package:chants/data/models/auth_feature_config.dart';
 import 'package:chants/data/models/creator_profile.dart';
 import 'package:chants/data/models/blocked_user.dart';
 import 'package:chants/data/repositories/auth_repository.dart';
@@ -24,10 +25,13 @@ import 'package:chants/data/repositories/vote_repository.dart';
 import 'package:chants/data/repositories/comment_repository.dart';
 import 'package:chants/data/repositories/block_repository.dart';
 import 'package:chants/data/repositories/moderation_repository.dart';
+import 'package:chants/data/repositories/onboarding_repository.dart';
+import 'package:chants/data/repositories/magic_link_store.dart';
 import 'package:chants/data/repositories/safety_submission_repository.dart';
 import 'package:chants/data/repositories/saved_songbook_repository.dart';
 import 'package:chants/data/repositories/songbook_storage.dart';
 import 'package:chants/data/services/account_deletion_service.dart';
+import 'package:chants/data/services/magic_link_coordinator.dart';
 import 'package:chants/data/services/chant_share.dart';
 import 'package:chants/data/services/saved_songbook_service.dart';
 import 'package:chants/data/models/saved_songbook.dart';
@@ -35,6 +39,18 @@ import 'package:chants/data/models/saved_songbook.dart';
 // Repositories
 final authRepositoryProvider = Provider<AuthRepository>(
   (ref) => AuthRepository(),
+);
+
+final authFeatureConfigProvider = Provider<AuthFeatureConfig>(
+  (ref) => AuthFeatureConfig.fromEnvironment(),
+);
+
+final magicLinkStoreProvider = Provider<MagicLinkStore>(
+  (ref) => MagicLinkStore(),
+);
+
+final magicLinkCoordinatorProvider = Provider<MagicLinkCoordinator>(
+  (ref) => MagicLinkCoordinator(),
 );
 
 final profileRepositoryProvider = Provider<ProfileRepository>(
@@ -121,6 +137,10 @@ final blockRepositoryProvider = Provider<BlockRepository>(
 
 final moderationRepositoryProvider = Provider<ModerationRepository>(
   (ref) => ModerationRepository(),
+);
+
+final onboardingRepositoryProvider = Provider<OnboardingRepository>(
+  (ref) => OnboardingRepository(),
 );
 
 final chantShareGatewayProvider = Provider<ChantShareGateway>(

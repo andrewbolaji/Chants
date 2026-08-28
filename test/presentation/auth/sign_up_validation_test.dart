@@ -1,122 +1,121 @@
+import 'package:chants/app/providers.dart';
+import 'package:chants/data/repositories/auth_repository.dart';
+import 'package:chants/data/repositories/onboarding_repository.dart';
+import 'package:chants/presentation/auth/onboarding_screen.dart';
+import 'package:chants/presentation/auth/sign_up_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:chants/presentation/auth/sign_up_screen.dart';
+import 'package:mockito/mockito.dart';
+
+class _ValidationOnlyAuthRepository extends Mock implements AuthRepository {
+  @override
+  Future<UserCredential> signUp({
+    required String email,
+    required String password,
+  }) {
+    throw StateError('Network boundary is not used by validation assertions.');
+  }
+}
+
+class _FakeOnboardingRepository extends Mock implements OnboardingRepository {
+  int calls = 0;
+  String? displayName;
+
+  @override
+  Future<void> complete({required String displayName}) async {
+    calls += 1;
+    this.displayName = displayName;
+  }
+}
 
 void main() {
-  Widget wrap(Widget child) {
+  Widget wrap(Widget child, {_FakeOnboardingRepository? onboarding}) {
     return ProviderScope(
+      overrides: [
+        authRepositoryProvider.overrideWithValue(
+          _ValidationOnlyAuthRepository(),
+        ),
+        if (onboarding != null)
+          onboardingRepositoryProvider.overrideWithValue(onboarding),
+      ],
       child: MaterialApp(home: child),
     );
   }
 
-  group('SignUpScreen password confirm', () {
-    testWidgets('shows error when passwords do not match', (tester) async {
-      await tester.pumpWidget(wrap(const SignUpScreen()));
-
-      // Fill in display name
-      await tester.enterText(
-        find.widgetWithText(TextFormField, 'Display name'),
-        'Testuser',
-      );
-
-      // Fill in email
+  group('SignUpScreen email credential validation', () {
+    Future<void> fill(
+      WidgetTester tester, {
+      String password = 'password123',
+      String confirmation = 'password123',
+    }) async {
       await tester.enterText(
         find.widgetWithText(TextFormField, 'Email'),
         'test@example.com',
       );
-
-      // Fill in password
       await tester.enterText(
         find.widgetWithText(TextFormField, 'Password'),
-        'password123',
+        password,
       );
-
-      // Fill in confirm password with mismatch
       await tester.enterText(
         find.widgetWithText(TextFormField, 'Confirm password'),
-        'differentpassword',
+        confirmation,
       );
+    }
 
-      // Tap create account
-      await tester.tap(find.text('CREATE ACCOUNT'));
-      await tester.pumpAndSettle();
+    testWidgets('shows error when passwords do not match', (tester) async {
+      await tester.pumpWidget(wrap(const SignUpScreen()));
+      await fill(tester, confirmation: 'differentpassword');
+
+      await tester.tap(find.widgetWithText(FilledButton, 'CREATE ACCOUNT'));
+      await tester.pump();
 
       expect(find.text('Passwords do not match.'), findsOneWidget);
     });
 
-    testWidgets('no error when passwords match', (tester) async {
+    testWidgets('matching valid passwords clear local validation', (
+      tester,
+    ) async {
       await tester.pumpWidget(wrap(const SignUpScreen()));
+      await fill(tester);
 
-      await tester.enterText(
-        find.widgetWithText(TextFormField, 'Display name'),
-        'Testuser',
-      );
-      await tester.enterText(
-        find.widgetWithText(TextFormField, 'Email'),
-        'test@example.com',
-      );
-      await tester.enterText(
-        find.widgetWithText(TextFormField, 'Password'),
-        'password123',
-      );
-      await tester.enterText(
-        find.widgetWithText(TextFormField, 'Confirm password'),
-        'password123',
-      );
-
-      await tester.tap(find.text('CREATE ACCOUNT'));
-      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'CREATE ACCOUNT'));
+      await tester.pump();
 
       expect(find.text('Passwords do not match.'), findsNothing);
     });
 
-    testWidgets('show-password toggle exists', (tester) async {
+    testWidgets('requires eight password characters', (tester) async {
       await tester.pumpWidget(wrap(const SignUpScreen()));
+      await fill(tester, password: 'short', confirmation: 'short');
 
-      // Should find visibility toggle icons (two password fields)
-      expect(
-        find.byIcon(Icons.visibility_off_outlined),
-        findsNWidgets(2),
-      );
+      await tester.tap(find.widgetWithText(FilledButton, 'CREATE ACCOUNT'));
+      await tester.pump();
+
+      expect(find.text('At least 8 characters.'), findsNWidgets(2));
+    });
+
+    testWidgets('both password fields have visibility controls', (
+      tester,
+    ) async {
+      await tester.pumpWidget(wrap(const SignUpScreen()));
+      expect(find.byIcon(Icons.visibility_off_outlined), findsNWidgets(2));
     });
   });
 
-  group('SignUpScreen policy and age gate', () {
-    Future<void> fillBaseFields(WidgetTester tester) async {
-      await tester.enterText(
-        find.widgetWithText(TextFormField, 'Display name'),
-        'Testuser',
-      );
-      await tester.enterText(
-        find.widgetWithText(TextFormField, 'Email'),
-        'test@example.com',
-      );
-      await tester.enterText(
-        find.widgetWithText(TextFormField, 'Password'),
-        'password123',
-      );
-      await tester.enterText(
-        find.widgetWithText(TextFormField, 'Confirm password'),
-        'password123',
-      );
-    }
-
-    /// Drives the real Material date picker (input mode) to set a date of
-    /// birth [yearsAgo] years before today.
+  group('OnboardingScreen age and policy admission', () {
     Future<void> pickDateOfBirth(WidgetTester tester, int yearsAgo) async {
       await tester.tap(find.text('Tap to choose'));
       await tester.pumpAndSettle();
-
-      // Switch the calendar picker to text-entry mode.
       await tester.tap(find.byTooltip('Switch to input'));
       await tester.pumpAndSettle();
 
       final now = DateTime.now();
       final dob = DateTime(now.year - yearsAgo, now.month, now.day);
-      final formatted = '${dob.month.toString().padLeft(2, '0')}/'
+      final formatted =
+          '${dob.month.toString().padLeft(2, '0')}/'
           '${dob.day.toString().padLeft(2, '0')}/${dob.year}';
-
       await tester.enterText(
         find.descendant(
           of: find.byType(Dialog),
@@ -128,35 +127,54 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    testWidgets('blocks submit with no date of birth', (tester) async {
-      await tester.pumpWidget(wrap(const SignUpScreen()));
-      await fillBaseFields(tester);
+    testWidgets('blocks completion with no date of birth', (tester) async {
+      await tester.pumpWidget(
+        wrap(OnboardingScreen(onDestinationSelected: (_) {})),
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Display name'),
+        'Testuser',
+      );
 
-      await tester.tap(find.text('CREATE ACCOUNT'));
-      await tester.pumpAndSettle();
+      await tester.tap(find.text('ENTER CHANTS'));
+      await tester.pump();
 
       expect(find.text('Add your date of birth.'), findsOneWidget);
     });
 
-    testWidgets('blocks submit for a date of birth under 17', (tester) async {
-      await tester.pumpWidget(wrap(const SignUpScreen()));
-      await fillBaseFields(tester);
+    testWidgets('shows the under-17 boundary and does not allow entry', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        wrap(OnboardingScreen(onDestinationSelected: (_) {})),
+      );
       await pickDateOfBirth(tester, 10);
-
-      await tester.tap(find.text('CREATE ACCOUNT'));
+      await tester.drag(find.byType(ListView), const Offset(0, -500));
       await tester.pumpAndSettle();
 
       expect(find.textContaining('17 or older'), findsOneWidget);
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.widgetWithText(FilledButton, 'ENTER CHANTS'),
+            )
+            .onPressed,
+        isNull,
+      );
     });
 
-    testWidgets('blocks submit when the policy checkbox is unchecked',
-        (tester) async {
-      await tester.pumpWidget(wrap(const SignUpScreen()));
-      await fillBaseFields(tester);
+    testWidgets('blocks completion until policy is accepted', (tester) async {
+      await tester.pumpWidget(
+        wrap(OnboardingScreen(onDestinationSelected: (_) {})),
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Display name'),
+        'Testuser',
+      );
       await pickDateOfBirth(tester, 20);
 
-      await tester.tap(find.text('CREATE ACCOUNT'));
-      await tester.pumpAndSettle();
+      await tester.tap(find.text('ENTER CHANTS'));
+      await tester.pump();
 
       expect(
         find.text('Agree to the Content Policy to continue.'),
@@ -164,34 +182,32 @@ void main() {
       );
     });
 
-    testWidgets('picking a date of birth replaces the placeholder text',
-        (tester) async {
-      await tester.pumpWidget(wrap(const SignUpScreen()));
-
-      expect(find.text('Tap to choose'), findsOneWidget);
-      await pickDateOfBirth(tester, 20);
-      expect(find.text('Tap to choose'), findsNothing);
-    });
-
-    testWidgets(
-        'an adult date of birth plus the checkbox clears both blocking '
-        'errors, only the network call fails in this offline test',
-        (tester) async {
-      await tester.pumpWidget(wrap(const SignUpScreen()));
-      await fillBaseFields(tester);
+    testWidgets('adult consent completes once and retains first destination', (
+      tester,
+    ) async {
+      final onboarding = _FakeOnboardingRepository();
+      var destination = -1;
+      await tester.pumpWidget(
+        wrap(
+          OnboardingScreen(
+            onDestinationSelected: (value) => destination = value,
+          ),
+          onboarding: onboarding,
+        ),
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Display name'),
+        ' Testuser ',
+      );
       await pickDateOfBirth(tester, 20);
       await tester.tap(find.byType(Checkbox));
-      await tester.pumpAndSettle();
+      await tester.tap(find.text('Songbook'));
+      await tester.tap(find.text('ENTER CHANTS'));
+      await tester.pump();
 
-      await tester.tap(find.text('CREATE ACCOUNT'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Add your date of birth.'), findsNothing);
-      expect(find.textContaining('17 or older'), findsNothing);
-      expect(
-        find.text('Agree to the Content Policy to continue.'),
-        findsNothing,
-      );
+      expect(onboarding.calls, 1);
+      expect(onboarding.displayName, ' Testuser ');
+      expect(destination, 3);
     });
   });
 }

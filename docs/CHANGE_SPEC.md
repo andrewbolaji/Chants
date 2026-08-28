@@ -1,217 +1,215 @@
-# Change spec: Creator platform expansion
+# Change spec: V1 launch authentication, onboarding, and Android readiness
 
-**Status:** Approved post-review correction packaged by the commit carrying this record; exact-head CI and closure review are external gates
+**Status:** Implemented and locally verified; clean-runner, provider, device, and release gates remain
 **Updated:** 2026-08-28
-**Risk lane:** Lane 2, public identity, uploaded media, persistent social data, public routes, moderation, privacy, and cost
-**Base:** `86603c22fbd7647f89c9276af9a60a0b3d63113b`, merged PR 16 main
-**Approval:** Andrew approved Feed Pass 3, Chant Stage, and Navigation Pass 3, Product Clear, after reviewing three feed passes and three navigation passes. He also approved 30-second record or upload performances, performance popularity signals, creator bios, follows before V1, public chant URLs with rich previews, mentions, and deeper conversations.
-
-## Approved post-review correction
-
-Andrew approved the complete `PR 17 post-review takedown and integrity correction spec` on 2026-08-28 after Claude independently reviewed the packaged range. The correction remains one consolidated block and one closure review, not seven separate review loops.
-
-### Scope and acceptance
-
-1. A banned creator immediately loses public profile, new feed, public-page, playback, and interaction authority. Unban restores only ban-derived eligibility and never overrides a manually hidden or removed performance.
-2. Public and in-app performance authority rechecks the current creator and chant. A current ban, creator removal, chant hide, chant removal, or deletion state fails closed even before a denormalized projection finishes reconciling.
-3. Hidden performances have operator-only preview, Restore, and terminal Remove actions. Ordinary viewers cannot preview hidden media.
-4. Terminal performance removal durably schedules physical published-media deletion. Cleanup is retryable and idempotent, and a failed Storage operation cannot make removed content public again.
-5. Stage cards and public creator profiles expose a confirmed Block creator action. A viewer's blocked creators disappear from Stage without requiring a relaunch, while Unblock remains available through Blocked users.
-6. Public creator `performanceCount` converges from current live performance rows after approval, hide, restore, removal, ban-derived eligibility, and chant-derived eligibility changes.
-7. Chant title, trust status, and availability reconcile into attached performances. Demotion removes Terrace Proven presentation, and hide or removal removes the performance from current feeds and public resolution.
-8. Direct public performance queries carry the new source-eligibility predicates. Server writers own those fields and clients cannot forge them.
-9. Tests reproduce each independent-review defect against the prior implementation, then prove duplicate delivery, partial cleanup, stale projection, operator bypass, and blocked-feed behavior.
-10. The overview, rationale, interface memory, decision 021, roadmap, completed change record, and execution evidence state the corrected behavior and remaining native, device, policy, configuration, deploy, seed, signing, and release gates honestly.
-
-### Excluded from this correction
-
-Production Firebase access, App Check dashboard enforcement, live Arsenal preflight, dependency advisory scans, native signing, store submission, broad Discover pagination, repository-wide Dart formatting, resumable chant merge, automated media screening, deployment, seed writes, and release remain separate gates or future blocks.
+**Risk lane:** Lane 2, authentication, account identity, age and policy admission, personal data, external identity providers, SMS cost, deep links, and native release configuration
+**Base:** `8b457d8b0fd959a7dc54222f8f95856c77b2bed6`, exact PR 17 post-review correction head
+**Product direction:** Andrew requested a launch-quality signup and onboarding experience with Apple, Google, email and password, email verification, Facebook, magic email links, phone/SMS, provider account linking, automatic verification return, visible password reset, and Android delivery.
+**Approval:** Andrew explicitly approved `V1 launch authentication, onboarding, and Android readiness spec` on 2026-08-28.
 
 ## Outcome
 
-- **Problem:** The current app is a useful trusted songbook and Chant Lab, but it understates the original creator-led vision. Fans cannot perform a chant, build a public creator identity, compete on reach, follow creators, or share a public destination that can travel outside the app.
-- **Desired behavior:** Chants becomes the home of the chant idea and the performances around it. A fan can still learn and save a chant for matchday, but can also publish an original idea, attach or create a short performance, earn visible reach, participate in threaded conversation, and build a following. Public links carry the chant back into the app without confusing popularity with terrace proof.
-- **Product position:** The Songbook remains the trusted archive. Chant Lab remains the workshop. Performances are a third object attached to a chant, not a replacement for chants or proof that a chant is sung in a stadium.
+- **Problem:** Chants currently has a functional email-and-password entry, but it does not yet introduce the creator and matchday product well, verify email ownership, recover automatically after verification, support social or passwordless access, link providers safely, or prove an Android client build. The current password reset is visible, contrary to the supplied comparison, but it treats a network failure as if the request was sent.
+- **Desired behavior:** A supporter can understand Chants before creating an account, choose a suitable sign-in method, verify a contact method, complete the age, identity, and policy steps without becoming stranded, enter the right first product destination, and later connect another provider without losing the same Firebase UID or Chants data. Android becomes a continuously compiled V1 target with production signing and provider configuration kept fail-closed until the operator supplies them.
+- **Product position:** The entry experience should feel like Chants, not a generic enterprise login. It should communicate three uses quickly: watch performances on the Stage, learn and save Terrace Proven chants for matchday, and create what gets sung next.
+- **Review boundary:** Flutter auth and onboarding presentation, app gate and lifecycle, auth/profile repositories, one server-authoritative onboarding callable, current mutation authority, relevant Firestore rules, native iOS and Android provider/link configuration, Android build and signing configuration, CI build evidence, focused tests, and affected engineering records.
 
-## Approved product decisions
+## Current evidence
 
-1. The primary shell is `Feed`, `Clubs`, `Create`, `Songbook`, and `You`.
-2. The feed uses the Chant Stage hierarchy. Performance media earns attention, but the creator, underlying chant, club or player, trust state, popularity, and route to lyrics remain visible.
-3. Feed filters begin with `Rising`, `New`, and `Terrace`. Ranked labels are derived from real metrics and never appear on every item.
-4. A performance is a separate persistent entity. Many performances may reference one chant.
-5. A performance video may be recorded in the app or selected from the device library. The maximum duration is 30 seconds. The first version does not provide a beat-synced karaoke editor, licensed backing tracks, duet, remix, or general video editing.
-6. Existing words-only chants and external evidence links remain supported. A creator does not have to sing or upload media to contribute.
-7. Performance popularity is separate from chant backing. Performance views, likes, comments, and shares measure the performance. `Back it` continues to rank the underlying chant idea.
-8. The weekly competition uses unique sharers, then likes and qualified views as deterministic tie breakers. A share means the app handed a public performance link to an operating-system share destination. It does not claim the recipient opened it.
-9. Public creator identity lives in an allowlisted public document separate from the private account profile. It includes a unique handle, public display name, short bio, and server-owned aggregate counts. Ban state, age confirmation, report counts, policy acceptance, deletion state, and email remain private.
-10. Creator profiles and follows ship before V1 release. The identity and bio boundary remains separate from the private account profile, and the follow graph exposes aggregates rather than public edge lists.
-11. Public chant and performance URLs plus rich social previews ship before V1 release. Preview copy must name the trust state honestly and cannot imply stadium adoption from votes or performance reach.
-12. Conversations support mentions and continued replies. Stored threads may continue beyond three replies, but the mobile interface never indents beyond three visible levels. Deeper replies open in a focused thread so text remains readable and screen-reader hierarchy remains explicit.
-13. Low-volume V1 video moderation is manual before public visibility. Pending media is readable only by its owner and operators. Automated provider-scale media screening is deferred until upload volume or moderation response time crosses a recorded operational trigger.
-14. The completed creator-platform range receives one independent exact-range review after local integration hardening and clean-runner CI. This supersedes the earlier plan for a review after each block. Corrections remain separate from implementation review.
+| Capability | Chants at the base | Required end state |
+|---|---|---|
+| Apple | Not built | Built for supported native platforms, operator-configured before visibility |
+| Google | Not built | Built for iOS and Android, operator-configured before visibility |
+| Email and password | Built | Preserved and integrated into the new entry flow |
+| Email verification | Not built or enforced | Sent, gated, resendable, and refreshed on app return |
+| Facebook | Not built | Built behind verified Meta and Firebase configuration |
+| Magic email link | Not built | Built with Firebase Hosting action links and safe local email recovery |
+| Phone/SMS | Not built | Built with consent, region and quota gates, retry states, and real-device evidence before enablement |
+| Provider account linking | Not built | Explicit signed-in linking without automatic email-only merges |
+| Automatic verification return | Not built | App resume and incoming-link completion refresh the Firebase user |
+| Visible password reset | Built | Preserved, with real delivery failures distinguished from privacy-safe unknown-account results |
+| New-provider profile completion | Not recoverable | A missing profile opens onboarding instead of an indefinite loading screen |
+| Android build | Source project exists | Clean-runner debug build required; local build waits for Android SDK installation |
+| Android production signing | Uses debug signing | Release fails closed until an operator-owned keystore is supplied |
+
+## Approved experience direction
+
+The implementation will use one calm, supporter-first sequence:
+
+1. **Welcome:** `Learn the songs. Back what comes next. Take the Stage.` Show the product before asking for account details.
+2. **Choose access:** Apple, Google, and email are primary. Facebook and phone live under `More ways to sign in` so the screen does not become a wall of provider buttons. Email offers password or `Email me a sign-in link` in one place.
+3. **Verify when required:** Password-email users receive a verification message. The waiting screen supports resend, change account, manual refresh, and automatic refresh after the app resumes. Google, Apple, Facebook, magic-link, and phone users use Firebase's verified-provider result rather than repeating email verification.
+4. **Complete supporter profile:** Collect display name, date of birth, and content-policy acceptance. The exact birth date remains on the device and only the existing 17-plus result crosses the boundary. Provider names and photos may prefill a field but never become public without confirmation.
+5. **Choose the first action:** Enter Feed, find a club, or open Matchday Songbook. This choice changes only the first destination. It does not create unused preference data or claim personalization that does not exist.
+6. **Manage sign-in methods later:** `You` exposes a Sign-in methods screen for link, unlink, resend verification, and password reset. A user can never unlink the last usable method.
+
+Provider buttons are controlled by an injected availability contract. A release build shows a method only when its native and dashboard setup has been verified. Local tests can exercise every method without depending on production provider state.
 
 ## Delivery blocks
 
-### Block A: Product shell and creator identity
+### Block A: Entry, verification, and recoverable onboarding
 
-**Local status:** Complete.
+1. Replace the current single-form entry with the approved welcome and method hierarchy while preserving email and password.
+2. Use Firebase user-change state plus an app-lifecycle refresh so external verification returns automatically.
+3. Add a verification waiting screen with resend cooldown, manual refresh, change-account, offline, expired-session, and ordinary failure states.
+4. Replace direct client profile creation during signup with one authenticated `completeOnboarding` callable. It validates the narrow input, derives UID from auth, requires a verified email, verified phone, or trusted current or linked federated identity, creates the private profile with server timestamps, and records current policy acceptance in one Firestore transaction.
+5. Route an authenticated account with no profile to onboarding. Existing valid profiles remain compatible and do not repeat onboarding.
+6. Preserve age 17-plus behavior without storing the birth date. An underage or declined new account is signed out and offered a best-effort recent-user deletion path without entering the product.
+7. Correct password reset so unknown-account privacy remains intact while network, quota, invalid-email, and disabled-provider failures remain truthful and retryable.
 
-- Install the approved five-tab shell without breaking policy or account-deletion gates.
-- Preserve useful Home discovery as the initial Feed foundation until real performances exist.
-- Add a real `You` surface for public identity, bio editing, account settings, and existing account actions.
-- Reserve unique normalized handles through a server-authoritative transaction.
-- Keep public creator data separate from the private profile document.
+### Block B: Provider breadth and account linking
 
-### Block B: Performance creation and Chant Stage feed
+1. Add Google with the official native Google sign-in plugin and Firebase credential exchange.
+2. Add Apple through Firebase's Apple provider. Keep Apple consent explicit before linking and add the iOS capability only to the intended app target.
+3. Add Facebook through the provider-supported native plugin and Firebase credential exchange. Do not expose the button until the Meta app, callback, policy, and data-deletion configuration are verified.
+4. Add Firebase Hosting email-link authentication. Store the pending email only on the device, never in the URL, remove it after completion or cancellation, and ask for it again when a link arrives on another device.
+5. Add phone/SMS with clear disclosure that the number is sent to and stored by Google for abuse prevention. Cover code sent, auto-verification, invalid code, expiry, resend, quota, cancellation, and timeout. Do not enable production SMS until region policy, test numbers, quotas, billing alerts, and real-device proof exist.
+6. Add an explicit Sign-in methods screen. Linking preserves the current Firebase UID. `account-exists-with-different-credential` never triggers an automatic email-only merge. The user signs in by the existing method and then links deliberately.
+7. Prevent unlinking the final usable method. Refresh the Firebase user after link or unlink and preserve the current Chants profile, creator identity, follows, Songbook ownership, and moderation state.
 
-**Local status:** Complete.
+### Block C: Android source and clean build readiness
 
-- Add the performance model, repository, indexes, rules, and deletion treatment.
-- Add camera recording and library selection with the same 30-second and size limits.
-- Provide explicit upload, retry, cancellation, pending-review, rejected, removed, and playback-failure states.
-- Publish only operator-approved media.
-- Replace the Feed foundation with the approved Chant Stage cards and real pagination.
-- Add deterministic performance likes, qualified unique views, unique shares, comments, counters, and weekly ranking.
+1. Keep the stable application ID and namespace `com.chants.chants` unless Andrew separately approves a store-identity change.
+2. Add production Internet access, correct the visible app label, and inspect the merged manifest for camera, microphone, media selection, auth callback, and App Link behavior.
+3. Add Android App Links for the approved public and auth paths without claiming domain association until `assetlinks.json` is deployed and verified.
+4. Replace release debug signing with a fail-closed operator-owned signing contract. No keystore, password, certificate, or service credential enters Git.
+5. Add a clean-runner Android debug-build job using a checked-in non-secret Firebase compile fixture or an approved secret when available. Inspect the APK identity and source SHA rather than treating Gradle exit zero as complete proof.
+6. Install or point Flutter to an Android SDK only with separate machine-level authorization. Then compile locally and walk at least one Google Play emulator or physical Android device.
+7. Record Google and phone SHA fingerprints, Play Integrity/App Check, store signing, app-link association, permissions, data safety, and Play listing as release configuration gates rather than source-complete claims.
 
-### Block C: Public destinations
+## Acceptance criteria and invariants
 
-**Local status:** Complete for server-rendered pages and stable public URLs. Native universal links, store fallback, domain association, and production hosting remain launch configuration gates.
+1. Every enabled method has success, user cancellation, network failure, provider-disabled, and account-collision behavior with no permanent loading state.
+2. A signed-in user without a private profile sees recoverable onboarding, never the product shell and never an indefinite neutral spinner.
+3. A password-email user without a verified address cannot complete onboarding or perform a protected mutation through the app, raw SDK, rules, or callable boundary.
+4. A Firebase-verified email, verified phone, or trusted current or linked Apple, Google, or Facebook identity can complete onboarding without a redundant email challenge.
+5. `completeOnboarding` derives UID and verified-contact authority from Firebase Auth, accepts only display name, 17-plus confirmation, and current policy consent, and writes one coherent profile state transactionally.
+6. Duplicate or concurrent onboarding completion converges on one private profile without changing role, ban, report, deletion, or creator counters.
+7. Existing profiles remain readable and do not require schema backfill. Existing users may be asked for contact verification when their Firebase identity lacks it, but they keep the same UID and all existing data.
+8. The birth date never enters Firebase, logs, Crashlytics, provider metadata, URLs, or project memory.
+9. Provider email, name, phone, token, access token, authorization code, nonce, and raw Firebase exception text do not enter logs.
+10. Magic-link completion verifies the Firebase link, binds it to the intended email, uses HTTPS in production, rejects replay or malformed input through Firebase, and removes local pending state after a terminal result.
+11. Phone entry uses international format, does not log the number, states the Google processing disclosure, and cannot hammer resend from the UI. Dashboard quotas and region controls remain the real cost boundary.
+12. Linking is explicit and preserves the current UID. Collision never deletes or silently merges either account.
+13. The last usable sign-in method cannot be unlinked. Recent-login failures explain the safe next action.
+14. Email verification reloads once on app resume or deliberate refresh, with no polling loop or background battery cost.
+15. Password reset keeps account existence private but does not report `sent` after a known transport or provider failure.
+16. Auth cancellation or a declined/underage onboarding path cannot enter the app. Best-effort deletion failure leaves a signed-out, recoverable account rather than granting authority.
+17. Banned, deletion-pending, or policy-stale users remain behind the existing gates after any sign-in or link method.
+18. Provider buttons meet platform naming and branding rules, have semantic labels, 48 by 48 logical-pixel targets, keyboard order, screen-reader meaning, and no color-only state.
+19. Welcome, method choice, email/password, magic-link wait, phone number, SMS code, verification wait, onboarding, and collision recovery render without clipping at 390 by 844, a narrow Android width, and 1.8x text.
+20. Android clean CI produces a debug APK from the exact source head. Production release signing refuses to use the debug key.
+21. Existing app-gate deletion recovery, policy updates, public creator identity, performance creation, Stage, Songbook, and safety authority remain unchanged after onboarding completes.
 
-- Add stable public chant, performance, and creator routes.
-- Generate safe server-rendered social metadata and deep-link or store fallback behavior.
-- Update native share-out to use the public destination only after resolver availability is proved.
-- Preserve a complete text fallback when a destination is unavailable.
+## Source of truth and compatibility
 
-### Block D: Follows, mentions, and deeper threads
-
-**Local status:** Complete for the V1 bounded graph, inbox, mention fan-out, and continued performance conversations.
-
-- Add private follow edges and public aggregate counts.
-- Add Following as a feed signal without making an empty graph a dead end.
-- Add validated mentions and notification inbox records with bounded fan-out.
-- Migrate comment threading additively so legacy chant comments remain readable.
-- Keep visible indentation bounded while allowing focused continued conversation.
-
-### Block E: Integration and release hardening
-
-**Local status:** Complete for source authority, reports, blocking, moderation, deletion integration, focused interface evidence, and local automated verification. Native compile and device evidence, policy copy, production configuration, deploy, and release remain open.
-
-- Extend blocking, reports, moderation, account deletion, audit privacy, rate limits, and operational recovery to every new entity.
-- Measure read, write, storage, egress, and Function amplification against the stated budgets.
-- Complete representative viewport, text-scale, screen-reader, keyboard, permission, offline, lifecycle, upload, and playback evidence.
-- Complete Android and iOS builds, the combined device walkthrough, independent freeze review, policy text, live configuration checks, signing, and release only under their own authority gates.
-
-## Data and authority design
-
-| Surface | Public data | Private or server-owned data | Write authority |
-|---|---|---|---|
-| `profiles/{uid}` | None | Role, ban, age gate, policy acceptance, deletion state, report count, account display name | Existing owner allowlist plus server-owned fields |
-| `creatorProfiles/{uid}` | Handle, public display name, bio, aggregate counts, visibility | Moderation reason and internal history stay elsewhere | Callable transaction for identity fields; server for counters and visibility |
-| `creatorHandles/{normalizedHandle}` | None | Handle-to-UID reservation | Server only |
-| `performances/{performanceId}` | Approved performance metadata and server counters | Pending or rejected owner state and moderation detail | Server admission and moderation; direct client writes denied |
-| Media storage | Approved playback object | Staged and rejected upload objects | UID-scoped upload ticket; server-owned publication state |
-| Performance likes, views, shares | Aggregate counts only | UID-scoped deterministic interaction records | Server-authoritative or rules-pinned deterministic writes |
-| Follow edges | Aggregate counts only | Follower and followed UID edge | Authenticated owner of the follow action |
-| Mentions and notifications | None | Recipient-scoped inbox data | Server-derived from an accepted comment or reply |
-
-## Invariants and acceptance criteria
-
-1. A public read cannot expose any private `profiles` field.
-2. A handle is normalized, allowlisted, case-insensitively unique, and cannot be stolen by overlapping requests.
-3. Identity updates cannot change role, ban state, age state, deletion state, policy state, report count, or server counters.
-4. A banned or deletion-pending account cannot create or update public identity, performances, interactions, follows, mentions, or comments.
-5. The shell retains the selected tab across child navigation and exposes every destination with a semantic label and at least a 48 by 48 logical-pixel target.
-6. Account deletion, sign out, policy, blocked users, feedback, and operator moderation remain reachable after the Home account menu moves to `You`.
-7. Existing Home, competition, team, player, chant detail, submission, Songbook, policy, deletion, and moderation routes keep their current authority behavior.
-8. Performance duration over 30 seconds, unsupported media, oversized files, forged ownership, forged counters, and unapproved public reads fail closed.
-9. Pending media is not publicly readable. Approval changes visibility without changing ownership or the underlying chant.
-10. A performance never changes a chant from Chant Lab to Terrace Proven. Evidence and operator promotion remain the only trust path.
-11. Likes, qualified views, unique sharers, comments, follows, and notifications converge from stored source records under duplicate or overlapping delivery.
-12. Feed queries always include current visibility and approval predicates. Stale readable content cannot authorize a like, share count, comment, follow, save, or report.
-13. Ranking uses server time and documented deterministic tie breakers. Clients cannot write rank or counters.
-14. Public preview routes omit private identifiers and unsafe text, escape user content, use a fallback image, and return a valid destination for visible content only.
-15. A removed or hidden target stops resolving publicly and loses current-live actions in the app.
-16. Deeper comment storage cannot create cycles, cross-target parents, orphan promotion, unbounded inline indentation, or a mention notification to a blocked user.
-17. Account deletion removes private interaction and follow edges, removes or anonymizes creator identity according to the approved retention policy, and leaves retained content without a live profile link.
-18. Every material UI surface covers loading, empty, populated, error, stale or unavailable authority, destructive confirmation, and enlarged-text behavior where applicable.
+- Firebase Auth owns authentication identity, verification state, linked providers, and the stable UID.
+- `profiles/{uid}` remains the private Chants authority record. The new callable owns initial creation; existing profile reads and allowed display-name updates remain compatible.
+- `creatorProfiles/{uid}` remains optional public identity and is not silently created from provider data during authentication.
+- Current Firebase UID remains the ownership key for creator identity, follows, interactions, notifications, reports, deletion work, and local Songbook state.
+- Existing email-password accounts and profiles require no backfill. New clients handle a missing profile; old clients are not released against newly enabled providers until the onboarding callable and compatible rules are deployed.
+- Email-link pending state is device-local and short-lived. No server-side pending-email collection is introduced.
+- Provider availability is injected configuration, not inferred from UI or trusted as authorization.
 
 ## Failure and abuse analysis
 
-| Failure or abuse | Required response |
-|---|---|
-| Two accounts claim the same handle | One transaction succeeds. The other receives a specific unavailable-handle error without partial profile mutation. |
-| Identity save times out after commit | A subsequent profile read is authoritative and the form can reconcile without creating a second reservation. |
-| Upload stops or app dies | The draft remains retryable or cancellable; abandoned staged objects are eligible for bounded cleanup. No public performance exists. |
-| Duration or type metadata is forged | Server admission verifies trusted object metadata and rejects the performance. |
-| Upload succeeds but admission fails | The object remains private and cleanup can remove it without affecting any published entity. |
-| Approval and removal overlap | The parent performance transaction serializes current moderation state. Removed wins over public playback. |
-| Trigger delivery duplicates or reorders | Aggregate writers recompute from source records and serialize on the parent document. |
-| A creator self-refreshes views or shares | Deterministic per-account records prevent repeated contribution to ranking. Own views and shares do not contribute to competition rank. |
-| A link is shared after moderation | The resolver returns an unavailable response and the app refuses current-live actions. |
-| A mentioned or followed account blocks the actor | New interaction is denied. Server fan-out rechecks the block before writing a notification. |
-| Account deletion begins during upload or interaction | New authority stops, staged media becomes cleanup work, and retained public content loses creator linkage. |
-| Moderation queue grows beyond manual capacity | Pause new media admission or keep new work pending. Do not silently publish. Revisit automated screening at the recorded trigger. |
+| Condition | Expected behavior | Evidence |
+|---|---|---|
+| Provider flow is cancelled | Return to the same method screen with entered non-secret form state preserved | Widget and repository cancellation tests |
+| Auth succeeds but profile creation times out | Missing-profile gate remains recoverable; retry reads current profile before attempting the idempotent transaction | Callable duplicate and timeout reconciliation tests |
+| Two onboarding requests overlap | One transaction creates the profile; the other returns the same completed state without field drift | Functions overlap test |
+| Existing provider owns the email | Do not reveal provider inventory or auto-merge. Explain that the user should sign in by the existing method, then link | Repository and widget collision tests |
+| Link credential belongs to another UID | Preserve both accounts and current session; show a non-destructive recovery message | Linking boundary tests |
+| Verification link opens after app restart | Restore the pending email locally or ask for it again, complete once, then clear it | Link lifecycle tests and device walk |
+| Verification link is malformed, expired, or replayed | Firebase rejects it; remain signed out or gated with a new-link action | Focused link tests |
+| App resumes while still unverified | One reload returns to the waiting state without repeated sends or polling | Lifecycle widget test |
+| Password reset request is offline | Keep entered email, restore control, and say the message could not be requested | Repository and widget error test |
+| SMS is requested repeatedly | UI cooldown and in-flight guards apply; Firebase quota, region, and anti-abuse controls remain enabled | Callback-state tests and dashboard launch checklist |
+| Automatic Android SMS verification races manual entry | First accepted credential wins and later callbacks cannot sign in twice or replace another account | Controller concurrency test |
+| User unlinks a provider during stale UI | Reload current provider data and refuse removal when it would leave no usable method | Repository state test |
+| User becomes banned or deletion-pending after provider auth | Existing live private-profile and deletion gates fail closed before the shell | App-gate and callable authority regressions |
+| Release config omits signing or provider setup | Release build or provider availability fails closed; the app never ships a broken visible method | Gradle/config contract tests |
 
-## Performance and cost budgets
+## Security and privacy
 
-- Maximum selected or recorded duration: 30 seconds.
-- Initial maximum upload size: 50 MiB before server verification. Reduce only with measured device evidence.
-- Feed page: at most 10 performances per request, with explicit pagination and no unbounded listeners.
-- Profile and feed cards use denormalized public identity snapshots only where a documented reconciliation path exists; avoid one profile read per visible card.
-- One account contributes at most one ranking like, one qualified view, and one unique share to a performance.
-- New-account and established-account upload admission receive separate bounded daily limits before public beta.
-- No background autoplay, background upload, unbounded prefetch, or automatic retry loop.
-- Billing alerts and an explicit storage cleanup schedule are launch gates. No claim about production cost is made until observed.
+- Do not log Firebase credentials, provider tokens, nonces, emails, phone numbers, dates of birth, or raw provider exceptions.
+- Keep generic sign-in and reset copy resistant to account enumeration. Do not call provider-discovery APIs to reveal how an email is registered.
+- Verify contact authority on trusted Firebase token state at both rules and callable mutation boundaries. UI gating alone is not evidence.
+- Require explicit Apple account-linking consent. Never link accounts only because provider emails match.
+- Keep OAuth state, nonce, callback scheme, package fingerprint, associated-domain, and redirect configuration platform-specific and reviewed.
+- Delete or expire device-local magic-link email state after completion, cancellation, sign-out, or a bounded age.
+- Phone/SMS remains disabled until user disclosure, permitted regions, quota/billing controls, test numbers, and App Check or platform anti-abuse configuration are verified.
+- Existing account deletion continues to act on the Firebase UID and therefore covers linked sign-in methods without a second Chants data-deletion path.
 
-## Interface evidence plan
+## Performance and cost
 
-- Compare the approved Chant Stage and Product Clear reference against the Flutter result without copying food-app imagery or generic social chrome.
-- Inspect Feed, Create, Songbook, and You at 390 by 844, a narrow phone width, and 1.8x text.
-- Verify bottom navigation labels, selection, safe areas, keyboard behavior, tab restoration, and child-route back behavior.
-- Verify words-only, video, pending, rejected, removed, blocked, empty-following, slow-network, offline, upload retry, playback failure, and reduced-motion states.
-- Keep direct semantic assertions for creator identity, trust state, popularity meaning, and public-link availability outside golden tolerance.
+- No background verification polling. Refresh only on screen entry, app resume, incoming link, or explicit user action.
+- One provider flow or SMS send may be in flight per screen. Buttons remain disabled only for that bounded operation.
+- Email verification and reset resend controls use a visible cooldown. Cooldown is UX protection, not the security boundary.
+- Phone/SMS production enablement requires an explicit regional allowlist, Firebase quota review, billing alert, and observed first-cohort volume. Source implementation does not claim cost safety.
+- Onboarding performs at most one Auth refresh, one idempotent callable, and the existing profile stream reconciliation on completion.
+- Adding provider SDKs requires dependency, binary-size, native-build, license, and update-path review. Remove a provider dependency if the method is not enabled for launch.
 
 ## Verification plan
 
-| Claim | Evidence |
-|---|---|
-| Client models and repositories | Focused unit and fake-Firestore tests where deterministic, plus emulator coverage for authority |
-| Callable admission and counters | Extracted handler tests with duplicate, overlap, timeout, invalid input, and deletion-state cases |
-| Firestore and Storage authority | Java-backed Firestore rules plus the appropriate Storage rules emulator or documented blocker |
-| Shell and creator interface | Widget navigation, state, semantics, text-scale, and targeted golden evidence |
-| Existing behavior did not regress | Full Flutter, Functions, rules, seed, governance, and scoped native checks |
-| Public routes | Resolver unit and integration tests for visible, hidden, removed, missing, and unsafe content |
-| Review boundary | One scoped rationale per completed block, exact commit range, clean runner CI, then the scheduled independent review |
+| Claim | Check | Expected evidence |
+|---|---|---|
+| Auth domain behavior | Focused Dart repository/controller tests with fake Firebase boundaries | Success, cancellation, collision, verification, link, unlink, resend, timeout, and error mapping pass |
+| Server onboarding authority | Functions tests and TypeScript build | Verified token required, narrow input, duplicate and overlap convergence, private fields pinned |
+| Direct-write and verified-contact authority | Java-backed Firestore and Storage emulator suites | Unverified and hostile identities fail; existing verified identities retain intended access |
+| App gate and automatic return | Focused widget tests with lifecycle and user-stream changes | Missing profile, unverified, verified-on-resume, banned, deletion, and policy states select the correct screen |
+| Interface quality | Widget semantics plus targeted goldens | Required screens pass representative iOS, Android, narrow, and 1.8x states with direct semantic assertions outside tolerance |
+| Existing behavior | Full Flutter, Functions, rules, seed, analysis, and governance suites | No regression in established authority or product journeys |
+| iOS native graph | Simulator build with non-secret local Firebase config | App target compiles with intended capabilities; real providers still require configured-device walk |
+| Android source graph | Clean CI `flutter build apk --debug` with non-secret compile fixture | APK exists, package ID is `com.chants.chants`, and exact source SHA is recorded |
+| Android local behavior | `flutter doctor`, local debug build, Play emulator or physical-device walk | Requires Android SDK installation and configured test project |
+| External provider readiness | Operator checklist against Firebase, Apple, Google, Meta, Hosting, APNs, Play, and domain dashboards | Each visible method is enabled, callback and fingerprint match, and test account succeeds without production mutation claims |
+
+## Local implementation evidence
+
+- All three source blocks are implemented in the isolated worktree without provider-console, live Firebase, SMS, signing-key, deployment, commit, push, merge, or store actions.
+- The final local matrix passes 454 Flutter tests, 142 Cloud Functions tests, 42 seed tests, zero-issue Flutter analysis, rules TypeScript compilation, and project-memory, writing-style, native-contract, governance-regression, and diff checks.
+- The Java-backed Firestore and Storage suites remain clean-runner only because this machine has no usable Java runtime.
+- The final iOS source state builds `Runner.app` for the simulator without code signing and reports bundle ID `com.chants.chants`. This is compile evidence, not provider, device, or distribution evidence.
+- This machine has no Android SDK or `adb`. The new Android clean-runner job owns the first APK compile and application-ID proof after commit and push are separately authorized.
 
 ## Rollout and recovery
 
-- Every block remains isolated on a stacked branch and is not deployed by implementation work.
-- New public collections are additive. Old clients continue using chants, profiles, and one-level comments until the compatible client is released.
-- Rules and Functions deploy before a client that depends on them. Public resolvers deploy before share payloads begin emitting URLs.
-- Uploaded media stays behind a server-owned admission and moderation state. If moderation, billing, or playback health is poor, pause admission and keep Songbook plus words-only Chant Lab available.
-- Rollback the client shell to the prior Home entry without deleting creator data. Disable performance admission before rolling back media readers.
-- Schema cleanup, live backfill, bulk moderation, deployment, seed writes, signing, and store release require separate explicit authorization.
+1. Merge compatible rules and `completeOnboarding` Function before enabling a client that can create provider-only Auth accounts.
+2. Keep every new provider hidden through injected availability until its dashboard, native, policy, callback, and device checks pass.
+3. Enable Google and Apple first, then magic link and Facebook, then phone/SMS after the additional consent and cost gates.
+4. Roll back a provider by hiding its entry point while preserving already linked Firebase identities. Do not unlink users in bulk.
+5. If onboarding admission fails, keep existing signed-in profiles working, leave incomplete new accounts behind the missing-profile gate, and forward-fix or disable new provider entry.
+6. If Android build or signing fails, keep Android unreleased. iOS and backend behavior remain separately versioned; no source gate claims store readiness.
+7. Deployment, dashboard changes, domain association, credentials, signing, live SMS, store submission, and production observation require separate explicit authorization.
 
-## Deferred after V1
+## Alternatives rejected
 
-- Beat-synced karaoke recording and editing.
-- Licensed backing-track catalog.
-- Duet, remix, stitches, and collaborative video composition.
-- Automated provider-scale media screening until the operational trigger is met.
-- Paid creator opportunities, marketplace, payouts, sponsorship matching, or ranking-based compensation.
-- Fully personalized recommendation models. The first feed uses transparent recency, trust, following, and popularity inputs.
+- **One giant form with every method visible:** too much cognitive load and does not explain why Chants is worth joining.
+- **FirebaseUI replacement:** the Flutter product already has a custom design system and FirebaseUI does not remove the project-specific profile, age, policy, deletion, and provider-availability contracts.
+- **Client-only profile creation for every provider:** repeats the existing partial-signup failure and cannot authoritatively bind verified-contact state to profile admission.
+- **Automatic account merging by email:** risks joining the wrong identities and conflicts with explicit Apple linking consent.
+- **Store the date of birth:** unnecessary personal data for the existing 17-plus gate.
+- **Enable phone at the same time as source implementation:** obscures SMS cost, regional availability, consent, and real-device abuse checks.
+- **Keep Android release on the debug key:** makes an apparently successful release build unfit for Play delivery.
+- **Persist a favourite club during onboarding before it changes product behavior:** creates dead personal data. The first-destination choice provides immediate relevance without pretending personalization exists.
 
-## Review and correction boundaries
+## External gates and open decisions
 
-Claude independently reviewed `86603c22fbd7647f89c9276af9a60a0b3d63113b...946ab0c` in draft PR 17. It includes the five-tab product shell, creator identity, private follows, activity notifications, moderated performance upload and playback, Stage ranking and interactions, public destinations, published-media moderation, account-deletion integration, Firebase Hosting and Storage rules, CI contract corrections, and durable records. The review found the seven connected lifecycle defects captured in this spec and judged the authorization foundation otherwise strong.
+The source block does not authorize or complete these actions:
 
-The approved correction begins after `946ab0c` and is packaged by the commit carrying this record. Replacement GitHub Actions run `33181165940` passed all six jobs at the earlier implementation head `641281e`; it is not evidence for this correction. The correction requires one exact-head clean-runner result and one narrow independent closure review. The verified run belongs to PR 17's external check history because a commit cannot embed the result of CI that runs on itself. No production Firebase write, deployment, seed write, signing action, store submission, PR merge, or release has been performed.
+- Firebase console provider enablement and email-enumeration protection review.
+- Apple Developer Sign in with Apple setup, key, service ID, consent wording, and associated domains.
+- Google OAuth consent, Android SHA-1/SHA-256 registration, and iOS URL configuration.
+- Meta developer app, Facebook Login settings, privacy policy, data deletion URL, and app review if required.
+- Firebase Hosting auth link domain, authorized domains, iOS Universal Links, Android `assetlinks.json`, and deployed callback verification.
+- Phone regions, test numbers, APNs, Play Integrity/reCAPTCHA, quota, billing alert, and live SMS.
+- Android SDK installation on this Mac, physical device or emulator setup, upload key generation, Play App Signing, Play Console, and store release.
 
-## Remaining gates
+## Requested approval
 
-1. Finish or rerun native iOS and Android compilation in an environment that completes Xcode and has the Android SDK.
-2. Perform the combined device walkthrough for recording, device selection, permission denial, upload recovery, playback, sharing, Following fallback, comments, notification routing, moderation, blocking, deletion, text scale, and offline behavior.
-3. Replace the placeholder content policy and finalize privacy policy, terms, reporting expectations, and creator-media rules.
-4. Configure and verify `chantsfc.com`, Hosting rewrites, IAM URL signing, universal or app links, store destinations, App Check, billing alerts, staged and removed-media cleanup alerts, Function alerts, and deployed rules parity.
-5. Push the correction commit to draft PR 17 and require all six clean-runner jobs at that exact head.
-6. Give Claude one narrow closure review of `946ab0c...<correction-head>` and correct only a reproduced remaining blocker before declaring the creator-platform source freeze.
+Approve with:
+
+`approved V1 launch authentication, onboarding, and Android readiness spec`
+
+Approval authorizes local source, tests, native project configuration without secrets, durable records, and clean-runner CI preparation on `codex/v1-auth-onboarding-android`. It does not authorize provider-console changes, live Firebase changes, SMS sends, credentials, signing-key creation, deployment, commit, push, merge, or store release.

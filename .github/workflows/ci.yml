@@ -54,6 +54,55 @@ jobs:
       - name: Analyze
         run: flutter analyze
 
+  android-debug-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+      - name: Configure non-secret Android build fixtures
+        run: |
+          cp lib/firebase_options.dart.example lib/firebase_options.dart
+          cp android/app/google-services.json.example android/app/google-services.json
+      - name: Build debug APK
+        run: flutter build apk --debug
+      - name: Verify APK identity and record digest
+        run: |
+          test -f build/app/outputs/flutter-apk/app-debug.apk
+          test "$(apkanalyzer manifest application-id build/app/outputs/flutter-apk/app-debug.apk)" = "com.chants.chants"
+          sha256sum build/app/outputs/flutter-apk/app-debug.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: chants-android-debug-${{ github.sha }}
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          if-no-files-found: error
+          retention-days: 7
+
+  ios-simulator-build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+      - name: Configure non-secret iOS build fixtures
+        run: |
+          cp lib/firebase_options.dart.example lib/firebase_options.dart
+          cp ios/Runner/GoogleService-Info.plist.example ios/Runner/GoogleService-Info.plist
+      - name: Resolve locked CocoaPods graph
+        run: pod install
+        working-directory: ios
+      - name: Build iOS simulator app
+        run: flutter build ios --simulator --no-codesign
+      - name: Verify app identity and exact source
+        run: |
+          test -d build/ios/iphonesimulator/Runner.app
+          test "$(plutil -extract CFBundleIdentifier raw build/ios/iphonesimulator/Runner.app/Info.plist)" = "com.chants.chants"
+          git rev-parse HEAD
+
   functions:
     runs-on: ubuntu-latest
     defaults:

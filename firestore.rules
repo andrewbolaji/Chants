@@ -6,8 +6,22 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function hasVerifiedContact() {
+      return isAuth()
+        && (request.auth.token.email_verified == true
+          || (request.auth.token.phone_number is string
+            && request.auth.token.phone_number.size() > 0)
+          || request.auth.token.firebase.sign_in_provider in [
+            'apple.com', 'google.com', 'facebook.com'
+          ]
+          || (request.auth.token.firebase.identities is map
+            && request.auth.token.firebase.identities.keys().hasAny([
+              'apple.com', 'google.com', 'facebook.com'
+            ])));
+    }
+
     function isOperator() {
-      return isAuth() &&
+      return hasVerifiedContact() &&
         exists(/databases/$(database)/documents/profiles/$(request.auth.uid))
         && !exists(/databases/$(database)/documents/accountDeletionJobs/$(request.auth.uid))
         && get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.role == 'operator'
@@ -20,7 +34,8 @@ service cloud.firestore {
     }
 
     function isNotBanned() {
-      return exists(/databases/$(database)/documents/profiles/$(request.auth.uid))
+      return hasVerifiedContact()
+        && exists(/databases/$(database)/documents/profiles/$(request.auth.uid))
         && !exists(/databases/$(database)/documents/accountDeletionJobs/$(request.auth.uid))
         && get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.banned == false
         && (!('deletionPending' in get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data)
@@ -400,31 +415,14 @@ service cloud.firestore {
       allow write: if isOperator();
     }
 
-    // profiles: private to the owner and operators, owner create (role, banned, ageConfirmed17Plus,
-    // userReportCount pinned; acceptedPolicyVersion/acceptedPolicyAt must be
-    // absent, only the acceptPolicy Cloud Function sets them via the Admin
-    // SDK), owner update (cannot change role, banned, ageConfirmed17Plus,
-    // acceptedPolicyVersion, acceptedPolicyAt, or userReportCount)
+    // profiles: private to the owner and operators. Initial creation and policy
+    // acceptance are server-owned so one verified-contact transaction creates
+    // a coherent account. Owners may update display name only.
     match /profiles/{userId} {
       allow get: if isAuth() && (request.auth.uid == userId || isOperator());
       allow list: if isOperator();
-      allow create: if isAuth() && request.auth.uid == userId
-        && !exists(/databases/$(database)/documents/accountDeletionJobs/$(request.auth.uid))
-        && request.resource.data.keys().hasOnly(
-            ['displayName', 'role', 'banned', 'ageConfirmed17Plus',
-             'userReportCount', 'createdAt', 'updatedAt'])
-        && request.resource.data.role == 'user'
-        && request.resource.data.banned == false
-        && request.resource.data.ageConfirmed17Plus == true
-        && request.resource.data.userReportCount == 0
-        && !('acceptedPolicyVersion' in request.resource.data)
-        && !('acceptedPolicyAt' in request.resource.data)
-        && request.resource.data.displayName is string
-        && request.resource.data.displayName.size() > 0
-        && request.resource.data.displayName.size() <= 50
-        && validRecentClientTimestamp(request.resource.data.createdAt)
-        && validRecentClientTimestamp(request.resource.data.updatedAt);
-      allow update: if isAuth() && request.auth.uid == userId
+      allow create: if false;
+      allow update: if hasVerifiedContact() && request.auth.uid == userId
         && !exists(/databases/$(database)/documents/accountDeletionJobs/$(request.auth.uid))
         && (!('deletionPending' in resource.data)
             || resource.data.deletionPending == false)
@@ -627,7 +625,8 @@ service cloud.firestore {
         && isVisibleChant(resource.data.chantId)
         && request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['value']);
-      allow delete: if isAuth() && resource.data.userId == request.auth.uid;
+      allow delete: if hasVerifiedContact()
+        && resource.data.userId == request.auth.uid;
     }
 
     // Report admission is server-owned so rate budget and report creation can
@@ -680,7 +679,7 @@ service cloud.firestore {
         && isVisibleChant(request.resource.data.chantId)
         && validReplyParent(request.resource.data);
       // Author can only soft-delete (set removed: true on their own comment)
-      allow update: if isAuth()
+      allow update: if hasVerifiedContact()
         && resource.data.userId == request.auth.uid
         && request.resource.data.removed == true
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['removed']);
@@ -724,7 +723,8 @@ service cloud.firestore {
             get(/databases/$(database)/documents/comments/$(resource.data.commentId)).data.userId)
         && request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['value']);
-      allow delete: if isAuth() && resource.data.userId == request.auth.uid;
+      allow delete: if hasVerifiedContact()
+        && resource.data.userId == request.auth.uid;
     }
 
     // Comment report admission is server-owned. Read behavior is unchanged.
@@ -757,7 +757,8 @@ service cloud.firestore {
         && request.resource.data.createdAt is timestamp
         && blockId == request.auth.uid + '_' + request.resource.data.blockedUserId
         && isActiveProfile(request.resource.data.blockedUserId);
-      allow delete: if isAuth() && resource.data.blockerId == request.auth.uid;
+      allow delete: if hasVerifiedContact()
+        && resource.data.blockerId == request.auth.uid;
       allow update: if false;
     }
 

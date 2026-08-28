@@ -5,6 +5,20 @@ service firebase.storage {
       return request.auth != null;
     }
 
+    function hasVerifiedContact() {
+      return isSignedIn()
+        && (request.auth.token.email_verified == true
+          || (request.auth.token.phone_number is string
+            && request.auth.token.phone_number.size() > 0)
+          || request.auth.token.firebase.sign_in_provider in [
+            'apple.com', 'google.com', 'facebook.com'
+          ]
+          || (request.auth.token.firebase.identities is map
+            && request.auth.token.firebase.identities.keys().hasAny([
+              'apple.com', 'google.com', 'facebook.com'
+            ])));
+    }
+
     function accountIsActive(uid) {
       let profile = firestore.get(
         /databases/(default)/documents/profiles/$(uid)
@@ -50,6 +64,7 @@ service firebase.storage {
     // with that server-owned draft. Direct replacement and deletion are off.
     match /performance-staging/{uid}/{draftId}/source {
       allow create: if isSignedIn()
+        && hasVerifiedContact()
         && request.auth.uid == uid
         && accountIsActive(uid)
         && resource == null

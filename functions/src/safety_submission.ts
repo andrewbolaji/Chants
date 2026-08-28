@@ -88,6 +88,42 @@ export function requireAuthenticatedUid(
   return auth.uid;
 }
 
+export function requireVerifiedUid(
+  auth: {
+    uid: string;
+    token?: Record<string, unknown>;
+  } | undefined
+): string {
+  const uid = requireAuthenticatedUid(auth);
+  const token = auth?.token;
+  const hasVerifiedEmail = token?.email_verified === true;
+  const phoneNumber = token?.phone_number;
+  const hasVerifiedPhone = typeof phoneNumber === "string" &&
+    phoneNumber.trim().length > 0;
+  const firebaseClaim = token?.firebase;
+  const signInProvider = isRecord(firebaseClaim)
+    ? firebaseClaim.sign_in_provider
+    : undefined;
+  const identities = isRecord(firebaseClaim)
+    ? firebaseClaim.identities
+    : undefined;
+  const trustedProviders = ["apple.com", "google.com", "facebook.com"];
+  const hasTrustedFederatedProvider =
+    (typeof signInProvider === "string" &&
+      trustedProviders.includes(signInProvider)) ||
+    (isRecord(identities) && trustedProviders.some((provider) => {
+      const identityValues = identities[provider];
+      return Array.isArray(identityValues) && identityValues.length > 0;
+    }));
+  if (!hasVerifiedEmail && !hasVerifiedPhone && !hasTrustedFederatedProvider) {
+    throw new HttpsError(
+      "permission-denied",
+      "Verify an email address or phone number to continue."
+    );
+  }
+  return uid;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }

@@ -20,8 +20,9 @@ The path from code-complete to public launch, with concrete triggers on every ga
 - Visual identity: complete "matchnight, warmed with playful" redesign, tokenized, AA contrast proven.
 
 **Not yet done:**
-- Push the packaged PR 17 takedown and integrity correction, run exact-head clean-runner CI, and obtain one narrow independent closure review.
-- Complete iOS and Android native compilation for the current media dependency graph, followed by visual sign-off and the combined V1 device walkthrough.
+- Obtain one narrow independent closure review of the pushed PR 17 correction at `8b457d8`. Exact-head clean-runner run `33190943182` is green across all six jobs.
+- Package the locally verified V1 launch authentication and onboarding block, then prove Android compilation on the new clean-runner job. Provider dashboards, credentials, SMS, signing, and store actions remain separate release gates.
+- Complete Android native compilation for the current dependency graph, followed by visual sign-off and the combined V1 device walkthrough. The final iOS simulator source build passes locally.
 - The read-only live chant-identity preflight before the next production seed write.
 - The remaining verified club seed.
 - Saved Matchday Songbook airplane-mode device walk; its iOS client compilation now passes.
@@ -69,12 +70,13 @@ V1 is a trusted songbook and a creator workshop. The work is sequenced as bounde
 12. **Build the Chant Stage performance block.** Packaged and clean-runner green in draft PR 17. A separate performance entity uses private Storage staging, record or library selection up to 30 seconds, manual approval, bounded paginated feed queries, explicit playback, and server-owned likes, qualified views, comments, unique shares, and weekly ranking. Existing words-only chants remain valid.
 13. **Build public and social destinations.** Packaged and clean-runner green in draft PR 17. Chants, performances, and creators have stable server-rendered destinations and safe previews. Public performance pages use a current-authority media route. Private follows, aggregate counts, Following fallback, validated mentions, continued performance replies, and bounded activity notifications are integrated.
 14. **Integrate and freeze the creator expansion.** The initial range is packaged and clean-runner green. Claude's review found source-lifecycle gaps rather than a failed creator-platform premise. The packaged correction closes current creator and chant authority, source reconciliation, exact performance counts, Stage and profile blocking, hidden-content escalation, and durable media deletion. Run exact-head CI and obtain one narrow closure review before native and device evidence.
+15. **Build launch authentication, onboarding, and Android readiness.** Implemented and locally verified in the approved worktree. Chants now has a product-specific welcome, verified email and automatic return, recoverable server-owned onboarding, Apple, Google, Facebook, magic-link and phone paths behind fail-closed flags, explicit same-UID linking, truthful reset, iOS entitlements, fail-closed Android signing, and clean-runner native build jobs. The 454 Flutter, 142 Functions, and 42 seed tests, analysis, source contracts, and iOS simulator build pass. Exact-head CI, the Android artifact, provider configuration, and device walkthrough remain gates.
 
 The original Songbook and Chant Lab boundary remains in `docs/decisions/004-songbook-and-chant-lab.md`; creator-platform decisions are 017 through 022 and the active implementation contract is `docs/CHANGE_SPEC.md`. Beat-synced karaoke editing, licensed backing tracks, duet or remix tools, payouts, scheduled challenges, automated large-scale media screening, and personalized recommendation models remain later work.
 
-The pre-creator V1 stack is merged through `86603c2`. Creator-platform review head `946ab0c` contains the initial clean-runner-green implementation and durable records. The accepted post-review correction is locally implemented but not yet committed or clean-runner verified. Its iOS 12.18 CocoaPods graph resolves, but the first full Xcode compile was terminated after an extended silent wait; Android is blocked locally by the missing SDK. Exact-head CI, the narrow correction review, completed native builds, and the combined device walkthrough remain the gates that turn source confidence into release sign-off.
+The pre-creator V1 stack is merged through `86603c2`. PR 17 now carries the packaged post-review correction at `8b457d8`, and exact-head clean-runner run `33190943182` passed all six jobs. The current iOS 12.18 CocoaPods graph resolves and builds the simulator app from the final local auth source. Android is still blocked locally by the missing SDK. The narrow correction review, auth-block packaging and exact-head CI, Android build, provider setup, and combined device walkthrough remain gates that turn source confidence into release sign-off.
 
-**Trigger to exit:** Exact-head CI and the independent creator-platform review are green; both native clients compile; recording or choosing, upload recovery, approval, playback, sharing, Following, comments, activity, moderation, blocking, deletion, and offline Songbook pass the combined device walk; provenance and promotion rules still work end to end; and public share-out never produces a broken destination.
+**Trigger to exit:** The independent creator-platform closure review is green; approved launch auth and onboarding are complete; both native clients compile; recording or choosing, upload recovery, approval, playback, sharing, Following, comments, activity, moderation, blocking, deletion, authentication, verification, and offline Songbook pass the combined device walk; provenance and promotion rules still work end to end; and public share-out never produces a broken destination.
 
 ---
 
@@ -114,6 +116,7 @@ Parallel track (not a v1 launch blocker): flip the GitHub repo public for job ap
 - **DONE** Fanzine visual redesign across all surfaces (commit 4f9f8ae).
 - **DONE** Vote rapid-tap reconciliation fixed (commit 9912adf).
 - **DONE** Vote stale-load mismatch fixed via appliedValue reconciliation; detail screen now subscribes to a live chant stream (commit 38f559a).
+- **IN PROGRESS** Launch authentication and onboarding are implemented and locally verified with server-owned initial profile creation and requested providers hidden until configuration. Packaging, Android clean-runner proof, exact-head CI, provider setup, and device evidence remain before release.
 
 ### Comments on chants (v1, likes plus one reply level)
 
