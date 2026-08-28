@@ -36,13 +36,13 @@ This is the current design contract and decision history for Chants. Read the re
 
 ### 2026-08-28T00:00:00Z Complete Chant Stage, public sharing, creator graph, and media safety
 
-- **Status:** implemented locally; packaging, clean-runner CI, independent review, and device walkthrough pending
+- **Status:** packaged and implementation-head clean-runner green in draft PR 17; independent review and device walkthrough pending
 - **Surface and user problem:** The foundation still behaved primarily as a chant catalogue. Fans could not publish a short performance, compete on reach, follow creators, continue a funny conversation, or share a destination outside the installed app.
 - **Decision:** Replace Feed with the approved Chant Stage, add 30-second record or choose upload with manual approval, preserve chant trust separately, expose truthful performance popularity, add private follows and activity, allow continued performance replies with bounded visual depth, publish current-authority web destinations, and extend report, block, moderation, and deletion behavior to every new entity.
 - **Why:** This restores the creator-led product vision without tearing down the trusted Songbook and Chant Lab architecture. Each new public surface has a server-owned admission and lifecycle boundary before it appears in the interface.
 - **Required states:** Rising, New, Terrace, Following and fallback; poster, playback, retry, missing and blocked; record, choose, permission denial, cancel, upload, pending, reject, remove; followed and unfollowed; mention, reply and focused thread; public visible and unavailable; reported, hidden and restored media; deletion during upload or interaction.
 - **Accessibility/responsive impact:** Video is user-initiated, controls are written, cards keep trust and popularity distinct, deep replies preserve text width, the five-tab shell retains semantic labels, and the representative Stage plus creator profile goldens have been inspected.
-- **Implementation evidence:** Decisions 018 through 021, 415 Flutter tests, 122 Functions tests, 157 Java-backed Firestore and Storage assertions, 42 seed tests, full analysis exit 0, and focused goldens. Native and clean-runner evidence remain open.
+- **Implementation evidence:** Decisions 018 through 021, 415 Flutter tests, 122 Functions tests, 157 Java-backed Firestore and Storage assertions, 42 seed tests, zero-issue analysis, focused goldens, and all six jobs green in replacement run `33181165940` at implementation head `641281e`. Native and device evidence remain open.
 - **Revisit when:** Stage volume needs personalized ranking, more than 30 followed creators must be queried together, manual review misses its target, public egress crosses budget, or karaoke and remix tools receive a separate approved design.
 - **Related:** `docs/decisions/018-performance-stage-and-admission.md` through `021-published-media-safety.md`, `docs/CHANGE_SPEC.md`
 

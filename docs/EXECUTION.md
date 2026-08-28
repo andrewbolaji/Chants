@@ -15,7 +15,7 @@ This is the chronological evidence trail for substantial engineering work. It re
 
 ### 2026-08-28T01:24:55Z Start the creator platform expansion
 
-- **Status:** Implemented and locally verified; packaging, exact-head CI, independent review, native completion, and release gates pending
+- **Status:** Packaged in draft PR 17 and implementation-head clean-runner green; independent review, native completion, and release gates pending
 - **Scope:** Build the approved Chant Stage feed direction and Product Clear navigation, including public creator identity, 30-second moderated performances, popularity, public destinations, private follows, activity, mentions, continued performance threads, and integration hardening. No live Firebase, deployment, signing, seed write, store, or production action is authorized by this entry.
 - **Reference:** `docs/CHANGE_SPEC.md`
 - **Approval:** Andrew selected Feed Pass 3 and Navigation Pass 3 and explicitly approved starting the build on 2026-08-27.
@@ -39,9 +39,10 @@ This is the chronological evidence trail for substantial engineering work. It re
 | 05:40:20 | Repeated the iOS compile with warm caches and closed local artifacts | Local Xcode and worktree | The retry skipped pod resolution and again remained silent in Xcode compilation until the bounded stop, with no source diagnostic. Removed the ignored non-secret Firebase analysis fixture and confirmed no golden failure directories remain. |
 | 14:36:04 | Ran first exact-head clean-runner CI | GitHub Actions run `33180742374` at `643779a` | Governance, Functions, seed, and the expanded Firestore plus Storage jobs passed. Flutter 3.47.2 made six inherited initializing-formal notices fatal and measured creator-profile and chant-detail renderer drift at 1.70 and 1.97 percent, just above their local thresholds. Flutter otherwise passed 413 tests. |
 | 14:45:00 | Corrected clean-runner-only analysis and golden boundaries | Two inherited service constructors and two scoped golden tests | Suppressed only the initializing-formal suggestion where adopting private named parameters would break the public injection API. Set measured per-image ceilings of 1.8 percent for creator profile and 2.0 percent for chant detail; no process-wide tolerance changed. Replacement exact-head CI is required. |
+| 14:57:00 | Watched replacement clean-runner CI to completion | GitHub Actions run `33181165940` at `641281e` in draft PR 17 | PASS: all six jobs completed without failure or skip. Evidence includes 415 Flutter tests, zero-issue analysis on Flutter 3.47.2, 122 Functions tests, 157 Firestore and Storage assertions, 42 seed tests, and project governance. |
 
-- **Current state:** The approved creator-platform source is implemented locally with the final automated matrix green. Nothing has been committed, pushed, deployed, or written to live Firebase.
-- **Follow-up:** Run final style, formatting, diff, and focused reruns; finish native compilation if the local environment permits; then package only on Andrew's instruction, obtain clean-runner CI, and give Claude the requested exact-range independent review.
+- **Current state:** The approved creator-platform implementation is committed and pushed in draft PR 17. The implementation head is green locally and on the clean runner. Nothing has been deployed or written to live Firebase.
+- **Follow-up:** Finish the documentation-only evidence commit and its final-head CI, then give Claude the requested `86603c22...641281e` independent review. Native, device, policy, configuration, deploy, seed, signing, and release gates remain separate.
 
 ### 2026-08-27T00:25:16Z Close the final independent freeze review
 

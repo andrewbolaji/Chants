@@ -1,6 +1,6 @@
 # Repository implementation rationale
 
-This document explains the current Chants repository, including inherited systems and the uncommitted creator-platform range based on merged `main` at `86603c22fbd7647f89c9276af9a60a0b3d63113b`. It is a reviewer map, not proof of deployment or release readiness.
+This document explains the current Chants repository, including inherited systems and the packaged creator-platform range `86603c22...641281e` based on merged `main` at `86603c22fbd7647f89c9276af9a60a0b3d63113b`. It is a reviewer map, not proof of deployment or release readiness.
 
 ## Document identity and completeness
 
@@ -9,7 +9,7 @@ This document explains the current Chants repository, including inherited system
 - **Durable creator decisions:** 017 through 021
 - **Execution evidence:** `docs/EXECUTION.md`
 - **Interface memory:** `docs/INTERFACE.md`
-- **Known missing evidence:** exact-head CI, independent review, both native builds, combined device walk, production configuration, policy, deploy, seed completion, signing, and release
+- **Known missing evidence:** independent review, both native builds, combined device walk, production configuration, policy, deploy, seed completion, signing, and release
 
 ## Repository coverage ledger
 
@@ -179,12 +179,13 @@ The launch must set billing alerts, staged-object cleanup, Function alerts, mode
 | Command or probe | Result |
 |---|---|
 | `flutter test` | PASS, 415 |
-| `flutter analyze` with the checked-in non-secret fixture | PASS exit 0; inherited initializing-formal info remains |
+| `flutter analyze` with the checked-in non-secret fixture | PASS with zero issues locally and in clean-runner CI |
 | `functions/npm test` | PASS, 122 |
 | Firestore plus Storage emulator | PASS, 157 |
 | `seed/npm test` | PASS, 42 |
 | `scripts/test-project-governance.sh` | PASS after adding review-range coverage |
-| `git diff --check` | PASS before final documentation refresh; rerun required at handoff |
+| `git diff --check` | PASS at packaging; rerun after the final documentation refresh |
+| GitHub Actions run `33181165940` | PASS at implementation head `641281e`; all six jobs completed without failure or skip |
 | Three targeted goldens | Updated, passing, and visually inspected |
 | CocoaPods resolution | PASS on Firebase iOS 12.18 |
 | iOS simulator compile | Incomplete after extended silent Xcode compilation |
@@ -206,7 +207,7 @@ Recovery options are additive. Pause performance admission without removing Song
 | `docs/changes/2026-08-27-creator-platform-foundation.md` | Exact implementation reasoning and evidence |
 | Decisions 017 through 021 | Shell, identity, performance, public, social, and safety architecture |
 | `docs/INTERFACE.md` | Current Stage, creator, conversation, moderation, and inherited interaction contract |
-| `docs/ROADMAP.md` | Creator source complete locally; packaging, review, native, policy, configuration, seed, and release remain |
+| `docs/ROADMAP.md` | Creator source packaged and clean-runner green; review, native, policy, configuration, seed, and release remain |
 | `ENGINEERING_OVERVIEW.md` | Reviewer-oriented current code map |
 
 ## Known compromises and uncertainty

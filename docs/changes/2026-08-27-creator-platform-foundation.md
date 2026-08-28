@@ -91,6 +91,10 @@ Video does not autoplay. Play, retry, comments, follow, share, report, moderatio
 
 The exact final counts may change if a later correction adds tests. `docs/EXECUTION.md` owns the final handoff numbers.
 
+## Packaging and clean-runner evidence
+
+The implementation is packaged in draft PR 17. Commits `0e75c40`, `643779a`, and `641281e` separate runtime and test work, durable architecture, and clean-runner-only corrections. Replacement GitHub Actions run `33181165940` passed all six jobs at implementation head `641281e`: 415 Flutter tests, zero-issue Flutter analysis, 122 Functions tests, 157 Firestore and Storage assertions, 42 seed tests, and project governance. No job failed or was skipped.
+
 ## Rollout, observation, and recovery
 
 No deployment was authorized or performed. The compatible rollout order is Firestore and Storage rules, Functions, Hosting, then the client. Hosting and media resolution must be verified before a release client emits public links.
@@ -122,4 +126,4 @@ If moderation or cost health is poor, pause new performance admission while leav
 
 ## Remaining gates
 
-Package the exact branch, run clean-runner CI, obtain the one requested Claude review, correct accepted findings separately, complete both native builds and the combined device walkthrough, finish policy and production configuration, then request separate authority for deploy, seed writes, signing, and release.
+Obtain the one requested Claude review of `86603c22...641281e`, correct accepted findings separately, complete both native builds and the combined device walkthrough, finish policy and production configuration, then request separate authority for deploy, seed writes, signing, and release.

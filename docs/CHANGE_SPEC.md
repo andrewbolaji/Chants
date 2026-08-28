@@ -1,7 +1,7 @@
 # Change spec: Creator platform expansion
 
-**Status:** Implemented locally; packaging, clean-runner CI, independent review, and release gates pending
-**Updated:** 2026-08-27
+**Status:** Implemented and packaged in draft PR 17; implementation-head clean-runner CI green; independent review and release gates pending
+**Updated:** 2026-08-28
 **Risk lane:** Lane 2, public identity, uploaded media, persistent social data, public routes, moderation, privacy, and cost
 **Base:** `86603c22fbd7647f89c9276af9a60a0b3d63113b`, merged PR 16 main
 **Approval:** Andrew approved Feed Pass 3, Chant Stage, and Navigation Pass 3, Product Clear, after reviewing three feed passes and three navigation passes. He also approved 30-second record or upload performances, performance popularity signals, creator bios, follows before V1, public chant URLs with rich previews, mentions, and deeper conversations.
@@ -182,9 +182,9 @@
 
 ## Implemented review boundary
 
-The local review boundary is the complete uncommitted diff from merged `main` at `86603c22fbd7647f89c9276af9a60a0b3d63113b`. It includes the five-tab product shell, creator identity, private follows, activity notifications, moderated performance upload and playback, Stage ranking and interactions, public destinations, published-media moderation, account-deletion integration, Firebase Hosting and Storage rules, CI contract corrections, and durable records.
+The independent review boundary is `86603c22fbd7647f89c9276af9a60a0b3d63113b...641281e` in draft PR 17. It includes the five-tab product shell, creator identity, private follows, activity notifications, moderated performance upload and playback, Stage ranking and interactions, public destinations, published-media moderation, account-deletion integration, Firebase Hosting and Storage rules, CI contract corrections, and durable records.
 
-No production Firebase write, deployment, seed write, signing action, store submission, commit, push, or pull request has been performed in this implementation block.
+The range is committed and pushed. Replacement GitHub Actions run `33181165940` passed all six clean-runner jobs at implementation head `641281e`. No production Firebase write, deployment, seed write, signing action, store submission, PR merge, or release has been performed in this implementation block.
 
 ## Remaining gates
 
@@ -192,5 +192,5 @@ No production Firebase write, deployment, seed write, signing action, store subm
 2. Perform the combined device walkthrough for recording, device selection, permission denial, upload recovery, playback, sharing, Following fallback, comments, notification routing, moderation, blocking, deletion, text scale, and offline behavior.
 3. Replace the placeholder content policy and finalize privacy policy, terms, reporting expectations, and creator-media rules.
 4. Configure and verify `chantsfc.com`, Hosting rewrites, IAM URL signing, universal or app links, store destinations, App Check, billing alerts, Storage cleanup, Function alerts, and deployed rules parity.
-5. Package the exact range, obtain clean-runner CI, and give Claude the one requested independent review.
+5. Give Claude the one requested independent review of `86603c22...641281e` and preserve its findings as a separate review artifact.
 6. Correct accepted review findings in a separate bounded record before declaring the creator-platform source freeze.

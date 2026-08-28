@@ -1,6 +1,6 @@
 # Chants engineering overview
 
-This is the current whole-project map for the uncommitted creator-platform implementation on `codex/v1-creator-platform-foundation`, based on merged `main` at `86603c22fbd7647f89c9276af9a60a0b3d63113b`. It describes source reality, including inherited and unchanged systems. It is not a deployment claim or an approval record.
+This is the current whole-project map for the packaged creator-platform implementation on `codex/v1-creator-platform-foundation`, based on merged `main` at `86603c22fbd7647f89c9276af9a60a0b3d63113b`. The reviewed implementation boundary is `86603c22...641281e` in draft PR 17. It describes source reality, including inherited and unchanged systems. It is not a deployment claim or an approval record.
 
 The active approval contract is `docs/CHANGE_SPEC.md`. Completed change reasoning is in `docs/changes/2026-08-27-creator-platform-foundation.md`. Durable architectural choices are decisions 017 through 021. `docs/IMPLEMENTATION_RATIONALE.md` is the companion coverage ledger and verification record.
 
@@ -13,7 +13,7 @@ Chants now has the intended two-part product rather than a catalogue alone:
 
 The implementation preserves the central trust boundary. A performance has its own status, media, creator, and popularity counters. It cannot mutate the attached chant's `canonical` or `community` state (`functions/src/performance.ts :: handleModeratePerformance`; `docs/decisions/018-performance-stage-and-admission.md`).
 
-The local automated matrix is green: 415 Flutter tests, 122 Cloud Functions tests, 157 Firestore and Storage emulator assertions, 42 seed tests, full Flutter analysis exit 0, and project-governance regressions. The iOS CocoaPods graph resolves on Firebase iOS 12.18, but the full Xcode compile did not complete within the bounded local attempt. Android compilation is blocked by the absent SDK. Clean-runner CI, one independent Claude review, both native builds, the combined device walkthrough, policy, production configuration, deployment, and release remain open (`docs/EXECUTION.md :: 2026-08-28 creator platform entry`).
+The local automated matrix is green: 415 Flutter tests, 122 Cloud Functions tests, 157 Firestore and Storage emulator assertions, 42 seed tests, full Flutter analysis exit 0, and project-governance regressions. Replacement clean-runner run `33181165940` passed all six jobs at implementation head `641281e`, including zero-issue analysis on Flutter 3.47.2 and the complete 415-test Flutter suite. The iOS CocoaPods graph resolves on Firebase iOS 12.18, but the full Xcode compile did not complete within the bounded local attempt. Android compilation is blocked by the absent SDK. One independent Claude review, both native builds, the combined device walkthrough, policy, production configuration, deployment, and release remain open (`docs/EXECUTION.md :: 2026-08-28 creator platform entry`).
 
 ## Product and navigation
 
@@ -121,7 +121,7 @@ The compatible rollout order is Firestore and Storage rules, Functions, Hosting,
 
 ## Unverified
 
-- Exact-head clean-runner CI and the requested independent Claude review.
+- The requested independent Claude review of `86603c22...641281e`.
 - Completed iOS and Android native builds for the creator-platform graph.
 - Camera and library permissions, upload progress, backgrounding, retry, cancellation, playback, share destinations, Following, notifications, deep comments, moderation, blocking, deletion, accessibility, and offline behavior on real devices.
 - `chantsfc.com` Hosting deployment, DNS, domain association, social crawler output, app/store routing, and URL-signing IAM.
