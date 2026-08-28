@@ -156,4 +156,34 @@ void main() {
 
     expect(auth.signInCalls, 0);
   });
+
+  test(
+    'cancellation stays terminal after an in-flight credential fails',
+    () async {
+      final auth = _PhoneFirebaseAuth();
+      final repository = AuthRepository(
+        auth: auth,
+        googleSignIn: _MockGoogleSignIn(),
+        facebookAuth: _MockFacebookAuth(),
+      );
+      final start = await repository.startPhoneVerification(
+        phoneNumber: '+447700900123',
+        linkToCurrentUser: false,
+      );
+      auth.blockedSignIn = Completer<UserCredential>();
+
+      auth.verificationCompletedCallback!(_MockPhoneCredential());
+      await Future<void>.delayed(Duration.zero);
+      expect(auth.signInCalls, 1);
+
+      start.attempt!.cancel();
+      auth.blockedSignIn!.completeError(StateError('credential rejected'));
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
+
+      auth.verificationCompletedCallback!(_MockPhoneCredential());
+      await Future<void>.delayed(Duration.zero);
+      expect(auth.signInCalls, 1);
+    },
+  );
 }

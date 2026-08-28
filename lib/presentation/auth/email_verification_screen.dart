@@ -90,7 +90,17 @@ class _EmailVerificationScreenState
       _message = null;
     });
     try {
-      await ref.read(authRepositoryProvider).sendEmailVerification();
+      final sent = await ref
+          .read(authRepositoryProvider)
+          .sendEmailVerification();
+      if (!sent) {
+        await ref.read(authRepositoryProvider).reloadCurrentUser();
+        if (!mounted) return;
+        setState(() {
+          _message = 'Email is already verified. Account status refreshed.';
+        });
+        return;
+      }
       if (!mounted) return;
       setState(() {
         _message = 'Verification email sent. Check your inbox and spam folder.';

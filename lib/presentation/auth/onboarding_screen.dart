@@ -25,6 +25,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   bool _leaving = false;
   int _destination = 0;
   String? _error;
+  String? _status;
 
   @override
   void dispose() {
@@ -87,11 +88,17 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     setState(() {
       _loading = true;
       _error = null;
+      _status = null;
     });
     try {
       await ref
           .read(onboardingRepositoryProvider)
           .complete(displayName: _displayNameController.text);
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _status = 'Setup was saved. You can safely enter again or sign out.';
+      });
     } catch (error) {
       if (!mounted) return;
       setState(() {
@@ -202,6 +209,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             ),
             const SizedBox(height: Spacing.sm),
             SegmentedButton<int>(
+              style: const ButtonStyle(
+                minimumSize: WidgetStatePropertyAll(Size(0, 48)),
+              ),
               segments: const [
                 ButtonSegment(value: 0, label: Text('Stage')),
                 ButtonSegment(value: 1, label: Text('Clubs')),
@@ -220,6 +230,16 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 child: Text(
                   _error!,
                   style: const TextStyle(color: AppColors.error),
+                ),
+              ),
+            ],
+            if (_status != null) ...[
+              const SizedBox(height: Spacing.lg),
+              Semantics(
+                liveRegion: true,
+                child: Text(
+                  _status!,
+                  style: const TextStyle(color: AppColors.success),
                 ),
               ),
             ],

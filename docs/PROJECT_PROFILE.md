@@ -8,7 +8,7 @@ This is the compact source of truth to read before changing Chants. Detailed cur
 - **Purpose:** A mobile football songbook and creator stage where supporters learn Terrace Proven chants, build and rank new ideas in Chant Lab, and publish short performances around the chant itself.
 - **Primary users:** Premier League supporters using iOS or Android at home, in transit, in pubs, and at crowded grounds with unreliable connectivity. The interface must remain understandable to first-time users and resilient to text scaling and assistive technology.
 - **Failure cost:** Authority or privacy failure can expose restricted data or accept unsafe actions. Content corruption can publish inaccurate lyrics. Offline or lifecycle failure can strand saved matchday content. Ordinary presentation defects mainly cost trust, comprehension, and retention.
-- **Non-goals for V1:** Beat-synced karaoke editing, licensed backing tracks, duet or remix tools, paid creator opportunities, fully personalized recommendations, cloud sync for Saved Matchday Songbook, automated large-scale media screening, and automated lyric generation. Public creator identity, short moderated performance video, follows, public destinations, mentions, and continued performance replies are packaged in draft PR 17. Its initial independent review is complete; the approved takedown correction is packaged and still requires exact-head clean-runner CI plus one narrow closure review.
+- **Non-goals for V1:** Beat-synced karaoke editing, licensed backing tracks, duet or remix tools, paid creator opportunities, fully personalized recommendations, cloud sync for Saved Matchday Songbook, automated large-scale media screening, and automated lyric generation. Public creator identity, short moderated performance video, follows, public destinations, mentions, continued performance replies, launch authentication, and Android source readiness are packaged through exact PR 18 head `db40f42`. Its eight-job clean CI and consolidated independent review are complete. The approved nine-finding post-auth correction is local and awaits packaging plus replacement CI.
 
 ## Architecture map
 
@@ -40,6 +40,7 @@ This is the compact source of truth to read before changing Chants. Detailed cur
 | Seeded chant identity is explicit and stable across title edits | Prevents duplicate live documents and broken future links | Seed validation, plan, and identity tests; live read-only preflight still required |
 | Lyrics, squads, tunes, and cultural context are externally sourced and manually verified | Generated or guessed terrace content would damage trust and may create legal or safety problems | Reviewed source documents, seed JSON review, and seed validation |
 | Release UI remains usable at 390 by 844 and enlarged text | Core mobile journeys must not clip or hide their next action | Targeted goldens, widget tests, and final live-device walkthrough |
+| Authentication remains retryable and truthful across asynchronous boundaries | Provider, local binding, server onboarding, and profile projection can complete or fail independently | Repository state-machine tests, production auth widget tests, rules assertions, and decision 023 |
 
 ## Real commands
 
@@ -84,8 +85,8 @@ No version in this table is an instruction to upgrade. A change needs a compatib
 
 - **Data classes:** Public chant, team, player, approved performance, approved performance-comment, and allowlisted creator identity data; private account authority, drafts, follow edges, notifications, per-user interactions, blocks, reports, feedback, local Songbook snapshots, handle reservations, safety budgets, account-deletion jobs, published-media deletion jobs, and operator audit data; restricted credentials and Admin access remain outside the repository.
 - **Tenant or isolation model:** Chants is a single public community, not a multi-tenant product. User and operator isolation is enforced by Firebase Auth identity, Firestore rules, private collection rules, and callable authorization.
-- **Authentication:** Firebase Auth email and password.
-- **Authorization:** `firestore.rules` for client data access and Cloud Functions for callable and trigger-owned behavior. UI visibility is not an authority boundary.
+- **Authentication:** Firebase Auth email and password plus fail-closed Apple, Google, Facebook, magic-link, and phone source paths. Non-email providers remain disabled until their external and device gates pass.
+- **Authorization:** Verified Firebase contact facts gate protected callables, Firestore, and Storage. Cloud Functions own callable and trigger behavior. UI visibility is not an authority boundary.
 - **Secrets:** Admin credentials and native Firebase configuration are not committed. Production secret storage and rotation are dashboard-owned and not verified from source.
 - **Retention, deletion, and export:** Durable account deletion removes private interactions, anonymizes retained contributions, and redacts authored report data. Target-side safety history may retain an account identifier. No user export or repository-backed retention schedule exists.
 - **External integrations:** Firebase Auth, Firestore, Storage, Functions, Hosting, App Check, and Crashlytics; operating-system camera or media library, video playback, and share sheet; allowlisted YouTube or X evidence links through the system browser. Timeout, retry, current-authority, and idempotency behavior is documented in the repository rationale and decisions.
@@ -121,8 +122,8 @@ Default lanes come from the Codex Engineering Framework.
 
 | Item | Consequence | Owner | Revisit trigger |
 |---|---|---|---|
-| Android release uses debug signing | Store release is blocked | Andrew | Before the first production Android build |
-| Current creator-platform Android compilation, iOS compile completion, and combined device walk are incomplete | Android SDK is absent locally. The iOS 12.18 dependency graph resolves, but the first Xcode compile was terminated after an extended silent wait | Andrew | Before creator-platform source freeze and V1 sign-off |
+| Production Android signing values do not exist in source | Release tasks fail closed without ignored operator values, so store packaging is blocked until signing is supplied and tested | Andrew | Before the first production Android build |
+| Current correction replacement CI and combined device walk are incomplete | Exact PR 18 base `db40f42` builds Android and iOS cleanly, but the local correction is not packaged and no combined real-device evidence exists | Andrew | Before source freeze and V1 sign-off |
 | App Check enforcement and operational alerts are unverified | Abuse and retained-job failures may be detected late | Andrew | Before public beta and during the first telemetry window |
 | Content policy is placeholder copy | User consent and store compliance are incomplete | Andrew | Before public user submission |
 | Domain association, store fallback, URL-signing IAM, Storage cleanup, deletion-job monitoring, and media billing alerts are unverified | Public links or media delivery may fail, retained deletion work may go unnoticed, or cost may exceed expectations | Andrew | Before emitting public links from a release build |

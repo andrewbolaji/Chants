@@ -86,13 +86,51 @@ class _SignInMethodsScreenState extends ConsumerState<SignInMethodsScreen> {
     }
   }
 
-  Future<void> _openLinkRoute(String route) async {
+  Future<void> _openLinkRoute(
+    String route, {
+    bool reload = true,
+    String success = 'Sign-in method connected.',
+  }) async {
     final result = await Navigator.pushNamed(context, route, arguments: true);
     if (result == true && mounted) {
-      await ref.read(authRepositoryProvider).reloadCurrentUser();
+      if (reload) {
+        await ref.read(authRepositoryProvider).reloadCurrentUser();
+      }
+      if (!mounted) return;
       setState(() {
-        _message = 'Sign-in method connected.';
+        _message = success;
         _messageIsError = false;
+      });
+    }
+  }
+
+  Future<void> _sendEmailVerification() async {
+    if (_activeMethod != null) return;
+    setState(() {
+      _activeMethod = 'verify-email';
+      _message = null;
+    });
+    try {
+      final sent = await ref
+          .read(authRepositoryProvider)
+          .sendEmailVerification();
+      if (!sent) {
+        await ref.read(authRepositoryProvider).reloadCurrentUser();
+      }
+      if (!mounted) return;
+      setState(() {
+        _activeMethod = null;
+        _message = sent
+            ? 'Verification email sent.'
+            : 'Email is already verified. Account status refreshed.';
+        _messageIsError = false;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _activeMethod = null;
+        _message = authErrorMessage(error);
+        _messageIsError = true;
       });
     }
   }
@@ -186,11 +224,7 @@ class _SignInMethodsScreenState extends ConsumerState<SignInMethodsScreen> {
               if (user?.emailVerified == false)
                 TextButton(
                   onPressed: _activeMethod == null
-                      ? () => _run(
-                          'verify-email',
-                          repository.sendEmailVerification,
-                          success: 'Verification email sent.',
-                        )
+                      ? _sendEmailVerification
                       : null,
                   child: const Text('RESEND EMAIL VERIFICATION'),
                 ),
@@ -233,7 +267,12 @@ class _SignInMethodsScreenState extends ConsumerState<SignInMethodsScreen> {
               _ConnectButton(
                 label: 'CONNECT EMAIL LINK',
                 active: false,
-                onPressed: () => _openLinkRoute(AppRouter.magicLink),
+                onPressed: () => _openLinkRoute(
+                  AppRouter.magicLink,
+                  reload: false,
+                  success:
+                      'Email link sent. Open it on this device to finish connecting.',
+                ),
               ),
             if ((!config.appleEnabled || linked.contains('apple.com')) &&
                 (!config.googleEnabled || linked.contains('google.com')) &&

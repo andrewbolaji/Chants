@@ -209,5 +209,61 @@ void main() {
       expect(onboarding.displayName, ' Testuser ');
       expect(destination, 3);
     });
+
+    testWidgets('successful setup restores retry and sign-out controls', (
+      tester,
+    ) async {
+      final onboarding = _FakeOnboardingRepository();
+      await tester.pumpWidget(
+        wrap(
+          OnboardingScreen(onDestinationSelected: (_) {}),
+          onboarding: onboarding,
+        ),
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Display name'),
+        'Testuser',
+      );
+      await pickDateOfBirth(tester, 20);
+      await tester.tap(find.byType(Checkbox));
+      await tester.tap(find.text('ENTER CHANTS'));
+      await tester.pump();
+
+      expect(find.textContaining('Setup was saved'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('ENTER CHANTS'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.widgetWithText(FilledButton, 'ENTER CHANTS'),
+            )
+            .onPressed,
+        isNotNull,
+      );
+      expect(
+        tester
+            .widget<TextButton>(find.widgetWithText(TextButton, 'SIGN OUT'))
+            .onPressed,
+        isNotNull,
+      );
+    });
+
+    testWidgets('destination selector has a 48-pixel minimum target', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        wrap(OnboardingScreen(onDestinationSelected: (_) {})),
+      );
+      await tester.drag(find.byType(ListView), const Offset(0, -400));
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.getSize(find.byType(SegmentedButton<int>)).height,
+        greaterThanOrEqualTo(48),
+      );
+    });
   });
 }

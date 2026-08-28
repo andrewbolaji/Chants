@@ -64,3 +64,7 @@ Local evidence at the uncommitted implementation state:
 - Creator platform, Stage, chant submission, Songbook, report, moderation, deletion, public URL, and seed behavior are changed only where verified-contact authority must apply consistently.
 - Final privacy and content policy, store disclosures, credentials, provider branding approval, real-device walks, production signing, deployment, seeding, and release remain outside this source block.
 - The next independent review should inspect this block together with the remaining pre-freeze source work, in line with Andrew's requested consolidated review cadence.
+
+## Post-review addendum
+
+Exact PR 18 head `db40f42` passed all eight clean-runner jobs in run `33206487262` and received the consolidated independent review. The review found no source-freeze blocker and identified nine bounded recovery, authority, copy, throttling, persistence, and touch-target findings. Andrew approved their correction. The completed local result and its replacement-CI gate are recorded in `docs/changes/2026-08-28-post-auth-independent-review-corrections.md`; decision 023 carries the durable state-machine consequences.

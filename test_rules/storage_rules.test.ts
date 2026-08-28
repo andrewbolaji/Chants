@@ -80,6 +80,21 @@ async function seedUploadTicket(
   });
 }
 
+async function seedOperator(uid: string) {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    await context.firestore().collection("profiles").doc(uid).set({
+      displayName: "Operator",
+      role: "operator",
+      banned: false,
+      deletionPending: false,
+      ageConfirmed17Plus: true,
+      acceptedPolicyVersion: "v1",
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    });
+  });
+}
+
 function uploadMetadata(uid: string, draftId: string) {
   return {
     contentType: "video/mp4",
@@ -228,5 +243,28 @@ describe("performance media storage", () => {
     await assertFails(
       owner.ref("performance-media/performance-1/source").getDownloadURL(),
     );
+  });
+
+  it("requires verified contact for operator staging previews", async () => {
+    await seedUploadTicket("fan", "draft-review");
+    await seedOperator("operator");
+    const path = "performance-staging/fan/draft-review/source";
+    const owner = verifiedContext("fan").storage(BUCKET);
+    await assertSucceeds(
+      upload(
+        owner.ref(path),
+        new Uint8Array([1, 2, 3]),
+        uploadMetadata("fan", "draft-review"),
+      ),
+    );
+
+    const unverifiedOperator = testEnv.authenticatedContext("operator", {
+      email: "operator@example.com",
+      email_verified: false,
+    }).storage(BUCKET);
+    await assertFails(unverifiedOperator.ref(path).getDownloadURL());
+
+    const verifiedOperator = verifiedContext("operator").storage(BUCKET);
+    await assertSucceeds(verifiedOperator.ref(path).getDownloadURL());
   });
 });

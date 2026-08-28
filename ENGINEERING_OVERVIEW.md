@@ -1,8 +1,8 @@
 # Chants engineering overview
 
-This is the current whole-project map for the launch-authentication worktree `codex/v1-auth-onboarding-android`, based on exact reviewed PR 17 correction head `8b457d8`. It includes the inherited creator platform, the accepted takedown correction, and the locally implemented V1 authentication, onboarding, and native-readiness block. It describes source reality, including inherited and unchanged systems. It is not a deployment claim, provider-configuration claim, or approval record.
+This is the current whole-project map for the launch-authentication worktree `codex/v1-auth-onboarding-android`, based on exact reviewed PR 18 head `db40f42` plus the approved local post-auth correction. It includes the inherited creator platform, its accepted takedown correction, V1 authentication, onboarding, Android readiness, and the nine review corrections. It describes source reality, including inherited and unchanged systems. It is not a deployment claim, provider-configuration claim, or approval record.
 
-The active approval contract is `docs/CHANGE_SPEC.md`. Completed reasoning is in the creator-platform, takedown-correction, and launch-authentication records under `docs/changes/`. Durable architectural choices are decisions 017 through 023. `docs/IMPLEMENTATION_RATIONALE.md` is the companion coverage ledger and verification record.
+The active approval contract is `docs/CHANGE_SPEC.md`. Completed reasoning is in the creator-platform, takedown-correction, launch-authentication, and post-auth correction records under `docs/changes/`. Durable architectural choices are decisions 017 through 023. `docs/IMPLEMENTATION_RATIONALE.md` is the companion coverage ledger and verification record.
 
 ## Review outcome
 
@@ -13,7 +13,7 @@ Chants now has the intended two-part product rather than a catalogue alone:
 
 The implementation preserves the central trust boundary. A performance has its own status, media, creator, and popularity counters. It cannot mutate the attached chant's `canonical` or `community` state (`functions/src/performance.ts :: handleModeratePerformance`; `docs/decisions/018-performance-stage-and-admission.md`).
 
-The inherited creator correction is exact-head clean-runner green at `8b457d8` in run `33190943182`. The final local launch block passes 454 Flutter tests, 142 Functions tests, 42 seed tests, zero-issue analysis, rules TypeScript compilation, an iOS simulator build, and native, governance, writing, and diff checks. The focused narrow-text test first reproduced and then closed a welcome-screen overflow. The local machine has no usable Java runtime or Android SDK, so the changed rules and first Android APK remain clean-runner gates. Exact-head CI, consolidated review, device walkthrough, provider setup, policy, production configuration, deployment, and release remain open.
+PR 18 head `db40f42` is exact-head clean-runner green in run `33206487262`, including both native compile jobs and 164 Java-backed rules assertions, and its consolidated independent review found no source-freeze blocker. The approved local correction passes 463 Flutter tests, 142 Functions tests, 42 seed tests, zero-issue analysis, rules TypeScript compilation, and native, governance, writing, and diff checks. The local machine has no usable Java runtime or Android SDK, so replacement Java-backed Storage evidence and both current-head native builds remain clean-runner gates after packaging. Device walkthrough, provider setup, policy, production configuration, deployment, and release remain open.
 
 ## Product and navigation
 
@@ -31,7 +31,9 @@ Firebase Auth owns the stable UID, credential, verification, and linked-provider
 
 `functions/src/onboarding.ts :: handleCompleteOnboarding` accepts only display name, confirmed 17-plus, and current-policy consent. It derives UID and verified authority from callable auth and transactionally creates the private profile plus deterministic policy audit. Duplicate completion leaves existing coherent state unchanged. Direct profile create is denied. The birth date is used only by `OnboardingScreen` for the local age calculation and is not persisted or transmitted.
 
-`AuthRepository` supports email and password, Apple, Google, Facebook, magic email link, and phone, plus deliberate same-UID linking. `SignInMethodsScreen` refuses unlinking the final method. Credential collision never starts an app-level merge. `MagicLinkStore` retains only email, request time, and optional current UID in one versioned device record for up to one hour. Phone UI discloses Google processing, guards resend, and uses one credential claim across manual entry, Android auto-verification, and resends. Leaving the screen invalidates any later unused automatic credential.
+`AuthRepository` supports email and password, Apple, Google, Facebook, magic email link, and phone, plus deliberate same-UID linking. `SignInMethodsScreen` refuses unlinking the final method. Credential collision never starts an app-level merge. A failed Google initialization is discarded so a later attempt can retry. `MagicLinkStore` retains only email, request time, and optional current UID in one versioned device record for up to one hour. An ambiguous send failure retains that binding, while completion, explicit cancellation, terminal invalidity, or expiry clears it. Phone UI discloses Google processing, applies one cooldown to every send path, and uses one monotonic credential claim across manual entry, Android auto-verification, and resends. Leaving or changing the attempt invalidates any later unused automatic credential.
+
+Verification feedback distinguishes a requested email from an already-verified account. Returning from a magic-link request says completion is pending rather than claiming the provider is connected. If `completeOnboarding` succeeds before the profile stream advances, the form restores Enter Chants and Sign Out with explicit safe-retry copy. Storage operator preview now requires the same verified-contact proof as Firestore and callable operator authority.
 
 Provider code is not provider readiness. Firebase console enablement, Apple and Google identifiers, Meta callback and deletion configuration, SMS regions and quota, APNs or Android fingerprints, hosted association files, App Check, branding review, and real-device proof remain external gates. A provider button stays absent until an operator intentionally supplies the matching build flag.
 
@@ -113,7 +115,7 @@ The seed pipeline still validates explicit chant identity and content shape befo
 
 The auth client adds Google Sign-In, Facebook Auth, app links, and shared preferences. FlutterFire resolves as one current graph in `pubspec.lock`; iOS resolves 18 direct dependencies and 56 total pods against Firebase iOS 12.18. Google Sign-In 9.2 moves `GTMSessionFetcher` from 5.3.1 to compatible 3.5.0. CocoaPods warns that its Firebase distribution will stop receiving new versions after October 2026, but the repository intentionally remains CocoaPods-owned under the existing native decision. A future dependency-manager migration requires its own compatibility block.
 
-Android declares Internet access, uses the Chants label, owns the approved auth and public HTTPS paths, and refuses debug signing for release, including when an aggregate Gradle task reaches a release task indirectly. The local machine has no Android SDK, so the new clean runner owns first compile proof. iOS Runner carries Sign in with Apple plus auth and public-domain entitlements. The final local source builds a simulator `Runner.app` with bundle ID `com.chants.chants`; this does not prove provider or distribution readiness.
+Android declares Internet access, uses the Chants label, owns the approved auth and public HTTPS paths, and refuses debug signing for release, including when an aggregate Gradle task reaches a release task indirectly. Exact PR 18 clean CI built and inspected the debug APK; the local machine still has no Android SDK. iOS Runner carries Sign in with Apple plus auth and public-domain entitlements, and exact PR 18 CI built and inspected the simulator bundle. Neither compile proves provider, signing, association, device, or distribution readiness.
 
 ## Deployment, cost, and recovery
 
@@ -125,9 +127,9 @@ The compatible rollout order is Firestore and Storage rules, Functions, Hosting,
 
 ## Where I most want your eyes
 
-1. `functions/src/onboarding.ts`, `requireVerifiedUid`, and both rules implementations for inconsistent email, phone, current-provider, or linked-provider authority.
-2. `lib/app/app.dart`, `MagicLinkGate`, and `SignInMethodsScreen` for deletion precedence, stale Firebase user state, cross-account links, collision, or last-method holes.
-3. `AuthRepository` phone callbacks and magic-link local binding for duplicate credential use, stale screens, replay, expiry, or unrelated-account replacement.
+1. `functions/src/onboarding.ts`, `requireVerifiedUid`, and both rules implementations for inconsistent email, phone, current-provider, linked-provider, or operator authority.
+2. `lib/app/app.dart`, `MagicLinkGate`, onboarding, and `SignInMethodsScreen` for deletion precedence, stale Firebase user state, ambiguous delivery, cross-account links, collision, or last-method holes.
+3. `AuthRepository` Google initialization, phone callbacks, cancellation, and magic-link local binding for poisoned retry, duplicate credential use, replay, expiry, or unrelated-account replacement.
 4. Android Gradle signing, both native link declarations, non-secret fixtures, and the two new native CI jobs for false readiness claims.
 5. `functions/src/performance_source.ts` and performance media-deletion work for inherited stale projection, aggregate, or retry holes.
 6. Firestore and Storage rules for parser-safe public projections and path substitution.
@@ -135,8 +137,7 @@ The compatible rollout order is Firestore and Storage rules, Functions, Hosting,
 
 ## Unverified
 
-- Full launch-block clean-runner CI and the consolidated independent review.
-- The first Android clean-runner APK and exact application-ID evidence.
+- Replacement exact-head CI for the local nine-finding correction, including its two new Java-backed Storage assertions and both native compile jobs.
 - Apple, Google, Facebook, magic-link, and phone dashboard, credential, callback, domain, privacy, quota, anti-abuse, and real-device behavior. Every provider remains disabled until its own gates pass.
 - Camera and library permissions, upload progress, backgrounding, retry, cancellation, playback, share destinations, Following, notifications, deep comments, moderation, blocking, deletion, accessibility, and offline behavior on real devices.
 - `chantsfc.com` Hosting deployment, DNS, domain association, social crawler output, app/store routing, and URL-signing IAM.

@@ -29,7 +29,9 @@ The exact date of birth stays in the current device form. Only the confirmed 17-
 
 Provider linking is a signed-in Firebase operation that preserves the current UID. A credential collision does not trigger an application-level merge or deletion. The user signs in through the owning method and links deliberately from Sign-in methods. The final usable method cannot be unlinked.
 
-Apple, Google, Facebook, magic link, and phone entry are fail-closed build features. Their buttons remain absent unless an operator intentionally enables the matching compile-time flag after native, provider-console, policy, callback, cost, and device checks. Magic-link pending email, request time, and optional linking UID share one versioned device-local record for no more than one hour and are cleared after completion, cancellation, terminal invalidity, or expiry. One phone attempt owns manual entry, automatic verification, and every resend so two callbacks cannot consume two credentials.
+Apple, Google, Facebook, magic link, and phone entry are fail-closed build features. Their buttons remain absent unless an operator intentionally enables the matching compile-time flag after native, provider-console, policy, callback, cost, and device checks. Magic-link pending email, request time, and optional linking UID share one versioned device-local record for no more than one hour. Completion, explicit cancellation, terminal invalidity, or expiry clears it; an ambiguous send failure retains it because Firebase may have accepted the request. One phone attempt owns manual entry, automatic verification, and every resend so two callbacks cannot consume two credentials. Cancelling that attempt is terminal, including when an in-flight credential later fails. The visible cooldown guards every new SMS request path.
+
+Provider initialization and status feedback follow confirmed outcomes. A rejected Google initialization is not cached for the rest of the process. Email verification reports whether Firebase was actually asked to send. A requested magic link remains pending until the user opens it; returning from the request screen cannot claim the method is already connected.
 
 ## Alternatives considered
 
@@ -50,6 +52,8 @@ Apple, Google, Facebook, magic link, and phone entry are fail-closed build featu
 - Positive: onboarding retries converge without a half-created profile or client-selected authority fields.
 - Positive: linked providers preserve creator identity, follows, interactions, Songbook ownership, moderation history, and deletion work under one UID.
 - Positive: missing provider or SMS setup removes the button instead of exposing a predictable runtime failure.
+- Positive: transient initialization, delayed profile projection, and ambiguous email delivery preserve a retry or escape path.
+- Positive: Storage operator preview requires the same verified-contact proof as other operator authority.
 - Negative: existing unverified password accounts are placed behind verification before their next protected action.
 - Negative: provider enablement requires coordinated Firebase, Apple, Google, Meta, domain, signing, privacy, and device work outside source.
 - Negative: the client carries several native provider SDKs before every provider is publicly enabled.
@@ -57,5 +61,5 @@ Apple, Google, Facebook, magic link, and phone entry are fail-closed build featu
 
 ## Validation and revisit trigger
 
-- **Evidence:** `functions/src/onboarding.ts`, `functions/src/safety_submission.ts`, `functions/src/index.ts`, `firestore.rules`, `storage.rules`, `lib/data/repositories/auth_repository.dart`, `lib/app/app.dart`, `lib/presentation/auth/`, `lib/presentation/settings/sign_in_methods_screen.dart`, auth and app-gate tests, native contract checks, and `docs/changes/2026-08-28-v1-launch-auth-onboarding-android.md`.
+- **Evidence:** `functions/src/onboarding.ts`, `functions/src/safety_submission.ts`, `functions/src/index.ts`, `firestore.rules`, `storage.rules`, `lib/data/repositories/auth_repository.dart`, `lib/app/app.dart`, `lib/presentation/auth/`, `lib/presentation/settings/sign_in_methods_screen.dart`, auth and app-gate tests, native contract checks, `docs/changes/2026-08-28-v1-launch-auth-onboarding-android.md`, and `docs/changes/2026-08-28-post-auth-independent-review-corrections.md`.
 - **Revisit when:** a new provider has no trustworthy token representation, the product needs verified identity recovery across merged UIDs, age requirements change, magic-link retention must cross devices, passkeys replace a launch method, or provider SDK and binary cost exceed measured value.

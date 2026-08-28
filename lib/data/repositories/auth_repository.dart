@@ -23,9 +23,10 @@ class PhoneVerificationInProgressException implements Exception {
 class PhoneVerificationAttempt {
   bool _inFlight = false;
   bool _completed = false;
+  bool _cancelled = false;
 
   bool begin() {
-    if (_inFlight || _completed) return false;
+    if (_inFlight || _completed || _cancelled) return false;
     _inFlight = true;
     return true;
   }
@@ -37,9 +38,11 @@ class PhoneVerificationAttempt {
 
   void release() {
     _inFlight = false;
+    if (_cancelled) _completed = true;
   }
 
   void cancel() {
+    _cancelled = true;
     if (!_inFlight) _completed = true;
   }
 }
@@ -108,9 +111,11 @@ class AuthRepository {
     }
   }
 
-  Future<void> sendEmailVerification() async {
+  Future<bool> sendEmailVerification() async {
     final user = _requireCurrentUser();
-    if (!user.emailVerified) await user.sendEmailVerification();
+    if (user.emailVerified) return false;
+    await user.sendEmailVerification();
+    return true;
   }
 
   Future<void> reloadCurrentUser() async {
@@ -131,12 +136,27 @@ class AuthRepository {
     required String clientId,
     required String serverClientId,
   }) {
-    return _googleInitialization ??= _googleSignIn.initialize(
-      clientId: clientId.trim().isEmpty ? null : clientId.trim(),
-      serverClientId: serverClientId.trim().isEmpty
-          ? null
-          : serverClientId.trim(),
+    return _googleInitialization ??= _initializeGoogleOnce(
+      clientId: clientId,
+      serverClientId: serverClientId,
     );
+  }
+
+  Future<void> _initializeGoogleOnce({
+    required String clientId,
+    required String serverClientId,
+  }) async {
+    try {
+      await _googleSignIn.initialize(
+        clientId: clientId.trim().isEmpty ? null : clientId.trim(),
+        serverClientId: serverClientId.trim().isEmpty
+            ? null
+            : serverClientId.trim(),
+      );
+    } catch (_) {
+      _googleInitialization = null;
+      rethrow;
+    }
   }
 
   Future<AuthCredential> _googleCredential({

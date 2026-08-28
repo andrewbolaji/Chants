@@ -85,7 +85,7 @@ class _PhoneAuthScreenState extends ConsumerState<PhoneAuthScreen> {
       );
       return;
     }
-    if (_loading || (resend && _cooldownSeconds > 0)) return;
+    if (_loading || _cooldownSeconds > 0) return;
     setState(() {
       _loading = true;
       _error = null;
@@ -226,7 +226,7 @@ class _PhoneAuthScreenState extends ConsumerState<PhoneAuthScreen> {
             ],
             const SizedBox(height: Spacing.xl),
             FilledButton(
-              onPressed: _loading
+              onPressed: _loading || (!codeSent && _cooldownSeconds > 0)
                   ? null
                   : codeSent
                   ? _verifyCode
@@ -237,7 +237,13 @@ class _PhoneAuthScreenState extends ConsumerState<PhoneAuthScreen> {
                       height: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : Text(codeSent ? 'VERIFY CODE' : 'SEND CODE'),
+                  : Text(
+                      codeSent
+                          ? 'VERIFY CODE'
+                          : _cooldownSeconds > 0
+                          ? 'SEND AGAIN IN ${_cooldownSeconds}s'
+                          : 'SEND CODE',
+                    ),
             ),
             if (codeSent) ...[
               const SizedBox(height: Spacing.sm),
@@ -257,6 +263,7 @@ class _PhoneAuthScreenState extends ConsumerState<PhoneAuthScreen> {
                     : () => setState(() {
                         _verificationAttempt?.cancel();
                         _verificationId = null;
+                        _resendToken = null;
                         _verificationAttempt = null;
                         _codeController.clear();
                         _error = null;

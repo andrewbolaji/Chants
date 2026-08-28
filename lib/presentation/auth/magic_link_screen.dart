@@ -63,7 +63,6 @@ class _MagicLinkScreenState extends ConsumerState<MagicLinkScreen> {
         _sent = true;
       });
     } catch (error) {
-      await ref.read(magicLinkStoreProvider).clear();
       if (!mounted) return;
       setState(() {
         _loading = false;
@@ -98,7 +97,7 @@ class _MagicLinkScreenState extends ConsumerState<MagicLinkScreen> {
                     ),
                     const SizedBox(height: Spacing.xl),
                     TextButton(
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () => Navigator.pop(context, true),
                       child: const Text('BACK'),
                     ),
                   ],

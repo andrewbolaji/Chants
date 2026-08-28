@@ -7,6 +7,30 @@ import 'package:mockito/mockito.dart';
 
 class _MockGoogleSignIn extends Mock implements GoogleSignIn {}
 
+class _RetryingGoogleSignIn extends Mock implements GoogleSignIn {
+  int initializeCalls = 0;
+
+  @override
+  Future<void> initialize({
+    String? clientId,
+    String? serverClientId,
+    String? nonce,
+    String? hostedDomain,
+  }) async {
+    initializeCalls += 1;
+    if (initializeCalls == 1) {
+      throw StateError('initialization failed');
+    }
+  }
+
+  @override
+  Future<GoogleSignInAccount> authenticate({
+    List<String> scopeHint = const <String>[],
+  }) async {
+    throw StateError('authentication boundary reached');
+  }
+}
+
 class _MockFacebookAuth extends Mock implements FacebookAuth {}
 
 class _AppleCancellationUser extends Mock implements User {
@@ -43,6 +67,7 @@ class _IdentityUser extends Mock implements User {
   @override
   final List<UserInfo> providerData;
   int unlinkCalls = 0;
+  int verificationSendCalls = 0;
 
   _IdentityUser({
     this.emailVerified = false,
@@ -54,6 +79,13 @@ class _IdentityUser extends Mock implements User {
   Future<User> unlink(String providerId) async {
     unlinkCalls += 1;
     return this;
+  }
+
+  @override
+  Future<void> sendEmailVerification([
+    ActionCodeSettings? actionCodeSettings,
+  ]) async {
+    verificationSendCalls += 1;
   }
 }
 
@@ -140,4 +172,52 @@ void main() {
     await repositoryFor(linkedUser).unlinkProvider('google.com');
     expect(linkedUser.unlinkCalls, 1);
   });
+
+  test(
+    'email verification reports requested versus already complete',
+    () async {
+      final unverified = _IdentityUser();
+      expect(await repositoryFor(unverified).sendEmailVerification(), isTrue);
+      expect(unverified.verificationSendCalls, 1);
+
+      final verified = _IdentityUser(emailVerified: true);
+      expect(await repositoryFor(verified).sendEmailVerification(), isFalse);
+      expect(verified.verificationSendCalls, 0);
+    },
+  );
+
+  test(
+    'failed Google initialization can be retried in the same session',
+    () async {
+      final google = _RetryingGoogleSignIn();
+      final repository = AuthRepository(
+        auth: _IdentityAuth(null),
+        googleSignIn: google,
+        facebookAuth: _MockFacebookAuth(),
+      );
+
+      await expectLater(
+        repository.signInWithGoogle(clientId: '', serverClientId: ''),
+        throwsA(
+          isA<StateError>().having(
+            (error) => error.message,
+            'message',
+            'initialization failed',
+          ),
+        ),
+      );
+      await expectLater(
+        repository.signInWithGoogle(clientId: '', serverClientId: ''),
+        throwsA(
+          isA<StateError>().having(
+            (error) => error.message,
+            'message',
+            'authentication boundary reached',
+          ),
+        ),
+      );
+
+      expect(google.initializeCalls, 2);
+    },
+  );
 }

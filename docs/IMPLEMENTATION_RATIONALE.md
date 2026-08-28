@@ -1,15 +1,15 @@
 # Repository implementation rationale
 
-This document explains the current Chants repository, including inherited systems, the independently reviewed creator-platform work through exact correction head `8b457d8`, and the locally implemented launch authentication, onboarding, and Android-readiness block based on that head. It is a reviewer map, not proof of deployment or release readiness.
+This document explains the current Chants repository, including inherited systems, the independently reviewed creator and launch-authentication work through exact PR 18 head `db40f42`, and the approved local post-auth correction based on that head. It is a reviewer map, not proof of deployment or release readiness.
 
 ## Document identity and completeness
 
 - **Current change:** `docs/CHANGE_SPEC.md`
-- **Completed change reasoning:** `docs/changes/2026-08-27-creator-platform-foundation.md`, `docs/changes/2026-08-28-pr17-post-review-takedown-integrity.md`, and `docs/changes/2026-08-28-v1-launch-auth-onboarding-android.md`
+- **Completed change reasoning:** `docs/changes/2026-08-27-creator-platform-foundation.md`, `docs/changes/2026-08-28-pr17-post-review-takedown-integrity.md`, `docs/changes/2026-08-28-v1-launch-auth-onboarding-android.md`, and `docs/changes/2026-08-28-post-auth-independent-review-corrections.md`
 - **Durable creator and identity decisions:** 017 through 023
 - **Execution evidence:** `docs/EXECUTION.md`
 - **Interface memory:** `docs/INTERFACE.md`
-- **Known missing evidence:** launch-block full-suite and exact-head CI, Android artifact, final iOS compile result, consolidated independent review, combined device walk, provider and production configuration, policy, deploy, seed completion, signing, and release
+- **Known missing evidence:** replacement exact-head CI for the local correction, combined device walk, provider and production configuration, association deployment, policy, deploy, seed completion, signing, and release
 
 ## Repository coverage ledger
 
@@ -148,6 +148,9 @@ The phase set now removes creator handle and profile, drafts and staging referen
 | Birth date does not leave the current onboarding form | Client computes only the 17-plus result and callable schema has no birth-date field | Widget, payload, and handler tests |
 | Provider availability fails closed | Compile-time flags default false and native or dashboard state is not inferred | Provider hierarchy and native contract tests |
 | Linking preserves UID and never removes the last method | Firebase link operations and repository unlink guard | Focused repository and interface review; real-provider device proof pending |
+| Provider failures preserve a retry or truthful pending state | Failed Google initialization is not cached; ambiguous magic-link delivery retains its binding; verification returns requested versus complete | Repository and production widget regressions |
+| Phone cancellation and cooldown are monotonic | One attempt token blocks after cancellation and every screen send path shares one cooldown | In-flight failure and Change Number regressions |
+| Onboarding cannot strand all controls after server success | Mounted success restores retry and Sign Out while idempotent profile projection catches up | Production onboarding widget regression |
 | Private account authority never enters public creator identity | Separate schemas, exact public allowlist, callable-only writes | Functions and rules tests |
 | Pending or rejected media is not public | Draft collection, Storage path, public visibility predicate | Functions plus Firestore and Storage emulator tests |
 | A performance does not alter chant trust | Separate model and moderation write set | Handler and model tests |
@@ -170,7 +173,7 @@ Firestore denies unmatched paths. New public projections have explicit schemas, 
 
 Every callable reauthorizes from private actor state and relevant current target sources. UI visibility and denormalized eligibility are never treated as sufficient live authority. App Check remains client-wired but production enforcement is unverified.
 
-Authentication adds no credential logging or provider discovery. Raw provider exceptions are converted to bounded user copy. Magic-link email stays local and is removed on completion, cancellation, terminal invalidity, malformed state, or expiry. Phone and federated methods remain invisible until their external privacy and abuse controls are verified.
+Authentication adds no credential logging or provider discovery. Raw provider exceptions are converted to bounded user copy. Magic-link email stays local and is removed on completion, explicit cancellation, terminal invalidity, malformed state, or expiry. It is retained after an ambiguous send failure so a possibly delivered link can still complete. Phone and federated methods remain invisible until their external privacy and abuse controls are verified.
 
 Public pages omit lyrics, private UIDs, raw Storage paths, report state, and unrestricted user HTML. Creator bios are escaped. Hidden and missing public targets are indistinguishable. Signed media creates a bounded two-minute residual after moderation.
 
@@ -190,7 +193,7 @@ The product stores user-created video. Policy, privacy, takedown, retention, mod
 | `app_links` | Initial and resumed HTTPS magic-link delivery | Source paths exist; hosted Apple and Android association is not deployed or claimed |
 | `shared_preferences` | Short-lived device-local pending magic-link identity | One-hour maximum with terminal and malformed-state clearing |
 
-iOS remains on the project-owned CocoaPods path. The auth graph resolves 18 direct dependencies and 56 total pods. Google Sign-In 9.2 uses `GTMSessionFetcher` 3.5.0, which remains inside Firebase Storage's accepted range. The current full simulator compile result is recorded in `docs/EXECUTION.md` when it completes. Android SDK is unavailable locally, so Android compilation is delegated to the new clean-runner job. CocoaPods reports Firebase Apple SDK pod publication will stop after October 2026; a Swift Package Manager migration needs a separate compatibility decision because the project previously rejected automatic mixed ownership.
+iOS remains on the project-owned CocoaPods path. The auth graph resolves 18 direct dependencies and 56 total pods. Google Sign-In 9.2 uses `GTMSessionFetcher` 3.5.0, which remains inside Firebase Storage's accepted range. Exact PR 18 clean CI built both the iOS simulator bundle and Android debug APK. Android SDK and Java remain unavailable locally, so replacement current-head native and rules evidence belongs to clean CI. CocoaPods reports Firebase Apple SDK pod publication will stop after October 2026; a Swift Package Manager migration needs a separate compatibility decision because the project previously rejected automatic mixed ownership.
 
 ## Performance, scale, and cost
 
@@ -212,18 +215,18 @@ The launch must set billing alerts, staged-object cleanup, Function alerts, mode
 | Command or probe | Result |
 |---|---|
 | Focused Flutter auth, onboarding, app-gate, reset, magic-link, provider cancellation, phone-race, stale-session, provider hierarchy, and narrow 1.8x tests | PASS at the final uncommitted launch implementation state |
-| Full `flutter test` | PASS, 454 tests at the final local source state |
+| Full `flutter test` | PASS, 463 tests at the final local correction state |
 | `flutter analyze` with the deterministic non-secret fixture | PASS with zero issues at the launch implementation state |
 | `functions/npm test` | PASS, 142 including overlapping onboarding and explicit transaction-retry state |
-| Firestore plus Storage emulator | Launch rules type-check locally; Java-backed replacement run pending. Prior PR 17 exact-head run passed 157 assertions |
+| Firestore plus Storage emulator | Correction rules type-check locally; Java-backed replacement run pending. Exact PR 18 run `33206487262` passed 164 assertions at base `db40f42` |
 | `seed/npm test` | PASS, 42 |
 | Memory, writing-style, native-contract, and governance-regression scripts | PASS locally at the uncommitted launch implementation state |
 | `git diff --check` | PASS at the uncommitted launch implementation state |
-| GitHub Actions run `33190943182` | PASS, all six inherited jobs at exact PR 17 correction head `8b457d8`; launch-block replacement run pending |
+| GitHub Actions run `33206487262` | PASS, all eight jobs at exact PR 18 base `db40f42`; local correction replacement run pending |
 | Three targeted goldens | Updated, passing, and visually inspected |
 | CocoaPods resolution | PASS, 18 direct dependencies and 56 total pods on Firebase iOS 12.18 |
 | iOS simulator compile | PASS, final incremental build produced `Runner.app` with bundle ID `com.chants.chants` |
-| Android debug compile | Blocked by missing Android SDK |
+| Android debug compile | PASS on exact PR 18 clean runner at `db40f42`; local rerun pending after packaging |
 
 ## Deployment and recovery
 
@@ -237,8 +240,8 @@ Recovery options are additive. Pause performance admission without removing Song
 
 | Record | Current meaning |
 |---|---|
-| `docs/CHANGE_SPEC.md` | Approved launch authentication, onboarding, and Android source scope plus remaining gates |
-| Three change records dated 2026-08-27 and 2026-08-28 | Creator implementation, takedown correction, and launch authentication extension |
+| `docs/CHANGE_SPEC.md` | Approved post-auth independent review correction plus remaining gates |
+| Four current change records dated 2026-08-27 and 2026-08-28 | Creator implementation, takedown correction, launch authentication extension, and post-auth correction |
 | Decisions 017 through 023 | Shell, creator, performance, public, social, safety, source eligibility, and verified identity architecture |
 | `docs/INTERFACE.md` | Current launch, Stage, creator, conversation, moderation, and inherited interaction contract |
 | `docs/ROADMAP.md` | Launch source implementation in progress; native evidence, provider configuration, policy, seed, and release remain |
@@ -255,7 +258,7 @@ Recovery options are additive. Pause performance admission without removing Song
 | Durable media-deletion jobs have no production alert | Failed physical cleanup may remain queued without prompt operator attention | Before media admission opens |
 | No automated media screening | Harm detection depends on humans | When queue or incident volume justifies a reviewed provider contract |
 | No domain or store association | Public pages cannot yet guarantee app opening | Before release emits links |
-| Native build evidence incomplete | Plugin linkage is not yet fully proved | Before source freeze |
+| Current correction has no replacement native build evidence | Base plugin linkage is proved at `db40f42`, but the final correction head is not packaged | Before source freeze |
 | Requested providers are source-complete but disabled | Launch breadth depends on external console, credential, callback, privacy, cost, and device proof | Before enabling each provider flag |
 | No cross-UID account merge | A user with two existing accounts must choose one and link only credentials not already owned | When measured support demand justifies a separately reviewed recovery system |
 | Placeholder policy and no production cost controls | Public UGC release is blocked | Before public submission |

@@ -13,6 +13,26 @@ This is the chronological evidence trail for substantial engineering work. It re
 
 ## Entries
 
+### 2026-08-28T20:59:12Z Start post-auth independent review corrections
+
+- **Status:** Approved and in progress
+- **Scope:** Correct the independent review's four medium and five low source findings across verified-contact Storage authority, Google initialization retry, onboarding recovery, phone cooldown and cancellation, magic-link persistence and copy, email-verification truth, and onboarding touch targets. No provider-console change, live Firebase write, SMS send, credential, association deployment, Android SDK installation, signing, commit, push, merge, deploy, store, or release action is authorized.
+- **Reference:** `docs/CHANGE_SPEC.md`, approved post-auth correction contract
+- **Approval:** Andrew explicitly approved `post-auth independent review correction spec` on 2026-08-28.
+- **Operator:** Codex
+
+| UTC time | Action | Target/environment | Result and evidence |
+|---|---|---|---|
+| 20:59:12 | Re-derived the nine findings and recorded the bounded correction contract | PR 18 head `db40f42`, Storage rules, auth repository, onboarding, phone, magic-link, verification, and sign-in-methods surfaces | Confirmed all findings against source. Defined focused regressions, rollout and recovery, exact authority exclusions, and the distinction between source corrections and deferred provider or device gates. |
+| 21:03:00 | Aligned verified-contact authority and authentication state machines | Storage rules; Google, phone, magic-link, and email-verification repository and presentation paths | Storage operator preview now requires verified contact. Rejected Google initialization is retryable. Phone cancellation is terminal and every send path shares the cooldown. Ambiguous email-link delivery retains its local binding. Verification reports requested versus already complete. |
+| 21:06:00 | Restored recoverable and truthful interface states | Onboarding, Sign-in Methods, verification, magic-link, and phone screens | Successful onboarding restores Enter Chants and Sign Out if profile projection stalls. Magic-link return says completion remains. Change Number cannot request another SMS during cooldown. The destination selector is at least 48 logical pixels. |
+| 21:09:00 | Ran focused and complete Flutter evidence | Repository and production widget regressions; full Flutter suite; scoped analysis | PASS: 463 Flutter tests and zero-issue analysis. Nine new tests cover failed Google initialization retry, email verification truth, in-flight phone cancellation, onboarding recovery, 48-pixel target, Change Number cooldown, ambiguous link delivery, actual email-link return, and already-verified copy. |
+| 21:11:00 | Verified unchanged backend and repository contracts | Functions, seed, rules TypeScript, project memory, writing, native source, governance, and diff | PASS: 142 Functions tests, 42 seed tests, rules TypeScript compilation, project memory, writing style, native project contract, governance regressions, and `git diff --check`. Java-backed rule execution is blocked locally by the absent Java runtime. |
+| 21:14:12 | Reconciled durable current truth | Decision 023, interface memory, roadmap, project profile, overview, implementation rationale, and completed correction record | Recorded requested versus connected outcomes, monotonic cancellation, ambiguous-delivery retention, authority parity, local evidence, and the remaining exact-head, provider, association, device, signing, policy, cost, deployment, seed, and release gates. |
+
+- **Current state:** All nine corrections are implemented and locally verified. No commit or push has been performed. Java-backed Storage assertions and both native compile jobs remain replacement exact-head clean-runner gates.
+- **Resume point:** Obtain separate authorization to package one correction commit, push PR 18, and run replacement eight-job clean CI.
+
 ### 2026-08-28T16:49:27Z Define launch authentication, onboarding, and Android readiness
 
 - **Status:** Approved and in progress

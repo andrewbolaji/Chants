@@ -36,7 +36,7 @@ service firebase.storage {
     }
 
     function isOperator() {
-      return isSignedIn()
+      return hasVerifiedContact()
         && firestore.get(
           /databases/(default)/documents/profiles/$(request.auth.uid)
         ).data.role == 'operator'
