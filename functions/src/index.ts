@@ -42,11 +42,18 @@ import {
   handleDeletePerformanceComment,
   handleSubmitPerformanceDraft,
   cleanupDeletedPerformanceDraft,
+  cleanupRemovedPerformanceMedia,
   recomputePerformanceLikeCounts,
   recomputePerformanceViewCounts,
   recomputePerformanceCommentCount,
   recomputePerformanceShareCounts,
 } from "./performance";
+import {
+  chantSourceChanged,
+  handlePerformanceVisibilityWritten,
+  reconcileChantPerformanceSource,
+  reconcileCreatorPerformanceSource,
+} from "./performance_source";
 import {
   handleResolvePublicShareDestination,
   handleResolvePublicPerformanceMedia,
@@ -416,6 +423,68 @@ export const onPerformanceCommentWritten = onDocumentWritten(
   }
 );
 
+export const onPerformanceWritten = onDocumentWritten(
+  { document: "performances/{performanceId}", region: "europe-west2" },
+  async (event) => {
+    await handlePerformanceVisibilityWritten({
+      before: event.data?.before.data(),
+      after: event.data?.after.data(),
+      firestore: db,
+      now: () => admin.firestore.Timestamp.now(),
+    });
+  }
+);
+
+export const onChantWrittenForPerformances = onDocumentWritten(
+  { document: "chants/{chantId}", region: "europe-west2" },
+  async (event) => {
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
+    if (!chantSourceChanged(before, after)) return;
+    await reconcileChantPerformanceSource({
+      chantId: event.params.chantId,
+      firestore: db,
+      now: () => admin.firestore.Timestamp.now(),
+    });
+  }
+);
+
+export const onProfileAuthorityWrittenForPerformances = onDocumentWritten(
+  { document: "profiles/{userId}", region: "europe-west2" },
+  async (event) => {
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
+    if (
+      before?.banned === after?.banned &&
+      before?.deletionPending === after?.deletionPending &&
+      !!before === !!after
+    ) return;
+    await reconcileCreatorPerformanceSource({
+      creatorId: event.params.userId,
+      firestore: db,
+      now: () => admin.firestore.Timestamp.now(),
+    });
+  }
+);
+
+export const onPerformanceMediaDeletionJobWritten = onDocumentWritten(
+  {
+    document: "performanceMediaDeletionJobs/{performanceId}",
+    region: "europe-west2",
+    retry: true,
+  },
+  async (event) => {
+    const snapshot = event.data?.after;
+    if (!snapshot?.exists) return;
+    const cleaned = await cleanupRemovedPerformanceMedia(
+      snapshot.data(),
+      performanceMediaGateway(),
+    );
+    if (!cleaned) throw new Error("Invalid performance media deletion job.");
+    await snapshot.ref.delete();
+  }
+);
+
 export const onCreatorFollowWritten = onDocumentWritten(
   { document: "creatorFollows/{followId}", region: "europe-west2" },
   async (event) => {
@@ -550,6 +619,14 @@ type UserProfileDocument = {
   update: (data: { banned: boolean }) => Promise<unknown>;
 };
 
+type CreatorProfileDocument = {
+  get: () => Promise<{
+    exists: boolean;
+    data: () => admin.firestore.DocumentData | undefined;
+  }>;
+  update: (data: { hidden: boolean }) => Promise<unknown>;
+};
+
 type AuditWriter = (params: {
   actorId: string;
   action: string;
@@ -563,6 +640,8 @@ export async function handleUserBanAction(params: {
   actorUid: string;
   targetId: string;
   profileDocument: UserProfileDocument;
+  creatorProfileDocument: CreatorProfileDocument;
+  reconcilePerformances: () => Promise<unknown>;
   auditWriter: AuditWriter;
 }): Promise<{ success: true }> {
   const targetProfile = await params.profileDocument.get();
@@ -572,6 +651,13 @@ export async function handleUserBanAction(params: {
 
   const banned = params.action === "ban";
   await params.profileDocument.update({ banned });
+  const creatorProfile = await params.creatorProfileDocument.get();
+  const creatorCanReturn = creatorProfile.exists &&
+    creatorProfile.data()?.removed !== true;
+  if (creatorProfile.exists && (banned || creatorCanReturn)) {
+    await params.creatorProfileDocument.update({ hidden: banned });
+  }
+  await params.reconcilePerformances();
   await params.auditWriter({
     actorId: params.actorUid,
     action: params.action,
@@ -707,6 +793,13 @@ export const onModerationAction = onCall(
           actorUid,
           targetId,
           profileDocument: db.collection("profiles").doc(targetId),
+          creatorProfileDocument: db.collection("creatorProfiles").doc(targetId),
+          reconcilePerformances: () =>
+            reconcileCreatorPerformanceSource({
+              creatorId: targetId,
+              firestore: db,
+              now: () => admin.firestore.Timestamp.now(),
+            }),
           auditWriter: writeAuditEntry,
         });
       }

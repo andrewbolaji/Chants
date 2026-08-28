@@ -154,6 +154,16 @@ class _ChantStageScreenState extends ConsumerState<ChantStageScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final viewer = ref.watch(authStateProvider).valueOrNull;
+    final blockedUsers = viewer == null
+        ? const AsyncValue<Set<String>>.data(<String>{})
+        : ref.watch(blockedUserIdsProvider(viewer.uid));
+    final visiblePerformances = _performances
+        .where(
+          (performance) => !(blockedUsers.valueOrNull ?? const <String>{})
+              .contains(performance.creatorId),
+        )
+        .toList(growable: false);
     return Scaffold(
       appBar: AppBar(
         title: const Text('CHANT STAGE'),
@@ -202,10 +212,18 @@ class _ChantStageScreenState extends ConsumerState<ChantStageScreen> {
                 child: const _FollowingDiscoveryNotice(),
               ),
             ),
-          if (_loading)
+          if (_loading || blockedUsers.isLoading)
             const SliverFillRemaining(
               hasScrollBody: false,
               child: Center(child: CircularProgressIndicator()),
+            )
+          else if (blockedUsers.hasError)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: _StageUnavailable(
+                onRetry: () =>
+                    ref.invalidate(blockedUserIdsProvider(viewer!.uid)),
+              ),
             )
           else if (_error != null && _performances.isEmpty)
             SliverFillRemaining(
@@ -220,6 +238,15 @@ class _ChantStageScreenState extends ConsumerState<ChantStageScreen> {
                 onBrowseClubs: widget.onBrowseClubs,
               ),
             )
+          else if (visiblePerformances.isEmpty)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: _BlockedStage(
+                canLoadMore: _hasMore,
+                onLoadMore: _loadMore,
+                onBrowseClubs: widget.onBrowseClubs,
+              ),
+            )
           else ...[
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(
@@ -229,13 +256,13 @@ class _ChantStageScreenState extends ConsumerState<ChantStageScreen> {
                 Spacing.xl,
               ),
               sliver: SliverList.separated(
-                itemCount: _performances.length,
+                itemCount: visiblePerformances.length,
                 separatorBuilder: (_, _) => const SizedBox(height: Spacing.xl),
                 itemBuilder: (context, index) => PerformanceCard(
                   key: ValueKey<String>(
-                    'performance-card-${_performances[index].id}',
+                    'performance-card-${visiblePerformances[index].id}',
                   ),
-                  performance: _performances[index],
+                  performance: visiblePerformances[index],
                   stageLeader:
                       _filter == PerformanceFeedFilter.rising && index == 0,
                   mediaBuilder: widget.mediaBuilder,
@@ -355,6 +382,56 @@ class _FollowingDiscoveryNotice extends StatelessWidget {
                 style: TextStyle(color: AppColors.textBody),
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BlockedStage extends StatelessWidget {
+  final bool canLoadMore;
+  final VoidCallback onLoadMore;
+  final VoidCallback onBrowseClubs;
+
+  const _BlockedStage({
+    required this.canLoadMore,
+    required this.onLoadMore,
+    required this.onBrowseClubs,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(Spacing.xxl),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.visibility_off_outlined, size: 42),
+            const SizedBox(height: Spacing.md),
+            Text(
+              'NO UNBLOCKED PERFORMANCES HERE',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: Spacing.sm),
+            const Text(
+              'Creators you block stay out of your Stage.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.textMuted),
+            ),
+            const SizedBox(height: Spacing.lg),
+            if (canLoadMore)
+              FilledButton(
+                onPressed: onLoadMore,
+                child: const Text('LOAD MORE'),
+              )
+            else
+              OutlinedButton(
+                onPressed: onBrowseClubs,
+                child: const Text('BROWSE CLUBS'),
+              ),
           ],
         ),
       ),
@@ -570,6 +647,46 @@ class _PerformanceCardState extends ConsumerState<PerformanceCard> {
     );
   }
 
+  Future<void> _blockCreator() async {
+    final user = ref.read(authStateProvider).valueOrNull;
+    if (user == null || user.uid == _performance.creatorId) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('Block @${_performance.creatorHandle}?'),
+        content: const Text(
+          'Their performances and comments will be hidden from your view. '
+          'You can undo this from your profile.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('CANCEL'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('BLOCK'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    try {
+      await ref
+          .read(blockRepositoryProvider)
+          .blockUser(
+            blockerId: user.uid,
+            blockedUserId: _performance.creatorId,
+            blockedDisplayName: _performance.creatorDisplayName,
+          );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not block this creator.')),
+      );
+    }
+  }
+
   void _reportPerformance() {
     final user = ref.read(authStateProvider).valueOrNull;
     if (user == null) {
@@ -603,6 +720,7 @@ class _PerformanceCardState extends ConsumerState<PerformanceCard> {
   @override
   Widget build(BuildContext context) {
     final performance = _performance;
+    final viewer = ref.watch(authStateProvider).valueOrNull;
     final subject = performance.playerName ?? performance.teamName;
     final media =
         widget.mediaBuilder?.call(context, performance) ??
@@ -682,18 +800,25 @@ class _PerformanceCardState extends ConsumerState<PerformanceCard> {
                   PopupMenuButton<String>(
                     tooltip: 'Performance actions',
                     onSelected: (value) {
-                      if (value == 'report-performance') {
+                      if (value == 'block-creator') {
+                        _blockCreator();
+                      } else if (value == 'report-performance') {
                         _reportPerformance();
                       } else if (value == 'report-creator') {
                         _reportCreator();
                       }
                     },
-                    itemBuilder: (_) => const [
-                      PopupMenuItem(
+                    itemBuilder: (_) => [
+                      if (viewer != null && viewer.uid != performance.creatorId)
+                        const PopupMenuItem(
+                          value: 'block-creator',
+                          child: Text('Block creator'),
+                        ),
+                      const PopupMenuItem(
                         value: 'report-performance',
                         child: Text('Report performance'),
                       ),
-                      PopupMenuItem(
+                      const PopupMenuItem(
                         value: 'report-creator',
                         child: Text('Report creator'),
                       ),

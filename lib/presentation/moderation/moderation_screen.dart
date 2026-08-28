@@ -601,10 +601,12 @@ class _HiddenPublishedContent extends ConsumerWidget {
     final performances = FirebaseFirestore.instance
         .collection('performances')
         .where('hidden', isEqualTo: true)
+        .where('removed', isEqualTo: false)
         .snapshots();
     final comments = FirebaseFirestore.instance
         .collection('performanceComments')
         .where('hidden', isEqualTo: true)
+        .where('removed', isEqualTo: false)
         .snapshots();
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: performances,
@@ -642,42 +644,178 @@ class _HiddenPublishedContent extends ConsumerWidget {
               separatorBuilder: (_, _) => const SizedBox(height: Spacing.sm),
               itemBuilder: (context, index) {
                 final item = items[index];
-                return Card(
-                  child: ListTile(
-                    title: Text(
-                      item.label,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    subtitle: Text(item.type),
-                    trailing: FilledButton(
-                      onPressed: () async {
-                        try {
-                          await ref
-                              .read(moderationRepositoryProvider)
-                              .moderatePublishedPerformance(
-                                targetType: item.type,
-                                targetId: item.id,
-                                action: 'unhide',
-                              );
-                        } catch (_) {
-                          if (!context.mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Could not restore this content.'),
-                            ),
-                          );
-                        }
-                      },
-                      child: const Text('RESTORE'),
-                    ),
-                  ),
+                return HiddenPublishedContentCard(
+                  targetType: item.type,
+                  targetId: item.id,
+                  label: item.label,
                 );
               },
             );
           },
         );
       },
+    );
+  }
+}
+
+class HiddenPublishedContentCard extends ConsumerStatefulWidget {
+  final String targetType;
+  final String targetId;
+  final String label;
+
+  const HiddenPublishedContentCard({
+    super.key,
+    required this.targetType,
+    required this.targetId,
+    required this.label,
+  });
+
+  @override
+  ConsumerState<HiddenPublishedContentCard> createState() =>
+      _HiddenPublishedContentCardState();
+}
+
+class _HiddenPublishedContentCardState
+    extends ConsumerState<HiddenPublishedContentCard> {
+  bool _working = false;
+
+  Future<void> _preview() async {
+    if (widget.targetType == 'performance') {
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(widget.label),
+          content: SizedBox(
+            width: 320,
+            child: AspectRatio(
+              aspectRatio: 4 / 5,
+              child: PerformanceVideoPlayer(
+                resolveMediaUri: () => ref
+                    .read(performanceRepositoryProvider)
+                    .resolvePlayback(widget.targetId),
+                semanticLabel: 'Preview hidden performance',
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('CLOSE'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+    final snapshot = await FirebaseFirestore.instance
+        .collection('performanceComments')
+        .doc(widget.targetId)
+        .get();
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Hidden comment'),
+        content: Text(
+          snapshot.data()?['body'] as String? ?? 'Comment unavailable.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('CLOSE'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _act(String action) async {
+    if (_working) return;
+    if (action == 'remove') {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Remove this content?'),
+          content: const Text(
+            'Removal is terminal. Performance media will be deleted by the '
+            'durable cleanup worker.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('CANCEL'),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.error,
+              ),
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('REMOVE'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true || !mounted) return;
+    }
+    setState(() => _working = true);
+    try {
+      await ref
+          .read(moderationRepositoryProvider)
+          .moderatePublishedPerformance(
+            targetType: widget.targetType,
+            targetId: widget.targetId,
+            action: action,
+          );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _working = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not update this hidden content.')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(Spacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              widget.label,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: Spacing.xs),
+            Text(widget.targetType),
+            const SizedBox(height: Spacing.md),
+            Wrap(
+              spacing: Spacing.sm,
+              runSpacing: Spacing.sm,
+              children: [
+                OutlinedButton(
+                  onPressed: _working ? null : _preview,
+                  child: const Text('PREVIEW'),
+                ),
+                FilledButton(
+                  onPressed: _working ? null : () => _act('unhide'),
+                  child: const Text('RESTORE'),
+                ),
+                FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.error,
+                  ),
+                  onPressed: _working ? null : () => _act('remove'),
+                  child: const Text('REMOVE'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

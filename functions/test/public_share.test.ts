@@ -79,13 +79,31 @@ function visiblePerformance(overrides: Data = {}): Data {
     publicationState: "approved",
     hidden: false,
     removed: false,
+    sourceChantVisible: true,
+    sourceCreatorVisible: true,
+    chantId: "chant-1",
     chantTitle: "Super Saka",
+    creatorId: "creator-1",
     creatorDisplayName: "North Bank Leo",
     teamName: "Arsenal",
     chantStatus: "community",
     mediaPath: "performance-media/performance-1/source",
     ...overrides,
   };
+}
+
+function seedPerformanceAuthority(db: FirestoreHarness): void {
+  db.set("chants", "chant-1", visibleChant());
+  db.set("profiles", "creator-1", {
+    banned: false,
+    deletionPending: false,
+  });
+  db.set("creatorProfiles", "creator-1", {
+    handle: "northbankleo",
+    displayName: "North Bank Leo",
+    hidden: false,
+    removed: false,
+  });
 }
 
 describe("public share destinations", () => {
@@ -111,6 +129,7 @@ describe("public share destinations", () => {
 
   it("resolves only a currently visible target to the stable domain", async () => {
     const db = new FirestoreHarness();
+    seedPerformanceAuthority(db);
     db.set("chants", "chant-1", visibleChant());
     db.set("performances", "performance-1", visiblePerformance());
     db.set("creatorProfiles", "creator-1", {
@@ -182,6 +201,7 @@ describe("public share destinations", () => {
 
   it("renders a controlled public performance player without autoplay", async () => {
     const db = new FirestoreHarness();
+    seedPerformanceAuthority(db);
     db.set("performances", "performance-1", visiblePerformance());
 
     const page = await resolvePublicPage({
@@ -201,6 +221,7 @@ describe("public share destinations", () => {
 
   it("mints short public media only after a current visibility check", async () => {
     const db = new FirestoreHarness();
+    seedPerformanceAuthority(db);
     db.set("performances", "performance-1", visiblePerformance());
     const signed: Array<[string, number]> = [];
 
@@ -239,5 +260,69 @@ describe("public share destinations", () => {
       media: { signReadUrl: async () => "https://should-not-run.test" },
       nowMs: () => 1_000,
     }), (error: { code?: string }) => error.code === "not-found");
+  });
+
+  it("fails closed when a current creator ban or chant hide makes a stale projection unsafe", async () => {
+    const db = new FirestoreHarness();
+    seedPerformanceAuthority(db);
+    db.set("performances", "performance-1", visiblePerformance());
+    db.set("profiles", "creator-1", {
+      banned: true,
+      deletionPending: false,
+    });
+
+    await assert.rejects(handleResolvePublicShareDestination({
+      data: { targetType: "performance", targetId: "performance-1" },
+      firestore: db.firestore,
+    }), (error: { code?: string }) => error.code === "not-found");
+    assert.strictEqual((await resolvePublicPage({
+      path: "/performances/performance-1",
+      firestore: db.firestore,
+    })).status, 404);
+    await assert.rejects(handleResolvePublicPerformanceMedia({
+      performanceId: "performance-1",
+      firestore: db.firestore,
+      media: { signReadUrl: async () => "https://should-not-run.test" },
+      nowMs: () => 1_000,
+    }), (error: { code?: string }) => error.code === "not-found");
+
+    db.set("profiles", "creator-1", {
+      banned: false,
+      deletionPending: false,
+    });
+    db.set("chants", "chant-1", visibleChant({ hidden: true }));
+    await assert.rejects(handleResolvePublicPerformanceMedia({
+      performanceId: "performance-1",
+      firestore: db.firestore,
+      media: { signReadUrl: async () => "https://should-not-run.test" },
+      nowMs: () => 1_000,
+    }), (error: { code?: string }) => error.code === "not-found");
+  });
+
+  it("closes a public creator destination and page on current account ban", async () => {
+    const db = new FirestoreHarness();
+    seedPerformanceAuthority(db);
+
+    assert.deepStrictEqual(await handleResolvePublicShareDestination({
+      data: { targetType: "creator", targetId: "creator-1" },
+      firestore: db.firestore,
+    }), { url: "https://chantsfc.com/creators/northbankleo" });
+    assert.strictEqual((await resolvePublicPage({
+      path: "/creators/northbankleo",
+      firestore: db.firestore,
+    })).status, 200);
+
+    db.set("profiles", "creator-1", {
+      banned: true,
+      deletionPending: false,
+    });
+    await assert.rejects(handleResolvePublicShareDestination({
+      data: { targetType: "creator", targetId: "creator-1" },
+      firestore: db.firestore,
+    }), (error: { code?: string }) => error.code === "not-found");
+    assert.strictEqual((await resolvePublicPage({
+      path: "/creators/northbankleo",
+      firestore: db.firestore,
+    })).status, 404);
   });
 });

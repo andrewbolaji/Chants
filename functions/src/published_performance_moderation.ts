@@ -62,6 +62,9 @@ export async function handlePublishedPerformanceModeration(params: {
     .collection("accountDeletionJobs")
     .doc(params.actorUid);
   const targetRef = params.firestore.collection(targetCollection).doc(input.targetId);
+  const mediaDeletionJobRef = params.firestore
+    .collection("performanceMediaDeletionJobs")
+    .doc(input.targetId);
   const reportQuery = params.firestore
     .collection(reportCollection)
     .where(reportField, "==", input.targetId)
@@ -105,7 +108,26 @@ export async function handlePublishedPerformanceModeration(params: {
     if (input.action === "hide") {
       transaction.update(targetRef, { hidden: true, updatedAt: timestamp });
     } else if (input.action === "remove") {
-      transaction.update(targetRef, { removed: true, updatedAt: timestamp });
+      transaction.update(targetRef, {
+        hidden: true,
+        removed: true,
+        updatedAt: timestamp,
+      });
+      if (input.targetType === "performance") {
+        const expectedPath = `performance-media/${input.targetId}/source`;
+        if (target.mediaPath !== expectedPath) {
+          throw new HttpsError(
+            "failed-precondition",
+            "Performance media identity is invalid."
+          );
+        }
+        transaction.set(mediaDeletionJobRef, {
+          performanceId: input.targetId,
+          mediaPath: expectedPath,
+          requestedAt: timestamp,
+          updatedAt: timestamp,
+        });
+      }
     } else if (input.action === "unhide") {
       transaction.update(targetRef, { hidden: false, updatedAt: timestamp });
     }

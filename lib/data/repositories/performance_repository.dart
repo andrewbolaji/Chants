@@ -110,7 +110,9 @@ class PerformanceRepository {
         .where('schemaVersion', isEqualTo: Performance.schemaVersion)
         .where('publicationState', isEqualTo: 'approved')
         .where('hidden', isEqualTo: false)
-        .where('removed', isEqualTo: false);
+        .where('removed', isEqualTo: false)
+        .where('sourceChantVisible', isEqualTo: true)
+        .where('sourceCreatorVisible', isEqualTo: true);
 
     return switch (filter) {
       PerformanceFeedFilter.rising =>
@@ -178,6 +180,8 @@ class PerformanceRepository {
         .where('publicationState', isEqualTo: 'approved')
         .where('hidden', isEqualTo: false)
         .where('removed', isEqualTo: false)
+        .where('sourceChantVisible', isEqualTo: true)
+        .where('sourceCreatorVisible', isEqualTo: true)
         .where('creatorId', whereIn: creatorIds)
         .orderBy('createdAt', descending: true);
     if (cursor != null) {

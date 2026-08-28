@@ -1,10 +1,31 @@
 # Change spec: Creator platform expansion
 
-**Status:** Implemented and packaged in draft PR 17; implementation-head clean-runner CI green; independent review and release gates pending
+**Status:** Approved post-review correction packaged by the commit carrying this record; exact-head CI and closure review are external gates
 **Updated:** 2026-08-28
 **Risk lane:** Lane 2, public identity, uploaded media, persistent social data, public routes, moderation, privacy, and cost
 **Base:** `86603c22fbd7647f89c9276af9a60a0b3d63113b`, merged PR 16 main
 **Approval:** Andrew approved Feed Pass 3, Chant Stage, and Navigation Pass 3, Product Clear, after reviewing three feed passes and three navigation passes. He also approved 30-second record or upload performances, performance popularity signals, creator bios, follows before V1, public chant URLs with rich previews, mentions, and deeper conversations.
+
+## Approved post-review correction
+
+Andrew approved the complete `PR 17 post-review takedown and integrity correction spec` on 2026-08-28 after Claude independently reviewed the packaged range. The correction remains one consolidated block and one closure review, not seven separate review loops.
+
+### Scope and acceptance
+
+1. A banned creator immediately loses public profile, new feed, public-page, playback, and interaction authority. Unban restores only ban-derived eligibility and never overrides a manually hidden or removed performance.
+2. Public and in-app performance authority rechecks the current creator and chant. A current ban, creator removal, chant hide, chant removal, or deletion state fails closed even before a denormalized projection finishes reconciling.
+3. Hidden performances have operator-only preview, Restore, and terminal Remove actions. Ordinary viewers cannot preview hidden media.
+4. Terminal performance removal durably schedules physical published-media deletion. Cleanup is retryable and idempotent, and a failed Storage operation cannot make removed content public again.
+5. Stage cards and public creator profiles expose a confirmed Block creator action. A viewer's blocked creators disappear from Stage without requiring a relaunch, while Unblock remains available through Blocked users.
+6. Public creator `performanceCount` converges from current live performance rows after approval, hide, restore, removal, ban-derived eligibility, and chant-derived eligibility changes.
+7. Chant title, trust status, and availability reconcile into attached performances. Demotion removes Terrace Proven presentation, and hide or removal removes the performance from current feeds and public resolution.
+8. Direct public performance queries carry the new source-eligibility predicates. Server writers own those fields and clients cannot forge them.
+9. Tests reproduce each independent-review defect against the prior implementation, then prove duplicate delivery, partial cleanup, stale projection, operator bypass, and blocked-feed behavior.
+10. The overview, rationale, interface memory, decision 021, roadmap, completed change record, and execution evidence state the corrected behavior and remaining native, device, policy, configuration, deploy, seed, signing, and release gates honestly.
+
+### Excluded from this correction
+
+Production Firebase access, App Check dashboard enforcement, live Arsenal preflight, dependency advisory scans, native signing, store submission, broad Discover pagination, repository-wide Dart formatting, resumable chant merge, automated media screening, deployment, seed writes, and release remain separate gates or future blocks.
 
 ## Outcome
 
@@ -180,17 +201,17 @@
 - Paid creator opportunities, marketplace, payouts, sponsorship matching, or ranking-based compensation.
 - Fully personalized recommendation models. The first feed uses transparent recency, trust, following, and popularity inputs.
 
-## Implemented review boundary
+## Review and correction boundaries
 
-The independent review boundary is `86603c22fbd7647f89c9276af9a60a0b3d63113b...641281e` in draft PR 17. It includes the five-tab product shell, creator identity, private follows, activity notifications, moderated performance upload and playback, Stage ranking and interactions, public destinations, published-media moderation, account-deletion integration, Firebase Hosting and Storage rules, CI contract corrections, and durable records.
+Claude independently reviewed `86603c22fbd7647f89c9276af9a60a0b3d63113b...946ab0c` in draft PR 17. It includes the five-tab product shell, creator identity, private follows, activity notifications, moderated performance upload and playback, Stage ranking and interactions, public destinations, published-media moderation, account-deletion integration, Firebase Hosting and Storage rules, CI contract corrections, and durable records. The review found the seven connected lifecycle defects captured in this spec and judged the authorization foundation otherwise strong.
 
-The range is committed and pushed. Replacement GitHub Actions run `33181165940` passed all six clean-runner jobs at implementation head `641281e`. No production Firebase write, deployment, seed write, signing action, store submission, PR merge, or release has been performed in this implementation block.
+The approved correction begins after `946ab0c` and is packaged by the commit carrying this record. Replacement GitHub Actions run `33181165940` passed all six jobs at the earlier implementation head `641281e`; it is not evidence for this correction. The correction requires one exact-head clean-runner result and one narrow independent closure review. The verified run belongs to PR 17's external check history because a commit cannot embed the result of CI that runs on itself. No production Firebase write, deployment, seed write, signing action, store submission, PR merge, or release has been performed.
 
 ## Remaining gates
 
 1. Finish or rerun native iOS and Android compilation in an environment that completes Xcode and has the Android SDK.
 2. Perform the combined device walkthrough for recording, device selection, permission denial, upload recovery, playback, sharing, Following fallback, comments, notification routing, moderation, blocking, deletion, text scale, and offline behavior.
 3. Replace the placeholder content policy and finalize privacy policy, terms, reporting expectations, and creator-media rules.
-4. Configure and verify `chantsfc.com`, Hosting rewrites, IAM URL signing, universal or app links, store destinations, App Check, billing alerts, Storage cleanup, Function alerts, and deployed rules parity.
-5. Give Claude the one requested independent review of `86603c22...641281e` and preserve its findings as a separate review artifact.
-6. Correct accepted review findings in a separate bounded record before declaring the creator-platform source freeze.
+4. Configure and verify `chantsfc.com`, Hosting rewrites, IAM URL signing, universal or app links, store destinations, App Check, billing alerts, staged and removed-media cleanup alerts, Function alerts, and deployed rules parity.
+5. Push the correction commit to draft PR 17 and require all six clean-runner jobs at that exact head.
+6. Give Claude one narrow closure review of `946ab0c...<correction-head>` and correct only a reproduced remaining blocker before declaring the creator-platform source freeze.

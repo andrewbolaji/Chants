@@ -6,6 +6,8 @@ Map<String, dynamic> _json({
   String state = 'approved',
   bool hidden = false,
   bool removed = false,
+  bool sourceChantVisible = true,
+  bool sourceCreatorVisible = true,
 }) {
   final now = Timestamp.fromDate(DateTime.utc(2026, 8, 27));
   return {
@@ -34,6 +36,8 @@ Map<String, dynamic> _json({
     'rankingWeek': '2026-08-24',
     'hidden': hidden,
     'removed': removed,
+    'sourceChantVisible': sourceChantVisible,
+    'sourceCreatorVisible': sourceCreatorVisible,
     'createdAt': now,
     'approvedAt': now,
     'updatedAt': now,
@@ -62,6 +66,34 @@ void main() {
     expect(
       Performance.fromJson(_json(removed: true), id: 'removed').isVisible,
       isFalse,
+    );
+  });
+
+  test(
+    'an unavailable current chant or creator makes the projection inert',
+    () {
+      expect(
+        Performance.fromJson(
+          _json(sourceChantVisible: false),
+          id: 'chant-hidden',
+        ).isVisible,
+        isFalse,
+      );
+      expect(
+        Performance.fromJson(
+          _json(sourceCreatorVisible: false),
+          id: 'creator-hidden',
+        ).isVisible,
+        isFalse,
+      );
+    },
+  );
+
+  test('missing source authority fails closed at the parser boundary', () {
+    final json = _json()..remove('sourceCreatorVisible');
+    expect(
+      () => Performance.fromJson(json, id: 'missing-source-authority'),
+      throwsA(isA<TypeError>()),
     );
   });
 

@@ -28,6 +28,8 @@
         { "fieldPath": "publicationState", "order": "ASCENDING" },
         { "fieldPath": "hidden", "order": "ASCENDING" },
         { "fieldPath": "removed", "order": "ASCENDING" },
+        { "fieldPath": "sourceChantVisible", "order": "ASCENDING" },
+        { "fieldPath": "sourceCreatorVisible", "order": "ASCENDING" },
         { "fieldPath": "rankingWeek", "order": "ASCENDING" },
         { "fieldPath": "weeklyUniqueSharerCount", "order": "DESCENDING" },
         { "fieldPath": "weeklyLikeCount", "order": "DESCENDING" },
@@ -43,6 +45,8 @@
         { "fieldPath": "publicationState", "order": "ASCENDING" },
         { "fieldPath": "hidden", "order": "ASCENDING" },
         { "fieldPath": "removed", "order": "ASCENDING" },
+        { "fieldPath": "sourceChantVisible", "order": "ASCENDING" },
+        { "fieldPath": "sourceCreatorVisible", "order": "ASCENDING" },
         { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
     },
@@ -54,6 +58,8 @@
         { "fieldPath": "publicationState", "order": "ASCENDING" },
         { "fieldPath": "hidden", "order": "ASCENDING" },
         { "fieldPath": "removed", "order": "ASCENDING" },
+        { "fieldPath": "sourceChantVisible", "order": "ASCENDING" },
+        { "fieldPath": "sourceCreatorVisible", "order": "ASCENDING" },
         { "fieldPath": "chantStatus", "order": "ASCENDING" },
         { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
@@ -122,6 +128,8 @@
         { "fieldPath": "publicationState", "order": "ASCENDING" },
         { "fieldPath": "hidden", "order": "ASCENDING" },
         { "fieldPath": "removed", "order": "ASCENDING" },
+        { "fieldPath": "sourceChantVisible", "order": "ASCENDING" },
+        { "fieldPath": "sourceCreatorVisible", "order": "ASCENDING" },
         { "fieldPath": "creatorId", "order": "ASCENDING" },
         { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]

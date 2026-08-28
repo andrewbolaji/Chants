@@ -24,6 +24,7 @@ class _PublicCreatorProfileScreenState
   bool _following = false;
   bool _followBusy = false;
   bool _shareBusy = false;
+  bool _blocked = false;
   int _followerDelta = 0;
 
   @override
@@ -114,24 +115,82 @@ class _PublicCreatorProfileScreenState
     }
   }
 
+  Future<void> _block(CreatorProfile creator) async {
+    final viewer = ref.read(authStateProvider).valueOrNull;
+    if (viewer == null || viewer.uid == creator.id) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('Block @${creator.handle}?'),
+        content: const Text(
+          'Their performances and comments will be hidden from your view. '
+          'You can undo this from your profile.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('CANCEL'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('BLOCK'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    try {
+      await ref
+          .read(blockRepositoryProvider)
+          .blockUser(
+            blockerId: viewer.uid,
+            blockedUserId: creator.id,
+            blockedDisplayName: creator.displayName,
+          );
+      if (mounted) setState(() => _blocked = true);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not block this creator.')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final profile = ref.watch(creatorProfileProvider(widget.creatorId));
+    final viewer = ref.watch(authStateProvider).valueOrNull;
+    final blockedUsers = viewer == null || viewer.uid == widget.creatorId
+        ? const AsyncValue<Set<String>>.data(<String>{})
+        : ref.watch(blockedUserIdsProvider(viewer.uid));
+    final blocked =
+        _blocked ||
+        (blockedUsers.valueOrNull ?? const <String>{}).contains(
+          widget.creatorId,
+        );
     return Scaffold(
       appBar: AppBar(title: const Text('CREATOR')),
-      body: profile.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, _) => _Unavailable(
-          onRetry: () =>
-              ref.invalidate(creatorProfileProvider(widget.creatorId)),
-        ),
-        data: (creator) => creator == null || !creator.isPublic
-            ? _Unavailable(
+      body: blockedUsers.isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : blockedUsers.hasError
+          ? _Unavailable(
+              onRetry: () =>
+                  ref.invalidate(blockedUserIdsProvider(viewer!.uid)),
+            )
+          : profile.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (_, _) => _Unavailable(
                 onRetry: () =>
                     ref.invalidate(creatorProfileProvider(widget.creatorId)),
-              )
-            : _body(creator),
-      ),
+              ),
+              data: (creator) => blocked || creator == null || !creator.isPublic
+                  ? _Unavailable(
+                      onRetry: () => ref.invalidate(
+                        creatorProfileProvider(widget.creatorId),
+                      ),
+                    )
+                  : _body(creator),
+            ),
     );
   }
 
@@ -221,6 +280,12 @@ class _PublicCreatorProfileScreenState
               icon: const Icon(Icons.ios_share_outlined),
             ),
             if (!isSelf) ...[
+              const SizedBox(width: Spacing.sm),
+              IconButton.outlined(
+                tooltip: 'Block @${creator.handle}',
+                onPressed: () => _block(creator),
+                icon: const Icon(Icons.block_outlined),
+              ),
               const SizedBox(width: Spacing.sm),
               IconButton.outlined(
                 tooltip: 'Report @${creator.handle}',

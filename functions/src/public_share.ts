@@ -1,5 +1,9 @@
 import * as admin from "firebase-admin";
 import { HttpsError } from "firebase-functions/v2/https";
+import {
+  currentChantSourceVisible,
+  currentCreatorSourceVisible,
+} from "./performance_source";
 
 export const PUBLIC_SHARE_ORIGIN = "https://chantsfc.com";
 
@@ -73,11 +77,52 @@ function visiblePerformance(
     data.publicationState === "approved" &&
     data.hidden === false &&
     data.removed === false &&
+    data.sourceChantVisible === true &&
+    data.sourceCreatorVisible === true &&
+    typeof data.chantId === "string" &&
+    typeof data.creatorId === "string" &&
     typeof data.chantTitle === "string" &&
     typeof data.creatorDisplayName === "string" &&
     typeof data.teamName === "string" &&
     data.mediaPath === `performance-media/${performanceId}/source` &&
     (data.chantStatus === "canonical" || data.chantStatus === "community");
+}
+
+async function currentPerformanceSourcesVisible(
+  firestore: admin.firestore.Firestore,
+  performance: Data,
+): Promise<boolean> {
+  const creatorId = performance.creatorId;
+  const chantId = performance.chantId;
+  if (typeof creatorId !== "string" || typeof chantId !== "string") return false;
+  const [accountSnapshot, deletionSnapshot, creatorSnapshot, chantSnapshot] =
+    await Promise.all([
+      firestore.collection("profiles").doc(creatorId).get(),
+      firestore.collection("accountDeletionJobs").doc(creatorId).get(),
+      firestore.collection("creatorProfiles").doc(creatorId).get(),
+      firestore.collection("chants").doc(chantId).get(),
+    ]);
+  return currentCreatorSourceVisible({
+    account: accountSnapshot.data(),
+    creator: creatorSnapshot.data(),
+    deletionJobExists: deletionSnapshot.exists,
+  }) && currentChantSourceVisible(chantSnapshot.data());
+}
+
+async function currentCreatorVisible(
+  firestore: admin.firestore.Firestore,
+  creatorId: string,
+  creator: Data,
+): Promise<boolean> {
+  const [accountSnapshot, deletionSnapshot] = await Promise.all([
+    firestore.collection("profiles").doc(creatorId).get(),
+    firestore.collection("accountDeletionJobs").doc(creatorId).get(),
+  ]);
+  return currentCreatorSourceVisible({
+    account: accountSnapshot.data(),
+    creator,
+    deletionJobExists: deletionSnapshot.exists,
+  });
 }
 
 function visibleCreator(data: Data | undefined): data is Data {
@@ -108,7 +153,11 @@ export async function handleResolvePublicShareDestination(params: {
       .collection("performances")
       .doc(input.targetId)
       .get();
-    if (!visiblePerformance(snapshot.data(), input.targetId)) {
+    const performance = snapshot.data();
+    if (
+      !visiblePerformance(performance, input.targetId) ||
+      !await currentPerformanceSourcesVisible(params.firestore, performance)
+    ) {
       throw new HttpsError("not-found", "This performance is unavailable.");
     }
     return { url: `${PUBLIC_SHARE_ORIGIN}/performances/${input.targetId}` };
@@ -118,7 +167,10 @@ export async function handleResolvePublicShareDestination(params: {
     .doc(input.targetId)
     .get();
   const creator = snapshot.data();
-  if (!visibleCreator(creator)) {
+  if (
+    !visibleCreator(creator) ||
+    !await currentCreatorVisible(params.firestore, input.targetId, creator)
+  ) {
     throw new HttpsError("not-found", "This creator is unavailable.");
   }
   return { url: `${PUBLIC_SHARE_ORIGIN}/creators/${creator.handle}` };
@@ -179,7 +231,10 @@ async function pageForPerformance(
 ): Promise<PublicPage> {
   const snapshot = await firestore.collection("performances").doc(id).get();
   const performance = snapshot.data();
-  if (!visiblePerformance(performance, id)) return notFoundPage();
+  if (
+    !visiblePerformance(performance, id) ||
+    !await currentPerformanceSourcesVisible(firestore, performance)
+  ) return notFoundPage();
   const trust = trustLabel(performance.chantStatus);
   return {
     status: 200,
@@ -220,7 +275,10 @@ export async function handleResolvePublicPerformanceMedia(params: {
     .doc(performanceId)
     .get();
   const performance = snapshot.data();
-  if (!visiblePerformance(performance, performanceId)) {
+  if (
+    !visiblePerformance(performance, performanceId) ||
+    !await currentPerformanceSourcesVisible(params.firestore, performance)
+  ) {
     throw new HttpsError("not-found", "This performance is unavailable.");
   }
   const expiresAtMs = params.nowMs() + 2 * 60 * 1000;
@@ -242,8 +300,13 @@ async function pageForCreator(
     .where("removed", "==", false)
     .limit(1)
     .get();
-  const creator = snapshot.docs[0]?.data();
-  if (!visibleCreator(creator)) return notFoundPage();
+  const creatorDocument = snapshot.docs[0];
+  const creator = creatorDocument?.data();
+  if (
+    !creatorDocument ||
+    !visibleCreator(creator) ||
+    !await currentCreatorVisible(firestore, creatorDocument.id, creator)
+  ) return notFoundPage();
   return {
     status: 200,
     title: `${creator.displayName} (@${creator.handle}) | Chants`,

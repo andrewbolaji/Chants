@@ -43,6 +43,8 @@ class Performance {
   final String rankingWeek;
   final bool hidden;
   final bool removed;
+  final bool sourceChantVisible;
+  final bool sourceCreatorVisible;
   final DateTime createdAt;
   final DateTime approvedAt;
   final DateTime updatedAt;
@@ -73,6 +75,8 @@ class Performance {
     required this.rankingWeek,
     this.hidden = false,
     this.removed = false,
+    this.sourceChantVisible = true,
+    this.sourceCreatorVisible = true,
     required this.createdAt,
     required this.approvedAt,
     required this.updatedAt,
@@ -83,7 +87,9 @@ class Performance {
   bool get isVisible =>
       publicationState == PerformancePublicationState.approved &&
       !hidden &&
-      !removed;
+      !removed &&
+      sourceChantVisible &&
+      sourceCreatorVisible;
 
   factory Performance.fromJson(
     Map<String, dynamic> json, {
@@ -124,6 +130,8 @@ class Performance {
       rankingWeek: json['rankingWeek'] as String,
       hidden: json['hidden'] as bool? ?? false,
       removed: json['removed'] as bool? ?? false,
+      sourceChantVisible: json['sourceChantVisible'] as bool,
+      sourceCreatorVisible: json['sourceCreatorVisible'] as bool,
       createdAt: (json['createdAt'] as Timestamp).toDate(),
       approvedAt: (json['approvedAt'] as Timestamp).toDate(),
       updatedAt: (json['updatedAt'] as Timestamp).toDate(),
@@ -177,6 +185,8 @@ class Performance {
       rankingWeek: rankingWeek ?? this.rankingWeek,
       hidden: hidden,
       removed: removed,
+      sourceChantVisible: sourceChantVisible,
+      sourceCreatorVisible: sourceCreatorVisible,
       createdAt: createdAt,
       approvedAt: approvedAt,
       updatedAt: updatedAt,

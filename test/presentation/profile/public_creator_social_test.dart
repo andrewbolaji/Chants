@@ -1,10 +1,14 @@
+import 'dart:async';
+
 import 'package:chants/app/providers.dart';
 import 'package:chants/app/router.dart';
 import 'package:chants/app/theme.dart';
 import 'package:chants/data/models/creator_notification.dart';
 import 'package:chants/data/models/creator_profile.dart';
+import 'package:chants/data/models/blocked_user.dart';
 import 'package:chants/data/models/performance.dart';
 import 'package:chants/data/repositories/creator_follow_repository.dart';
+import 'package:chants/data/repositories/block_repository.dart';
 import 'package:chants/data/repositories/creator_notification_repository.dart';
 import 'package:chants/data/repositories/performance_interaction_repository.dart';
 import 'package:chants/data/repositories/performance_repository.dart';
@@ -13,6 +17,7 @@ import 'package:chants/data/services/creator_share.dart';
 import 'package:chants/presentation/profile/creator_notifications_screen.dart';
 import 'package:chants/presentation/profile/public_creator_profile_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -21,6 +26,32 @@ import 'package:mockito/mockito.dart';
 class _User extends Mock implements User {
   @override
   String get uid => 'viewer-1';
+}
+
+class _Firestore extends Mock implements FirebaseFirestore {}
+
+class _BlockRepository extends BlockRepository {
+  final blocked = <String>[];
+  final _controller = StreamController<List<BlockedUser>>.broadcast();
+
+  _BlockRepository() : super(firestore: _Firestore());
+
+  @override
+  Stream<List<BlockedUser>> blockedUsersStream(String blockerId) async* {
+    yield const [];
+    yield* _controller.stream;
+  }
+
+  @override
+  Future<void> blockUser({
+    required String blockerId,
+    required String blockedUserId,
+    required String blockedDisplayName,
+  }) async {
+    blocked.add(blockedUserId);
+  }
+
+  Future<void> close() => _controller.close();
 }
 
 class _CreatorShareGateway implements CreatorShareGateway {
@@ -85,6 +116,8 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final followCalls = <bool>[];
     final shareGateway = _CreatorShareGateway();
+    final blocks = _BlockRepository();
+    addTearDown(blocks.close);
 
     await tester.pumpWidget(
       ProviderScope(
@@ -95,6 +128,7 @@ void main() {
           creatorProfileProvider(
             'creator-1',
           ).overrideWith((ref) => Stream.value(_creator())),
+          blockRepositoryProvider.overrideWithValue(blocks),
           creatorFollowRepositoryProvider.overrideWithValue(
             CreatorFollowRepository(
               followStateLoader: (_, _) async => false,
@@ -140,6 +174,39 @@ void main() {
       shareGateway.payload?.text,
       contains('https://chantsfc.com/creators/northbankleo'),
     );
+  });
+
+  testWidgets('public creator profile exposes Block and closes after success', (
+    tester,
+  ) async {
+    final blocks = _BlockRepository();
+    addTearDown(blocks.close);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authStateProvider.overrideWith(
+            (ref) => Stream.value(_User() as User?),
+          ),
+          creatorProfileProvider(
+            'creator-1',
+          ).overrideWith((ref) => Stream.value(_creator())),
+          blockRepositoryProvider.overrideWithValue(blocks),
+        ],
+        child: MaterialApp(
+          theme: ChantTheme.dark,
+          home: const PublicCreatorProfileScreen(creatorId: 'creator-1'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Block @northbankleo'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'BLOCK'));
+    await tester.pumpAndSettle();
+
+    expect(blocks.blocked, ['creator-1']);
+    expect(find.text('This creator is not available.'), findsOneWidget);
   });
 
   testWidgets('Activity is private, marks a row read, and opens its actor', (

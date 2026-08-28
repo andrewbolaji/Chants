@@ -30,6 +30,7 @@ service cloud.firestore {
     function isActiveProfile(userId) {
       return exists(/databases/$(database)/documents/profiles/$(userId))
         && !exists(/databases/$(database)/documents/accountDeletionJobs/$(userId))
+        && get(/databases/$(database)/documents/profiles/$(userId)).data.banned == false
         && (!('deletionPending' in get(/databases/$(database)/documents/profiles/$(userId)).data)
             || get(/databases/$(database)/documents/profiles/$(userId)).data.deletionPending == false);
     }
@@ -208,7 +209,7 @@ service cloud.firestore {
           'publicationState', 'viewCount', 'likeCount', 'commentCount',
           'shareCount', 'uniqueSharerCount', 'weeklyUniqueSharerCount',
           'weeklyLikeCount', 'weeklyQualifiedViewCount', 'rankingWeek',
-          'hidden', 'removed',
+          'hidden', 'removed', 'sourceChantVisible', 'sourceCreatorVisible',
           'createdAt', 'approvedAt', 'updatedAt'
         ])
         && data.keys().hasAll([
@@ -219,7 +220,7 @@ service cloud.firestore {
           'publicationState', 'viewCount', 'likeCount', 'commentCount',
           'shareCount', 'uniqueSharerCount', 'weeklyUniqueSharerCount',
           'weeklyLikeCount', 'weeklyQualifiedViewCount', 'rankingWeek',
-          'hidden', 'removed',
+          'hidden', 'removed', 'sourceChantVisible', 'sourceCreatorVisible',
           'createdAt', 'approvedAt', 'updatedAt'
         ])
         && data.schemaVersion == 1
@@ -268,6 +269,8 @@ service cloud.firestore {
         && data.rankingWeek.matches('[0-9]{4}-[0-9]{2}-[0-9]{2}')
         && data.hidden is bool
         && data.removed is bool
+        && data.sourceChantVisible is bool
+        && data.sourceCreatorVisible is bool
         && data.createdAt is timestamp
         && data.approvedAt is timestamp
         && data.updatedAt is timestamp;
@@ -438,11 +441,14 @@ service cloud.firestore {
     // writers may mutate these documents or their handle reservations.
     match /creatorProfiles/{userId} {
       allow get: if (resource.data.hidden == false
-          && resource.data.removed == false)
+          && resource.data.removed == false
+          && isActiveProfile(userId))
         || (isAuth() && request.auth.uid == userId)
         || isOperator();
-      allow list: if resource.data.hidden == false
-        && resource.data.removed == false;
+      // A list rule cannot safely prove current private account authority for
+      // every possible public result. V1 has no creator-directory query, so
+      // public access stays exact-ID get only and operators retain list access.
+      allow list: if isOperator();
       allow create, update, delete: if false;
     }
 
@@ -472,13 +478,17 @@ service cloud.firestore {
     match /performances/{performanceId} {
       allow get: if (validPublicPerformance(resource.data)
           && resource.data.hidden == false
-          && resource.data.removed == false)
+          && resource.data.removed == false
+          && resource.data.sourceChantVisible == true
+          && resource.data.sourceCreatorVisible == true)
         || isOperator();
       allow list: if isOperator()
         || (resource.data.schemaVersion == 1
         && resource.data.publicationState == 'approved'
         && resource.data.hidden == false
-        && resource.data.removed == false);
+        && resource.data.removed == false
+        && resource.data.sourceChantVisible == true
+        && resource.data.sourceCreatorVisible == true);
       allow create, update, delete: if false;
     }
 
@@ -766,6 +776,11 @@ service cloud.firestore {
 
     // Private server-owned cursors for retryable account deletion.
     match /accountDeletionJobs/{userId} {
+      allow read, write: if false;
+    }
+
+    // Durable server-owned jobs make terminal performance removal retryable.
+    match /performanceMediaDeletionJobs/{performanceId} {
       allow read, write: if false;
     }
   }

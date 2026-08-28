@@ -96,7 +96,13 @@ async function seedCreatorProfile(
 
 async function seedPerformance(
   id: string,
-  options: { hidden?: boolean; removed?: boolean; malformed?: boolean } = {},
+  options: {
+    hidden?: boolean;
+    removed?: boolean;
+    malformed?: boolean;
+    sourceChantVisible?: boolean;
+    sourceCreatorVisible?: boolean;
+  } = {},
 ) {
   await testEnv.withSecurityRulesDisabled(async (context) => {
     const db = context.firestore();
@@ -126,6 +132,8 @@ async function seedPerformance(
       rankingWeek: "2026-08-24",
       hidden: options.hidden ?? false,
       removed: options.removed ?? false,
+      sourceChantVisible: options.sourceChantVisible ?? true,
+      sourceCreatorVisible: options.sourceCreatorVisible ?? true,
       createdAt: Timestamp.now(),
       approvedAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
@@ -746,6 +754,9 @@ describe("profiles", () => {
 
 describe("creator profiles", () => {
   it("allows public reads only for visible creator identity", async () => {
+    await seedUserProfile("visible");
+    await seedUserProfile("hidden");
+    await seedUserProfile("removed");
     await seedCreatorProfile("visible");
     await seedCreatorProfile("hidden", { hidden: true });
     await seedCreatorProfile("removed", { removed: true });
@@ -767,16 +778,32 @@ describe("creator profiles", () => {
     await assertSucceeds(getDoc(doc(operatorDb, "creatorProfiles", "owner")));
   });
 
-  it("requires visibility predicates for a public creator query", async () => {
+  it("keeps public creator access exact-ID while operators may list", async () => {
+    await seedUserProfile("visible");
     await seedCreatorProfile("visible");
+    await seedOperator("operator");
     const unauth = testEnv.unauthenticatedContext().firestore();
+    const operatorDb = testEnv.authenticatedContext("operator").firestore();
 
-    await assertSucceeds(getDocs(query(
+    await assertFails(getDocs(query(
       collection(unauth, "creatorProfiles"),
       where("hidden", "==", false),
       where("removed", "==", false),
     )));
     await assertFails(getDocs(collection(unauth, "creatorProfiles")));
+    await assertSucceeds(getDocs(collection(operatorDb, "creatorProfiles")));
+  });
+
+  it("denies a visible public identity as soon as its account is banned", async () => {
+    await seedUserProfile("banned");
+    await seedCreatorProfile("banned");
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await updateDoc(doc(context.firestore(), "profiles", "banned"), {
+        banned: true,
+      });
+    });
+    const unauth = testEnv.unauthenticatedContext().firestore();
+    await assertFails(getDoc(doc(unauth, "creatorProfiles", "banned")));
   });
 
   it("denies every direct creator profile and handle mutation", async () => {
@@ -911,12 +938,18 @@ describe("performances", () => {
     await seedPerformance("visible");
     await seedPerformance("hidden", { hidden: true });
     await seedPerformance("removed", { removed: true });
+    await seedPerformance("chant-unavailable", { sourceChantVisible: false });
+    await seedPerformance("creator-unavailable", {
+      sourceCreatorVisible: false,
+    });
     await seedPerformance("malformed", { malformed: true });
     const unauth = testEnv.unauthenticatedContext().firestore();
 
     await assertSucceeds(getDoc(doc(unauth, "performances", "visible")));
     await assertFails(getDoc(doc(unauth, "performances", "hidden")));
     await assertFails(getDoc(doc(unauth, "performances", "removed")));
+    await assertFails(getDoc(doc(unauth, "performances", "chant-unavailable")));
+    await assertFails(getDoc(doc(unauth, "performances", "creator-unavailable")));
     await assertFails(getDoc(doc(unauth, "performances", "malformed")));
   });
 
@@ -929,6 +962,8 @@ describe("performances", () => {
       where("publicationState", "==", "approved"),
       where("hidden", "==", false),
       where("removed", "==", false),
+      where("sourceChantVisible", "==", true),
+      where("sourceCreatorVisible", "==", true),
     );
 
     await assertSucceeds(getDocs(visibleQuery));
@@ -936,6 +971,14 @@ describe("performances", () => {
       collection(unauth, "performances"),
       where("hidden", "==", false),
       where("removed", "==", false),
+    )));
+    await assertFails(getDocs(query(
+      collection(unauth, "performances"),
+      where("schemaVersion", "==", 1),
+      where("publicationState", "==", "approved"),
+      where("hidden", "==", false),
+      where("removed", "==", false),
+      where("sourceChantVisible", "==", true),
     )));
   });
 
@@ -972,6 +1015,26 @@ describe("performances", () => {
       viewCount: 999999,
     }));
     await assertFails(deleteDoc(doc(ownerDb, "performances", "performance-1")));
+  });
+
+  it("keeps durable performance media deletion jobs server-only", async () => {
+    await seedOperator("operator");
+    const operatorDb = testEnv.authenticatedContext("operator").firestore();
+    await assertFails(getDoc(doc(
+      operatorDb,
+      "performanceMediaDeletionJobs",
+      "performance-1",
+    )));
+    await assertFails(setDoc(doc(
+      operatorDb,
+      "performanceMediaDeletionJobs",
+      "performance-1",
+    ), {
+      performanceId: "performance-1",
+      mediaPath: "performance-media/performance-1/source",
+      requestedAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    }));
   });
 
   it("keeps performance drafts owner-or-operator private", async () => {

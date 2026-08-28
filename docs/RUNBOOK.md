@@ -17,6 +17,7 @@ This runbook describes the source-backed recovery paths that exist today. Dashbo
 | Public browse | Current visible chants load; transient cache states are labelled | Permission errors, authoritative absence, or repeated load failure | Confirm deployed rules, indexes, client version, and Firestore availability |
 | Live actions | Vote, comment, report, feedback, share, and new save obey current authority | Repeated callable or rule rejection for a valid current target | Confirm Auth, App Check posture, rules, Functions, target visibility, and client compatibility |
 | Counters | Stored child rows and visible totals converge | Score, comments, likes, user reports, or flags remain inconsistent | Run read-only diagnosis first, then use the reviewed reconciliation path that matches the counter |
+| Published media takedown | Removed performances are unavailable and no deletion job remains after Storage cleanup | A `performanceMediaDeletionJobs` row persists, source eligibility is stale, or removed media resolves again | Preserve terminal state, inspect exact job identity, and retrigger only the reviewed worker |
 | Account deletion | Accepted jobs advance and pending accounts remain gated | A job remains in one phase, retry count grows, or a pending user regains authority | Preserve job state, inspect worker error without exposing payloads, and use forward recovery |
 | Saved Matchday Songbook | Same user can reopen saved copies without network | Corrupt, UID-mismatched, missing, or cleanup-locked local state | Use the built-in recovery or removal path; do not hand-edit application files |
 | Crash and error telemetry | No new release-correlated spike | Crashlytics or Function errors rise after a change | Stop rollout, identify exact version and first failing journey, then choose rollback or forward fix |
@@ -68,6 +69,22 @@ No numeric alert thresholds or observation windows are approved yet. Set them be
 - **Recovery verification:** The worker advances through all phases, private data is removed, retained contributions and allowed audit history satisfy the anonymization contract, Auth deletion tolerates already-missing users, counters converge, and the final job and profile disappear atomically.
 - **Escalate when:** Progress requires changing retained-data policy, audit allowlists, or the durable job schema.
 
+### Published media remains after terminal removal
+
+- **Likely causes:** The retry-enabled deletion trigger failed, deployed Function and rules versions are incompatible, the job contains malformed historical data, or the Storage object is already absent while job acknowledgement failed.
+- **Diagnosis:** Through authorized operator access, verify the performance is `removed: true`, the job ID equals the performance ID, and `mediaPath` equals `performance-media/{performanceId}/source`. Check the worker's minimal error classification without copying user media or signed URLs into repository records. Also verify that new app and public media resolution is denied.
+- **Mitigation:** Preserve the removed projection and deterministic job. Correct the compatible worker or permission boundary and retrigger its idempotent handler. Do not unremove the performance, delete the job by hand, weaken Storage reads, or substitute a different path merely to clear the queue.
+- **Recovery verification:** The exact object is absent, the deletion job is gone only after cleanup, repeated worker delivery succeeds harmlessly, ordinary and signed-out resolution stays unavailable, and operator audit still records the terminal action.
+- **Escalate when:** The job identity is malformed, cleanup would target any path other than the exact performance source, or retry requires a retention-policy change.
+
+### Performance eligibility or creator totals are stale
+
+- **Likely causes:** A creator or chant fan-out trigger failed, a deployed index or schema is incompatible, or exact count reconstruction timed out at unexpected volume.
+- **Diagnosis:** Read the current private creator authority, public creator state, chant state, dependent `sourceCreatorVisible` and `sourceChantVisible` flags, and live performance rows. Distinguish a stale projection from current source truth. Do not use a cached card as evidence of current authority.
+- **Mitigation:** Keep server actions and public resolvers on current-source checks. Retrigger or run the reviewed source reconciliation path after correcting the failure. Never patch source flags or `performanceCount` from the client.
+- **Recovery verification:** Dependent flags match current creator and chant eligibility, chant title and trust status are current, feed queries exclude ineligible rows, and the creator total equals approved, unhidden, unremoved rows with both source flags true.
+- **Escalate when:** One creator or chant has enough dependent rows that fan-out or exact reconstruction approaches Function, transaction, or cost limits.
+
 ### A seed preflight reports a collision
 
 - **Likely causes:** A reviewed ID was changed, live content predates explicit ownership metadata, or a source file points at an ID owned by another club or chant.
@@ -88,7 +105,7 @@ No numeric alert thresholds or observation windows are approved yet. Set them be
 
 - **Application:** Stop distribution of a bad candidate and ship a corrected build. Store rollback mechanics and signed artifact ownership are not yet documented.
 - **Configuration:** Restore a reviewed compatible configuration through the owning Firebase or store console. Record the exact before and after values without copying secrets.
-- **Rules and Functions:** Verify deployed baseline first, then deploy a reviewed compatible prior or forward version. CI success does not prove deployed parity.
+- **Rules and Functions:** Verify deployed baseline first, then deploy a reviewed compatible prior or forward version. For performance-source eligibility, deploy compatible rules and Functions before the client. CI success does not prove deployed parity.
 - **Schema and data:** Prefer backward-compatible additions and forward recovery. Stable seed identity, account deletion, counters, and safety records each have specific decisions that take precedence over generic rollback.
 - **External side effects:** Native sharing and evidence links leave the app boundary. Chants cannot recall third-party copies, browser history, or recipient data.
 - **Disabled merge:** `mergeChants` remains stopped before parsing or mutation. Do not re-enable it as incident mitigation.

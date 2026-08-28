@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:chants/app/providers.dart';
 import 'package:chants/app/theme.dart';
+import 'package:chants/data/models/blocked_user.dart';
 import 'package:chants/data/models/performance.dart';
 import 'package:chants/data/models/performance_comment.dart';
+import 'package:chants/data/repositories/block_repository.dart';
 import 'package:chants/data/repositories/performance_interaction_repository.dart';
 import 'package:chants/data/repositories/performance_repository.dart';
 import 'package:chants/data/repositories/creator_follow_repository.dart';
@@ -12,11 +16,55 @@ import 'package:chants/presentation/feed/chant_stage_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:mockito/mockito.dart';
 
 class _User extends Mock implements User {
   @override
   String get uid => 'fan-1';
+}
+
+class _Firestore extends Mock implements FirebaseFirestore {}
+
+class _EmptyBlockRepository extends BlockRepository {
+  _EmptyBlockRepository() : super(firestore: _Firestore());
+
+  @override
+  Stream<List<BlockedUser>> blockedUsersStream(String blockerId) =>
+      Stream.value(const []);
+}
+
+class _BlockRepository extends BlockRepository {
+  final _controller = StreamController<List<BlockedUser>>.broadcast();
+  final List<String> blocked = [];
+
+  _BlockRepository() : super(firestore: _Firestore());
+
+  @override
+  Stream<List<BlockedUser>> blockedUsersStream(String blockerId) async* {
+    yield const [];
+    yield* _controller.stream;
+  }
+
+  @override
+  Future<void> blockUser({
+    required String blockerId,
+    required String blockedUserId,
+    required String blockedDisplayName,
+  }) async {
+    blocked.add(blockedUserId);
+    _controller.add([
+      BlockedUser(
+        id: '${blockerId}_$blockedUserId',
+        blockerId: blockerId,
+        blockedUserId: blockedUserId,
+        blockedDisplayName: blockedDisplayName,
+        createdAt: DateTime.utc(2026, 8, 28),
+      ),
+    ]);
+  }
+
+  Future<void> close() => _controller.close();
 }
 
 PerformanceInteractionRepository _interactionRepository({
@@ -94,12 +142,16 @@ Widget _app({
   PublicShareRepository? publicShareRepository,
   PerformanceShareGateway? performanceShareGateway,
   CreatorFollowRepository? followRepository,
+  BlockRepository? blockRepository,
   VoidCallback? onCreate,
   VoidCallback? onBrowseClubs,
 }) {
   return ProviderScope(
     overrides: [
       performanceRepositoryProvider.overrideWithValue(repository),
+      blockRepositoryProvider.overrideWithValue(
+        blockRepository ?? _EmptyBlockRepository(),
+      ),
       creatorFollowRepositoryProvider.overrideWithValue(
         followRepository ??
             CreatorFollowRepository(
@@ -180,6 +232,35 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('#1 MOST SHARED'), findsNothing);
+  });
+
+  testWidgets('blocking a creator from Stage removes their performance', (
+    tester,
+  ) async {
+    final blocks = _BlockRepository();
+    addTearDown(blocks.close);
+    final repository = PerformanceRepository(
+      pageLoader: (_, _) async =>
+          PerformancePage(performances: [_performance()], hasMore: false),
+    );
+
+    await tester.pumpWidget(
+      _app(repository: repository, user: _User(), blockRepository: blocks),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Performance actions'));
+    await tester.pumpAndSettle();
+    expect(find.text('Block creator'), findsOneWidget);
+    await tester.tap(find.text('Block creator'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'BLOCK'));
+    await tester.pumpAndSettle();
+
+    expect(blocks.blocked, ['creator-1']);
+    expect(
+      find.byKey(const ValueKey('performance-card-performance-1')),
+      findsNothing,
+    );
   });
 
   testWidgets('like intent is optimistic and server-authoritative', (

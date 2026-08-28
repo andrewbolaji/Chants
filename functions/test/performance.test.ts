@@ -24,6 +24,7 @@ import {
   performanceMentionHandles,
   parseModeratePerformance,
   cleanupDeletedPerformanceDraft,
+  cleanupRemovedPerformanceMedia,
 } from "../src/performance";
 
 type Data = Record<string, unknown>;
@@ -227,9 +228,29 @@ function visibleChant(overrides: Data = {}): Data {
   };
 }
 
+function approvedPerformance(overrides: Data = {}): Data {
+  return {
+    schemaVersion: 1,
+    publicationState: "approved",
+    hidden: false,
+    removed: false,
+    sourceChantVisible: true,
+    sourceCreatorVisible: true,
+    chantId: "chant-1",
+    creatorId: "fan",
+    mediaPath: "performance-media/performance-1/source",
+    ...overrides,
+  };
+}
+
 function seedAuthority(db: FirestoreHarness): void {
   db.set("profiles", "fan", activeAccount());
   db.set("creatorProfiles", "fan", visibleCreator());
+  db.set("profiles", "other", activeAccount());
+  db.set("creatorProfiles", "other", visibleCreator({
+    handle: "otherfan",
+    displayName: "Other Fan",
+  }));
   db.set("chants", "chant-1", visibleChant());
   db.set("teams", "arsenal", { name: "Arsenal" });
   db.set("players", "saka", { teamId: "arsenal", name: "Bukayo Saka" });
@@ -408,6 +429,7 @@ describe("performance admission", () => {
       "commentCount", "createdAt", "creatorDisplayName", "creatorHandle",
       "creatorId", "durationMs", "hidden", "likeCount", "mediaPath",
       "playerName", "publicationState", "removed", "schemaVersion",
+      "sourceChantVisible", "sourceCreatorVisible",
       "shareCount", "teamId", "teamName", "uniqueSharerCount", "updatedAt",
       "viewCount", "weeklyLikeCount", "weeklyQualifiedViewCount",
       "weeklyUniqueSharerCount", "rankingWeek",
@@ -437,14 +459,7 @@ describe("performance admission", () => {
   });
 
   it("mints a short URL only after current public visibility is rechecked", async () => {
-    db.set("performances", "performance-1", {
-      schemaVersion: 1,
-      publicationState: "approved",
-      hidden: false,
-      removed: false,
-      creatorId: "fan",
-      mediaPath: "performance-media/performance-1/source",
-    });
+    db.set("performances", "performance-1", approvedPerformance());
     const result = await handleResolvePerformancePlayback({
       actorUid: "fan",
       data: { performanceId: "performance-1" },
@@ -471,14 +486,7 @@ describe("performance admission", () => {
 
   it("lets an active operator preview blocked published media for moderation", async () => {
     db.set("profiles", "operator", activeAccount({ role: "operator" }));
-    db.set("performances", "performance-1", {
-      schemaVersion: 1,
-      publicationState: "approved",
-      hidden: false,
-      removed: false,
-      creatorId: "fan",
-      mediaPath: "performance-media/performance-1/source",
-    });
+    db.set("performances", "performance-1", approvedPerformance());
     db.set("blocks", "fan_operator", {
       blockerId: "fan",
       blockedUserId: "operator",
@@ -496,14 +504,77 @@ describe("performance admission", () => {
     assert.strictEqual(media.signed.length, 1);
   });
 
-  it("stores one like source and removes it idempotently", async () => {
-    db.set("performances", "performance-1", {
-      schemaVersion: 1,
-      publicationState: "approved",
-      hidden: false,
-      removed: false,
-      creatorId: "other",
+  it("lets an active operator preview hidden media without reopening it to fans", async () => {
+    db.set("profiles", "operator", activeAccount({ role: "operator" }));
+    db.set("performances", "performance-1", approvedPerformance({ hidden: true }));
+
+    const result = await handleResolvePerformancePlayback({
+      actorUid: "operator",
+      data: { performanceId: "performance-1" },
+      firestore: db.firestore,
+      media,
+      now: () => NOW,
     });
+    assert.strictEqual(result.url, "https://signed.example.test/media");
+
+    await assert.rejects(handleResolvePerformancePlayback({
+      actorUid: "fan",
+      data: { performanceId: "performance-1" },
+      firestore: db.firestore,
+      media,
+      now: () => NOW,
+    }), (error: { code?: string }) => error.code === "not-found");
+  });
+
+  it("rejects a stale projection when the creator is banned or chant is hidden", async () => {
+    db.set("profiles", "viewer", activeAccount());
+    db.set("performances", "performance-1", approvedPerformance());
+    db.set("profiles", "fan", activeAccount({ banned: true }));
+
+    await assert.rejects(handleResolvePerformancePlayback({
+      actorUid: "viewer",
+      data: { performanceId: "performance-1" },
+      firestore: db.firestore,
+      media,
+      now: () => NOW,
+    }), (error: { code?: string }) => error.code === "not-found");
+
+    db.set("profiles", "fan", activeAccount());
+    db.set("chants", "chant-1", visibleChant({ hidden: true }));
+    await assert.rejects(handleSetPerformanceLike({
+      uid: "viewer",
+      data: { performanceId: "performance-1", liked: true },
+      firestore: db.firestore,
+      now: () => NOW,
+    }), (error: { code?: string }) => error.code === "not-found");
+  });
+
+  it("deletes only the exact removed performance media path idempotently", async () => {
+    const media = new MediaHarness();
+    assert.strictEqual(await cleanupRemovedPerformanceMedia({
+      performanceId: "performance-1",
+      mediaPath: "performance-media/performance-1/source",
+    }, media), true);
+    assert.deepStrictEqual(media.removed, [
+      "performance-media/performance-1/source",
+    ]);
+    assert.strictEqual(await cleanupRemovedPerformanceMedia({
+      performanceId: "performance-1",
+      mediaPath: "performance-media/another/source",
+    }, media), false);
+    assert.strictEqual(await cleanupRemovedPerformanceMedia({
+      performanceId: "../unsafe",
+      mediaPath: "performance-media/../unsafe/source",
+    }, media), false);
+    assert.deepStrictEqual(media.removed, [
+      "performance-media/performance-1/source",
+    ]);
+  });
+
+  it("stores one like source and removes it idempotently", async () => {
+    db.set("performances", "performance-1", approvedPerformance({
+      creatorId: "other",
+    }));
     const request = (liked: boolean) => handleSetPerformanceLike({
       uid: "fan",
       data: { performanceId: "performance-1", liked },
@@ -523,13 +594,9 @@ describe("performance admission", () => {
   });
 
   it("stores one unique share source after current authority succeeds", async () => {
-    db.set("performances", "performance-1", {
-      schemaVersion: 1,
-      publicationState: "approved",
-      hidden: false,
-      removed: false,
+    db.set("performances", "performance-1", approvedPerformance({
       creatorId: "other",
-    });
+    }));
     const request = () => handleRecordPerformanceShare({
       uid: "fan",
       data: { performanceId: "performance-1" },
@@ -546,14 +613,9 @@ describe("performance admission", () => {
   });
 
   it("counts a view only after a current three-second playback ticket", async () => {
-    db.set("performances", "performance-1", {
-      schemaVersion: 1,
-      publicationState: "approved",
-      hidden: false,
-      removed: false,
+    db.set("performances", "performance-1", approvedPerformance({
       creatorId: "other",
-      mediaPath: "performance-media/performance-1/source",
-    });
+    }));
     await handleResolvePerformancePlayback({
       actorUid: "fan",
       data: { performanceId: "performance-1" },
@@ -592,13 +654,9 @@ describe("performance admission", () => {
   });
 
   it("creates idempotent public comments and lets only the author remove them", async () => {
-    db.set("performances", "performance-1", {
-      schemaVersion: 1,
-      publicationState: "approved",
-      hidden: false,
-      removed: false,
+    db.set("performances", "performance-1", approvedPerformance({
       creatorId: "other",
-    });
+    }));
     assert.deepStrictEqual(parsePerformanceComment({
       performanceId: "performance-1",
       body: "  This will catch on.  ",
@@ -647,13 +705,9 @@ describe("performance admission", () => {
   });
 
   it("stores continued threads and fans out only validated unblocked mentions", async () => {
-    db.set("performances", "performance-1", {
-      schemaVersion: 1,
-      publicationState: "approved",
-      hidden: false,
-      removed: false,
+    db.set("performances", "performance-1", approvedPerformance({
       creatorId: "other",
-    });
+    }));
     db.set("creatorHandles", "target_handle", { uid: "target" });
     db.set("creatorProfiles", "target", visibleCreator({
       handle: "target_handle",
@@ -705,13 +759,9 @@ describe("performance admission", () => {
   });
 
   it("keeps a blocked mention as plain text without an inbox side effect", async () => {
-    db.set("performances", "performance-1", {
-      schemaVersion: 1,
-      publicationState: "approved",
-      hidden: false,
-      removed: false,
+    db.set("performances", "performance-1", approvedPerformance({
       creatorId: "other",
-    });
+    }));
     db.set("creatorHandles", "target_handle", { uid: "target" });
     db.set("creatorProfiles", "target", visibleCreator({ handle: "target_handle" }));
     db.set("blocks", "target_fan", {

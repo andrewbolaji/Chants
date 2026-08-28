@@ -1,15 +1,15 @@
 # Repository implementation rationale
 
-This document explains the current Chants repository, including inherited systems and the packaged creator-platform range `86603c22...641281e` based on merged `main` at `86603c22fbd7647f89c9276af9a60a0b3d63113b`. It is a reviewer map, not proof of deployment or release readiness.
+This document explains the current Chants repository, including inherited systems, the independently reviewed creator-platform range `86603c22...946ab0c`, and the approved takedown correction packaged by the commit carrying this record, based on merged `main` at `86603c22fbd7647f89c9276af9a60a0b3d63113b`. It is a reviewer map, not proof of deployment or release readiness.
 
 ## Document identity and completeness
 
 - **Current change:** `docs/CHANGE_SPEC.md`
-- **Completed change reasoning:** `docs/changes/2026-08-27-creator-platform-foundation.md`
-- **Durable creator decisions:** 017 through 021
+- **Completed change reasoning:** `docs/changes/2026-08-27-creator-platform-foundation.md` and `docs/changes/2026-08-28-pr17-post-review-takedown-integrity.md`
+- **Durable creator decisions:** 017 through 022
 - **Execution evidence:** `docs/EXECUTION.md`
 - **Interface memory:** `docs/INTERFACE.md`
-- **Known missing evidence:** independent review, both native builds, combined device walk, production configuration, policy, deploy, seed completion, signing, and release
+- **Known missing evidence:** correction exact-head CI and narrow closure review, both native builds, combined device walk, production configuration, policy, deploy, seed completion, signing, and release
 
 ## Repository coverage ledger
 
@@ -52,7 +52,7 @@ This ordering is inherited and unchanged in meaning. The creator expansion adds 
 
 `lib/presentation/profile/edit_creator_profile_screen.dart` submits handle, public name, and optional bio through `lib/data/repositories/creator_profile_repository.dart`. `functions/src/creator_profile.ts :: handleUpdateCreatorProfile` normalizes and validates the input, rechecks private account authority, reserves `creatorHandles/{handle}` transactionally, writes the public allowlist, and preserves server counters.
 
-Public profile reads use `creatorProfiles`. No public page or Stage card reads `profiles`. This prevents role, ban, policy, age, deletion, report, and email state from entering the public schema.
+Public profile content uses exact-ID `creatorProfiles` gets; private authority is never copied into that schema. Firestore rules and public HTTP handlers separately recheck current private account activity, so a ban or deletion closes public access without exposing role, ban, policy, age, deletion, report, or email fields. Public creator collection listing is operator-only because V1 has no creator-directory query and a list rule cannot safely prove private account authority for every possible result.
 
 ## Critical path: record or choose, upload, and approve
 
@@ -60,13 +60,13 @@ Public profile reads use `creatorProfiles`. No public page or Stage card reads `
 
 `handleCreatePerformanceDraft` allocates one owner draft and exact staging path. Storage rules allow only that UID and draft path. `PerformanceDraftRepository` transfers bytes and exposes progress, retry, cancellation, and submission. `handleSubmitPerformanceDraft` trusts Storage metadata rather than client claims and moves the draft to pending only after account, creator, chant, object, type, bytes, and duration checks.
 
-An active operator uses `handleModeratePerformance`. Approval creates the public performance projection and approved media identity. Rejection stays private. Upload completion alone never grants visibility.
+An active operator uses `handleModeratePerformance`. Approval creates the public performance projection, approved media identity, and both server-owned source-eligibility flags. Rejection stays private. Upload completion alone never grants visibility.
 
 ## Critical path: browse and play Stage
 
-`PerformanceRepository` issues bounded ten-record queries for Rising, New, Terrace, or Following and carries a cursor. Every public query includes approval and visibility. Following first reads up to the 30 most recent private follow edges, then performs the bounded creator query. Empty or signed-out Following falls back visibly to Rising.
+`PerformanceRepository` issues bounded ten-record queries for Rising, New, Terrace, or Following and carries a cursor. Every public query includes approval, moderation visibility, current creator-source eligibility, and current chant-source eligibility. Following first reads up to the 30 most recent private follow edges, then performs the bounded creator query. Empty or signed-out Following falls back visibly to Rising. The Stage additionally watches the viewer's private block set, fails closed while that authority is unavailable, and removes blocked creators immediately.
 
-`PerformanceVideoPlayer` starts from a poster and explicit play. It calls the playback resolver only on demand. The server checks current visibility and both block directions, then returns a short signed URL. Three seconds of actual playback triggers the qualified-view callable once for that account.
+`PerformanceVideoPlayer` starts from a poster and explicit play. It calls the playback resolver only on demand. The server checks current actor authority, private creator account, creator deletion job, public creator, current chant, performance visibility, source flags, and both block directions before returning a short signed URL. Three seconds of actual playback triggers the qualified-view callable once for that account.
 
 Playback errors preserve the card and expose Retry. The feed does not autoplay, background play, prefetch, or loop through failed network requests.
 
@@ -88,15 +88,21 @@ The comments sheet visually indents only three levels. Deeper branches open a fo
 
 The mobile repository asks `resolvePublicShareDestination` for a current HTTPS URL. The system share sheet receives bounded text plus that destination. Server-rendered pages independently recheck visibility and emit escaped, allowlisted metadata.
 
-Public performance video uses a same-origin media route. It does not reveal the raw Storage path. The handler verifies the exact performance media identity and returns a no-store redirect to a two-minute signed URL. A hide or removal stops new resolution. Immediate revocation of an already issued URL is not claimed.
+Public performance video uses a same-origin media route. It does not reveal the raw Storage path. The handler verifies the exact performance media identity plus current creator and chant authority, then returns a no-store redirect to a two-minute signed URL. A ban, deletion, source takedown, hide, or removal stops new resolution. Immediate revocation of an already issued URL is not claimed. In-app playback URLs have a ten-minute residual.
 
 ## Critical path: report and moderate
 
 The existing report callable now parses performance and performance-comment targets. It rechecks current target authority, both deletion states where applicable, duplicate identity, and the atomic report budget before writing server-owned rows.
 
-Draft approval is separate from published-media response. `handlePublishedPerformanceModeration` supports dismiss, hide, remove, and restore after current operator authorization. It updates target state, resolves relevant reports, and writes bounded audit. The operator UI separates reported video, reported comments, and hidden content.
+Draft approval is separate from published-media response. `handlePublishedPerformanceModeration` supports dismiss, hide, remove, and restore after current operator authorization. It updates target state, resolves relevant reports, and writes bounded audit. Terminal performance removal also commits deterministic exact-path media-deletion work. A retry-enabled trigger deletes the object idempotently and acknowledges the job only after cleanup. The operator UI separates reported video, reported comments, and hidden content; eligible hidden rows expose Preview, Restore, and Remove.
 
-Directional blocks suppress ordinary viewing interaction, follow, comment, mention fan-out, and notification delivery. Operator preview is a narrow inspection exception, not a social-action bypass.
+Directional blocks suppress Stage cards, public creator access in the app, ordinary viewing interaction, follow, comment, mention fan-out, and notification delivery. Stage cards and public creator profiles expose a confirmed Block action. Operator preview is a narrow inspection exception for approved, nonremoved hidden media, not a social-action bypass.
+
+## Critical path: source reconciliation and creator totals
+
+`functions/src/performance_source.ts` derives creator and chant eligibility from current documents. Profile and chant triggers fan out server-owned source flags to dependent performances. Each dependent write rereads its current source in the same transaction, so a concurrent source change causes an older handler to retry. Chant reconciliation also updates the attached title and trust status. Live server actions and public HTTP handlers still read current source documents because trigger delivery is asynchronous.
+
+Approval retains an idempotent immediate `performanceCount` update. Lifecycle repair reconstructs that total from approved, unhidden, unremoved performances with both source flags true. The query and creator write share one transaction, so overlapping writers serialize on the creator profile. Visibility-affecting writes invoke reconstruction; likes, views, shares, and comment counter updates do not.
 
 ## Critical path: account deletion
 
@@ -115,6 +121,7 @@ The phase set now removes creator handle and profile, drafts and staging referen
 | `performances` | Approved visible public projection; operator restricted inspection | Server admission and moderation |
 | Staged media | Exact owner draft only | UID-scoped Storage rule |
 | Published media | No direct client read | Server copy and signed delivery |
+| `performanceMediaDeletionJobs` | No client read or write | Terminal moderation transaction and retry-enabled cleanup trigger |
 | Performance interactions | Actor or recipient where needed; aggregates public only | Server callables and triggers |
 | `creatorFollows` | Follower only | Server callable |
 | `creatorNotifications` | Recipient only | Server fan-out and read callable |
@@ -135,7 +142,10 @@ The phase set now removes creator handle and profile, drafts and staging referen
 | Follow graph and inbox remain private | Recipient or follower rules, aggregate public profile only | Rules and repository tests |
 | Replies stay same-target and acyclic | Parent/root/depth validation | Functions and widget tests |
 | Block suppresses social fan-out in both directions | Server block reads and callable denial | Functions tests |
-| Hidden public media stops new resolution | Page and media handler current checks | Public-share tests |
+| Current creator or chant takedown closes dependent performances | Server source reads, query flags, fan-out, strict rules | Functions, Flutter, and rules tests |
+| Hidden public media stops new resolution while remaining operator-reviewable | Page and media current checks plus narrow operator preview | Public-share, playback, and moderation tests |
+| Terminal performance removal schedules exact retryable Storage cleanup | Deterministic server-only job and path-validating worker | Functions cleanup and moderation tests |
+| Creator performance totals converge from live rows | Parent-serialized exact reconstruction | Source overlap and repair tests |
 | New persistent data joins deletion | Added bounded phases and finalization | Failure-injection and app-gate tests |
 | CI enforces project memory for the review range | `--range` workflow and regression harness | Governance tests |
 
@@ -143,7 +153,7 @@ The phase set now removes creator handle and profile, drafts and staging referen
 
 Firestore denies unmatched paths. New public projections have explicit schemas, visibility states, and list-query requirements. New private paths deny direct mutation. Storage accepts only the exact staged source object for a current owner draft and denies direct public-media reads.
 
-Every callable reauthorizes from private profile and deletion job state. UI visibility is never treated as authority. App Check remains client-wired but production enforcement is unverified.
+Every callable reauthorizes from private actor state and relevant current target sources. UI visibility and denormalized eligibility are never treated as sufficient live authority. App Check remains client-wired but production enforcement is unverified.
 
 Public pages omit lyrics, private UIDs, raw Storage paths, report state, and unrestricted user HTML. Creator bios are escaped. Hidden and missing public targets are indistinguishable. Signed media creates a bounded two-minute residual after moderation.
 
@@ -167,8 +177,9 @@ iOS remains on the project-owned CocoaPods path. The new graph resolves successf
 - Following V1 is limited to 30 followed creator IDs.
 - Upload is limited to one 30-second, 50-MiB object per draft.
 - Video does not autoplay, prefetch, or retry indefinitely.
-- Signed playback URLs last two minutes.
+- Public signed playback URLs last two minutes; in-app signed playback URLs last ten minutes.
 - Interaction totals recompute from all source rows for a performance, which favors correctness over large-scale write cost.
+- Creator and chant changes scan dependent performances and execute one current-source transaction per row. Creator performance totals scan that creator's performance rows. These paths favor convergence over globally bounded work and have no measured production budget.
 - Manual review limits admission throughput.
 - Production reads, writes, signing, storage, egress, moderation time, and cost are unmeasured.
 
@@ -178,14 +189,14 @@ The launch must set billing alerts, staged-object cleanup, Function alerts, mode
 
 | Command or probe | Result |
 |---|---|
-| `flutter test` | PASS, 415 |
-| `flutter analyze` with the checked-in non-secret fixture | PASS with zero issues locally and in clean-runner CI |
-| `functions/npm test` | PASS, 122 |
-| Firestore plus Storage emulator | PASS, 157 |
+| `flutter test` | PASS, 422 at the correction commit |
+| `flutter analyze` with the deterministic non-secret fixture | PASS with zero issues at the correction commit |
+| `functions/npm test` | PASS, 135 at the correction commit |
+| Firestore plus Storage emulator | Correction suite blocked locally because Java is absent; prior reviewed head PASS, 157 |
 | `seed/npm test` | PASS, 42 |
-| `scripts/test-project-governance.sh` | PASS after adding review-range coverage |
-| `git diff --check` | PASS at packaging; rerun after the final documentation refresh |
-| GitHub Actions run `33181165940` | PASS at implementation head `641281e`; all six jobs completed without failure or skip |
+| `scripts/check-project-memory.sh` and `scripts/test-project-governance.sh` | PASS locally at the correction commit |
+| `git diff --check` | PASS after the correction documentation refresh |
+| GitHub Actions run `33181165940` | PASS at initial implementation head `641281e`; correction exact-head run pending |
 | Three targeted goldens | Updated, passing, and visually inspected |
 | CocoaPods resolution | PASS on Firebase iOS 12.18 |
 | iOS simulator compile | Incomplete after extended silent Xcode compilation |
@@ -197,17 +208,17 @@ Nothing in this range is deployed. No live Firestore or Storage mutation, seed w
 
 Compatible deployment order is rules, Functions, Hosting, then client. Public URLs should not ship until Hosting, domain, IAM signing, and store routing are verified. Media admission should not open until policy, moderation, cleanup, billing, and alert gates are operational.
 
-Recovery options are additive. Pause performance admission without removing Songbook or words-only creation. Hide or remove approved media to stop new public resolution. Recompute counters from deterministic source rows. Revert the client shell without deleting creator data. Account deletion continues through its durable worker.
+Recovery options are additive. Pause performance admission without removing Songbook or words-only creation. Hide or remove approved media to stop new public resolution; terminal removal leaves retryable physical cleanup. Reconcile source flags and exact creator totals from current documents. Revert the client shell without deleting creator data. Account deletion continues through its durable worker.
 
 ## Documentation consistency
 
 | Record | Current meaning |
 |---|---|
 | `docs/CHANGE_SPEC.md` | Approved creator-platform scope, completed local blocks, and remaining gates |
-| `docs/changes/2026-08-27-creator-platform-foundation.md` | Exact implementation reasoning and evidence |
-| Decisions 017 through 021 | Shell, identity, performance, public, social, and safety architecture |
+| `docs/changes/2026-08-27-creator-platform-foundation.md` and the 2026-08-28 correction record | Initial implementation plus accepted review corrections |
+| Decisions 017 through 022 | Shell, identity, performance, public, social, safety, and source eligibility architecture |
 | `docs/INTERFACE.md` | Current Stage, creator, conversation, moderation, and inherited interaction contract |
-| `docs/ROADMAP.md` | Creator source packaged and clean-runner green; review, native, policy, configuration, seed, and release remain |
+| `docs/ROADMAP.md` | Initial creator source reviewed; correction CI and closure, native, policy, configuration, seed, and release remain |
 | `ENGINEERING_OVERVIEW.md` | Reviewer-oriented current code map |
 
 ## Known compromises and uncertainty
@@ -216,8 +227,9 @@ Recovery options are additive. Pause performance admission without removing Song
 |---|---|---|
 | Manual media review | Queue can stall | Before public beta and when response time crosses the chosen target |
 | Following query cap | More than 30 followed creators are not represented in one V1 page query | When real accounts cross the cap |
-| Two-minute signed URL | Hide is not instantaneous for an already issued URL | When risk requires stronger revocation |
-| Ground-truth aggregate scans | Write cost grows with popularity | Before public volume or when telemetry crosses budget |
+| Signed URL residual | Hide is not instantaneous for an already issued public two-minute or in-app ten-minute URL | When risk requires stronger revocation |
+| Source fan-out and ground-truth aggregate scans | Trigger time and write cost grow with dependent performance volume and popularity | Before public volume or when telemetry crosses budget |
+| Durable media-deletion jobs have no production alert | Failed physical cleanup may remain queued without prompt operator attention | Before media admission opens |
 | No automated media screening | Harm detection depends on humans | When queue or incident volume justifies a reviewed provider contract |
 | No domain or store association | Public pages cannot yet guarantee app opening | Before release emits links |
 | Native build evidence incomplete | Plugin linkage is not yet fully proved | Before source freeze |
@@ -229,7 +241,7 @@ Recovery options are additive. Pause performance admission without removing Song
 - `lib/presentation/shell/`, `feed/`, `create/`, `profile/`, `moderation/`, `report/`
 - `lib/data/models/creator_*`, `performance*`
 - `lib/data/repositories/creator_*`, `performance_*`, `public_share_repository.dart`
-- `functions/src/creator_profile.ts`, `creator_follow.ts`, `creator_notification.ts`, `performance.ts`, `public_share.ts`, `published_performance_moderation.ts`
+- `functions/src/creator_profile.ts`, `creator_follow.ts`, `creator_notification.ts`, `performance.ts`, `performance_source.ts`, `public_share.ts`, `published_performance_moderation.ts`
 - `functions/src/safety_submission.ts`, `account_deletion.ts`, and `index.ts`
 - `firestore.rules`, `storage.rules`, `firestore.indexes.json`, `firebase.json`, `hosting/`
 - `.github/workflows/ci.yml`, `scripts/check-project-memory.sh`, `scripts/test-project-governance.sh`

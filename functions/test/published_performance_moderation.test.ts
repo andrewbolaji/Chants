@@ -82,6 +82,7 @@ class Harness {
   private async transaction<T>(handler: (transaction: {
     get: (target: Ref | QueryRef) => Promise<unknown>;
     create: (ref: Ref, data: Data) => void;
+    set: (ref: Ref, data: Data) => void;
     update: (ref: Ref, data: Data) => void;
   }) => Promise<T>): Promise<T> {
     const operations: Array<() => void> = [];
@@ -93,6 +94,9 @@ class Harness {
         if (this.bucket(ref.collectionName).has(ref.id)) {
           throw new Error("document exists");
         }
+        this.bucket(ref.collectionName).set(ref.id, { ...data });
+      }),
+      set: (ref, data) => operations.push(() => {
         this.bucket(ref.collectionName).set(ref.id, { ...data });
       }),
       update: (ref, data) => operations.push(() => {
@@ -203,6 +207,39 @@ describe("published performance moderation", () => {
       "dismissed"
     );
     assert.strictEqual(db.get("performanceComments", "comment-1")?.body, "Keep this");
+  });
+
+  it("makes terminal performance removal schedule durable media deletion", async () => {
+    const db = new Harness();
+    seedOperator(db);
+    db.set("performances", "performance-1", {
+      hidden: true,
+      removed: false,
+      mediaPath: "performance-media/performance-1/source",
+    });
+
+    await handlePublishedPerformanceModeration({
+      actorUid: "operator",
+      data: {
+        targetType: "performance",
+        targetId: "performance-1",
+        action: "remove",
+      },
+      firestore: db.firestore,
+      now: () => NOW,
+      newAuditId: () => "audit-1",
+    });
+
+    assert.strictEqual(db.get("performances", "performance-1")?.removed, true);
+    assert.deepStrictEqual(
+      db.get("performanceMediaDeletionJobs", "performance-1"),
+      {
+        performanceId: "performance-1",
+        mediaPath: "performance-media/performance-1/source",
+        requestedAt: NOW,
+        updatedAt: NOW,
+      },
+    );
   });
 
   it("rejects non-operators and missing targets without resolving reports", async () => {

@@ -1,5 +1,9 @@
 import * as admin from "firebase-admin";
 import { HttpsError } from "firebase-functions/v2/https";
+import {
+  currentChantSourceVisible,
+  currentCreatorSourceVisible,
+} from "./performance_source";
 
 export const PERFORMANCE_SCHEMA_VERSION = 1;
 export const MAX_PERFORMANCE_DURATION_MS = 30_000;
@@ -272,6 +276,9 @@ function requireVisiblePerformance(
     performance.publicationState !== "approved" ||
     performance.hidden !== false ||
     performance.removed !== false ||
+    performance.sourceChantVisible !== true ||
+    performance.sourceCreatorVisible !== true ||
+    typeof performance.chantId !== "string" ||
     typeof performance.creatorId !== "string"
   ) {
     throw new HttpsError("not-found", "Performance is unavailable.");
@@ -328,6 +335,7 @@ async function interactionAuthority(params: {
   performanceId: string;
   firestore: admin.firestore.Firestore;
   transaction: admin.firestore.Transaction;
+  actorAuthority?: { account: Data | undefined; deletionJobExists: boolean };
 }): Promise<{
   performance: Data;
   performanceRef: admin.firestore.DocumentReference;
@@ -339,16 +347,54 @@ async function interactionAuthority(params: {
   const performanceRef = params.firestore
     .collection("performances")
     .doc(params.performanceId);
-  const [profileSnapshot, deletionSnapshot, performanceSnapshot] =
-    await Promise.all([
-      params.transaction.get(profileRef),
-      params.transaction.get(deletionRef),
-      params.transaction.get(performanceRef),
-    ]);
-  const profile = profileSnapshot.data();
-  requireActiveAccount(profile, deletionSnapshot.exists);
+  let profile: Data | undefined;
+  let deletionJobExists: boolean;
+  let performanceSnapshot: admin.firestore.DocumentSnapshot;
+  if (params.actorAuthority) {
+    profile = params.actorAuthority.account;
+    deletionJobExists = params.actorAuthority.deletionJobExists;
+    performanceSnapshot = await params.transaction.get(performanceRef);
+  } else {
+    const [profileSnapshot, deletionSnapshot, loadedPerformance] =
+      await Promise.all([
+        params.transaction.get(profileRef),
+        params.transaction.get(deletionRef),
+        params.transaction.get(performanceRef),
+      ]);
+    profile = profileSnapshot.data();
+    deletionJobExists = deletionSnapshot.exists;
+    performanceSnapshot = loadedPerformance;
+  }
+  requireActiveAccount(profile, deletionJobExists);
   const performance = performanceSnapshot.data();
   requireVisiblePerformance(performance);
+  const creatorId = performance.creatorId as string;
+  const chantId = performance.chantId as string;
+  const [creatorAccountSnapshot, creatorDeletionSnapshot, creatorSnapshot, chantSnapshot] =
+    await Promise.all([
+      params.transaction.get(
+        params.firestore.collection("profiles").doc(creatorId)
+      ),
+      params.transaction.get(
+        params.firestore.collection("accountDeletionJobs").doc(creatorId)
+      ),
+      params.transaction.get(
+        params.firestore.collection("creatorProfiles").doc(creatorId)
+      ),
+      params.transaction.get(
+        params.firestore.collection("chants").doc(chantId)
+      ),
+    ]);
+  if (
+    !currentCreatorSourceVisible({
+      account: creatorAccountSnapshot.data(),
+      creator: creatorSnapshot.data(),
+      deletionJobExists: creatorDeletionSnapshot.exists,
+    }) ||
+    !currentChantSourceVisible(chantSnapshot.data())
+  ) {
+    throw new HttpsError("not-found", "Performance is unavailable.");
+  }
   if (profile?.role !== "operator") {
     const refs = blockRefs(
       params.firestore,
@@ -714,6 +760,8 @@ export async function handleModeratePerformance(params: {
       rankingWeek: performanceRankingWeek(timestamp),
       hidden: false,
       removed: false,
+      sourceChantVisible: true,
+      sourceCreatorVisible: true,
       createdAt: draft.createdAt,
       approvedAt: timestamp,
       updatedAt: timestamp,
@@ -749,12 +797,42 @@ export async function handleResolvePerformancePlayback(params: {
     .doc(interactionId(params.actorUid, performanceId));
   let mediaPath = "";
   await params.firestore.runTransaction(async (transaction) => {
-    const { performance } = await interactionAuthority({
-      uid: params.actorUid,
-      performanceId,
-      firestore: params.firestore,
-      transaction,
-    });
+    const [actorSnapshot, deletionSnapshot] = await Promise.all([
+      transaction.get(params.firestore.collection("profiles").doc(params.actorUid)),
+      transaction.get(
+        params.firestore.collection("accountDeletionJobs").doc(params.actorUid)
+      ),
+    ]);
+    const actor = actorSnapshot.data();
+    requireActiveAccount(actor, deletionSnapshot.exists);
+    let performance: Data;
+    if (actor?.role === "operator") {
+      const performanceSnapshot = await transaction.get(
+        params.firestore.collection("performances").doc(performanceId)
+      );
+      const candidate = performanceSnapshot.data();
+      if (
+        !candidate ||
+        candidate.schemaVersion !== PERFORMANCE_SCHEMA_VERSION ||
+        candidate.publicationState !== "approved" ||
+        candidate.removed !== false ||
+        typeof candidate.mediaPath !== "string"
+      ) {
+        throw new HttpsError("not-found", "Performance is unavailable.");
+      }
+      performance = candidate;
+    } else {
+      performance = (await interactionAuthority({
+        uid: params.actorUid,
+        performanceId,
+        firestore: params.firestore,
+        transaction,
+        actorAuthority: {
+          account: actor,
+          deletionJobExists: deletionSnapshot.exists,
+        },
+      })).performance;
+    }
     if (typeof performance.mediaPath !== "string") {
       throw new HttpsError("not-found", "Performance is unavailable.");
     }
@@ -1330,6 +1408,19 @@ export async function cleanupDeletedPerformanceDraft(
   );
   if (!match || match[1] !== ownerId) return false;
   await media.remove(data.uploadPath);
+  return true;
+}
+
+export async function cleanupRemovedPerformanceMedia(
+  data: Data | undefined,
+  media: PerformanceMediaGateway,
+): Promise<boolean> {
+  if (!data || typeof data.performanceId !== "string") return false;
+  const performanceId = cleanId(data.performanceId);
+  if (!performanceId || performanceId !== data.performanceId) return false;
+  const expectedPath = `performance-media/${performanceId}/source`;
+  if (data.mediaPath !== expectedPath) return false;
+  await media.remove(expectedPath);
   return true;
 }
 

@@ -1,8 +1,8 @@
 # Chants engineering overview
 
-This is the current whole-project map for the packaged creator-platform implementation on `codex/v1-creator-platform-foundation`, based on merged `main` at `86603c22fbd7647f89c9276af9a60a0b3d63113b`. The reviewed implementation boundary is `86603c22...641281e` in draft PR 17. It describes source reality, including inherited and unchanged systems. It is not a deployment claim or an approval record.
+This is the current whole-project map for the creator-platform implementation on `codex/v1-creator-platform-foundation`, based on merged `main` at `86603c22fbd7647f89c9276af9a60a0b3d63113b`. Claude independently reviewed `86603c22...946ab0c` in draft PR 17. The commit carrying this record packages the approved takedown and integrity correction that follows that review. It describes source reality, including inherited and unchanged systems. It is not a deployment claim or an approval record.
 
-The active approval contract is `docs/CHANGE_SPEC.md`. Completed change reasoning is in `docs/changes/2026-08-27-creator-platform-foundation.md`. Durable architectural choices are decisions 017 through 021. `docs/IMPLEMENTATION_RATIONALE.md` is the companion coverage ledger and verification record.
+The active approval contract is `docs/CHANGE_SPEC.md`. Completed reasoning is in `docs/changes/2026-08-27-creator-platform-foundation.md` and `docs/changes/2026-08-28-pr17-post-review-takedown-integrity.md`. Durable architectural choices are decisions 017 through 022. `docs/IMPLEMENTATION_RATIONALE.md` is the companion coverage ledger and verification record.
 
 ## Review outcome
 
@@ -13,7 +13,7 @@ Chants now has the intended two-part product rather than a catalogue alone:
 
 The implementation preserves the central trust boundary. A performance has its own status, media, creator, and popularity counters. It cannot mutate the attached chant's `canonical` or `community` state (`functions/src/performance.ts :: handleModeratePerformance`; `docs/decisions/018-performance-stage-and-admission.md`).
 
-The local automated matrix is green: 415 Flutter tests, 122 Cloud Functions tests, 157 Firestore and Storage emulator assertions, 42 seed tests, full Flutter analysis exit 0, and project-governance regressions. Replacement clean-runner run `33181165940` passed all six jobs at implementation head `641281e`, including zero-issue analysis on Flutter 3.47.2 and the complete 415-test Flutter suite. The iOS CocoaPods graph resolves on Firebase iOS 12.18, but the full Xcode compile did not complete within the bounded local attempt. Android compilation is blocked by the absent SDK. One independent Claude review, both native builds, the combined device walkthrough, policy, production configuration, deployment, and release remain open (`docs/EXECUTION.md :: 2026-08-28 creator platform entry`).
+The initial implementation matrix is green: 415 Flutter tests, 122 Cloud Functions tests, 157 Firestore and Storage emulator assertions, 42 seed tests, zero-issue analysis, and project-governance regressions. Replacement clean-runner run `33181165940` passed all six jobs at implementation head `641281e`; durable records extended the reviewed head to `946ab0c`. Claude then found seven connected lifecycle defects. Their consolidated correction passes 422 Flutter tests, 135 Functions tests, 42 seed tests, scoped analysis, project-memory structure, governance regressions, and diff checks locally. Java is absent, so the changed rules have TypeScript and index validation but still need Java-backed clean-runner evidence. Exact-head CI and the narrow closure review remain open, as do native builds, the device walkthrough, policy, production configuration, deployment, and release.
 
 ## Product and navigation
 
@@ -29,7 +29,7 @@ Private authority remains in `profiles/{uid}`. Public creator identity lives in 
 
 Normalized handle ownership lives in server-only `creatorHandles/{handle}`. `handleUpdateCreatorProfile` reserves, renames, and releases handles in one transaction while preserving server counters. A banned, stale-policy, under-age, missing, or deletion-pending account cannot write identity (`functions/src/creator_profile.ts :: handleUpdateCreatorProfile`).
 
-`lib/presentation/profile/public_creator_profile_screen.dart :: PublicCreatorProfileScreen` shows the public allowlist, aggregate totals, recent approved performances, Follow, Share, and Report. It does not read private account fields.
+`lib/presentation/profile/public_creator_profile_screen.dart :: PublicCreatorProfileScreen` shows the public allowlist, aggregate totals, recent approved performances, Follow, Share, Report, and confirmed Block. It does not expose private account fields. Firestore exact-ID gets and public HTTP reads separately check current private account activity so a ban or deletion closes the public surface. Public creator collection listing is denied because V1 has no creator directory and a list query cannot safely prove private account authority for every result.
 
 ## Performance admission and media
 
@@ -39,13 +39,15 @@ A performance starts as a private draft. `functions/src/performance.ts :: handle
 
 `functions/src/performance.ts :: handleSubmitPerformanceDraft` verifies trusted Storage metadata before moving a draft to pending review. `handleModeratePerformance` is active-operator only. Approval produces the parser-safe public `performances/{id}` projection and public media identity. Rejection and cancellation remain private. `cleanupDeletedPerformanceDraft` provides the server cleanup hook for deleted drafts.
 
-Public client reads require an approved, visible performance with exact schema and query predicates (`firestore.rules :: match /performances/{performanceId}`). Firebase client reads of `performance-media` are denied (`storage.rules :: match /performance-media/{performanceId}/source`). In-app playback calls `functions/src/performance.ts :: handleResolvePerformancePlayback`, which rechecks current performance and block authority before signing a short URL.
+Public client reads require an approved, visible performance with exact schema, `sourceCreatorVisible`, `sourceChantVisible`, and matching query predicates (`firestore.rules :: match /performances/{performanceId}`). Firebase client reads of `performance-media` are denied (`storage.rules :: match /performance-media/{performanceId}/source`). In-app playback calls `functions/src/performance.ts :: handleResolvePerformancePlayback`, which rechecks current actor, creator account, creator deletion job, public creator, chant, performance, and block authority before signing a short URL. Active operators have one narrow preview exception for approved, nonremoved hidden media.
 
 ## Chant Stage and popularity
 
-`lib/data/repositories/performance_repository.dart :: PerformanceRepository` pages at ten records through Rising, New, Terrace, and Following. Rising is a transparent recent popularity order. New is chronological. Terrace requires the underlying chant snapshot to be canonical. Following queries no more than the 30 most recent followed creator IDs and falls back to Rising with written disclosure when the graph is empty or unavailable.
+`lib/data/repositories/performance_repository.dart :: PerformanceRepository` pages at ten records through Rising, New, Terrace, and Following. Every query includes both source-eligibility predicates. Rising is a transparent recent popularity order. New is chronological. Terrace requires the underlying chant snapshot to be canonical. Following queries no more than the 30 most recent followed creator IDs and falls back to Rising with written disclosure when the graph is empty or unavailable.
 
-`lib/presentation/feed/chant_stage_screen.dart :: PerformanceCard` uses a 4:5 media area and retains creator, chant title, club or player, trust, lyrics, and popularity. `lib/presentation/feed/performance_video_player.dart :: PerformanceVideoPlayer` never autoplays or prefetches. It records a qualified view only after three seconds of playback.
+`lib/presentation/feed/chant_stage_screen.dart :: PerformanceCard` uses a 4:5 media area and retains creator, chant title, club or player, trust, lyrics, and popularity. Stage watches the viewer's block set, fails closed while that preference is unavailable, removes blocked creators immediately, and exposes a confirmed Block action. `lib/presentation/feed/performance_video_player.dart :: PerformanceVideoPlayer` never autoplays or prefetches. It records a qualified view only after three seconds of playback.
+
+`functions/src/performance_source.ts` owns source visibility and exact creator performance totals. Creator or chant changes reconcile dependent performance flags; chant changes also reconcile title and trust status. Every dependent update reads current source within its projection transaction, so overlapping or reordered triggers retry to current truth. Because fan-out is asynchronous, server actions and public handlers still read current source truth. Approval retains its idempotent immediate count update, and lifecycle triggers reconstruct `performanceCount` from live rows in a creator-profile transaction so later hide, restore, removal, ban, or chant changes converge.
 
 Likes, qualified views, unique shares, and performance comments are deterministic per-account records (`functions/src/performance.ts :: interactionId`; `handleSetPerformanceLike`; `handleRecordQualifiedPerformanceView`; `handleRecordPerformanceShare`). Their triggers recompute parent totals from source rows (`recomputePerformanceInteractionCounts`; `recomputePerformanceShareCounts`). The weekly label appears only for a real winner with a positive unique-share count; likes and qualified views break ties (`functions/src/performance.ts :: performanceRankingWeek`; `lib/presentation/feed/chant_stage_screen.dart :: ChantStageScreen`).
 
@@ -63,7 +65,7 @@ Legacy chant comments remain one direct reply level under decision 002. The deep
 
 ## Public destinations
 
-`functions/src/public_share.ts :: handleResolvePublicShareDestination` returns only an HTTPS Chants URL for a current visible chant, performance, or creator. `resolvePublicPage` creates the server-rendered destination. User text is escaped; metadata is bounded; lyrics, private UIDs, report state, and raw Storage paths are omitted. Hidden, removed, missing, and malformed targets use the same 404 page.
+`functions/src/public_share.ts :: handleResolvePublicShareDestination` returns only an HTTPS Chants URL for a current visible chant, performance, or creator. Performance and creator destinations recheck current private creator activity as well as public projection state; performances also recheck the current chant. `resolvePublicPage` creates the server-rendered destination. User text is escaped; metadata is bounded; lyrics, private UIDs, report state, and raw Storage paths are omitted. Hidden, removed, source-ineligible, banned, deleting, missing, and malformed targets use the same 404 page.
 
 `functions/src/index.ts :: publicSharePage` serves `/chants/**`, `/performances/**`, and `/creators/**` through Firebase Hosting rewrites (`firebase.json :: hosting.rewrites`). Performance pages use a controlled, non-autoplay video source at `/media/performances/{id}`. `publicPerformanceMedia` calls `handleResolvePublicPerformanceMedia`, rechecks the exact visible projection and media path, then issues a no-store redirect to a two-minute signed URL.
 
@@ -75,7 +77,7 @@ Legacy chant comments remain one direct reply level under decision 002. The deep
 
 `lib/presentation/report/report_sheet.dart :: ReportSheet` supports chant, chant comment, user, performance, and performance-comment reporting. Stage, comments, and public creator surfaces expose Report and Block without granting authority through UI visibility.
 
-`functions/src/published_performance_moderation.ts :: handlePublishedPerformanceModeration` reauthorizes active operators, supports dismiss, hide, remove, and restore, resolves relevant reports, and writes audit. `lib/presentation/moderation/moderation_screen.dart :: ModerationScreen` adds Reported media and Hidden queues with Videos and Comments scope. Operators may inspect blocked creator media for moderation; ordinary social action still respects the block boundary.
+`functions/src/published_performance_moderation.ts :: handlePublishedPerformanceModeration` reauthorizes active operators, supports dismiss, hide, remove, and restore, resolves relevant reports, and writes audit. Terminal performance removal also creates deterministic `performanceMediaDeletionJobs/{performanceId}` work bound to the exact published object. `functions/src/index.ts :: onPerformanceMediaDeletionJobWritten` deletes that object idempotently and acknowledges the job only after cleanup. `lib/presentation/moderation/moderation_screen.dart :: ModerationScreen` adds Reported media and Hidden queues with Videos and Comments scope. Eligible hidden rows expose Preview, Restore, and Remove. Operators may inspect blocked or source-ineligible approved media for moderation; ordinary social action still respects the authority boundary.
 
 Manual pre-publication review is the V1 safety model. No automated provider-scale media screening exists. Policy wording, queue response target, staffing, and escalation remain launch work.
 
@@ -105,23 +107,23 @@ The local Xcode build entered compilation after successful pod resolution but wa
 
 CI verifies and does not deploy. The source names one Firebase project and no staging environment. No public Function, Hosting route, rule, index, Storage rule, or client has been deployed by this work.
 
-Performance cost is bounded in source by ten-record feed pages, 30-second and 50-MiB upload limits, no autoplay, no prefetch, one deterministic ranking contribution per account, short playback URLs, and manual approval. Production read, write, signing, storage, moderation, and egress measurements do not exist.
+Performance read and upload surfaces have explicit limits: ten-record feed pages, 30-second and 50-MiB uploads, no autoplay or prefetch, one deterministic ranking contribution per account, short playback URLs, and manual approval. Creator and chant source fan-out plus exact aggregate reconstruction are not globally bounded and have no measured production budget. Production read, write, signing, storage, moderation, cleanup, and egress measurements do not exist.
 
 The compatible rollout order is Firestore and Storage rules, Functions, Hosting, then client. Before rollout, verify URL-signing IAM, domain and app associations, store destinations, App Check, billing and Function alerts, staged-media cleanup, moderation staffing, privacy and content policy, and deployed parity. Recovery can pause admission while keeping Songbook and words-only Chant Lab available.
 
 ## Where I most want your eyes
 
-1. `functions/src/performance.ts :: handleSubmitPerformanceDraft`, `handleModeratePerformance`, and interaction recomputation for overlap, idempotence, and media lifecycle holes.
+1. `functions/src/performance_source.ts` and `functions/src/index.ts :: onProfileAuthorityWrittenForPerformances`, `onChantWrittenForPerformances`, and `onPerformanceMediaDeletionJobWritten` for stale projection, fan-out, aggregate, or retry holes.
 2. `firestore.rules :: validPerformance`, `validPerformanceComment`, and the query predicates for parser-safe public projections.
 3. `storage.rules :: performance-staging` plus `functions/src/public_share.ts :: handleResolvePublicPerformanceMedia` for path substitution or stale-authority leakage.
 4. `functions/src/creator_follow.ts` and performance mention fan-out for block, deletion, duplicate, and graph-privacy failures.
-5. `functions/src/published_performance_moderation.ts` and the new deletion phases for partial failure, restoration, audit, or retention mistakes.
+5. `functions/src/published_performance_moderation.ts` and performance media-deletion jobs for partial failure, restoration, audit, exact-path, or retention mistakes.
 6. `lib/presentation/feed/chant_stage_screen.dart` and `performance_comments_sheet.dart` for popularity wording, deep-thread context, large text, and stale navigation.
 7. `.github/workflows/ci.yml` and `scripts/check-project-memory.sh` for PR-range correctness on push and pull-request events.
 
 ## Unverified
 
-- The requested independent Claude review of `86603c22...641281e`.
+- Exact-head clean-runner CI and the narrow Claude closure review for the correction after `946ab0c`.
 - Completed iOS and Android native builds for the creator-platform graph.
 - Camera and library permissions, upload progress, backgrounding, retry, cancellation, playback, share destinations, Following, notifications, deep comments, moderation, blocking, deletion, accessibility, and offline behavior on real devices.
 - `chantsfc.com` Hosting deployment, DNS, domain association, social crawler output, app/store routing, and URL-signing IAM.
