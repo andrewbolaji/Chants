@@ -15,16 +15,18 @@ The path from code-complete to public launch, with concrete triggers on every ga
 - Claude independently reviewed the freeze ranges through final closure. The last review approved the minimal disposed-Home correction and dormant merge privacy gate with no new defect.
 - The approved V1 core-journey interface-readiness and bounded Home hierarchy blocks are merged through PR 15. Home, competition, and player have inspected 390 by 844 baselines; the immutable competition-list crash is fixed; recovery copy is truthful; and Home explains Matchday Songbook, Terrace Proven, and Chant Lab without new navigation or data authority.
 - Claude's one-shot review of `9189c71...e810318` judged draft PR 16 freeze-defensible with no production defect. Exact-head run `33025564912` passed all six jobs. One evidence-only closure for the native harness and unmeasured golden ceilings is locally green; its replacement CI and the combined device evidence remain pending.
+- PR 16 and its reviewed correction are merged to `main` at `86603c22fbd7647f89c9276af9a60a0b3d63113b`. The creator-platform expansion is the active approved Lane 2 change. Product Clear navigation, separate public creator identity, Chant Stage, moderated 30-second performance upload, popularity signals, public destinations, private follows, activity, mentions, continued performance replies, and published-media safety are implemented locally. Packaging, clean-runner CI, one independent review, and release gates remain pending.
 - Dedup matching engine (backend only): token-overlap matcher exists. Operator `mergeChants` is disabled because its retained sequential implementation has no resumable cursor or complete undo snapshot. Its legacy audit payload also embeds authored source content and raw `createdBy`; any re-enable must redesign that payload and re-review the deletion-retention allowlist.
 - Visual identity: complete "matchnight, warmed with playful" redesign, tokenized, AA contrast proven.
 
 **Not yet done:**
-- Package and clean-runner verify the final evidence-only closure, then complete the combined device walkthrough.
-- Visual sign-off on device and the v1 flow walk-through.
+- Package and clean-runner verify the creator-platform range, then obtain the one requested independent review and correct accepted findings.
+- Complete iOS and Android native compilation for the current media dependency graph, followed by visual sign-off and the combined V1 device walkthrough.
 - The read-only live chant-identity preflight before the next production seed write.
 - The remaining verified club seed.
 - Saved Matchday Songbook airplane-mode device walk; its iOS client compilation now passes.
-- Basic share-out device destination walk; its iOS native plugin linkage now passes.
+- Camera and library permission, upload recovery, playback, public sharing, Following, activity, threaded conversation, moderation, block, and deletion device walks.
+- Content policy, privacy, terms, domain association, store destinations, URL-signing IAM, Storage cleanup, App Check, alerts, billing controls, deployed parity, signing, and store assets.
 - Store launch prep.
 
 ---
@@ -57,18 +59,22 @@ V1 is a trusted songbook and a creator workshop. The work is sequenced as bounde
 2. **Add provenance end to end.** Merged and exact-main CI verified. Submission requires Already sung or I made this. Evidence is optional at posting, an Already sung claim without one stays visibly unverified, and a user submission needs valid evidence plus operator review before Terrace Proven promotion. The device walk remains.
 3. **Expose Songbook and Chant Lab.** Merged and exact-main CI verified. Club and player journeys distinguish Terrace Proven content from community work, with Top and New in Chant Lab and a non-verification Rising signal. The device walk remains.
 4. **Build Saved Matchday Songbook.** Merged and exact-main CI verified. One chant or a club's current visible Songbook can be stored as a UID-scoped device snapshot, refreshed explicitly, read without live social dependencies, and removed locally. iOS simulator compilation passes; the airplane-mode force-stop and relaunch walk remains. Cross-device sync stays deferred.
-5. **Add basic share-out.** Merged and exact-main CI verified. Live chant detail uses the platform share sheet with a complete text-only rendition and honest trust wording. Current builds emit no URL because no public resolver exists. iOS native plugin linkage passes; the destination device walk remains.
+5. **Add basic share-out.** The original text-only block is merged and exact-main CI verified. The active creator-platform range now resolves current visible chants, performances, and creators to stable public URLs before native sharing. Production Hosting, domain, app or store routing, and the destination device walk remain.
 6. **Close report and feedback velocity abuse.** Merged, independently reviewed as part of the freeze range, and exact-main CI verified. Admission uses authenticated callables with server-owned fields and atomic anchored-window budgets. Direct client creates remain denied and failed forms retain entered work.
 7. **Make account deletion recoverable.** Merged, independently reviewed through final closure, and exact-main CI verified. Durable acceptance precedes local cleanup and sign-out; one retry-enabled server worker performs bounded idempotent cleanup while pending accounts lose active authority.
 8. **Establish core interface readiness.** Merged and exact-main CI verified. Home, competition, and player have current baseline renders and state coverage. One immutable-list crash and four misleading recovery messages are corrected.
-9. **Refresh the V1 Home hierarchy.** Merged and exact-main CI verified. Home keeps existing routes and providers while surfacing Matchday Songbook, Premier League browse, one Terrace Proven chant, and one Chant Lab idea. Persistent navigation, View all, and teamless Add remain deferred.
-10. **Close the independent interface review.** Locally complete. Home derives Rising from the current live community chant, empty Terrace Proven recovery opens real club browse, semantic trust assertions sit outside golden tolerance, and governance checks state and test their real manual and CI boundaries. Packaging, clean-runner CI, and correction review remain.
+9. **Refresh the V1 Home hierarchy.** Merged and exact-main CI verified. Home keeps existing routes and providers while surfacing Matchday Songbook, Premier League browse, one Terrace Proven chant, and one Chant Lab idea.
+10. **Close the independent interface review.** Merged through PR 16. Home derives Rising from the current live community chant, empty Terrace Proven recovery opens real club browse, semantic trust assertions sit outside golden tolerance, and governance checks state and test their real manual and CI boundaries.
+11. **Establish Product Clear navigation and public creator identity.** Implemented locally. The signed-in shell exposes Feed, Clubs, Create, Songbook, and You. A callable transaction owns normalized unique handles and an allowlisted public creator document while private profile authority remains private.
+12. **Build the Chant Stage performance block.** Implemented locally. A separate performance entity uses private Storage staging, record or library selection up to 30 seconds, manual approval, bounded paginated feed queries, explicit playback, and server-owned likes, qualified views, comments, unique shares, and weekly ranking. Existing words-only chants remain valid.
+13. **Build public and social destinations.** Implemented locally. Chants, performances, and creators have stable server-rendered destinations and safe previews. Public performance pages use a current-authority media route. Private follows, aggregate counts, Following fallback, validated mentions, continued performance replies, and bounded activity notifications are integrated.
+14. **Integrate and freeze the creator expansion.** Source hardening is locally complete for blocking, reports, moderation, deletion, audit, rule coverage, CI range enforcement, and project memory. Next package the exact range, obtain clean-runner CI, perform one independent Claude review, correct accepted findings, finish native and device evidence, and close policy plus production configuration before release.
 
-The accepted product boundary is in `docs/decisions/004-songbook-and-chant-lab.md`. Each state-changing block gets the framework's Lane 2 change spec, execution log, tests, UI evidence, scoped rationale, and rollback plan. Unlimited nesting, notifications, scheduled challenges, collaborative lyric suggestions, creator follows, and hosted media remain later work.
+The original Songbook and Chant Lab boundary remains in `docs/decisions/004-songbook-and-chant-lab.md`; creator-platform decisions are 017 through 021 and the active implementation contract is `docs/CHANGE_SPEC.md`. Beat-synced karaoke editing, licensed backing tracks, duet or remix tools, payouts, scheduled challenges, automated large-scale media screening, and personalized recommendation models remain later work.
 
-The V1 stack through Home hierarchy is merged at `9189c71`, and exact-main run `33012771517` is green across all six jobs. PR 16 reviewed head `e810318` also passed all six jobs in run `33025564912`; Claude judged the source range freeze-defensible. The iOS simulator app compiles on the corrected CocoaPods graph. Replacement CI for the evidence-only closure, Android evidence, and the combined device walkthrough remain the gates that turn automated confidence into release sign-off.
+The pre-creator V1 stack is merged through `86603c2`. The creator-platform branch has local green Flutter, Functions, Firestore and Storage rules, seed, analysis, and governance evidence. Its iOS 12.18 CocoaPods graph resolves, but the first full Xcode compile was terminated after an extended silent wait; Android is blocked locally by the missing SDK. Exact-head CI, independent review, completed native builds, and the combined device walkthrough remain the gates that turn source confidence into release sign-off.
 
-**Trigger to exit:** The current device walk starts by proving native Share and external evidence opening, then passes the remaining journeys; provenance and promotion rules work end to end; Songbook and Chant Lab remain understandable on club and player screens; Saved Matchday Songbook survives airplane-mode relaunch; the dedup nudge works on the seeded archive; and share-out never produces a broken destination.
+**Trigger to exit:** Exact-head CI and the independent creator-platform review are green; both native clients compile; recording or choosing, upload recovery, approval, playback, sharing, Following, comments, activity, moderation, blocking, deletion, and offline Songbook pass the combined device walk; provenance and promotion rules still work end to end; and public share-out never produces a broken destination.
 
 ---
 
@@ -87,8 +93,8 @@ The V1 stack through Home hierarchy is merged at `9189c71`, and exact-main run `
 ### Moderation and content safety (existential, addressed from v1)
 Shipped in source: content policy stub, server-authoritative report and feedback admission, atomic report and feedback budgets, remove, ban, unban, fail-safe auto-hide, and audit log. Open: Andrew writes the real content policy text. Trigger for the fuller moderation console: accepted submission volume outgrows basic remove-and-ban.
 
-### Music and IP licensing (designed around, not a blocker)
-V1 posture: lyrics plus tune-name text is the core. Optional evidence links open on an allowlisted external platform. Chants does not host, download, extract, autoplay, or provide background playback for that media, and never streams licensed master recordings. Trigger to revisit hosted media: link engagement proves demand and written moderation, takedown, audio, privacy, cost, and operational controls are approved first.
+### Music and IP licensing (active design constraint)
+Lyrics plus tune-name text remains the core, and optional evidence links still open on allowlisted external platforms. The approved performance block hosts short user-created video or audio captured with the video, not licensed master recordings or an extracted platform stream. Upload terms, takedown handling, privacy, moderation, storage cleanup, and cost controls are release gates. Beat-synced karaoke and licensed backing tracks remain deferred until a separately approved rights and operations model exists.
 
 ### Cold-start and retention (addressed by design)
 The operator-seeded Songbook makes the app useful on day one. Chant Lab, player creation prompts, voting, comments, sharing, and Saved Matchday Songbook provide creation, competition, conversation, distribution, and matchday return loops without waiting for a personalized feed.
@@ -115,7 +121,7 @@ Parallel track (not a v1 launch blocker): flip the GitHub repo public for job ap
 
 **Next:** complete the live-device keyboard, failed-write, block/unblock, moderation, and account-deletion walk recorded in `docs/CHANGE_SPEC.md`.
 
-**Scope out (stays v1.1):** replies to replies, unlimited nesting, reply notifications, mentions, the collaborative lyric-suggestion mechanic, and comment downvotes.
+**Implemented creator V1 block:** performance comments support validated mentions, private activity notifications, continued replies with no more than three visible indentation levels, and a focused deeper-thread view. Legacy chant comments remain one-level. Unlimited inline nesting, collaborative lyric suggestions, and comment downvotes remain outside V1.
 
 The implementation boundary and remaining verification gate live in `docs/CHANGE_SPEC.md`.
 
