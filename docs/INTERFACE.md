@@ -39,13 +39,13 @@ This is the current design contract and decision history for Chants. Read the re
 
 ### 2026-08-29T12:49:50Z Freeze saved onboarding values during projection recovery
 
-- **Status:** implemented and exact-runtime-head CI verified; final documentation-only PR head remains governed by required checks
+- **Status:** merged in PR 17 and exact-main CI verified; real-device evidence remains open
 - **Surface and user problem:** The server intentionally preserves an existing coherent profile on duplicate onboarding completion, but the post-success screen re-enabled editable fields and invited another entry. A changed display name could therefore appear saved while the server correctly ignored it.
 - **Decision:** After the first confirmed completion, freeze display name, birth date, policy acceptance, and destination. Keep Check Again and Sign Out enabled, and make Check Again reuse the original saved values.
 - **Why:** Recovery must stay available without presenting an idempotent projection check as a second editable profile submission.
 - **Required states:** first-submit validation, first-submit failure, successful completion with delayed projection, immutable saved values, repeated check, and Sign Out.
 - **Accessibility/responsive impact:** Disabled controls retain their labels and selected values. Recovery remains two written actions and does not depend on color.
-- **Implementation evidence:** Production widget regression in `test/presentation/auth/sign_up_validation_test.dart`, 463 passing Flutter tests, zero-issue scoped analysis, implementation commit `e1474ad`, and eight-job GitHub Actions run `33254213575`.
+- **Implementation evidence:** Production widget regression in `test/presentation/auth/sign_up_validation_test.dart`, 463 passing Flutter tests, zero-issue scoped analysis, implementation commit `e1474ad`, documentation commit `c1c4ea4`, merge commit `e8f2591`, and eight-job exact-main run `33256843751`.
 - **Revisit when:** Onboarding receives a bounded server acknowledgement channel or profile editing becomes an explicit separate destination.
 - **Related:** `docs/CHANGE_SPEC.md`, decision 023
 
@@ -63,56 +63,56 @@ This is the current design contract and decision history for Chants. Read the re
 
 ### 2026-08-28T18:03:28Z Establish launch authentication and recoverable onboarding
 
-- **Status:** implemented and locally verified; Android clean-runner, exact-head CI, provider configuration, and device evidence remain gates
+- **Status:** implemented, independently reviewed, merged, and exact-main CI verified; provider configuration and device evidence remain gates
 - **Surface and user problem:** Chants opened on a generic email form, did not verify email ownership, stranded a valid Firebase user with no profile, and offered none of the requested federated, passwordless, phone, or linking paths.
 - **Decision:** Introduce the product before credentials; keep Apple, Google, and email primary; place Facebook and phone under More; keep magic link inside email; gate password accounts on verification; create the initial profile through one idempotent server transaction; and expose explicit same-UID linking in You. Every non-email method is hidden unless an operator deliberately enables it after its external setup is verified.
 - **Why:** The entry should sell the Stage, Songbook, and creation loop while preserving a single stable Firebase UID and keeping verification, age, policy, and private profile authority server-enforced.
 - **Required states:** provider unavailable, cancellation, collision, offline, reset failure, verification wait, app resume, resend cooldown, magic-link same device and other device, phone code and late auto-verification, missing profile, underage, callable retry, linked method, last-method removal, and deletion recovery precedence.
 - **Accessibility/responsive impact:** welcome and every account form scroll at narrow width and 1.8x text; wrapping replaces compact rows that overflow; all state and provider meaning is written; action targets remain at least 48 logical pixels.
-- **Implementation evidence:** 454 passing Flutter tests, including provider hierarchy and cancellation, narrow layouts, truthful reset, cross-resend phone races, atomic magic-link persistence, stale linking sessions, onboarding, and app-gate states; final iOS simulator compile; decision 023; `docs/changes/2026-08-28-v1-launch-auth-onboarding-android.md`.
+- **Implementation evidence:** 454 focused-state Flutter tests before review closure, 463 tests at merged `main`, Android debug and iOS simulator compile plus identity checks in run `33256843751`, decision 023, and `docs/changes/2026-08-28-v1-launch-auth-onboarding-android.md`.
 - **Revisit when:** passkeys or MFA become a launch need, provider SDK cost exceeds adoption, account recovery needs cross-UID support, or age and policy requirements change.
 - **Related:** `docs/CHANGE_SPEC.md`, decision 023
 
 ### 2026-08-28T15:42:35Z Close published-performance takedown and integrity gaps
 
-- **Status:** implemented, locally verified, and packaged by the commit carrying this record; exact-head CI and the narrow independent closure review remain external gates
+- **Status:** implemented, independently reviewed, merged, and exact-main CI verified
 - **Surface and user problem:** A creator ban or chant takedown did not remove dependent performance cards and public destinations, blocked creators stayed on Stage, Hidden video could not be inspected before removal, terminal removal retained its Storage object, and creator performance totals could drift.
 - **Decision:** Recheck current creator and chant authority at every server action and public resolver, use two server-owned source flags for query filtering, reconcile dependent performance projections and exact creator counts, expose confirmed Block on Stage and public profiles, give eligible hidden content Preview, Restore, and Remove, and persist exact retryable media-deletion work on terminal removal.
 - **Why:** Performance media is a dependent public projection. Feed efficiency can use copied eligibility, but takedown must derive from current source truth and physical cleanup must survive partial failure.
 - **Required states:** blocked preference loading and failure, newly blocked creator, only-blocked page, current ban, deleting or removed creator, hidden or removed chant, chant trust demotion, hidden operator preview, restore, terminal remove, Storage retry, and repaired performance total.
 - **Accessibility/responsive impact:** Block and destructive choices are written and confirmed; blocked and unavailable states explain what happened; moderation actions remain labelled at representative and enlarged-text layouts.
-- **Implementation evidence:** 422 passing Flutter tests including narrow 1.8x moderation coverage, 135 passing Functions tests including current-source reconciliation, strict Firestore schema and query assertions that type-check locally, decision 022, and `docs/changes/2026-08-28-pr17-post-review-takedown-integrity.md`. Java-backed rules and clean-runner evidence remain pending.
+- **Implementation evidence:** Focused moderation, reconciliation, schema, and enlarged-text regressions; final merged evidence of 463 Flutter tests, 142 Functions tests, and 165 Java-backed Firestore and Storage cases in exact-main run `33256843751`; decision 022; and `docs/changes/2026-08-28-pr17-post-review-takedown-integrity.md`.
 - **Revisit when:** reconciliation or exact-count work crosses a measured cost budget, deletion jobs exceed the chosen alert window, or immediate signed-URL revocation becomes necessary.
 - **Related:** Decisions 021 and 022, `docs/CHANGE_SPEC.md`
 
 ### 2026-08-28T00:00:00Z Complete Chant Stage, public sharing, creator graph, and media safety
 
-- **Status:** packaged and implementation-head clean-runner green in draft PR 17; independent review and device walkthrough pending
+- **Status:** independently reviewed, merged in PR 17, and exact-main CI verified; device walkthrough pending
 - **Surface and user problem:** The foundation still behaved primarily as a chant catalogue. Fans could not publish a short performance, compete on reach, follow creators, continue a funny conversation, or share a destination outside the installed app.
 - **Decision:** Replace Feed with the approved Chant Stage, add 30-second record or choose upload with manual approval, preserve chant trust separately, expose truthful performance popularity, add private follows and activity, allow continued performance replies with bounded visual depth, publish current-authority web destinations, and extend report, block, moderation, and deletion behavior to every new entity.
 - **Why:** This restores the creator-led product vision without tearing down the trusted Songbook and Chant Lab architecture. Each new public surface has a server-owned admission and lifecycle boundary before it appears in the interface.
 - **Required states:** Rising, New, Terrace, Following and fallback; poster, playback, retry, missing and blocked; record, choose, permission denial, cancel, upload, pending, reject, remove; followed and unfollowed; mention, reply and focused thread; public visible and unavailable; reported, hidden and restored media; deletion during upload or interaction.
 - **Accessibility/responsive impact:** Video is user-initiated, controls are written, cards keep trust and popularity distinct, deep replies preserve text width, the five-tab shell retains semantic labels, and the representative Stage plus creator profile goldens have been inspected.
-- **Implementation evidence:** Decisions 018 through 021, 415 Flutter tests, 122 Functions tests, 157 Java-backed Firestore and Storage assertions, 42 seed tests, zero-issue analysis, focused goldens, and all six jobs green in replacement run `33181165940` at implementation head `641281e`. Native and device evidence remain open.
+- **Implementation evidence:** Decisions 018 through 021, focused implementation evidence in run `33181165940`, accepted takedown correction, and final exact-main run `33256843751` with 463 Flutter tests, 142 Functions tests, 165 Java-backed Firestore and Storage cases, 42 seed tests, zero-issue analysis, governance, and both native compile and identity checks. Device evidence remains open.
 - **Revisit when:** Stage volume needs personalized ranking, more than 30 followed creators must be queried together, manual review misses its target, public egress crosses budget, or karaoke and remix tools receive a separate approved design.
 - **Related:** `docs/decisions/018-performance-stage-and-admission.md` through `021-published-media-safety.md`, `docs/CHANGE_SPEC.md`
 
 ### 2026-08-27T20:40:00Z Establish Product Clear navigation and public creator identity
 
-- **Status:** implemented foundation; Feed replacement and social identity follow-up are recorded in the 2026-08-28 decision above
+- **Status:** implemented and merged; Feed replacement and social identity follow-up are recorded in the 2026-08-28 decision above
 - **Surface and user problem:** Chants exposed a songbook and workshop but had no stable creator-facing information architecture. Account actions lived on Home, contribution began inside club browse, and private account profiles could not safely serve as public creator pages.
 - **Decision:** Use five persistent destinations: Feed, Clubs, Create, Songbook, and You. Keep the current Home hierarchy as Feed until real performance data exists. Make Create a central labelled destination that opens the working club-scoped words flow. Move account actions to You. Store public handle, display name, bio, visibility, and aggregates in `creatorProfiles`, reserve normalized handles server-side, and keep private account authority in `profiles`.
 - **Why:** The shell states the creator, discovery, club, and matchday jobs without inventing dead performance controls. A separate public document makes future profile, follow, feed, and public-link reads possible without exposing ban, policy, age, report, deletion, role, or email state.
 - **Alternatives considered:** Leave push-only Home navigation, which hides the creator loop; turn the private profile document public, which crosses the privacy boundary; show a disabled Record action, which promises a feature that does not exist; or replace Home with fake performance fixtures, which would confuse design evidence with product data.
 - **Required states:** Five labelled tabs, preserved tab state, representative and narrow phone layouts, 1.8x text, set and unset creator identity, handle collision, invalid identity, network failure, hidden identity, removed identity, deletion, and owner/operator inspection.
 - **Accessibility/responsive impact:** Every destination uses a written semantic label and full navigation segment. The profile and edit form scroll, do not rely on color for status or errors, and retain values after failure.
-- **Implementation evidence:** Targeted creator model, repository, callable, rules, shell, profile, deletion, widget, and golden tests; 85 Functions tests and 140 Java-backed rules assertions pass locally. Full Flutter and clean-runner evidence remain pending.
+- **Implementation evidence:** Targeted creator model, repository, callable, rules, shell, profile, deletion, widget, and golden tests, followed by final exact-main run `33256843751` across the complete Flutter, Functions, rules, analysis, governance, seed, and native matrix.
 - **Revisit when:** Real performance pagination replaces Feed foundation, device testing shows five destinations are too dense, a public web profile requires a different allowlist, or handle policy changes.
 - **Related:** `docs/decisions/017-creator-platform-foundation.md`, `docs/CHANGE_SPEC.md`
 
 ### 2026-08-26T21:26:27Z Derive Home momentum and keep empty actions useful
 
-- **Status:** independently accepted for source freeze; final evidence-only closure and native walkthrough pending
+- **Status:** merged and exact-main CI verified; native walkthrough pending
 - **Surface and user problem:** Home granted `RISING` to every community preview, including stale zero-score ideas, because lane membership was passed as the badge value. Its empty Terrace Proven action reshuffled a complete visible set and could not surface a canonical chant when none existed.
 - **Decision:** Evaluate `isRisingChant` against the current live chant and an injectable time. Preserve `ORIGINAL IDEA` independently. Route an empty Terrace Proven lane to the existing Premier League club browse destination. Keep direct trust-word assertions separate from golden comparison and apply the measured 3 percent image tolerance only to Home.
 - **Why:** Community placement and community momentum are different facts. A trust or trend label must come from the same predicate everywhere, and recovery copy must lead to an action capable of helping.
@@ -182,7 +182,7 @@ This is the current design contract and decision history for Chants. Read the re
 - **Alternatives considered:** Claim immediate deletion, which is false; show worker phases and counters, which exposes private operational state and implies control; leave Home visible until finalization, which conflicts with the pending-account authority boundary.
 - **Required states:** Confirmation, pre-request local failure, unconfirmed remote outcome with locked Songbook, accepted and signed out, pending fallback, sign-out pending, and sign-out failure with retry.
 - **Accessibility/responsive impact:** The queued meaning is stated in words and not color alone. The centered content is scrollable, constrained in width, and verified at 390 by 844 with normal and 1.8x text.
-- **Implementation evidence:** Service, repository, app-gate, copy, and screen tests plus inspected 390 by 844 pending and recovery goldens. The current complete local Flutter suite passes 343 tests.
+- **Implementation evidence:** Service, repository, app-gate, copy, and screen tests plus inspected 390 by 844 pending and recovery goldens. The original block passed 343 Flutter tests; final merged `main` passes 463.
 - **Revisit when:** Deletion gains undo, progress becomes user-actionable, localization makes the copy exceed the current layout, or support data shows users misunderstand anonymized retention.
 - **Related:** `docs/decisions/011-durable-account-deletion-recovery.md`, `docs/changes/2026-08-25-v1-account-deletion-recovery.md`
 
@@ -214,15 +214,15 @@ This is the current design contract and decision history for Chants. Read the re
 
 ### 2026-08-25T00:41:42Z Share a useful chant before a public destination exists
 
-- **Status:** active
-- **Surface and user problem:** Live chant detail had no distribution action, while the product has no public chant resolver and must not send recipients to a guessed dead link.
-- **Decision:** Place one Share action between Save and Report on live detail. The system sheet receives the current title, optional known team, full main lyrics, tune, honest trust line, and Chants footer. Current builds are text-only. A later approved route may supply one validated HTTPS URL through the existing payload seam.
+- **Status:** superseded in part by the merged public-destination contract; the native share action and truthful payload remain active
+- **Surface and user problem:** At the time of this decision, live chant detail had no distribution action and the product had no public chant resolver, so it could not send recipients to a guessed dead link.
+- **Decision:** The original block placed one Share action between Save and Report with useful text and no invented URL. PR 17 now resolves a current visible chant, performance, or creator to a validated HTTPS destination before invoking the same native boundary.
 - **Why:** A useful rendition can travel through any installed application now without pretending Chants controls a destination, delivery, or third-party retention.
 - **Alternatives considered:** A guessed website link, which is broken; title-only promotional copy, which is not useful to the recipient; generated cards or direct social integrations, which add media, permissions, SDK, and platform-policy scope.
 - **Required states:** Current stream value, known or absent team, all provenance states, pending duplicate tap, dismissed or unavailable platform result, invocation failure, invalid source rectangle, and hidden or removed chant.
 - **Accessibility/responsive impact:** The control is labeled `Share this chant`, uses the native sheet, passes the button's laid-out global rectangle for iPad, and remains reachable with Save and Report at 390 by 844 and 1.8x text.
-- **Implementation evidence:** Pure payload and gateway tests, real-detail widget tests, a deliberate missing-lyrics red check, the current-live authority regression, 282 passing Flutter tests, an inspected launch-viewport golden, green replacement CI on draft PR 9, and successful PR 16 iOS simulator linkage. Share-sheet launch remains a first-priority device assertion.
-- **Revisit when:** A stable HTTPS chant route exists, recipients need richer previews, device testing finds platform-specific payload loss, or direct publishing has evidence strong enough to justify its account and SDK surface.
+- **Implementation evidence:** Pure payload and gateway tests, real-detail widget tests, current-live authority regression, public destination and preview tests, and exact-main run `33256843751`. Share-sheet launch remains a first-priority device assertion.
+- **Revisit when:** Recipients need richer previews, device testing finds platform-specific payload loss, or direct publishing has evidence strong enough to justify its account and SDK surface.
 - **Related:** `docs/decisions/008-native-text-share-before-public-links.md`, `docs/CHANGE_SPEC.md`
 
 ### 2026-08-22T19:38:09Z Make saved lyrics a timestamped device copy
@@ -234,7 +234,7 @@ This is the current design contract and decision history for Chants. Read the re
 - **Alternatives considered:** Generic cloud favorites, which do not prove lyrics are present offline; Firestore cache, which is incidental and lifecycle-unclear; background downloads, which add scheduling and consent surface before demand is proven.
 - **Required states:** Loading, empty, populated, individually saved, saved with club, cache-disabled save, busy, refresh failure with retained copy, zero-item refreshed club, corrupt, unsupported version, UID mismatch, removal confirmation, and account-deletion cleanup.
 - **Accessibility/responsive impact:** Bookmark ownership and freshness are explicit text and semantics. Destructive actions require confirmation. Read-only detail follows the live lyric hierarchy without vote, comment, report, evidence, or media affordances. The overview and detail goldens pass at 390 by 844, and the overview passes at 1.6x text.
-- **Implementation evidence:** The approved Lane 2 implementation, focused widget and persistence tests, deliberate reconstruction red check, two inspected goldens, green clean-runner CI, and successful PR 16 iOS simulator compilation are recorded in the change history. The live airplane-mode device walk remains pending.
+- **Implementation evidence:** The approved Lane 2 implementation, focused widget and persistence tests, deliberate reconstruction red check, two inspected goldens, green clean-runner CI, and exact-main native compilation are recorded in the change history. The live airplane-mode device walk remains pending.
 - **Revisit when:** Users expect cross-device sync, snapshot volume approaches the 2 MiB or 500-ID boundary, moderation requires online revocation stronger than refresh, or offline audio and video are separately approved.
 - **Related:** `docs/decisions/003-saved-matchday-songbook-offline-v1.md`, `docs/CHANGE_SPEC.md`
 
@@ -247,12 +247,10 @@ This is the current design contract and decision history for Chants. Read the re
 - **Alternatives considered:** Archive only, which suppresses the product's creator loop; one undifferentiated feed, which blurs provenance; a TikTok-style video feed, which makes media infrastructure and moderation the product before the archive is proven.
 - **Required states:** Songbook and Chant Lab loading, empty, partial, error, denied, hidden/removed, offline, and populated states; Top and New order in Chant Lab; no-evidence and dead-link states; player-with-no-chant creation prompt; successful and failed origin-aware submission.
 - **Accessibility/responsive impact:** Songbook versus Chant Lab and Proven versus Rising must use words and semantics, not color alone. Nested filters must remain usable at narrow widths and with enlarged text. External evidence actions state that they open another app or browser.
-- **Implementation evidence:** Product direction was approved by Andrew on 2026-08-21. The provenance slice and separate browse hierarchy were approved and implemented in source on 2026-08-22. Team and Player routes now open on Songbook, place only community work in Chant Lab, retain stable Top and Songbook survivor order, expose New separately, explain that Rising is early support rather than proof, and keep the last usable cards through a later stream error. Player metadata failure is inline and never erases chants. Team Songbook and Chant Lab goldens at 390 by 844, an enlarged-text route test, stream-driven widget tests, and pure ranking tests retain the interface boundary. Live-device inspection and PR review remain pending.
+- **Implementation evidence:** Product direction was approved by Andrew on 2026-08-21. The provenance slice and separate browse hierarchy were approved and implemented in source on 2026-08-22. Team and Player routes now open on Songbook, place only community work in Chant Lab, retain stable Top and Songbook survivor order, expose New separately, explain that Rising is early support rather than proof, and keep the last usable cards through a later stream error. Player metadata failure is inline and never erases chants. Team Songbook and Chant Lab goldens at 390 by 844, an enlarged-text route test, stream-driven widget tests, pure ranking tests, review, and exact-main CI retain the interface boundary. Live-device inspection remains pending.
 - **Revisit when:** Closed-beta users cannot find one of the two surfaces, community volume is too low for Top and New to be useful, or users consistently misunderstand evidence and verification.
 - **Related:** `docs/decisions/004-songbook-and-chant-lab.md`, `docs/ROADMAP.md`
 
 ## Open interface questions
 
-| Question | User consequence | Evidence needed | Owner/decision trigger |
-|---|---|---|---|
-| Should Chants later add persistent global navigation? | It may shorten movement between mature top-level destinations, but it changes route history, back behavior, vertical space, and accessibility order | Closed-beta navigation evidence plus a route and back-stack specification covering every tab, deep link, and signed-out state | Andrew after V1 usage evidence, before any navigation implementation |
+No unresolved interface question blocks the V1 source freeze. Closed-beta and device evidence may still trigger a revisit of five-tab density, route history, or back behavior under decision 017.

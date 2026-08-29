@@ -13,11 +13,27 @@ This is the chronological evidence trail for substantial engineering work. It re
 
 ## Entries
 
+### 2026-08-29T15:16:37Z Reconcile documentation after PR 17 merge
+
+- **Status:** Implemented locally; documentation-only packaging and branch CI remain pending
+- **Scope:** Reconcile the repository entry points and canonical memory with PR 17 merged `main`, exact-main CI, the creator product surface, and the remaining release gates. Preserve accurate historical entries and change no executable input.
+- **Reference:** `docs/CHANGE_SPEC.md`, approved post-merge documentation closure
+
+| Time UTC | Step | Evidence | Result |
+|---|---|---|---|
+| 15:16:37 | Established exact merged-main ground truth | `origin/main` `e8f2591740963f87623aacb82a806328cb1a98fe`; PR 17 documentation head `c1c4ea4`; runs `33255542646` and `33256843751` | PASS: the final PR head and exact merged `main` each passed all eight required jobs. Exact-main logs report 463 Flutter tests, 142 Functions tests, 42 seed tests, and 165 Java-backed Firestore and Storage cases. |
+| 15:16:37 | Isolated the documentation closure | Worktree `chants-post-merge-documentation-closure`; branch `codex/post-merge-documentation-closure` | PASS: Andrew's modified owner checkout and untracked artifacts remain untouched. |
+| 15:16:37 | Reconciled canonical current-state records | Ten documentation paths, including one new completion record | PASS: current records now describe merged `main`, the creator product, exact-main evidence, and the remaining release gates without changing historical entries. |
+| 15:20:30 | Verified the staged Lane 0 boundary | Project memory with `PROJECT_MEMORY_LANE=0` and `--staged`; writing style; governance regressions; native project contract; staged diff check | PASS: every required narrow check succeeded. Direct current-state and literal or encoded em-dash searches also returned no defect. |
+
+- **Current state:** The ten-path documentation-only boundary is staged and locally verified. No application, backend, rule, seed, dependency, native, workflow, production, provider, deployment, signing, store, or release state changed.
+- **Resume point:** Inspect the final staged boundary, then await explicit authorization before committing or pushing.
+
 ### 2026-08-29T12:49:50Z Close final source-freeze minor findings
 
-- **Status:** Approved and in progress
+- **Status:** Completed, merged, and exact-main CI verified; not deployed or released
 - **Scope:** Correct the final independent review's two minor findings: freeze already-saved onboarding fields while retaining truthful retry and Sign Out, then reconcile current engineering evidence with the packaged and green PR 18 and combined PR 17 heads. No callable, schema, rule, provider, native, deployment, seed, or release behavior changes.
-- **Reference:** `docs/CHANGE_SPEC.md`, approved final source-freeze minor closure
+- **Reference:** `docs/changes/2026-08-29-final-source-freeze-minor-closure.md`, approved final source-freeze minor closure
 - **Approval:** Andrew explicitly requested the minor fixes, replacement CI, and merge on 2026-08-29.
 - **Operator:** Codex
 
@@ -32,9 +48,12 @@ This is the chronological evidence trail for substantial engineering work. It re
 | 13:03:38 | Staged and verified the exact commit boundary | Eleven intended source, test, and durable-record paths in the Git index | PASS: staged project memory, index-scoped writing, governance regressions, native contract, Dart formatter, and staged diff checks. No backend, rules, seed, native, dependency, workflow, or unrelated owner path is staged. |
 | 13:07:14 | Packaged and pushed the bounded implementation closure | Commit `e1474ad7ae362dcaaf6a19c45907024c31a60f7b` on PR 17 | Created `Close final source freeze findings` and pushed only `codex/v1-creator-platform-foundation`. The PR head matched the pushed commit exactly before CI. |
 | 13:35:47 | Completed replacement exact-head CI | GitHub Actions run `33254213575` at `e1474ad7ae362dcaaf6a19c45907024c31a60f7b` | PASS: all eight jobs succeeded, including governance, 463 Flutter tests, analysis, 142 Functions tests, 42 seed tests, 165 Java-backed Firestore and Storage cases, Android debug compile and identity inspection, and iOS simulator compile and identity inspection. |
+| 14:08:35 | Completed final documentation-head CI | Documentation commit `c1c4ea4f2278a36337f0de56836368315a30632b`; GitHub Actions run `33255542646` | PASS: all eight jobs succeeded at the exact PR head. The evidence-only commit changed eight documentation files and no runtime source. |
+| 14:09:19 | Merged the exact reviewed and green head | PR 17 into `main` | GitHub merged `c1c4ea4` as `e8f2591740963f87623aacb82a806328cb1a98fe`. The remote `main` ref and PR merge record matched. |
+| 14:36:10 | Verified exact-main clean-runner evidence | GitHub Actions run `33256843751` at `e8f2591740963f87623aacb82a806328cb1a98fe` | PASS: all eight jobs succeeded, including 463 Flutter tests, zero-issue analysis, 142 Functions tests, 42 seed tests, 165 Java-backed Firestore and Storage cases, governance, and both native compile and identity checks. |
 
-- **Current state:** The runtime and regression closure is exact-head green. This evidence-only update changes no runtime source; its resulting PR head must pass the same eight-job workflow before merge.
-- **Resume point:** Commit and push the evidence-only records, require exact-head CI, then merge PR 17 only if every required job succeeds at that final SHA.
+- **Current state:** PR 17 is merged and exact-main CI is green. No production configuration, provider enablement, Firebase or Storage write, seed write, deployment, signing, store action, or release occurred.
+- **Resume point:** Freeze speculative feature engineering. Continue with the combined iOS and Android device walkthrough, externally verified seed content, policy, provider and domain configuration, operational controls, deployment, signing, and store readiness under their own approvals.
 
 ### 2026-08-28T20:59:12Z Start post-auth independent review corrections
 
