@@ -1,13 +1,13 @@
 # Operator runbook
 
-This runbook describes the source-backed recovery paths that exist today. Dashboard names, alerts, backups, deployed versions, and production credentials are not represented in the repository and must be verified by the operator before public launch.
+This runbook describes the source-backed recovery paths that exist today. Dashboard setting names and non-sensitive configuration state are recorded when verified. Credentials, private notification destinations, raw production payloads, and user identities stay outside the repository.
 
 ## Service and ownership
 
 - **Purpose:** Let football supporters browse, learn, save, submit, discuss, vote on, and report chants while operators preserve archive trust and community safety.
 - **Owner and escalation:** Andrew is the current product and system owner. A second operator and external escalation channel are not yet recorded.
 - **Dependencies:** Firebase Auth, Firestore, Cloud Functions, App Check, Crashlytics, mobile operating-system storage, the native share sheet, and the system browser for evidence links.
-- **Dashboards, logs, and traces:** Firebase and store dashboards are external and not linked from the repository. `firebase functions:log` is available from `functions/package.json`; use it only with explicit environment authorization and avoid copying sensitive payloads into project memory.
+- **Dashboards, logs, and traces:** Firebase Authentication, App Check, Crashlytics, Hosting, Google Cloud Monitoring, Cloud Logging, and Cloud Billing own the launch controls. Store dashboards remain external. `firebase functions:log` is available from `functions/package.json`; use it only with explicit environment authorization and avoid copying sensitive payloads into project memory.
 - **Deployments and recent changes:** Git history, merged pull requests, GitHub Actions, `docs/EXECUTION.md`, and scoped rationales under `docs/changes/`.
 
 ## Health
@@ -21,9 +21,22 @@ This runbook describes the source-backed recovery paths that exist today. Dashbo
 | Account deletion | Accepted jobs advance and pending accounts remain gated | A job remains in one phase, retry count grows, or a pending user regains authority | Preserve job state, inspect worker error without exposing payloads, and use forward recovery |
 | Saved Matchday Songbook | Same user can reopen saved copies without network | Corrupt, UID-mismatched, missing, or cleanup-locked local state | Use the built-in recovery or removal path; do not hand-edit application files |
 | Crash and error telemetry | No new release-correlated spike | Crashlytics or Function errors rise after a change | Stop rollout, identify exact version and first failing journey, then choose rollback or forward fix |
+| Abandoned staging | No `cleanup_pending` draft remains after the next daily cleanup; ordinary uploads are newer than 24 hours | Cleanup reports an invalid row or Storage or finalization failure | Keep media admission closed, inspect through authorized consoles, and correct the exact state or path boundary before retry |
+| Retained deletion jobs | No account-deletion job remains unchanged for 30 minutes and no performance-media-deletion job remains unchanged for 15 minutes | The `stale-deletion-jobs` signal fires | Confirm worker deployment and error class, preserve terminal state, then use the matching forward-recovery path |
 | Seed identity | Read-only preflight reports no collision and reviewed IDs remain stable | A live ID is owned by a different source or a rename would create a duplicate | Stop before writes and prepare a migration-specific Lane 2 plan |
 
-No numeric alert thresholds or observation windows are approved yet. Set them before beta from an observed baseline rather than inventing them here.
+## Launch control thresholds
+
+| Control | Approved initial value | Meaning and response |
+|---|---|---|
+| Abandoned performance draft | `awaiting_upload` or `cleanup_pending`, at least 24 hours old, daily page of 100 | Stop new media admission if invalid or failed cleanup persists; never include active review or approved states |
+| Account-deletion backlog | No `updatedAt` progress for 30 minutes | Investigate the private phase and worker error through authorized access |
+| Performance-media-deletion backlog | No `updatedAt` progress for 15 minutes | Confirm the performance remains removed, then repair the exact-path worker without reopening media |
+| Backlog alert payload | At most 100 rows plus a more-than-limit bit per collection | Notifications contain aggregate counts only, never IDs, paths, or user content |
+| Cloud Billing budget | USD 25 monthly; actual 50, 75, 90, 100 percent; forecast 100 percent | Alert-only. Review Storage, egress, Functions, and abuse before changing product availability |
+| App Check observation | 1 to 2 weeks of valid iOS and Android release traffic before enforcement | Keep products unenforced until legitimate requests are classified and device gates pass |
+
+Crashlytics and general Function-error alerts begin with event detection rather than an invented error-rate objective. During beta, record a real baseline and then add a separate approved rate or crash-free threshold. A budget alert does not cap spend and never authorizes automatic billing disablement.
 
 ## First response
 
@@ -77,6 +90,14 @@ No numeric alert thresholds or observation windows are approved yet. Set them be
 - **Recovery verification:** The exact object is absent, the deletion job is gone only after cleanup, repeated worker delivery succeeds harmlessly, ordinary and signed-out resolution stays unavailable, and operator audit still records the terminal action.
 - **Escalate when:** The job identity is malformed, cleanup would target any path other than the exact performance source, or retry requires a retention-policy change.
 
+### Abandoned staged media is not cleaned
+
+- **Likely causes:** The daily scheduled Function is not deployed, its composite index is not ready, Storage deletion failed, final document deletion failed, or a malformed server-owned draft did not match its exact path.
+- **Diagnosis:** Confirm the schedule and deployed source. Read the aggregate cleanup error first. Through authorized access, inspect only the affected private draft state, creation time, owner identity, and exact `performance-staging/{ownerId}/{draftId}/source` path. Do not copy the media, signed URL, or identity into project memory.
+- **Mitigation:** Keep new performance admission closed if the failure is systemic. Correct the index, permission, or exact-path worker and let `cleanup_pending` retry. Do not reset the state to `awaiting_upload`, delete an unverified path, or include `pending_review` and approved rows in cleanup.
+- **Recovery verification:** A rerun treats a missing object as success, deletes the claimed draft only after Storage cleanup, produces no private identifier in logs, and leaves active or moderated drafts unchanged.
+- **Escalate when:** The stored owner and path disagree, a row uses an unknown schema, more than 100 stale rows persist, or recovery requires deleting media whose identity is uncertain.
+
 ### Performance eligibility or creator totals are stale
 
 - **Likely causes:** A creator or chant fan-out trigger failed, a deployed index or schema is incompatible, or exact count reconstruction timed out at unexpected volume.
@@ -105,6 +126,8 @@ No numeric alert thresholds or observation windows are approved yet. Set them be
 
 - **Application:** Stop distribution of a bad candidate and ship a corrected build. Store rollback mechanics and signed artifact ownership are not yet documented.
 - **Configuration:** Restore a reviewed compatible configuration through the owning Firebase or store console. Record the exact before and after values without copying secrets.
+- **App Check:** Registration can remain while enforcement is disabled. If valid release traffic is misclassified, disable enforcement first, preserve metrics, correct the provider or signing identity, and repeat the observation window.
+- **Alerts and budget:** Disable a noisy policy before deleting its notification channel. Edit or remove an incorrect budget without disabling billing. Treat any automated service shutdown as a separate destructive action.
 - **Rules and Functions:** Verify deployed baseline first, then deploy a reviewed compatible prior or forward version. For performance-source eligibility, deploy compatible rules and Functions before the client. CI success does not prove deployed parity.
 - **Schema and data:** Prefer backward-compatible additions and forward recovery. Stable seed identity, account deletion, counters, and safety records each have specific decisions that take precedence over generic rollback.
 - **External side effects:** Native sharing and evidence links leave the app boundary. Chants cannot recall third-party copies, browser history, or recipient data.

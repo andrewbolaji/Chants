@@ -8,10 +8,10 @@ The path from code-complete to public launch, with concrete triggers on every ga
 
 **Built and verified by automated checks:**
 - v1 feature set: auth, agnostic Sport/Competition/Team/Chant data model, browse and search, chant detail, user submission, moderation (report, remove, ban, unban, rate limits, audit log), voting with counter reconciliation, one-level comment replies with likes, user blocking, and suggestion box.
-- v1 hardening in source: account deletion, App Check client wiring, and Crashlytics wiring. Live enforcement and dashboard controls remain release-verification items.
+- v1 hardening in source: account deletion, App Check client wiring, complete native Crashlytics delivery hooks, bounded abandoned-media cleanup, and privacy-safe stale deletion-job detection. iOS App Attest is registered but unenforced; two operational policies and the alert-only budget are saved. Android registration, first Crashlytics delivery, observed alert delivery, and deployment remain release-verification items.
 - Stable seeded chant identity in source: explicit immutable IDs, collision preflight, and transactional ownership checks. The separately authorized live preflight remains pending.
 - The complete V1 feature and remediation stack from PRs 4 through 10 and 12 through 14 is merged to `main`. It includes provenance and evidence, Songbook and Chant Lab, Saved Matchday Songbook, Basic Share-Out, parser-safe authority boundaries, server-authoritative report and feedback intake, durable account deletion, and the final freeze corrections.
-- Final merged `main` is `e8f2591740963f87623aacb82a806328cb1a98fe`, including PR 17 and the PR 18 authentication stack. GitHub Actions run `33256843751` passed all eight jobs there: 463 Flutter tests, analysis, 142 Functions tests, 42 seed tests, 165 Firestore and Storage assertions, governance, and both native compile and identity checks.
+- Creator and authentication feature source merged at `e8f2591740963f87623aacb82a806328cb1a98fe`. GitHub Actions run `33256843751` passed all eight jobs there: 463 Flutter tests, analysis, 142 Functions tests, 42 seed tests, 165 Firestore and Storage assertions, governance, and both native compile and identity checks. Documentation-only PR 19 later advanced `main` to `9c6286a` without changing executable input.
 - Claude independently reviewed the freeze ranges through final closure. The last review approved the minimal disposed-Home correction and dormant merge privacy gate with no new defect.
 - The approved V1 core-journey interface-readiness and bounded Home hierarchy blocks are merged through PR 15. Home, competition, and player have inspected 390 by 844 baselines; the immutable competition-list crash is fixed; recovery copy is truthful; and Home explains Matchday Songbook, Terrace Proven, and Chant Lab without new navigation or data authority.
 - Claude's one-shot review of `9189c71...e810318` judged PR 16 freeze-defensible with no production defect. Its evidence closure and corrections merged at `86603c2` before the creator stack.
@@ -20,12 +20,12 @@ The path from code-complete to public launch, with concrete triggers on every ga
 - Visual identity: complete "matchnight, warmed with playful" redesign, tokenized, AA contrast proven.
 
 **Not yet done:**
-- Complete provider dashboards, credentials, association files, production signing, policy, cost and abuse controls, and the combined iOS and Android V1 device walkthrough. Merged `main` `e8f2591` compiles and passes identity inspection on both clean runners.
+- Complete remaining provider dashboards and credentials, Android association, deployed Apple association, production signing, policy, observed cost and abuse controls, and the combined iOS and Android V1 device walkthrough. Feature source at `e8f2591` compiles and passes identity inspection on both clean runners.
 - The read-only live chant-identity preflight before the next production seed write.
 - The remaining verified club seed.
 - Saved Matchday Songbook airplane-mode device walk; its iOS client compilation now passes.
 - Camera and library permission, upload recovery, playback, public sharing, Following, activity, threaded conversation, moderation, block, and deletion device walks.
-- Content policy, privacy, terms, domain association, store destinations, URL-signing IAM, Storage cleanup, App Check, alerts, billing controls, deployed parity, signing, and store assets.
+- Content policy, privacy, terms, association deployment, store destinations, URL-signing IAM, cleanup deployment, Android App Check, observed alert and billing delivery, deployed parity, signing, and store assets.
 - Store launch prep.
 
 ---
@@ -71,10 +71,11 @@ V1 is a trusted songbook and a creator workshop. The work is sequenced as bounde
 15. **Build launch authentication, onboarding, and Android readiness.** Merged through PRs 18 and 17, clean-runner green across eight jobs at exact `main`, and independently accepted for source freeze. Chants has a product-specific welcome, verified email and automatic return, recoverable server-owned onboarding, Apple, Google, Facebook, magic-link and phone paths behind fail-closed flags, explicit same-UID linking, truthful reset, native entitlements and paths, fail-closed Android signing, and native CI.
 16. **Close post-auth review findings.** Merged, independently verified, and exact-main clean-runner green. The nine corrections align Storage operator authority, retry provider initialization, restore onboarding escape paths, make phone cooldown and cancellation monotonic, retain ambiguous magic-link state, distinguish requested from connected or complete, and enlarge the onboarding destination target.
 17. **Close final source-freeze minor findings.** Merged and exact-main CI verified. Runtime commit `e1474ad` freezes saved onboarding values while profile projection catches up, documentation commit `c1c4ea4` records the evidence, and merge commit `e8f2591` passes all eight jobs in run `33256843751`.
+18. **Stage launch services without premature enforcement.** In progress on the approved launch-services branch. Source now contains exact Apple association, complete native Crashlytics delivery hooks, daily bounded abandoned-draft cleanup, capped aggregate stale-job monitoring, and CI contract checks. Firebase Auth authorizes both planned domains; iOS App Attest is registered at the default one-hour TTL and remains unenforced; two privacy-safe operational policies and the USD 25 alert-only budget are saved and re-read. Deployment, observed alert delivery, Android signing identity, device proof, and clean-runner evidence remain open.
 
 The original Songbook and Chant Lab boundary remains in `docs/decisions/004-songbook-and-chant-lab.md`; creator-platform decisions are 017 through 022 and the active post-merge documentation contract is `docs/CHANGE_SPEC.md`. Beat-synced karaoke editing, licensed backing tracks, duet or remix tools, payouts, scheduled challenges, automated large-scale media screening, and personalized recommendation models remain later work.
 
-The complete reviewed V1 source stack is merged at `e8f2591`. Exact-main run `33256843751` passes all eight jobs, including both native builds and 165 Java-backed Firestore and Storage cases. Provider setup, production signing, association deployment, policy, cost controls, and the combined device walkthrough remain gates that turn source confidence into release sign-off.
+The complete reviewed V1 source stack is merged at `e8f2591`. Exact-main run `33256843751` passes all eight jobs, including both native builds and 165 Java-backed Firestore and Storage cases. Provider setup, production signing, association deployment, policy, observed telemetry and alert delivery, and the combined device walkthrough remain gates that turn source confidence into release sign-off.
 
 **Trigger to exit:** The final minor closure is exact-head green; both native clients still compile; recording or choosing, upload recovery, approval, playback, sharing, Following, comments, activity, moderation, blocking, deletion, authentication, verification, and offline Songbook pass the combined device walk; provenance and promotion rules still work end to end; and public share-out never produces a broken destination.
 
@@ -157,7 +158,7 @@ The implementation boundary and remaining verification gate live in `docs/CHANGE
 - **TODO** Apple Developer account ($99) and Google Play Developer account ($25).
 - **TODO** Wire final app icon; set 17+ age rating.
 - **TODO** Store listings, screenshots, and data-safety / app-privacy forms.
-- **TODO** App Check production: register the DeviceCheck key, then flip soft to full enforcement after about one clean telemetry week.
+- **IN PROGRESS** App Check production: iOS App Attest is registered and remains unenforced. Register Android Play Integrity only after trusted release signing exists, observe one to two weeks of valid release traffic, then approve enforcement separately. DeviceCheck fallback still requires an approved private-key path.
 - **TODO** Production build, signing, and deploy.
 
 ---
@@ -199,7 +200,7 @@ The implementation boundary and remaining verification gate live in `docs/CHANGE
 ### Pre-v1 engineering hardening gates
 
 - CI via GitHub Actions. Status: complete for source verification across governance, Flutter, Functions, seed, Firestore and Storage rules, and both native debug builds. Automated deployment is not built or implied.
-- Observability: Crashlytics is wired in source. Deployed telemetry, alerts, Firebase Performance Monitoring, and Analytics remain next.
+- Observability: Crashlytics delivery hooks, bounded staging cleanup, and privacy-safe stale-job logging are wired in source, and two operational policies are saved. First received and symbolicated crash, deployment, and observed alert delivery remain next. Firebase Performance Monitoring and Analytics remain deferred unless a later approved data and product case justifies them.
 - Firestore and Storage security-rules suites use `@firebase/rules-unit-testing`; 165 Java-backed cases pass on exact merged `main`.
 - Code coverage via `flutter test --coverage` uploaded to Codecov, added alongside CI. Surface the badge only once coverage is respectable.
 

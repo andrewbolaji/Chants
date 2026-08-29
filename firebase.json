@@ -21,7 +21,12 @@
   ],
   "hosting": {
     "public": "hosting",
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "ignore": [
+      "firebase.json",
+      "**/.git/**",
+      "**/.DS_Store",
+      "**/node_modules/**"
+    ],
     "rewrites": [
       {
         "source": "/media/performances/**",
@@ -54,6 +59,32 @@
     ],
     "headers": [
       {
+        "source": "/.well-known/apple-app-site-association",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Cache-Control",
+            "value": "public,max-age=300"
+          }
+        ]
+      },
+      {
+        "source": "/.well-known/assetlinks.json",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Cache-Control",
+            "value": "public,max-age=300"
+          }
+        ]
+      },
+      {
         "source": "/share/**",
         "headers": [
           {
@@ -68,6 +99,7 @@
     "auth": { "port": 9099 },
     "firestore": { "port": 8080 },
     "storage": { "port": 9199 },
+    "hosting": { "port": 5002 },
     "ui": { "enabled": true, "port": 4000 },
     "singleProjectMode": true
   },
@@ -84,7 +116,7 @@
         "default": {
           "projectId": "chants-f95b4",
           "appId": "1:66623447919:ios:61727fcc1dec76d5737e9a",
-          "uploadDebugSymbols": false,
+          "uploadDebugSymbols": true,
           "fileOutput": "ios/Runner/GoogleService-Info.plist"
         }
       }

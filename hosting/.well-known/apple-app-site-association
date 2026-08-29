@@ -1,0 +1,25 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": [
+          "J7V95LBCWR.com.chants.chants"
+        ],
+        "components": [
+          {
+            "/": "/finish-sign-in"
+          },
+          {
+            "/": "/chants/*"
+          },
+          {
+            "/": "/performances/*"
+          },
+          {
+            "/": "/creators/*"
+          }
+        ]
+      }
+    ]
+  }
+}

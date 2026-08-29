@@ -16,12 +16,12 @@ flutter pub get
 flutter test                              # models, services, widgets. Needs no Firebase config.
 
 # Backend suites (Node 20), each self-contained. Verified green here:
-cd functions && npm install && npm test   # Cloud Functions, 78 tests
+cd functions && npm install && npm test   # Cloud Functions, 146 tests
 cd seed && npm install && npm test        # seed validation, 42 tests
 
 # Firestore rules tests need Java plus firebase-tools:
 npm --prefix test_rules install
-firebase emulators:exec --only firestore --project chants-f95b4 "cd test_rules && npm test"  # 136 assertions
+firebase emulators:exec --only firestore,storage --project chants-f95b4 "cd test_rules && npm test"  # 165 assertions
 
 # To run the actual app you need your own Firebase project:
 cp lib/firebase_options.dart.example lib/firebase_options.dart   # then add real keys
@@ -30,6 +30,8 @@ flutter run
 # Framework structure and tracked-prose checks.
 ./scripts/check-project-memory.sh
 ./scripts/check-writing-style.sh
+node scripts/check-launch-services.mjs
+node scripts/test-launch-services-check.mjs
 
 # After staging an implementation handoff.
 ./scripts/check-project-memory.sh --staged

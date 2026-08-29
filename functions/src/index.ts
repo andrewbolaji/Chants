@@ -6,6 +6,8 @@ import {
 } from "firebase-functions/v2/firestore";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { onRequest } from "firebase-functions/v2/https";
+import { onSchedule } from "firebase-functions/v2/scheduler";
+import { logger } from "firebase-functions";
 import { writeAuditEntry, writePrivacySafeReportAuditEntry } from "./audit";
 import {
   ChantTrustAction,
@@ -62,6 +64,12 @@ import {
   renderPublicPage,
   resolvePublicPage,
 } from "./public_share";
+import {
+  cleanupAbandonedPerformanceDrafts as cleanupAbandonedPerformanceDraftsBatch,
+  firebaseOperationalStore,
+  monitorOperationalBacklogs,
+  operationalBacklogLog,
+} from "./operations";
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -73,6 +81,62 @@ function performanceMediaGateway() {
 }
 
 const AUTO_HIDE_THRESHOLD = 3;
+
+export const cleanupAbandonedPerformanceDraftsJob = onSchedule(
+  {
+    schedule: "every day 03:00",
+    timeZone: "UTC",
+    region: "europe-west2",
+    retryCount: 3,
+  },
+  async () => {
+    const result = await cleanupAbandonedPerformanceDraftsBatch({
+      store: firebaseOperationalStore(db),
+      media: performanceMediaGateway(),
+      now: () => admin.firestore.Timestamp.now(),
+    });
+    if (result.failures > 0 || result.invalid > 0) {
+      logger.error("Abandoned performance cleanup did not finish.", {
+        operationalSignal: "abandoned-performance-cleanup-failed",
+        scanned: result.scanned,
+        claimed: result.claimed,
+        deleted: result.deleted,
+        invalid: result.invalid,
+        failures: result.failures,
+      });
+      throw new Error("Abandoned performance cleanup did not finish.");
+    }
+    if (result.deleted > 0 || result.invalid > 0) {
+      logger.info("Abandoned performance cleanup completed.", {
+        operationalSignal: "abandoned-performance-cleanup",
+        scanned: result.scanned,
+        claimed: result.claimed,
+        deleted: result.deleted,
+        invalid: result.invalid,
+      });
+    }
+  },
+);
+
+export const monitorOperationalBacklogsJob = onSchedule(
+  {
+    schedule: "every 15 minutes",
+    timeZone: "UTC",
+    region: "europe-west2",
+  },
+  async () => {
+    const summary = await monitorOperationalBacklogs({
+      store: firebaseOperationalStore(db),
+      now: () => admin.firestore.Timestamp.now(),
+    });
+    if (summary.hasStaleJobs) {
+      logger.error(
+        "Stale deletion jobs detected.",
+        operationalBacklogLog(summary),
+      );
+    }
+  },
+);
 
 // Must match kCurrentPolicyVersion in lib/app/policy.dart and the version
 // check in firestore.rules. Bump all three together, only for a substantive

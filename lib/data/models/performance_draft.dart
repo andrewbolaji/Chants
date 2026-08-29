@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 enum PerformanceDraftState {
   awaitingUpload('awaiting_upload'),
+  cleanupPending('cleanup_pending'),
   pendingReview('pending_review'),
   approved('approved'),
   rejected('rejected'),
