@@ -1,11 +1,9 @@
-import 'package:firebase_auth/firebase_auth.dart' show FirebaseAuthException;
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chants/app/colors.dart';
 import 'package:chants/app/providers.dart';
-import 'package:chants/app/router.dart';
 import 'package:chants/app/spacing.dart';
-import 'package:chants/data/services/age.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {
   const SignUpScreen({super.key});
@@ -19,12 +17,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  final _displayNameController = TextEditingController();
   bool _loading = false;
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
-  DateTime? _dateOfBirth;
-  bool _policyAccepted = false;
   String? _error;
 
   @override
@@ -32,163 +27,110 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
-    _displayNameController.dispose();
     super.dispose();
+  }
+
+  String _createError(Object error) {
+    if (error is FirebaseAuthException) {
+      return switch (error.code) {
+        'email-already-in-use' =>
+          'That email already has an account. Sign in instead.',
+        'invalid-email' => 'Enter a valid email address.',
+        'weak-password' =>
+          'Use a stronger password with at least 8 characters.',
+        'network-request-failed' =>
+          'You appear to be offline. Reconnect and try again.',
+        'too-many-requests' =>
+          'Too many attempts. Wait a moment before trying again.',
+        _ => 'Your account could not be created. Try again.',
+      };
+    }
+    return 'Your account could not be created. Try again.';
   }
 
   Future<void> _signUp() async {
     if (!_formKey.currentState!.validate()) return;
-
-    if (_dateOfBirth == null) {
-      setState(() => _error = 'Add your date of birth.');
-      return;
-    }
-    if (calculateAge(_dateOfBirth!, DateTime.now()) < kMinimumAge) {
-      setState(
-          () => _error = 'You need to be $kMinimumAge or older to use Chants.');
-      return;
-    }
-    if (!_policyAccepted) {
-      setState(() => _error = 'Agree to the Content Policy to continue.');
-      return;
-    }
-
     setState(() {
       _loading = true;
       _error = null;
     });
 
-    var authUserCreated = false;
-    var profileCreated = false;
-
     try {
-      final cred = await ref.read(authRepositoryProvider).signUp(
+      await ref
+          .read(authRepositoryProvider)
+          .signUp(
             email: _emailController.text.trim(),
             password: _passwordController.text,
           );
-
-      if (cred.user != null) {
-        authUserCreated = true;
-        // The date of birth itself is never sent to Firestore. Only the
-        // pass/fail result of the age check above is persisted.
-        await ref.read(profileRepositoryProvider).createProfile(
-              userId: cred.user!.uid,
-              displayName: _displayNameController.text.trim(),
-              ageConfirmed17Plus: true,
-            );
-        profileCreated = true;
-        // Record acceptance before navigating, so the app-level gate (which
-        // watches this same profile) never has a reason to bounce a
-        // brand-new user back to the acceptance screen on landing.
-        await ref.read(moderationRepositoryProvider).acceptPolicy();
+      try {
+        await ref.read(authRepositoryProvider).sendEmailVerification();
+      } catch (_) {
+        // The app gate now owns recovery. It shows a resend action without
+        // deleting the successfully created Firebase account.
       }
-
-      if (!mounted) return;
-      Navigator.of(context).popUntil((route) => route.isFirst);
-    } catch (e) {
-      if (authUserCreated) {
-        try {
-          // Prefer the server deletion flow once a profile may exist so the
-          // failed sign-up cannot leave an orphaned profile or interactions.
-          await ref.read(moderationRepositoryProvider).deleteAccount();
-          // The callable now returns after durable job acceptance. Sign out
-          // this failed registration while the server finishes cleanup.
-          try {
-            await ref.read(authRepositoryProvider).signOut();
-          } catch (_) {
-            // The pending-account gate still blocks app access if this
-            // best-effort local sign-out is delayed or fails.
-          }
-        } catch (_) {
-          if (!profileCreated) {
-            try {
-              await ref.read(authRepositoryProvider).deleteCurrentUser();
-            } catch (_) {
-              await ref.read(authRepositoryProvider).signOut();
-            }
-          } else {
-            // Keep Auth and profile coherent if server cleanup is unavailable.
-            // Signing out lets the user retry without being stranded.
-            await ref.read(authRepositoryProvider).signOut();
-          }
-        }
-      }
-      debugPrint('[SignUp] Error: $e');
-      if (e is FirebaseAuthException) {
-        debugPrint('[SignUp] code=${e.code} message=${e.message}');
-      }
+    } catch (error) {
       if (!mounted) return;
       setState(() {
-        _error = 'Could not create your account. '
-            'Try a different email or a stronger password.';
         _loading = false;
+        _error = _createError(error);
       });
     }
-  }
-
-  Future<void> _pickDateOfBirth() async {
-    final now = DateTime.now();
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime(now.year - 18, now.month, now.day),
-      firstDate: DateTime(now.year - 120),
-      lastDate: now,
-    );
-    if (picked != null) {
-      setState(() => _dateOfBirth = picked);
-    }
-  }
-
-  String _formatDate(DateTime d) {
-    final month = d.month.toString().padLeft(2, '0');
-    final day = d.day.toString().padLeft(2, '0');
-    return '${d.year}-$month-$day';
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('SIGN UP')),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: Spacing.xl),
+      appBar: AppBar(title: const Text('CREATE ACCOUNT')),
+      body: SafeArea(
         child: Form(
           key: _formKey,
           child: ListView(
+            padding: const EdgeInsets.fromLTRB(
+              Spacing.xl,
+              Spacing.xl,
+              Spacing.xl,
+              Spacing.xxxl,
+            ),
             children: [
-              const SizedBox(height: Spacing.xl),
-              TextFormField(
-                controller: _displayNameController,
-                decoration: const InputDecoration(labelText: 'Display name'),
-                autofillHints: const [AutofillHints.username],
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) {
-                    return 'Pick a display name.';
-                  }
-                  if (v.trim().length > 50) return '50 characters max.';
-                  return null;
-                },
+              Text(
+                'JOIN THE TERRACE',
+                style: Theme.of(context).textTheme.headlineMedium,
               ),
-              const SizedBox(height: Spacing.md),
+              const SizedBox(height: Spacing.sm),
+              const Text(
+                'Create your login first. We will verify your email, then '
+                'set up your supporter profile.',
+                style: TextStyle(color: AppColors.textBody),
+              ),
+              const SizedBox(height: Spacing.xl),
               TextFormField(
                 controller: _emailController,
                 decoration: const InputDecoration(labelText: 'Email'),
                 keyboardType: TextInputType.emailAddress,
                 autofillHints: const [AutofillHints.email],
-                validator: (v) =>
-                    v == null || v.isEmpty ? 'Enter your email.' : null,
+                textInputAction: TextInputAction.next,
+                validator: (value) {
+                  final email = value?.trim() ?? '';
+                  if (email.isEmpty || !email.contains('@')) {
+                    return 'Enter a valid email address.';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: Spacing.md),
               TextFormField(
                 controller: _passwordController,
                 decoration: InputDecoration(
                   labelText: 'Password',
+                  helperText: 'At least 8 characters.',
                   suffixIcon: IconButton(
+                    tooltip: _obscurePassword
+                        ? 'Show password'
+                        : 'Hide password',
                     icon: Icon(
                       _obscurePassword
                           ? Icons.visibility_off_outlined
                           : Icons.visibility_outlined,
-                      size: 20,
-                      color: AppColors.textMuted,
                     ),
                     onPressed: () =>
                         setState(() => _obscurePassword = !_obscurePassword),
@@ -196,8 +138,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 ),
                 obscureText: _obscurePassword,
                 autofillHints: const [AutofillHints.newPassword],
-                validator: (v) => v == null || v.length < 6
-                    ? 'At least 6 characters.'
+                textInputAction: TextInputAction.next,
+                validator: (value) => value == null || value.length < 8
+                    ? 'At least 8 characters.'
                     : null,
               ),
               const SizedBox(height: Spacing.md),
@@ -206,85 +149,33 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 decoration: InputDecoration(
                   labelText: 'Confirm password',
                   suffixIcon: IconButton(
+                    tooltip: _obscureConfirm
+                        ? 'Show confirmation password'
+                        : 'Hide confirmation password',
                     icon: Icon(
                       _obscureConfirm
                           ? Icons.visibility_off_outlined
                           : Icons.visibility_outlined,
-                      size: 20,
-                      color: AppColors.textMuted,
                     ),
                     onPressed: () =>
                         setState(() => _obscureConfirm = !_obscureConfirm),
                   ),
                 ),
                 obscureText: _obscureConfirm,
-                validator: (v) {
-                  if (v != _passwordController.text) {
-                    return 'Passwords do not match.';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: Spacing.md),
-              InkWell(
-                onTap: _pickDateOfBirth,
-                child: InputDecorator(
-                  decoration: const InputDecoration(
-                    labelText: 'Date of birth',
-                  ),
-                  child: Text(
-                    _dateOfBirth == null
-                        ? 'Tap to choose'
-                        : _formatDate(_dateOfBirth!),
-                    style: TextStyle(
-                      color: _dateOfBirth == null ? AppColors.textMuted : null,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: Spacing.md),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Checkbox(
-                    value: _policyAccepted,
-                    onChanged: (v) =>
-                        setState(() => _policyAccepted = v ?? false),
-                  ),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => Navigator.pushNamed(
-                          context, AppRouter.contentPolicy),
-                      child: Text.rich(
-                        TextSpan(
-                          text: 'I have read and agree to the ',
-                          style: Theme.of(context).textTheme.bodySmall,
-                          children: [
-                            TextSpan(
-                              text: 'Content Policy',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
-                                  ?.copyWith(
-                                    color: AppColors.gold,
-                                    decoration: TextDecoration.underline,
-                                  ),
-                            ),
-                            const TextSpan(text: '.'),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                autofillHints: const [AutofillHints.newPassword],
+                onFieldSubmitted: (_) => _loading ? null : _signUp(),
+                validator: (value) => value != _passwordController.text
+                    ? 'Passwords do not match.'
+                    : null,
               ),
               if (_error != null) ...[
-                const SizedBox(height: Spacing.md),
-                Text(
-                  _error!,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.error,
-                      ),
+                const SizedBox(height: Spacing.lg),
+                Semantics(
+                  liveRegion: true,
+                  child: Text(
+                    _error!,
+                    style: const TextStyle(color: AppColors.error),
+                  ),
                 ),
               ],
               const SizedBox(height: Spacing.xl),
@@ -292,8 +183,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 onPressed: _loading ? null : _signUp,
                 child: _loading
                     ? const SizedBox(
-                        height: 20,
                         width: 20,
+                        height: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Text('CREATE ACCOUNT'),

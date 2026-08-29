@@ -8,6 +8,7 @@ import {
   handleSubmitReport,
   planAnchoredWindow,
   requireAuthenticatedUid,
+  requireVerifiedUid,
 } from "../src/safety_submission";
 
 type Store = Record<string, Record<string, unknown>>;
@@ -126,7 +127,12 @@ function seedReporter(
 }
 
 function reportData(
-  targetType: "chant" | "comment" | "user",
+  targetType:
+    | "chant"
+    | "comment"
+    | "user"
+    | "performance"
+    | "performanceComment",
   targetId: string
 ): Record<string, unknown> {
   return { targetType, targetId, reason: "Hate speech or slurs" };
@@ -138,6 +144,58 @@ describe("handleSubmitReport", () => {
     await expectCode(Promise.resolve().then(
       () => requireAuthenticatedUid(undefined)
     ), "unauthenticated");
+  });
+
+  it("requires verified contact or a trusted federated identity", () => {
+    assert.strictEqual(
+      requireVerifiedUid({
+        uid: "email-user",
+        token: { email_verified: true },
+      }),
+      "email-user"
+    );
+    assert.strictEqual(
+      requireVerifiedUid({
+        uid: "phone-user",
+        token: { phone_number: "+447000000000" },
+      }),
+      "phone-user"
+    );
+    for (const provider of ["apple.com", "google.com", "facebook.com"]) {
+      assert.strictEqual(
+        requireVerifiedUid({
+          uid: `${provider}-user`,
+          token: { firebase: { sign_in_provider: provider } },
+        }),
+        `${provider}-user`
+      );
+    }
+    assert.strictEqual(
+      requireVerifiedUid({
+        uid: "linked-facebook-user",
+        token: {
+          firebase: {
+            sign_in_provider: "password",
+            identities: { "facebook.com": ["facebook-id"] },
+          },
+        },
+      }),
+      "linked-facebook-user"
+    );
+    for (const auth of [
+      { uid: "missing-token" },
+      { uid: "unverified", token: { email_verified: false } },
+      { uid: "empty-phone", token: { phone_number: "  " } },
+      {
+        uid: "empty-federated-identity",
+        token: { firebase: { identities: { "google.com": [] } } },
+      },
+    ]) {
+      assert.throws(
+        () => requireVerifiedUid(auth),
+        (error: { code?: string }) => error.code === "permission-denied"
+      );
+    }
   });
 
   it("rejects unauthoritative payload fields and malformed values", async () => {
@@ -310,11 +368,18 @@ describe("handleSubmitReport", () => {
     assert.strictEqual(harness.count("userReports"), 0);
   });
 
-  it("writes each legacy report shape with server-owned identity, time, and status", async () => {
+  it("writes every report shape with server-owned identity, time, and status", async () => {
     const cases = [
       ["chant", "chants", "reports", "chantId"],
       ["comment", "comments", "commentReports", "commentId"],
       ["user", "profiles", "userReports", "reportedUserId"],
+      ["performance", "performances", "performanceReports", "performanceId"],
+      [
+        "performanceComment",
+        "performanceComments",
+        "performanceCommentReports",
+        "performanceCommentId",
+      ],
     ] as const;
 
     for (const [targetType, targetCollection, reportCollection, targetField] of cases) {
@@ -322,7 +387,12 @@ describe("handleSubmitReport", () => {
       seedReporter(harness);
       harness.seed(targetCollection, "target", targetType === "user"
         ? { banned: false }
-        : { hidden: false, removed: false });
+        : {
+            hidden: false,
+            removed: false,
+            ...(targetType === "performance" ? { creatorId: "creator" } : {}),
+            ...(targetType === "performanceComment" ? { userId: "creator" } : {}),
+          });
 
       await handleSubmitReport({
         uid: "reporter",
@@ -343,6 +413,35 @@ describe("handleSubmitReport", () => {
       assert.strictEqual(rate.reportWindowStartedAt, NOW);
       assert.strictEqual(rate.updatedAt, NOW);
     }
+  });
+
+  it("rejects self-reporting a performance or performance comment", async () => {
+    const harness = makeHarness();
+    seedReporter(harness);
+    harness.seed("performances", "own-performance", {
+      creatorId: "reporter",
+      hidden: false,
+      removed: false,
+    });
+    harness.seed("performanceComments", "own-comment", {
+      userId: "reporter",
+      hidden: false,
+      removed: false,
+    });
+    await expectCode(handleSubmitReport({
+      uid: "reporter",
+      data: reportData("performance", "own-performance"),
+      firestore: harness.firestore,
+      clock: () => NOW,
+    }), "invalid-argument");
+    await expectCode(handleSubmitReport({
+      uid: "reporter",
+      data: reportData("performanceComment", "own-comment"),
+      firestore: harness.firestore,
+      clock: () => NOW,
+    }), "invalid-argument");
+    assert.strictEqual(harness.count("performanceReports"), 0);
+    assert.strictEqual(harness.count("performanceCommentReports"), 0);
   });
 
   it("rejects duplicates without overwriting or consuming budget", async () => {

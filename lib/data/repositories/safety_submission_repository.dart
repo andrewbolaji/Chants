@@ -1,6 +1,12 @@
 import 'package:cloud_functions/cloud_functions.dart';
 
-enum SafetyReportTargetType { chant, comment, user }
+enum SafetyReportTargetType {
+  chant,
+  comment,
+  user,
+  performance,
+  performanceComment,
+}
 
 enum SafetySubmissionFailure { duplicate, rateLimited, rejected }
 

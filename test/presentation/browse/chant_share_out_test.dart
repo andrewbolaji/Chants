@@ -13,6 +13,7 @@ import 'package:chants/data/models/vote.dart';
 import 'package:chants/data/repositories/chant_repository.dart';
 import 'package:chants/data/repositories/comment_repository.dart';
 import 'package:chants/data/repositories/profile_repository.dart';
+import 'package:chants/data/repositories/public_share_repository.dart';
 import 'package:chants/data/repositories/saved_songbook_repository.dart';
 import 'package:chants/data/repositories/vote_repository.dart';
 import 'package:chants/data/services/chant_share.dart';
@@ -187,6 +188,7 @@ Widget _app({
   User? user,
   SavedSongbook? songbook,
   SavedSongbookRepository? savedRepository,
+  PublicShareRepository? publicShareRepository,
 }) {
   repository.current = chant;
   return ProviderScope(
@@ -197,6 +199,13 @@ Widget _app({
       voteRepositoryProvider.overrideWithValue(_VoteRepository()),
       profileRepositoryProvider.overrideWithValue(_ProfileRepository()),
       chantShareGatewayProvider.overrideWithValue(gateway),
+      publicShareRepositoryProvider.overrideWithValue(
+        publicShareRepository ??
+            PublicShareRepository(
+              resolver: (_, id) async =>
+                  Uri.parse('https://chantsfc.com/chants/$id'),
+            ),
+      ),
       blockedUserIdsProvider.overrideWith(
         (ref, uid) => Stream.value(const <String>{}),
       ),
@@ -248,10 +257,39 @@ void main() {
     expect(gateway.payloads.single.text, contains('North Bank Song'));
     expect(gateway.payloads.single.text, contains('Arsenal'));
     expect(gateway.payloads.single.text, contains('Sing it loud'));
-    expect(gateway.payloads.single.text, isNot(contains('https://')));
+    expect(
+      gateway.payloads.single.text,
+      contains('https://chantsfc.com/chants/arsenal-north-bank-song'),
+    );
     expect(gateway.origins.single.width, greaterThan(0));
     expect(gateway.origins.single.height, greaterThan(0));
     semantics.dispose();
+  });
+
+  testWidgets('unavailable public destination never opens platform sharing', (
+    tester,
+  ) async {
+    final repository = _ChantRepository();
+    final gateway = _ShareGateway();
+    addTearDown(repository.controller.close);
+
+    await tester.pumpWidget(
+      _app(
+        chant: _chant(),
+        repository: repository,
+        gateway: gateway,
+        publicShareRepository: PublicShareRepository(
+          resolver: (_, _) async => throw StateError('hidden'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Share this chant'));
+    await tester.pump();
+
+    expect(gateway.payloads, isEmpty);
+    expect(find.text('Could not open sharing. Try again.'), findsOneWidget);
   });
 
   testWidgets('one native share remains outstanding at a time', (tester) async {

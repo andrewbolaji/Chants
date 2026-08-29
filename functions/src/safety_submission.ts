@@ -15,7 +15,12 @@ const FEEDBACK_CATEGORIES = new Set([
   "other",
 ]);
 
-type ReportTargetType = "chant" | "comment" | "user";
+type ReportTargetType =
+  | "chant"
+  | "comment"
+  | "user"
+  | "performance"
+  | "performanceComment";
 
 type Clock = () => admin.firestore.Timestamp;
 
@@ -26,9 +31,24 @@ type AnchoredWindowPlan = {
 };
 
 type ReportTargetConfig = {
-  targetCollection: "chants" | "comments" | "profiles";
-  reportCollection: "reports" | "commentReports" | "userReports";
-  targetField: "chantId" | "commentId" | "reportedUserId";
+  targetCollection:
+    | "chants"
+    | "comments"
+    | "profiles"
+    | "performances"
+    | "performanceComments";
+  reportCollection:
+    | "reports"
+    | "commentReports"
+    | "userReports"
+    | "performanceReports"
+    | "performanceCommentReports";
+  targetField:
+    | "chantId"
+    | "commentId"
+    | "reportedUserId"
+    | "performanceId"
+    | "performanceCommentId";
 };
 
 const REPORT_TARGET_CONFIG: Record<ReportTargetType, ReportTargetConfig> = {
@@ -47,6 +67,16 @@ const REPORT_TARGET_CONFIG: Record<ReportTargetType, ReportTargetConfig> = {
     reportCollection: "userReports",
     targetField: "reportedUserId",
   },
+  performance: {
+    targetCollection: "performances",
+    reportCollection: "performanceReports",
+    targetField: "performanceId",
+  },
+  performanceComment: {
+    targetCollection: "performanceComments",
+    reportCollection: "performanceCommentReports",
+    targetField: "performanceCommentId",
+  },
 };
 
 export function requireAuthenticatedUid(
@@ -56,6 +86,42 @@ export function requireAuthenticatedUid(
     throw new HttpsError("unauthenticated", "Sign in required.");
   }
   return auth.uid;
+}
+
+export function requireVerifiedUid(
+  auth: {
+    uid: string;
+    token?: Record<string, unknown>;
+  } | undefined
+): string {
+  const uid = requireAuthenticatedUid(auth);
+  const token = auth?.token;
+  const hasVerifiedEmail = token?.email_verified === true;
+  const phoneNumber = token?.phone_number;
+  const hasVerifiedPhone = typeof phoneNumber === "string" &&
+    phoneNumber.trim().length > 0;
+  const firebaseClaim = token?.firebase;
+  const signInProvider = isRecord(firebaseClaim)
+    ? firebaseClaim.sign_in_provider
+    : undefined;
+  const identities = isRecord(firebaseClaim)
+    ? firebaseClaim.identities
+    : undefined;
+  const trustedProviders = ["apple.com", "google.com", "facebook.com"];
+  const hasTrustedFederatedProvider =
+    (typeof signInProvider === "string" &&
+      trustedProviders.includes(signInProvider)) ||
+    (isRecord(identities) && trustedProviders.some((provider) => {
+      const identityValues = identities[provider];
+      return Array.isArray(identityValues) && identityValues.length > 0;
+    }));
+  if (!hasVerifiedEmail && !hasVerifiedPhone && !hasTrustedFederatedProvider) {
+    throw new HttpsError(
+      "permission-denied",
+      "Verify an email address or phone number to continue."
+    );
+  }
+  return uid;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -144,7 +210,11 @@ function parseReportPayload(data: unknown): {
   const rawTargetId = data.targetId;
   const rawReason = data.reason;
   if (
-    (targetType !== "chant" && targetType !== "comment" && targetType !== "user") ||
+    (targetType !== "chant" &&
+      targetType !== "comment" &&
+      targetType !== "user" &&
+      targetType !== "performance" &&
+      targetType !== "performanceComment") ||
     typeof rawTargetId !== "string" ||
     typeof rawReason !== "string"
   ) {
@@ -278,6 +348,14 @@ export async function handleSubmitReport(params: {
       const target = targetSnapshot.data()!;
       if (target.hidden !== false || target.removed !== false) {
         throw new HttpsError("failed-precondition", "Report target is unavailable.");
+      }
+      if (
+        (payload.targetType === "performance" &&
+          target.creatorId === params.uid) ||
+        (payload.targetType === "performanceComment" &&
+          target.userId === params.uid)
+      ) {
+        throw new HttpsError("invalid-argument", "You cannot report your own content.");
       }
     }
     if (reportSnapshot.exists) {

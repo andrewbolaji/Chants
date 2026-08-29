@@ -8,11 +8,13 @@ import 'package:chants/data/models/comment.dart';
 import 'package:chants/data/models/feedback_entry.dart';
 import 'package:chants/data/models/user_profile.dart';
 import 'package:chants/data/models/user_report.dart';
+import 'package:chants/data/models/performance_draft.dart';
 import 'package:chants/data/services/chant_evidence.dart';
 import 'package:chants/presentation/moderation/user_ban_button.dart';
 import 'package:chants/presentation/shared/chant_provenance_label.dart';
 import 'package:chants/presentation/shared/evidence_link_action.dart';
 import 'package:chants/presentation/shared/error_state.dart';
+import 'package:chants/presentation/feed/performance_video_player.dart';
 
 class ModerationScreen extends ConsumerWidget {
   const ModerationScreen({super.key});
@@ -48,7 +50,7 @@ class ModerationScreen extends ConsumerWidget {
         .snapshots();
 
     return DefaultTabController(
-      length: 6,
+      length: 8,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('MODERATION'),
@@ -57,6 +59,8 @@ class ModerationScreen extends ConsumerWidget {
             tabs: [
               Tab(text: 'Flagged'),
               Tab(text: 'Comments'),
+              Tab(text: 'Performances'),
+              Tab(text: 'Reported media'),
               Tab(text: 'Promote'),
               Tab(text: 'Feedback'),
               Tab(text: 'Reported users'),
@@ -128,7 +132,11 @@ class ModerationScreen extends ConsumerWidget {
                 );
               },
             ),
-            // Tab 3: promotion candidates
+            // Tab 3: pending performance media
+            const _PerformanceReviewTab(),
+            // Tab 4: reports against published performances and comments
+            const _PublishedPerformanceReportsTab(),
+            // Tab 5: promotion candidates
             StreamBuilder<List<Chant>>(
               stream: candidatesStream,
               builder: (context, snap) {
@@ -161,7 +169,7 @@ class ModerationScreen extends ConsumerWidget {
                 );
               },
             ),
-            // Tab 3: feedback
+            // Tab 6: feedback
             StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
               stream: feedbackStream,
               builder: (context, snap) {
@@ -214,7 +222,7 @@ class ModerationScreen extends ConsumerWidget {
                 );
               },
             ),
-            // Tab 5: reported users
+            // Tab 7: reported users
             StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
               stream: reportedUsersStream,
               builder: (context, snap) {
@@ -252,8 +260,733 @@ class ModerationScreen extends ConsumerWidget {
                 );
               },
             ),
-            // Tab 6: ban or unban by user ID
+            // Tab 8: ban or unban by user ID
             const _UserAccessTab(),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PerformanceReviewTab extends ConsumerWidget {
+  const _PerformanceReviewTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return StreamBuilder<List<PerformanceDraft>>(
+      stream: ref
+          .watch(performanceDraftRepositoryProvider)
+          .pendingReviewQueue(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return const ErrorState(
+            message: 'Could not load performance review queue.',
+          );
+        }
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        final drafts = snapshot.data!;
+        if (drafts.isEmpty) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(Spacing.xxl),
+              child: Text('No performances are waiting for review.'),
+            ),
+          );
+        }
+        return ListView.separated(
+          padding: const EdgeInsets.all(Spacing.sm),
+          itemCount: drafts.length,
+          separatorBuilder: (_, _) => const SizedBox(height: Spacing.sm),
+          itemBuilder: (context, index) =>
+              _PerformanceReviewCard(draft: drafts[index], ref: ref),
+        );
+      },
+    );
+  }
+}
+
+class _PublishedPerformanceReportsTab extends StatelessWidget {
+  const _PublishedPerformanceReportsTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 3,
+      child: Column(
+        children: [
+          const Material(
+            color: Colors.transparent,
+            child: TabBar(
+              tabs: [
+                Tab(text: 'Videos'),
+                Tab(text: 'Comments'),
+                Tab(text: 'Hidden'),
+              ],
+            ),
+          ),
+          Expanded(
+            child: TabBarView(
+              children: [
+                _PublishedReportList(
+                  collection: 'performanceReports',
+                  targetField: 'performanceId',
+                  targetType: 'performance',
+                  emptyCopy: 'No published performance reports.',
+                ),
+                _PublishedReportList(
+                  collection: 'performanceCommentReports',
+                  targetField: 'performanceCommentId',
+                  targetType: 'performanceComment',
+                  emptyCopy: 'No performance comment reports.',
+                ),
+                _HiddenPublishedContent(),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PublishedReportList extends StatelessWidget {
+  final String collection;
+  final String targetField;
+  final String targetType;
+  final String emptyCopy;
+
+  const _PublishedReportList({
+    required this.collection,
+    required this.targetField,
+    required this.targetType,
+    required this.emptyCopy,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final stream = FirebaseFirestore.instance
+        .collection(collection)
+        .where('status', isEqualTo: 'pending')
+        .snapshots();
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: stream,
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return const ErrorState(message: 'Could not load media reports.');
+        }
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        final reports = snapshot.data!.docs.toList();
+        if (reports.isEmpty) return Center(child: Text(emptyCopy));
+        reports.sort((a, b) {
+          final aTime = a.data()['createdAt'] as Timestamp?;
+          final bTime = b.data()['createdAt'] as Timestamp?;
+          return (bTime?.millisecondsSinceEpoch ?? 0).compareTo(
+            aTime?.millisecondsSinceEpoch ?? 0,
+          );
+        });
+        return ListView.separated(
+          padding: const EdgeInsets.all(Spacing.sm),
+          itemCount: reports.length,
+          separatorBuilder: (_, _) => const SizedBox(height: Spacing.sm),
+          itemBuilder: (context, index) {
+            final data = reports[index].data();
+            final targetId = data[targetField];
+            if (targetId is! String) {
+              return const Card(
+                child: ListTile(title: Text('Malformed report record')),
+              );
+            }
+            return _PublishedReportCard(
+              targetType: targetType,
+              targetId: targetId,
+              reason: data['reason'] as String? ?? 'No reason supplied',
+              reportedBy: data['reportedBy'] as String? ?? 'unknown',
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+class _PublishedReportCard extends ConsumerStatefulWidget {
+  final String targetType;
+  final String targetId;
+  final String reason;
+  final String reportedBy;
+
+  const _PublishedReportCard({
+    required this.targetType,
+    required this.targetId,
+    required this.reason,
+    required this.reportedBy,
+  });
+
+  @override
+  ConsumerState<_PublishedReportCard> createState() =>
+      _PublishedReportCardState();
+}
+
+class _PublishedReportCardState extends ConsumerState<_PublishedReportCard> {
+  bool _working = false;
+
+  Future<void> _preview() async {
+    if (widget.targetType == 'performance') {
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Reported performance'),
+          content: SizedBox(
+            width: 320,
+            child: AspectRatio(
+              aspectRatio: 4 / 5,
+              child: PerformanceVideoPlayer(
+                resolveMediaUri: () => ref
+                    .read(performanceRepositoryProvider)
+                    .resolvePlayback(widget.targetId),
+                semanticLabel: 'Preview reported performance',
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('CLOSE'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+    final snapshot = await FirebaseFirestore.instance
+        .collection('performanceComments')
+        .doc(widget.targetId)
+        .get();
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Reported comment'),
+        content: Text(
+          snapshot.data()?['body'] as String? ?? 'Comment unavailable.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('CLOSE'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _act(String action) async {
+    if (_working) return;
+    if (action == 'hide' || action == 'remove') {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text('${action == 'hide' ? 'Hide' : 'Remove'} this content?'),
+          content: Text(
+            action == 'hide'
+                ? 'It will stop being public until an operator restores it.'
+                : 'Removal is the terminal moderation state.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('CANCEL'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: Text(action.toUpperCase()),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true || !mounted) return;
+    }
+    setState(() => _working = true);
+    try {
+      await ref
+          .read(moderationRepositoryProvider)
+          .moderatePublishedPerformance(
+            targetType: widget.targetType,
+            targetId: widget.targetId,
+            action: action,
+          );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Report ${action == 'dismiss' ? 'dismissed' : 'reviewed'}.',
+          ),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _working = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not apply this moderation action.'),
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(Spacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              widget.targetType == 'performance'
+                  ? 'REPORTED PERFORMANCE'
+                  : 'REPORTED COMMENT',
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: Spacing.xs),
+            Text(widget.reason),
+            const SizedBox(height: Spacing.xs),
+            Text(
+              'Target: ${widget.targetId} · Reporter: ${widget.reportedBy}',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: Spacing.md),
+            Wrap(
+              spacing: Spacing.sm,
+              runSpacing: Spacing.sm,
+              children: [
+                OutlinedButton(
+                  onPressed: _working ? null : _preview,
+                  child: const Text('PREVIEW'),
+                ),
+                OutlinedButton(
+                  onPressed: _working ? null : () => _act('dismiss'),
+                  child: const Text('DISMISS'),
+                ),
+                FilledButton(
+                  onPressed: _working ? null : () => _act('hide'),
+                  child: const Text('HIDE'),
+                ),
+                FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.error,
+                  ),
+                  onPressed: _working ? null : () => _act('remove'),
+                  child: const Text('REMOVE'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HiddenPublishedContent extends ConsumerWidget {
+  const _HiddenPublishedContent();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final performances = FirebaseFirestore.instance
+        .collection('performances')
+        .where('hidden', isEqualTo: true)
+        .where('removed', isEqualTo: false)
+        .snapshots();
+    final comments = FirebaseFirestore.instance
+        .collection('performanceComments')
+        .where('hidden', isEqualTo: true)
+        .where('removed', isEqualTo: false)
+        .snapshots();
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: performances,
+      builder: (context, performanceSnapshot) {
+        return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+          stream: comments,
+          builder: (context, commentSnapshot) {
+            if (performanceSnapshot.hasError || commentSnapshot.hasError) {
+              return const ErrorState(message: 'Could not load hidden media.');
+            }
+            if (!performanceSnapshot.hasData || !commentSnapshot.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            final items = <({String type, String id, String label})>[
+              for (final document in performanceSnapshot.data!.docs)
+                (
+                  type: 'performance',
+                  id: document.id,
+                  label:
+                      document.data()['chantTitle'] as String? ?? document.id,
+                ),
+              for (final document in commentSnapshot.data!.docs)
+                (
+                  type: 'performanceComment',
+                  id: document.id,
+                  label: document.data()['body'] as String? ?? document.id,
+                ),
+            ];
+            if (items.isEmpty) {
+              return const Center(child: Text('No hidden published content.'));
+            }
+            return ListView.separated(
+              padding: const EdgeInsets.all(Spacing.sm),
+              itemCount: items.length,
+              separatorBuilder: (_, _) => const SizedBox(height: Spacing.sm),
+              itemBuilder: (context, index) {
+                final item = items[index];
+                return HiddenPublishedContentCard(
+                  targetType: item.type,
+                  targetId: item.id,
+                  label: item.label,
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+class HiddenPublishedContentCard extends ConsumerStatefulWidget {
+  final String targetType;
+  final String targetId;
+  final String label;
+
+  const HiddenPublishedContentCard({
+    super.key,
+    required this.targetType,
+    required this.targetId,
+    required this.label,
+  });
+
+  @override
+  ConsumerState<HiddenPublishedContentCard> createState() =>
+      _HiddenPublishedContentCardState();
+}
+
+class _HiddenPublishedContentCardState
+    extends ConsumerState<HiddenPublishedContentCard> {
+  bool _working = false;
+
+  Future<void> _preview() async {
+    if (widget.targetType == 'performance') {
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(widget.label),
+          content: SizedBox(
+            width: 320,
+            child: AspectRatio(
+              aspectRatio: 4 / 5,
+              child: PerformanceVideoPlayer(
+                resolveMediaUri: () => ref
+                    .read(performanceRepositoryProvider)
+                    .resolvePlayback(widget.targetId),
+                semanticLabel: 'Preview hidden performance',
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('CLOSE'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+    final snapshot = await FirebaseFirestore.instance
+        .collection('performanceComments')
+        .doc(widget.targetId)
+        .get();
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Hidden comment'),
+        content: Text(
+          snapshot.data()?['body'] as String? ?? 'Comment unavailable.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('CLOSE'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _act(String action) async {
+    if (_working) return;
+    if (action == 'remove') {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Remove this content?'),
+          content: const Text(
+            'Removal is terminal. Performance media will be deleted by the '
+            'durable cleanup worker.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('CANCEL'),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.error,
+              ),
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('REMOVE'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true || !mounted) return;
+    }
+    setState(() => _working = true);
+    try {
+      await ref
+          .read(moderationRepositoryProvider)
+          .moderatePublishedPerformance(
+            targetType: widget.targetType,
+            targetId: widget.targetId,
+            action: action,
+          );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _working = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not update this hidden content.')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(Spacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              widget.label,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: Spacing.xs),
+            Text(widget.targetType),
+            const SizedBox(height: Spacing.md),
+            Wrap(
+              spacing: Spacing.sm,
+              runSpacing: Spacing.sm,
+              children: [
+                OutlinedButton(
+                  onPressed: _working ? null : _preview,
+                  child: const Text('PREVIEW'),
+                ),
+                FilledButton(
+                  onPressed: _working ? null : () => _act('unhide'),
+                  child: const Text('RESTORE'),
+                ),
+                FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.error,
+                  ),
+                  onPressed: _working ? null : () => _act('remove'),
+                  child: const Text('REMOVE'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PerformanceReviewCard extends StatefulWidget {
+  final PerformanceDraft draft;
+  final WidgetRef ref;
+
+  const _PerformanceReviewCard({required this.draft, required this.ref});
+
+  @override
+  State<_PerformanceReviewCard> createState() => _PerformanceReviewCardState();
+}
+
+class _PerformanceReviewCardState extends State<_PerformanceReviewCard> {
+  bool _working = false;
+
+  Future<void> _preview() async {
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(widget.draft.chantTitle),
+        content: SizedBox(
+          width: 320,
+          child: AspectRatio(
+            aspectRatio: 4 / 5,
+            child: PerformanceVideoPlayer(
+              resolveMediaUri: () => widget.ref
+                  .read(performanceDraftRepositoryProvider)
+                  .resolveDraftPlayback(widget.draft.id),
+              semanticLabel: 'Preview ${widget.draft.chantTitle}',
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('CLOSE'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _approve() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Approve performance?'),
+        content: const Text(
+          'Confirm you watched the whole video, verified it is 30 seconds or '
+          'shorter, and found no policy violation. Approval publishes it to '
+          'Chant Stage.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('CANCEL'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('APPROVE'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await _moderate(approve: true);
+  }
+
+  Future<void> _reject() async {
+    final controller = TextEditingController();
+    final reason = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Do not approve'),
+        content: TextField(
+          controller: controller,
+          maxLength: 300,
+          maxLines: 3,
+          decoration: const InputDecoration(
+            labelText: 'Reason shown to the creator',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('CANCEL'),
+          ),
+          FilledButton(
+            onPressed: () {
+              final value = controller.text.trim();
+              if (value.isNotEmpty) Navigator.pop(dialogContext, value);
+            },
+            child: const Text('REJECT'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (reason == null || reason.isEmpty) return;
+    await _moderate(approve: false, reason: reason);
+  }
+
+  Future<void> _moderate({required bool approve, String reason = ''}) async {
+    if (_working) return;
+    setState(() => _working = true);
+    try {
+      await widget.ref
+          .read(performanceDraftRepositoryProvider)
+          .moderate(draftId: widget.draft.id, approve: approve, reason: reason);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            approve ? 'Performance approved.' : 'Performance rejected.',
+          ),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Moderation action failed. Try again.')),
+      );
+    } finally {
+      if (mounted) setState(() => _working = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(Spacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              widget.draft.chantTitle,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: Spacing.xs),
+            Text(
+              '${widget.draft.teamName} | '
+              '${(widget.draft.durationMs / 1000).toStringAsFixed(1)} seconds',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            if (widget.draft.caption.isNotEmpty) ...[
+              const SizedBox(height: Spacing.sm),
+              Text(widget.draft.caption),
+            ],
+            const SizedBox(height: Spacing.md),
+            Wrap(
+              spacing: Spacing.sm,
+              runSpacing: Spacing.sm,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: _working ? null : _preview,
+                  icon: const Icon(Icons.play_arrow),
+                  label: const Text('PREVIEW VIDEO'),
+                ),
+                FilledButton(
+                  onPressed: _working ? null : _approve,
+                  child: const Text('APPROVE'),
+                ),
+                TextButton(
+                  onPressed: _working ? null : _reject,
+                  child: const Text('REJECT'),
+                ),
+              ],
+            ),
           ],
         ),
       ),

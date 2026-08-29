@@ -9,10 +9,13 @@ import 'package:chants/app/providers.dart';
 import 'package:chants/data/models/user_profile.dart';
 import 'package:chants/data/repositories/songbook_storage.dart';
 import 'package:chants/presentation/auth/account_deletion_recovery_screen.dart';
+import 'package:chants/presentation/auth/email_verification_screen.dart';
+import 'package:chants/presentation/auth/onboarding_screen.dart';
 import 'package:chants/presentation/auth/policy_acceptance_gate_screen.dart';
 import 'package:chants/presentation/auth/account_deletion_pending_screen.dart';
 import 'package:chants/presentation/auth/sign_in_screen.dart';
-import 'package:chants/presentation/home/home_screen.dart';
+import 'package:chants/presentation/auth/magic_link_gate.dart';
+import 'package:chants/presentation/shell/app_shell.dart';
 
 class ChantApp extends ConsumerWidget {
   const ChantApp({super.key});
@@ -37,6 +40,7 @@ class ChantApp extends ConsumerWidget {
       darkTheme: ChantTheme.dark,
       themeMode: ThemeMode.dark, // Addition B: force dark regardless of system
       onGenerateRoute: AppRouter.onGenerateRoute,
+      builder: (context, child) => MagicLinkGate(child: child!),
       home: authState.when(
         data: (user) => user != null
             ? _SignedInGate(key: ValueKey(user.uid), uid: user.uid)
@@ -48,16 +52,15 @@ class ChantApp extends ConsumerWidget {
   }
 }
 
-/// Decides HomeScreen vs the one-time policy acceptance gate for a signed-in
-/// user, from their live profile stream.
+/// Decides the product shell vs the one-time policy acceptance gate for a
+/// signed-in user, from their live profile stream.
 ///
-/// - loading (no snapshot yet), or data(null) (profile doc not written yet,
-///   e.g. the brief window right after sign-up before createProfile lands):
-///   neutral loading, never the gate and never home.
+/// - loading (no snapshot yet): neutral loading, never a gate or home.
+/// - data(null): verified accounts enter recoverable onboarding.
 /// - error after a verified profile: keep that last verified gate state.
 /// - error before any verified profile: neutral loading, never home.
 /// - data(profile) with a stale or missing acceptedPolicyVersion: the gate.
-/// - data(profile) accepted at the current version: HomeScreen.
+/// - data(profile) accepted at the current version: AppShell.
 class _SignedInGate extends ConsumerStatefulWidget {
   final String uid;
 
@@ -69,15 +72,24 @@ class _SignedInGate extends ConsumerStatefulWidget {
 
 class _SignedInGateState extends ConsumerState<_SignedInGate> {
   UserProfile? _lastVerifiedProfile;
+  bool _hasVerifiedProfileSnapshot = false;
+  int _initialShellIndex = 0;
 
   @override
   void didUpdateWidget(covariant _SignedInGate oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.uid != widget.uid) _lastVerifiedProfile = null;
+    if (oldWidget.uid != widget.uid) {
+      _lastVerifiedProfile = null;
+      _hasVerifiedProfileSnapshot = false;
+      _initialShellIndex = 0;
+    }
   }
 
   Widget _screenFor({
     required UserProfile? profile,
+    required bool profileSnapshotAvailable,
+    required bool contactVerified,
+    required String? email,
     required SongbookAccountDeletionState localState,
     required SongbookDeletionGateInput deletionInput,
   }) {
@@ -103,18 +115,28 @@ class _SignedInGateState extends ConsumerState<_SignedInGate> {
         onSignOut: ref.read(authRepositoryProvider).signOut,
       );
     }
-    if (profile == null) return const _NeutralLoadingScreen();
+    if (!profileSnapshotAvailable) return const _NeutralLoadingScreen();
+    if (!contactVerified) return EmailVerificationScreen(email: email);
+    if (profile == null) {
+      return OnboardingScreen(
+        onDestinationSelected: (index) {
+          _initialShellIndex = index;
+        },
+      );
+    }
     if (profile.acceptedPolicyVersion != kCurrentPolicyVersion) {
       return const PolicyAcceptanceGateScreen();
     }
-    return const HomeScreen();
+    return AppShell(uid: widget.uid, initialIndex: _initialShellIndex);
   }
 
   @override
   Widget build(BuildContext context) {
+    final user = ref.watch(authStateProvider).valueOrNull;
     final profileAsync = ref.watch(userProfileProvider(widget.uid));
     final profile = profileAsync.when<UserProfile?>(
       data: (profile) {
+        _hasVerifiedProfileSnapshot = true;
         _lastVerifiedProfile = profile;
         return profile;
       },
@@ -131,6 +153,11 @@ class _SignedInGateState extends ConsumerState<_SignedInGate> {
     return localState.when(
       data: (state) => _screenFor(
         profile: profile,
+        profileSnapshotAvailable: _hasVerifiedProfileSnapshot,
+        contactVerified:
+            user != null &&
+            ref.read(authRepositoryProvider).isContactVerified(user),
+        email: user?.email,
         localState: state,
         deletionInput: deletionInput,
       ),

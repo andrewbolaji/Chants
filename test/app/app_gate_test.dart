@@ -10,6 +10,9 @@ import 'package:chants/app/policy.dart';
 import 'package:chants/app/providers.dart';
 import 'package:chants/data/models/user_profile.dart';
 import 'package:chants/data/repositories/auth_repository.dart';
+import 'package:chants/data/repositories/creator_profile_repository.dart';
+import 'package:chants/data/repositories/performance_repository.dart';
+import 'package:chants/data/repositories/performance_draft_repository.dart';
 import 'package:chants/data/repositories/profile_repository.dart';
 import 'package:chants/data/repositories/saved_songbook_repository.dart';
 import 'package:chants/data/repositories/songbook_storage.dart';
@@ -18,13 +21,32 @@ import 'package:chants/presentation/auth/account_deletion_pending_screen.dart';
 import 'package:chants/presentation/auth/account_deletion_recovery_screen.dart';
 import 'package:chants/presentation/auth/policy_acceptance_gate_screen.dart';
 import 'package:chants/presentation/auth/sign_in_screen.dart';
-import 'package:chants/presentation/home/home_screen.dart';
+import 'package:chants/presentation/auth/email_verification_screen.dart';
+import 'package:chants/presentation/auth/onboarding_screen.dart';
+import 'package:chants/presentation/profile/creator_profile_screen.dart';
+import 'package:chants/presentation/shell/app_shell.dart';
 
 // --- Fakes (write boundary only, no logic reimplementation) ---
 
 class _MockUser extends Mock implements User {
+  final bool verified;
+
+  _MockUser({this.verified = true});
+
   @override
   String get uid => 'test-user-1';
+
+  @override
+  bool get emailVerified => verified;
+
+  @override
+  String? get email => 'supporter@example.com';
+
+  @override
+  String? get phoneNumber => null;
+
+  @override
+  List<UserInfo> get providerData => const [];
 }
 
 class _FakeAuthRepository extends Mock implements AuthRepository {
@@ -33,6 +55,20 @@ class _FakeAuthRepository extends Mock implements AuthRepository {
   @override
   Future<void> signOut() async {
     signOutCalls += 1;
+  }
+
+  @override
+  bool isContactVerified(User user) {
+    if (user.emailVerified || (user.phoneNumber?.isNotEmpty ?? false)) {
+      return true;
+    }
+    return user.providerData.any(
+      (provider) => const {
+        'apple.com',
+        'google.com',
+        'facebook.com',
+      }.contains(provider.providerId),
+    );
   }
 }
 
@@ -85,12 +121,6 @@ class _FakeSavedSongbookRepository extends Mock
   }
 }
 
-/// HomeScreen independently watches profileRepositoryProvider.profileStream
-/// for its own operator-menu check, so any test that expects HomeScreen to
-/// render needs this backed by a real (non-throwing) stream too. Calls the
-/// factory fresh each time: a single-subscription Stream can only be
-/// listened to once, and this repo and userProfileProvider's override both
-/// listen independently.
 class _FakeProfileRepository implements ProfileRepository {
   Stream<UserProfile?> Function() makeStream = () => const Stream.empty();
 
@@ -112,6 +142,31 @@ class _FakeProfileRepository implements ProfileRepository {
     required String userId,
     required String displayName,
   }) async {}
+}
+
+class _FakeCreatorProfileRepository extends Mock
+    implements CreatorProfileRepository {
+  @override
+  Stream<Never?> profileStream(String userId) => Stream.value(null);
+}
+
+class _FakePerformanceRepository extends PerformanceRepository {
+  _FakePerformanceRepository()
+    : super(
+        pageLoader: (_, _) async =>
+            PerformancePage(performances: const [], hasMore: false),
+      );
+}
+
+class _FakePerformanceDraftRepository extends PerformanceDraftRepository {
+  _FakePerformanceDraftRepository()
+    : super(
+        invoker: (_, _) async => const {},
+        uploader: ({required ticket, required media, required ownerId}) =>
+            throw UnimplementedError(),
+        ownerDraftsLoader: (_) => Stream.value(const []),
+        reviewQueueLoader: () => Stream.value(const []),
+      );
 }
 
 UserProfile _makeProfile({
@@ -151,6 +206,15 @@ void main() {
       overrides: [
         authStateProvider.overrideWith((ref) => authStream),
         profileRepositoryProvider.overrideWithValue(fakeProfileRepo),
+        creatorProfileRepositoryProvider.overrideWithValue(
+          _FakeCreatorProfileRepository(),
+        ),
+        performanceRepositoryProvider.overrideWithValue(
+          _FakePerformanceRepository(),
+        ),
+        performanceDraftRepositoryProvider.overrideWithValue(
+          _FakePerformanceDraftRepository(),
+        ),
         savedSongbookRepositoryProvider.overrideWithValue(fakeSavedRepository),
         authRepositoryProvider.overrideWithValue(fakeAuthRepository),
         if (accountDeletionService != null)
@@ -163,6 +227,14 @@ void main() {
       ],
       child: const ChantApp(),
     );
+  }
+
+  Future<void> openAccountMenu(WidgetTester tester) async {
+    await tester.tap(find.byKey(const ValueKey('primary-nav-You')));
+    await tester.pumpAndSettle();
+    expect(find.byType(CreatorProfileScreen), findsOneWidget);
+    await tester.tap(find.byType(PopupMenuButton<String>));
+    await tester.pumpAndSettle();
   }
 
   group('ChantApp signed-in gate', () {
@@ -190,12 +262,11 @@ void main() {
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
       expect(find.byType(PolicyAcceptanceGateScreen), findsNothing);
-      expect(find.byType(HomeScreen), findsNothing);
+      expect(find.byType(AppShell), findsNothing);
     });
 
     testWidgets(
-      'signed in, profile doc not written yet (data(null)) shows neutral '
-      'loading, not the gate',
+      'verified account with no profile enters recoverable onboarding',
       (tester) async {
         await tester.pumpWidget(
           wrap(
@@ -203,12 +274,30 @@ void main() {
             makeProfileStream: () => Stream.value(null),
           ),
         );
-        await tester.pump();
+        await tester.pumpAndSettle();
 
-        expect(find.byType(CircularProgressIndicator), findsOneWidget);
+        expect(find.byType(OnboardingScreen), findsOneWidget);
         expect(find.byType(PolicyAcceptanceGateScreen), findsNothing);
+        expect(find.byType(AppShell), findsNothing);
       },
     );
+
+    testWidgets('unverified account waits for email verification', (
+      tester,
+    ) async {
+      final unverifiedUser = _MockUser(verified: false);
+      await tester.pumpWidget(
+        wrap(
+          authStream: Stream.value(unverifiedUser as User?),
+          makeProfileStream: () => Stream.value(null),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(EmailVerificationScreen), findsOneWidget);
+      expect(find.byType(OnboardingScreen), findsNothing);
+      expect(find.byType(AppShell), findsNothing);
+    });
 
     testWidgets(
       'signed in, profile has not accepted the current policy version '
@@ -261,7 +350,7 @@ void main() {
 
       expect(find.byType(AccountDeletionPendingScreen), findsOneWidget);
       expect(find.byType(PolicyAcceptanceGateScreen), findsNothing);
-      expect(find.byType(HomeScreen), findsNothing);
+      expect(find.byType(AppShell), findsNothing);
 
       await tester.tap(find.text('SIGN OUT'));
       await tester.pump();
@@ -269,7 +358,7 @@ void main() {
     });
 
     testWidgets(
-      'unknown local deletion state blocks Home and offers durable retry',
+      'unknown local deletion state blocks the product shell and offers durable retry',
       (tester) async {
         final savedRepository = _FakeSavedSongbookRepository()
           ..state = SongbookAccountDeletionState.unknown;
@@ -290,7 +379,7 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.byType(AccountDeletionRecoveryScreen), findsOneWidget);
-        expect(find.byType(HomeScreen), findsNothing);
+        expect(find.byType(AppShell), findsNothing);
         expect(find.text('REQUEST NOT CONFIRMED'), findsOneWidget);
 
         await tester.tap(find.text('TRY DELETION AGAIN'));
@@ -298,7 +387,7 @@ void main() {
 
         expect(deletionService.calls, 1);
         expect(find.textContaining('still could not confirm'), findsOneWidget);
-        expect(find.byType(HomeScreen), findsNothing);
+        expect(find.byType(AppShell), findsNothing);
       },
     );
 
@@ -320,7 +409,7 @@ void main() {
         expect(find.byType(AccountDeletionRecoveryScreen), findsOneWidget);
         expect(find.text('REQUEST NOT CONFIRMED'), findsOneWidget);
         expect(find.text('SIGN OUT'), findsOneWidget);
-        expect(find.byType(HomeScreen), findsNothing);
+        expect(find.byType(AppShell), findsNothing);
       },
     );
 
@@ -346,7 +435,7 @@ void main() {
 
         expect(savedRepository.confirmationCalls, 1);
         expect(find.byType(AccountDeletionPendingScreen), findsOneWidget);
-        expect(find.byType(HomeScreen), findsNothing);
+        expect(find.byType(AppShell), findsNothing);
       },
     );
 
@@ -367,7 +456,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(savedRepository.recoveryCalls, 1);
-      expect(find.byType(HomeScreen), findsOneWidget);
+      expect(find.byType(AppShell), findsOneWidget);
       expect(find.byType(AccountDeletionRecoveryScreen), findsNothing);
     });
 
@@ -390,16 +479,18 @@ void main() {
 
       expect(savedRepository.recoveryCalls, 1);
       expect(find.text('RECOVERY NEEDED'), findsOneWidget);
-      expect(find.byType(HomeScreen), findsNothing);
+      expect(find.byType(AppShell), findsNothing);
 
       await tester.tap(find.text('TRY RECOVERY'));
       await tester.pumpAndSettle();
 
       expect(savedRepository.recoveryCalls, 2);
-      expect(find.byType(HomeScreen), findsNothing);
+      expect(find.byType(AppShell), findsNothing);
     });
 
-    testWidgets('local deletion status failure blocks Home', (tester) async {
+    testWidgets('local deletion status failure blocks the product shell', (
+      tester,
+    ) async {
       final savedRepository = _FakeSavedSongbookRepository()
         ..stateError = StateError('disk unavailable');
       await tester.pumpWidget(
@@ -416,11 +507,11 @@ void main() {
 
       expect(find.byType(AccountDeletionRecoveryScreen), findsOneWidget);
       expect(find.text('RECOVERY NEEDED'), findsOneWidget);
-      expect(find.byType(HomeScreen), findsNothing);
+      expect(find.byType(AppShell), findsNothing);
     });
 
     testWidgets(
-      'signed in, profile accepted the current version shows HomeScreen',
+      'signed in, profile accepted the current version shows the product shell',
       (tester) async {
         await tester.pumpWidget(
           wrap(
@@ -432,12 +523,12 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(find.byType(HomeScreen), findsOneWidget);
+        expect(find.byType(AppShell), findsOneWidget);
         expect(find.byType(PolicyAcceptanceGateScreen), findsNothing);
       },
     );
 
-    testWidgets('an initial profile-stream error never authorizes HomeScreen', (
+    testWidgets('an initial profile-stream error never authorizes the shell', (
       tester,
     ) async {
       await tester.pumpWidget(
@@ -450,7 +541,7 @@ void main() {
       await tester.pump();
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
-      expect(find.byType(HomeScreen), findsNothing);
+      expect(find.byType(AppShell), findsNothing);
       expect(find.byType(PolicyAcceptanceGateScreen), findsNothing);
     });
 
@@ -469,12 +560,12 @@ void main() {
 
       profiles.add(_makeProfile(acceptedPolicyVersion: kCurrentPolicyVersion));
       await tester.pumpAndSettle();
-      expect(find.byType(HomeScreen), findsOneWidget);
+      expect(find.byType(AppShell), findsOneWidget);
 
       profiles.addError('transient read failure');
       await tester.pumpAndSettle();
 
-      expect(find.byType(HomeScreen), findsOneWidget);
+      expect(find.byType(AppShell), findsOneWidget);
       expect(find.byType(PolicyAcceptanceGateScreen), findsNothing);
     });
 
@@ -507,7 +598,7 @@ void main() {
       await tester.pump();
 
       expect(find.byType(AccountDeletionPendingScreen), findsOneWidget);
-      expect(find.byType(HomeScreen), findsNothing);
+      expect(find.byType(AppShell), findsNothing);
     });
 
     testWidgets(
@@ -528,8 +619,7 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        await tester.tap(find.byType(PopupMenuButton<String>));
-        await tester.pumpAndSettle();
+        await openAccountMenu(tester);
         await tester.tap(find.text('Delete account'));
         await tester.pumpAndSettle();
 
@@ -557,57 +647,57 @@ void main() {
       ),
       (name: 'generic error', error: StateError('request start failed')),
     ]) {
-      testWidgets('late ${scenario.name} does not access disposed Home state', (
-        tester,
-      ) async {
-        final profiles = StreamController<UserProfile?>.broadcast();
-        final pendingRequest = Completer<void>();
-        final deletionService = _FakeAccountDeletionService()
-          ..pendingRequest = pendingRequest;
-        addTearDown(profiles.close);
+      testWidgets(
+        'late ${scenario.name} does not access disposed shell state',
+        (tester) async {
+          final profiles = StreamController<UserProfile?>.broadcast();
+          final pendingRequest = Completer<void>();
+          final deletionService = _FakeAccountDeletionService()
+            ..pendingRequest = pendingRequest;
+          addTearDown(profiles.close);
 
-        await tester.pumpWidget(
-          wrap(
-            authStream: Stream.value(fakeUser as User?),
-            makeProfileStream: () => profiles.stream,
-            accountDeletionService: deletionService,
-          ),
-        );
-        await tester.pump();
+          await tester.pumpWidget(
+            wrap(
+              authStream: Stream.value(fakeUser as User?),
+              makeProfileStream: () => profiles.stream,
+              accountDeletionService: deletionService,
+            ),
+          );
+          await tester.pump();
 
-        profiles.add(
-          _makeProfile(acceptedPolicyVersion: kCurrentPolicyVersion),
-        );
-        await tester.pumpAndSettle();
-        expect(find.byType(HomeScreen), findsOneWidget);
+          profiles.add(
+            _makeProfile(acceptedPolicyVersion: kCurrentPolicyVersion),
+          );
+          await tester.pumpAndSettle();
+          expect(find.byType(AppShell), findsOneWidget);
 
-        await tester.tap(find.byType(PopupMenuButton<String>));
-        await tester.pumpAndSettle();
-        await tester.tap(find.text('Delete account'));
-        await tester.pumpAndSettle();
-        await tester.tap(find.text('DELETE MY ACCOUNT'));
-        await tester.pump();
-        expect(deletionService.calls, 1);
+          await openAccountMenu(tester);
+          await tester.tap(find.text('Delete account'));
+          await tester.pumpAndSettle();
+          await tester.tap(find.text('DELETE MY ACCOUNT'));
+          await tester.pump();
+          expect(deletionService.calls, 1);
 
-        profiles.add(
-          _makeProfile(
-            acceptedPolicyVersion: kCurrentPolicyVersion,
-            deletionPending: true,
-          ),
-        );
-        await tester.pump();
-        await tester.pump();
-        expect(find.byType(AccountDeletionPendingScreen), findsOneWidget);
-        expect(find.byType(HomeScreen), findsNothing);
+          profiles.add(
+            _makeProfile(
+              acceptedPolicyVersion: kCurrentPolicyVersion,
+              deletionPending: true,
+            ),
+          );
+          await tester.pump();
+          await tester.pump();
+          expect(find.byType(AccountDeletionPendingScreen), findsOneWidget);
+          expect(find.byType(AppShell), findsNothing);
 
-        pendingRequest.completeError(scenario.error);
-        await tester.pump();
-        await tester.pump();
+          pendingRequest.completeError(scenario.error);
+          await tester.pump();
+          await tester.pump();
 
-        expect(tester.takeException(), isNull);
-        expect(find.byType(AccountDeletionPendingScreen), findsOneWidget);
-        expect(find.byType(HomeScreen), findsNothing);
-      });
+          expect(tester.takeException(), isNull);
+          expect(find.byType(AccountDeletionPendingScreen), findsOneWidget);
+          expect(find.byType(AppShell), findsNothing);
+        },
+      );
     }
   });
 }

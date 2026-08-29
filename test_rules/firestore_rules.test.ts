@@ -6,11 +6,22 @@ import {
 } from "@firebase/rules-unit-testing";
 import { readFileSync } from "fs";
 import { resolve } from "path";
-import { Timestamp, setDoc, getDoc, doc, collection, addDoc, updateDoc, deleteDoc, deleteField, query, where, getDocs } from "firebase/firestore";
+import { Timestamp, setDoc, getDoc, doc, collection, addDoc, updateDoc, deleteDoc, deleteField, query, where, orderBy, limit, getDocs } from "firebase/firestore";
 
 const PROJECT_ID = "chants-test";
 
 let testEnv: RulesTestEnvironment;
+
+function verifiedContext(
+  uid: string,
+  claims: Record<string, unknown> = {},
+) {
+  return testEnv.authenticatedContext(uid, {
+    email: `${uid}@example.com`,
+    email_verified: true,
+    ...claims,
+  });
+}
 
 before(async () => {
   testEnv = await initializeTestEnvironment({
@@ -68,6 +79,138 @@ async function seedUserProfile(uid: string) {
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
     });
+  });
+}
+
+async function seedCreatorProfile(
+  uid: string,
+  options: { hidden?: boolean; removed?: boolean } = {},
+) {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    await setDoc(doc(db, "creatorProfiles", uid), {
+      handle: `handle_${uid}`,
+      displayName: "Test Creator",
+      bio: "Football and away ends.",
+      followerCount: 0,
+      followingCount: 0,
+      performanceCount: 0,
+      likeCount: 0,
+      shareCount: 0,
+      hidden: options.hidden ?? false,
+      removed: options.removed ?? false,
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    });
+  });
+}
+
+async function seedPerformance(
+  id: string,
+  options: {
+    hidden?: boolean;
+    removed?: boolean;
+    malformed?: boolean;
+    sourceChantVisible?: boolean;
+    sourceCreatorVisible?: boolean;
+  } = {},
+) {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    const payload: Record<string, unknown> = {
+      schemaVersion: 1,
+      chantId: "chant-1",
+      chantTitle: "North London Forever",
+      teamId: "arsenal",
+      teamName: "Arsenal",
+      playerName: null,
+      chantStatus: "canonical",
+      creatorId: "creator-1",
+      creatorHandle: "northbankleo",
+      creatorDisplayName: "North Bank Leo",
+      caption: "One take from the away end.",
+      mediaPath: `performance-media/${id}/source`,
+      durationMs: 18000,
+      publicationState: "approved",
+      viewCount: 19,
+      likeCount: 7,
+      commentCount: 3,
+      shareCount: 4,
+      uniqueSharerCount: 4,
+      weeklyUniqueSharerCount: 4,
+      weeklyLikeCount: 7,
+      weeklyQualifiedViewCount: 12,
+      rankingWeek: "2026-08-24",
+      hidden: options.hidden ?? false,
+      removed: options.removed ?? false,
+      sourceChantVisible: options.sourceChantVisible ?? true,
+      sourceCreatorVisible: options.sourceCreatorVisible ?? true,
+      createdAt: Timestamp.now(),
+      approvedAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    };
+    if (options.malformed) payload.privateModerationNote = "must not leak";
+    await setDoc(doc(db, "performances", id), payload);
+  });
+}
+
+async function seedPerformanceDraft(
+  id: string,
+  ownerId: string,
+  state = "pending_review",
+) {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    await setDoc(doc(db, "performanceDrafts", id), {
+      schemaVersion: 1,
+      ownerId,
+      chantId: "chant-1",
+      chantTitle: "North London Forever",
+      teamId: "arsenal",
+      teamName: "Arsenal",
+      playerName: null,
+      chantStatus: "community",
+      creatorHandle: "northbankleo",
+      creatorDisplayName: "North Bank Leo",
+      caption: "First take.",
+      uploadPath: `performance-staging/${ownerId}/${id}/source`,
+      claimedContentType: "video/mp4",
+      claimedSizeBytes: 3,
+      claimedDurationMs: 18000,
+      state,
+      moderationReason: null,
+      sourceGeneration: "generation-1",
+      verifiedContentType: "video/mp4",
+      verifiedSizeBytes: 3,
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+      submittedAt: Timestamp.now(),
+      reviewedAt: null,
+    });
+  });
+}
+
+async function seedPerformanceComment(
+  id: string,
+  options: { hidden?: boolean; removed?: boolean; malformed?: boolean } = {},
+) {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    const payload: Record<string, unknown> = {
+      schemaVersion: 1,
+      performanceId: "performance-1",
+      performanceCreatorId: "creator-1",
+      userId: "commenter",
+      creatorHandle: "commenter",
+      creatorDisplayName: "Commenter",
+      body: "This one could reach the terrace.",
+      hidden: options.hidden ?? false,
+      removed: options.removed ?? false,
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    };
+    if (options.malformed) payload.privateReportCount = 7;
+    await setDoc(doc(db, "performanceComments", id), payload);
   });
 }
 
@@ -314,13 +457,13 @@ describe("sports", () => {
 
   it("denies write for non-operator", async () => {
     await seedUserProfile("user1");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     await assertFails(setDoc(doc(db, "sports", "s1"), { name: "Football", enabled: true }));
   });
 
   it("allows write for operator", async () => {
     await seedOperator("op1");
-    const db = testEnv.authenticatedContext("op1").firestore();
+    const db = verifiedContext("op1").firestore();
     await assertSucceeds(setDoc(doc(db, "sports", "s1"), { name: "Football", enabled: true }));
   });
 });
@@ -340,13 +483,13 @@ describe("competitions", () => {
 
   it("denies write for non-operator", async () => {
     await seedUserProfile("user1");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     await assertFails(setDoc(doc(db, "competitions", "c1"), { sportId: "s1", name: "PL", enabled: true }));
   });
 
   it("allows write for operator", async () => {
     await seedOperator("op1");
-    const db = testEnv.authenticatedContext("op1").firestore();
+    const db = verifiedContext("op1").firestore();
     await assertSucceeds(setDoc(doc(db, "competitions", "c1"), { sportId: "s1", name: "PL", enabled: true }));
   });
 });
@@ -365,7 +508,7 @@ describe("teams", () => {
 
   it("denies write for non-operator", async () => {
     await seedUserProfile("user1");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     await assertFails(setDoc(doc(db, "teams", "t1"), { sportId: "s1", competitionId: "c1", name: "Arsenal", crestImageUrl: null }));
   });
 });
@@ -384,7 +527,7 @@ describe("players", () => {
 
   it("denies write for non-operator", async () => {
     await seedUserProfile("user1");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     await assertFails(setDoc(doc(db, "players", "p1"), { teamId: "t1", name: "Saka" }));
   });
 });
@@ -401,15 +544,15 @@ describe("profiles", () => {
   it("allows an owner and an operator to read a profile", async () => {
     await seedUserProfile("user1");
     await seedOperator("op1");
-    const ownerDb = testEnv.authenticatedContext("user1").firestore();
-    const operatorDb = testEnv.authenticatedContext("op1").firestore();
+    const ownerDb = verifiedContext("user1").firestore();
+    const operatorDb = verifiedContext("op1").firestore();
     await assertSucceeds(getDoc(doc(ownerDb, "profiles", "user1")));
     await assertSucceeds(getDoc(doc(operatorDb, "profiles", "user1")));
   });
 
-  it("allows owner to create own profile", async () => {
-    const db = testEnv.authenticatedContext("user1").firestore();
-    await assertSucceeds(setDoc(doc(db, "profiles", "user1"), {
+  it("denies owner profile creation because onboarding is server-owned", async () => {
+    const db = verifiedContext("user1").firestore();
+    await assertFails(setDoc(doc(db, "profiles", "user1"), {
       displayName: "Fan",
       role: "user",
       banned: false,
@@ -421,7 +564,7 @@ describe("profiles", () => {
   });
 
   it("denies creating another user's profile", async () => {
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     await assertFails(setDoc(doc(db, "profiles", "user2"), {
       displayName: "Impersonator",
       role: "user",
@@ -433,7 +576,7 @@ describe("profiles", () => {
 
   it("allows owner to update displayName", async () => {
     await seedUserProfile("user1");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     await assertSucceeds(updateDoc(doc(db, "profiles", "user1"), {
       displayName: "NewName",
       updatedAt: Timestamp.now(),
@@ -442,14 +585,14 @@ describe("profiles", () => {
 
   it("denies owner changing own role", async () => {
     await seedUserProfile("user1");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     await assertFails(updateDoc(doc(db, "profiles", "user1"), {
       role: "operator",
     }));
   });
 
   it("denies create with role 'operator' (privilege escalation)", async () => {
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     await assertFails(setDoc(doc(db, "profiles", "user1"), {
       displayName: "Hacker",
       role: "operator",
@@ -458,9 +601,9 @@ describe("profiles", () => {
     }));
   });
 
-  it("allows create with role 'user' (pinned)", async () => {
-    const db = testEnv.authenticatedContext("user2").firestore();
-    await assertSucceeds(setDoc(doc(db, "profiles", "user2"), {
+  it("denies even a well-shaped direct user profile create", async () => {
+    const db = verifiedContext("user2").firestore();
+    await assertFails(setDoc(doc(db, "profiles", "user2"), {
       displayName: "LegitFan",
       role: "user",
       banned: false,
@@ -472,7 +615,7 @@ describe("profiles", () => {
   });
 
   it("denies create with empty displayName", async () => {
-    const db = testEnv.authenticatedContext("user3").firestore();
+    const db = verifiedContext("user3").firestore();
     await assertFails(setDoc(doc(db, "profiles", "user3"), {
       displayName: "",
       role: "user",
@@ -482,7 +625,7 @@ describe("profiles", () => {
   });
 
   it("denies create with displayName over 50 chars", async () => {
-    const db = testEnv.authenticatedContext("user4").firestore();
+    const db = verifiedContext("user4").firestore();
     await assertFails(setDoc(doc(db, "profiles", "user4"), {
       displayName: "x".repeat(51),
       role: "user",
@@ -492,7 +635,7 @@ describe("profiles", () => {
   });
 
   it("denies create without ageConfirmed17Plus", async () => {
-    const db = testEnv.authenticatedContext("user5").firestore();
+    const db = verifiedContext("user5").firestore();
     await assertFails(setDoc(doc(db, "profiles", "user5"), {
       displayName: "NoAge",
       role: "user",
@@ -503,7 +646,7 @@ describe("profiles", () => {
   });
 
   it("denies create with ageConfirmed17Plus == false", async () => {
-    const db = testEnv.authenticatedContext("user6").firestore();
+    const db = verifiedContext("user6").firestore();
     await assertFails(setDoc(doc(db, "profiles", "user6"), {
       displayName: "Underage",
       role: "user",
@@ -516,7 +659,7 @@ describe("profiles", () => {
 
   it("denies create with acceptedPolicyVersion set directly (must be absent, "
       + "only the acceptPolicy Cloud Function may set it)", async () => {
-    const db = testEnv.authenticatedContext("user7").firestore();
+    const db = verifiedContext("user7").firestore();
     await assertFails(setDoc(doc(db, "profiles", "user7"), {
       displayName: "Forger",
       role: "user",
@@ -529,7 +672,7 @@ describe("profiles", () => {
   });
 
   it("denies create with acceptedPolicyAt set directly", async () => {
-    const db = testEnv.authenticatedContext("user8").firestore();
+    const db = verifiedContext("user8").firestore();
     await assertFails(setDoc(doc(db, "profiles", "user8"), {
       displayName: "Forger2",
       role: "user",
@@ -545,7 +688,7 @@ describe("profiles", () => {
       + "escalation: forging consent without going through acceptPolicy)",
       async () => {
     await seedUserProfileNoPolicyAcceptance("user9");
-    const db = testEnv.authenticatedContext("user9").firestore();
+    const db = verifiedContext("user9").firestore();
     await assertFails(updateDoc(doc(db, "profiles", "user9"), {
       acceptedPolicyVersion: "v1",
     }));
@@ -553,7 +696,7 @@ describe("profiles", () => {
 
   it("denies owner updating acceptedPolicyAt directly", async () => {
     await seedUserProfileNoPolicyAcceptance("user10");
-    const db = testEnv.authenticatedContext("user10").firestore();
+    const db = verifiedContext("user10").firestore();
     await assertFails(updateDoc(doc(db, "profiles", "user10"), {
       acceptedPolicyAt: Timestamp.now(),
     }));
@@ -561,7 +704,7 @@ describe("profiles", () => {
 
   it("denies owner updating ageConfirmed17Plus", async () => {
     await seedUserProfile("user11");
-    const db = testEnv.authenticatedContext("user11").firestore();
+    const db = verifiedContext("user11").firestore();
     await assertFails(updateDoc(doc(db, "profiles", "user11"), {
       ageConfirmed17Plus: false,
     }));
@@ -570,7 +713,7 @@ describe("profiles", () => {
   it("allows owner to update displayName without disturbing pinned fields",
       async () => {
     await seedUserProfile("user12");
-    const db = testEnv.authenticatedContext("user12").firestore();
+    const db = verifiedContext("user12").firestore();
     await assertSucceeds(updateDoc(doc(db, "profiles", "user12"), {
       displayName: "StillFine",
       updatedAt: Timestamp.now(),
@@ -578,7 +721,7 @@ describe("profiles", () => {
   });
 
   it("denies create without userReportCount", async () => {
-    const db = testEnv.authenticatedContext("user13").firestore();
+    const db = verifiedContext("user13").firestore();
     await assertFails(setDoc(doc(db, "profiles", "user13"), {
       displayName: "NoCount",
       role: "user",
@@ -591,7 +734,7 @@ describe("profiles", () => {
 
   it("denies create with userReportCount != 0 (cannot pre-inflate your "
       + "own count)", async () => {
-    const db = testEnv.authenticatedContext("user14").firestore();
+    const db = verifiedContext("user14").firestore();
     await assertFails(setDoc(doc(db, "profiles", "user14"), {
       displayName: "Inflated",
       role: "user",
@@ -607,7 +750,7 @@ describe("profiles", () => {
       + "it, only onUserReportCreated via the Admin SDK may set it)",
       async () => {
     await seedUserProfile("user15");
-    const db = testEnv.authenticatedContext("user15").firestore();
+    const db = verifiedContext("user15").firestore();
     // seedUserProfile sets userReportCount to 0, so the update must target a
     // genuinely different value: diff().affectedKeys() only reports fields
     // that actually changed, and setting a field to its current value would
@@ -615,6 +758,630 @@ describe("profiles", () => {
     await assertFails(updateDoc(doc(db, "profiles", "user15"), {
       userReportCount: 5,
     }));
+  });
+});
+
+describe("verified contact authority", () => {
+  it("lets an unverified owner read recovery state but denies mutations", async () => {
+    await seedUserProfile("unverified");
+    await seedVisibleChant("contact-chant", "someone");
+    const db = testEnv.authenticatedContext("unverified", {
+      email: "unverified@example.com",
+      email_verified: false,
+    }).firestore();
+
+    await assertSucceeds(getDoc(doc(db, "profiles", "unverified")));
+    await assertFails(updateDoc(doc(db, "profiles", "unverified"), {
+      displayName: "Not yet",
+      updatedAt: Timestamp.now(),
+    }));
+    await assertFails(setDoc(doc(db, "votes", "unverified_contact-chant"), {
+      chantId: "contact-chant",
+      userId: "unverified",
+      value: 1,
+      createdAt: Timestamp.now(),
+    }));
+  });
+
+  it("accepts a verified phone claim without a verified email", async () => {
+    await seedUserProfile("phone-user");
+    await seedVisibleChant("phone-chant", "someone");
+    const db = testEnv.authenticatedContext("phone-user", {
+      email_verified: false,
+      phone_number: "+447700900123",
+    }).firestore();
+
+    await assertSucceeds(updateDoc(doc(db, "profiles", "phone-user"), {
+      displayName: "Phone Fan",
+      updatedAt: Timestamp.now(),
+    }));
+    await assertSucceeds(setDoc(doc(db, "votes", "phone-user_phone-chant"), {
+      chantId: "phone-chant",
+      userId: "phone-user",
+      value: 1,
+      createdAt: Timestamp.now(),
+    }));
+  });
+
+  it("accepts a trusted federated sign-in claim", async () => {
+    await seedUserProfile("facebook-user");
+    const db = testEnv.authenticatedContext("facebook-user", {
+      email: "fan@example.com",
+      email_verified: false,
+      firebase: { sign_in_provider: "facebook.com" },
+    }).firestore();
+
+    await assertSucceeds(updateDoc(doc(db, "profiles", "facebook-user"), {
+      displayName: "Federated Fan",
+      updatedAt: Timestamp.now(),
+    }));
+  });
+
+  it("accepts a linked federated identity after password sign-in", async () => {
+    await seedUserProfile("linked-facebook-user");
+    const db = testEnv.authenticatedContext("linked-facebook-user", {
+      email: "linked@example.com",
+      email_verified: false,
+      firebase: {
+        sign_in_provider: "password",
+        identities: { "facebook.com": ["facebook-id"] },
+      },
+    }).firestore();
+
+    await assertSucceeds(updateDoc(
+      doc(db, "profiles", "linked-facebook-user"),
+      {
+        displayName: "Linked Fan",
+        updatedAt: Timestamp.now(),
+      },
+    ));
+  });
+});
+
+// ===================== CREATOR PROFILES =====================
+
+describe("creator profiles", () => {
+  it("allows public reads only for visible creator identity", async () => {
+    await seedUserProfile("visible");
+    await seedUserProfile("hidden");
+    await seedUserProfile("removed");
+    await seedCreatorProfile("visible");
+    await seedCreatorProfile("hidden", { hidden: true });
+    await seedCreatorProfile("removed", { removed: true });
+    const unauth = testEnv.unauthenticatedContext().firestore();
+
+    await assertSucceeds(getDoc(doc(unauth, "creatorProfiles", "visible")));
+    await assertFails(getDoc(doc(unauth, "creatorProfiles", "hidden")));
+    await assertFails(getDoc(doc(unauth, "creatorProfiles", "removed")));
+  });
+
+  it("allows the owner and an operator to inspect a hidden creator profile", async () => {
+    await seedUserProfile("owner");
+    await seedCreatorProfile("owner", { hidden: true });
+    await seedOperator("operator");
+
+    const ownerDb = verifiedContext("owner").firestore();
+    const operatorDb = verifiedContext("operator").firestore();
+    await assertSucceeds(getDoc(doc(ownerDb, "creatorProfiles", "owner")));
+    await assertSucceeds(getDoc(doc(operatorDb, "creatorProfiles", "owner")));
+  });
+
+  it("keeps public creator access exact-ID while operators may list", async () => {
+    await seedUserProfile("visible");
+    await seedCreatorProfile("visible");
+    await seedOperator("operator");
+    const unauth = testEnv.unauthenticatedContext().firestore();
+    const operatorDb = verifiedContext("operator").firestore();
+
+    await assertFails(getDocs(query(
+      collection(unauth, "creatorProfiles"),
+      where("hidden", "==", false),
+      where("removed", "==", false),
+    )));
+    await assertFails(getDocs(collection(unauth, "creatorProfiles")));
+    await assertSucceeds(getDocs(collection(operatorDb, "creatorProfiles")));
+  });
+
+  it("denies a visible public identity as soon as its account is banned", async () => {
+    await seedUserProfile("banned");
+    await seedCreatorProfile("banned");
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await updateDoc(doc(context.firestore(), "profiles", "banned"), {
+        banned: true,
+      });
+    });
+    const unauth = testEnv.unauthenticatedContext().firestore();
+    await assertFails(getDoc(doc(unauth, "creatorProfiles", "banned")));
+  });
+
+  it("denies every direct creator profile and handle mutation", async () => {
+    await seedUserProfile("owner");
+    await seedCreatorProfile("owner");
+    const ownerDb = verifiedContext("owner").firestore();
+    const payload = {
+      handle: "forged",
+      displayName: "Forged",
+      bio: "",
+      followerCount: 999,
+      followingCount: 999,
+      performanceCount: 999,
+      likeCount: 999,
+      shareCount: 999,
+      hidden: false,
+      removed: false,
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    };
+
+    await assertFails(setDoc(doc(ownerDb, "creatorProfiles", "new"), payload));
+    await assertFails(updateDoc(doc(ownerDb, "creatorProfiles", "owner"), {
+      bio: "Bypass",
+    }));
+    await assertFails(deleteDoc(doc(ownerDb, "creatorProfiles", "owner")));
+    await assertFails(setDoc(doc(ownerDb, "creatorHandles", "forged"), {
+      uid: "owner",
+    }));
+    await assertFails(getDoc(doc(ownerDb, "creatorHandles", "forged")));
+  });
+});
+
+describe("creator social privacy", () => {
+  it("keeps follow edges private to the follower and server-authored", async () => {
+    await seedUserProfile("follower");
+    await seedUserProfile("target");
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await setDoc(doc(db, "creatorFollows", "follower_target"), {
+        schemaVersion: 1,
+        followerId: "follower",
+        followedId: "target",
+        createdAt: Timestamp.now(),
+      });
+    });
+    const followerDb = verifiedContext("follower").firestore();
+    const targetDb = verifiedContext("target").firestore();
+
+    await assertSucceeds(getDoc(doc(
+      followerDb,
+      "creatorFollows",
+      "follower_target",
+    )));
+    await assertSucceeds(getDocs(query(
+      collection(followerDb, "creatorFollows"),
+      where("followerId", "==", "follower"),
+      orderBy("createdAt", "desc"),
+      limit(30),
+    )));
+    await assertFails(getDoc(doc(
+      targetDb,
+      "creatorFollows",
+      "follower_target",
+    )));
+    await assertFails(getDocs(collection(followerDb, "creatorFollows")));
+    await assertFails(setDoc(doc(
+      followerDb,
+      "creatorFollows",
+      "follower_other",
+    ), {
+      followerId: "follower",
+      followedId: "other",
+    }));
+    await assertFails(deleteDoc(doc(
+      followerDb,
+      "creatorFollows",
+      "follower_target",
+    )));
+  });
+
+  it("keeps notification rows private and denies direct read-state writes", async () => {
+    await seedUserProfile("owner");
+    await seedUserProfile("actor");
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await setDoc(doc(db, "creatorNotifications", "follow_actor_owner"), {
+        schemaVersion: 1,
+        ownerId: "owner",
+        actorId: "actor",
+        actorHandle: "actor_handle",
+        actorDisplayName: "Actor",
+        type: "creator_follow",
+        performanceId: null,
+        commentId: null,
+        read: false,
+        createdAt: Timestamp.now(),
+        readAt: null,
+      });
+    });
+    const ownerDb = verifiedContext("owner").firestore();
+    const actorDb = verifiedContext("actor").firestore();
+
+    await assertSucceeds(getDoc(doc(
+      ownerDb,
+      "creatorNotifications",
+      "follow_actor_owner",
+    )));
+    await assertSucceeds(getDocs(query(
+      collection(ownerDb, "creatorNotifications"),
+      where("ownerId", "==", "owner"),
+      orderBy("createdAt", "desc"),
+      limit(50),
+    )));
+    await assertFails(getDoc(doc(
+      actorDb,
+      "creatorNotifications",
+      "follow_actor_owner",
+    )));
+    await assertFails(updateDoc(doc(
+      ownerDb,
+      "creatorNotifications",
+      "follow_actor_owner",
+    ), { read: true }));
+  });
+});
+
+// ===================== PERFORMANCES =====================
+
+describe("performances", () => {
+  it("allows public reads only for approved visible parser-safe projections", async () => {
+    await seedPerformance("visible");
+    await seedPerformance("hidden", { hidden: true });
+    await seedPerformance("removed", { removed: true });
+    await seedPerformance("chant-unavailable", { sourceChantVisible: false });
+    await seedPerformance("creator-unavailable", {
+      sourceCreatorVisible: false,
+    });
+    await seedPerformance("malformed", { malformed: true });
+    const unauth = testEnv.unauthenticatedContext().firestore();
+
+    await assertSucceeds(getDoc(doc(unauth, "performances", "visible")));
+    await assertFails(getDoc(doc(unauth, "performances", "hidden")));
+    await assertFails(getDoc(doc(unauth, "performances", "removed")));
+    await assertFails(getDoc(doc(unauth, "performances", "chant-unavailable")));
+    await assertFails(getDoc(doc(unauth, "performances", "creator-unavailable")));
+    await assertFails(getDoc(doc(unauth, "performances", "malformed")));
+  });
+
+  it("requires every publication and visibility predicate for feed queries", async () => {
+    await seedPerformance("visible");
+    const unauth = testEnv.unauthenticatedContext().firestore();
+    const visibleQuery = query(
+      collection(unauth, "performances"),
+      where("schemaVersion", "==", 1),
+      where("publicationState", "==", "approved"),
+      where("hidden", "==", false),
+      where("removed", "==", false),
+      where("sourceChantVisible", "==", true),
+      where("sourceCreatorVisible", "==", true),
+    );
+
+    await assertSucceeds(getDocs(visibleQuery));
+    await assertFails(getDocs(query(
+      collection(unauth, "performances"),
+      where("hidden", "==", false),
+      where("removed", "==", false),
+    )));
+    await assertFails(getDocs(query(
+      collection(unauth, "performances"),
+      where("schemaVersion", "==", 1),
+      where("publicationState", "==", "approved"),
+      where("hidden", "==", false),
+      where("removed", "==", false),
+      where("sourceChantVisible", "==", true),
+    )));
+  });
+
+  it("lets an operator inspect restricted projections", async () => {
+    await seedOperator("operator");
+    await seedPerformance("hidden", { hidden: true });
+    await seedPerformanceComment("hidden-comment", { hidden: true });
+    await seedPerformance("malformed", { malformed: true });
+    const operatorDb = verifiedContext("operator").firestore();
+
+    await assertSucceeds(getDoc(doc(operatorDb, "performances", "hidden")));
+    await assertSucceeds(getDoc(doc(operatorDb, "performances", "malformed")));
+    await assertSucceeds(getDocs(query(
+      collection(operatorDb, "performances"),
+      where("hidden", "==", true),
+    )));
+    await assertSucceeds(getDocs(query(
+      collection(operatorDb, "performanceComments"),
+      where("hidden", "==", true),
+    )));
+  });
+
+  it("denies every direct performance mutation", async () => {
+    await seedUserProfile("creator-1");
+    await seedPerformance("performance-1");
+    const ownerDb = verifiedContext("creator-1").firestore();
+
+    await assertFails(setDoc(doc(ownerDb, "performances", "forged"), {
+      publicationState: "approved",
+      hidden: false,
+      removed: false,
+    }));
+    await assertFails(updateDoc(doc(ownerDb, "performances", "performance-1"), {
+      viewCount: 999999,
+    }));
+    await assertFails(deleteDoc(doc(ownerDb, "performances", "performance-1")));
+  });
+
+  it("keeps durable performance media deletion jobs server-only", async () => {
+    await seedOperator("operator");
+    const operatorDb = verifiedContext("operator").firestore();
+    await assertFails(getDoc(doc(
+      operatorDb,
+      "performanceMediaDeletionJobs",
+      "performance-1",
+    )));
+    await assertFails(setDoc(doc(
+      operatorDb,
+      "performanceMediaDeletionJobs",
+      "performance-1",
+    ), {
+      performanceId: "performance-1",
+      mediaPath: "performance-media/performance-1/source",
+      requestedAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    }));
+  });
+
+  it("keeps performance drafts owner-or-operator private", async () => {
+    await seedUserProfile("owner");
+    await seedPerformanceDraft("draft-1", "owner");
+    await seedOperator("operator");
+    const ownerDb = verifiedContext("owner").firestore();
+    const otherDb = verifiedContext("other").firestore();
+    const operatorDb = verifiedContext("operator").firestore();
+
+    await assertSucceeds(getDoc(doc(ownerDb, "performanceDrafts", "draft-1")));
+    await assertFails(getDoc(doc(otherDb, "performanceDrafts", "draft-1")));
+    await assertSucceeds(getDoc(doc(operatorDb, "performanceDrafts", "draft-1")));
+    await assertSucceeds(getDocs(query(
+      collection(ownerDb, "performanceDrafts"),
+      where("ownerId", "==", "owner"),
+    )));
+    await assertFails(getDocs(collection(ownerDb, "performanceDrafts")));
+    await assertSucceeds(getDocs(query(
+      collection(operatorDb, "performanceDrafts"),
+      where("state", "==", "pending_review"),
+    )));
+  });
+
+  it("denies direct draft and upload-limit access to owners and operators", async () => {
+    await seedUserProfile("owner");
+    await seedPerformanceDraft("draft-1", "owner");
+    await seedOperator("operator");
+    const ownerDb = verifiedContext("owner").firestore();
+    const operatorDb = verifiedContext("operator").firestore();
+
+    await assertFails(updateDoc(doc(ownerDb, "performanceDrafts", "draft-1"), {
+      state: "approved",
+    }));
+    await assertFails(deleteDoc(doc(ownerDb, "performanceDrafts", "draft-1")));
+    await assertFails(updateDoc(doc(operatorDb, "performanceDrafts", "draft-1"), {
+      state: "approved",
+    }));
+    await assertFails(setDoc(doc(ownerDb, "performanceUploadLimits", "forged"), {
+      count: 0,
+    }));
+    await assertFails(getDoc(doc(operatorDb, "performanceUploadLimits", "forged")));
+  });
+
+  it("keeps interaction sources private and server-authored", async () => {
+    await seedUserProfile("owner");
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await setDoc(doc(db, "performanceLikes", "owner_performance-1"), {
+        schemaVersion: 1,
+        performanceId: "performance-1",
+        userId: "owner",
+        creatorId: "creator-1",
+        rankingEligible: true,
+        rankingWeek: "2026-08-24",
+        createdAt: Timestamp.now(),
+      });
+      await setDoc(doc(db, "performanceViews", "owner_performance-1"), {
+        userId: "owner",
+      });
+      await setDoc(doc(db, "performanceShares", "owner_performance-1"), {
+        userId: "owner",
+      });
+      await setDoc(doc(db, "performancePlaybackSessions", "owner_performance-1"), {
+        userId: "owner",
+      });
+    });
+    const ownerDb = verifiedContext("owner").firestore();
+    const otherDb = verifiedContext("other").firestore();
+
+    await assertSucceeds(getDoc(doc(
+      ownerDb,
+      "performanceLikes",
+      "owner_performance-1",
+    )));
+    await assertFails(getDoc(doc(
+      otherDb,
+      "performanceLikes",
+      "owner_performance-1",
+    )));
+    await assertFails(getDocs(collection(ownerDb, "performanceLikes")));
+    await assertFails(setDoc(doc(ownerDb, "performanceLikes", "forged"), {
+      userId: "owner",
+      performanceId: "performance-1",
+    }));
+    await assertFails(deleteDoc(doc(
+      ownerDb,
+      "performanceLikes",
+      "owner_performance-1",
+    )));
+    await assertFails(getDoc(doc(
+      ownerDb,
+      "performanceViews",
+      "owner_performance-1",
+    )));
+    await assertFails(getDoc(doc(
+      ownerDb,
+      "performanceShares",
+      "owner_performance-1",
+    )));
+    await assertFails(getDoc(doc(
+      ownerDb,
+      "performancePlaybackSessions",
+      "owner_performance-1",
+    )));
+  });
+
+  it("exposes only visible parser-safe performance comment documents", async () => {
+    await seedPerformanceComment("visible");
+    await seedPerformanceComment("hidden", { hidden: true });
+    await seedPerformanceComment("removed", { removed: true });
+    await seedPerformanceComment("malformed", { malformed: true });
+    const unauth = testEnv.unauthenticatedContext().firestore();
+
+    await assertSucceeds(getDoc(doc(unauth, "performanceComments", "visible")));
+    await assertFails(getDoc(doc(unauth, "performanceComments", "hidden")));
+    await assertFails(getDoc(doc(unauth, "performanceComments", "removed")));
+    await assertFails(getDoc(doc(unauth, "performanceComments", "malformed")));
+  });
+
+  it("requires current visibility predicates for performance comment queries", async () => {
+    await seedPerformanceComment("visible");
+    const unauth = testEnv.unauthenticatedContext().firestore();
+
+    await assertSucceeds(getDocs(query(
+      collection(unauth, "performanceComments"),
+      where("schemaVersion", "==", 1),
+      where("performanceId", "==", "performance-1"),
+      where("hidden", "==", false),
+      where("removed", "==", false),
+      orderBy("createdAt", "desc"),
+      limit(50),
+    )));
+    await assertFails(getDocs(collection(unauth, "performanceComments")));
+  });
+
+  it("reads additive threaded comments without accepting malformed projections", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await setDoc(doc(db, "performanceComments", "threaded"), {
+        schemaVersion: 2,
+        performanceId: "performance-1",
+        performanceCreatorId: "creator-1",
+        userId: "commenter",
+        creatorHandle: "commenter",
+        creatorDisplayName: "Commenter",
+        body: "@another_fan keep it going.",
+        parentCommentId: "parent-1",
+        rootCommentId: "root-1",
+        depth: 4,
+        mentionedHandles: ["another_fan"],
+        hidden: false,
+        removed: false,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      });
+      await setDoc(doc(db, "performanceComments", "bad-thread"), {
+        schemaVersion: 2,
+        performanceId: "performance-1",
+        performanceCreatorId: "creator-1",
+        userId: "commenter",
+        creatorHandle: "commenter",
+        creatorDisplayName: "Commenter",
+        body: "Bad depth",
+        parentCommentId: "parent-1",
+        rootCommentId: "root-1",
+        depth: 900,
+        mentionedHandles: [],
+        hidden: false,
+        removed: false,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      });
+    });
+    const unauth = testEnv.unauthenticatedContext().firestore();
+
+    await assertSucceeds(getDoc(doc(
+      unauth,
+      "performanceComments",
+      "threaded",
+    )));
+    await assertFails(getDoc(doc(
+      unauth,
+      "performanceComments",
+      "bad-thread",
+    )));
+    await assertSucceeds(getDocs(query(
+      collection(unauth, "performanceComments"),
+      where("schemaVersion", "in", [1, 2]),
+      where("performanceId", "==", "performance-1"),
+      where("hidden", "==", false),
+      where("removed", "==", false),
+      orderBy("createdAt", "desc"),
+      limit(100),
+    )));
+  });
+
+  it("denies every direct performance comment mutation", async () => {
+    await seedPerformanceComment("comment-1");
+    await seedUserProfile("commenter");
+    const commenterDb = verifiedContext("commenter").firestore();
+
+    await assertFails(setDoc(doc(commenterDb, "performanceComments", "forged"), {
+      performanceId: "performance-1",
+      body: "Forged",
+    }));
+    await assertFails(updateDoc(
+      doc(commenterDb, "performanceComments", "comment-1"),
+      { removed: true },
+    ));
+    await assertFails(deleteDoc(
+      doc(commenterDb, "performanceComments", "comment-1"),
+    ));
+  });
+
+  it("keeps published-media report rows operator-only and server-authored", async () => {
+    await seedOperator("operator");
+    await seedUserProfile("reporter");
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await setDoc(doc(db, "performanceReports", "reporter_performance-1"), {
+        performanceId: "performance-1",
+        reportedBy: "reporter",
+        reason: "harassment",
+        details: null,
+        status: "pending",
+        createdAt: Timestamp.now(),
+      });
+      await setDoc(doc(
+        db,
+        "performanceCommentReports",
+        "reporter_comment-1",
+      ), {
+        performanceCommentId: "comment-1",
+        reportedBy: "reporter",
+        reason: "spam",
+        details: null,
+        status: "pending",
+        createdAt: Timestamp.now(),
+      });
+    });
+    const operatorDb = verifiedContext("operator").firestore();
+    const reporterDb = verifiedContext("reporter").firestore();
+
+    for (const [collectionName, reportId] of [
+      ["performanceReports", "reporter_performance-1"],
+      ["performanceCommentReports", "reporter_comment-1"],
+    ] as const) {
+      await assertSucceeds(getDocs(collection(operatorDb, collectionName)));
+      await assertFails(getDocs(collection(reporterDb, collectionName)));
+      await assertFails(setDoc(
+        doc(reporterDb, collectionName, "forged"),
+        { status: "pending" },
+      ));
+      await assertFails(updateDoc(
+        doc(reporterDb, collectionName, reportId),
+        { status: "resolved" },
+      ));
+    }
   });
 });
 
@@ -640,13 +1407,13 @@ describe("chants", () => {
   it("allows operator to read hidden chants", async () => {
     await seedHiddenChant("ch-hidden");
     await seedOperator("op1");
-    const db = testEnv.authenticatedContext("op1").firestore();
+    const db = verifiedContext("op1").firestore();
     await assertSucceeds(getDoc(doc(db, "chants", "ch-hidden")));
   });
 
   it("allows authenticated user to create chant with correct defaults", async () => {
     await seedUserProfile("user1");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     await assertSucceeds(setDoc(doc(db, "chants", "newchant"), {
       title: "New Song",
       sportId: "s1",
@@ -680,7 +1447,7 @@ describe("chants", () => {
 
   it("rejects create if status is not community", async () => {
     await seedUserProfile("user1");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     await assertFails(setDoc(doc(db, "chants", "newchant2"), {
       title: "Cheat",
       sportId: "s1",
@@ -714,7 +1481,7 @@ describe("chants", () => {
 
   it("rejects create if counters are not zero", async () => {
     await seedUserProfile("user1");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     await assertFails(setDoc(doc(db, "chants", "newchant3"), {
       title: "Inflate",
       sportId: "s1",
@@ -749,7 +1516,7 @@ describe("chants", () => {
   it("allows author to update content fields", async () => {
     await seedVisibleChant("ch1", "user1", { origin: "originalIdea" });
     await seedUserProfile("user1");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     await assertSucceeds(updateDoc(doc(db, "chants", "ch1"), {
       title: "Updated Title",
       lyrics: "New lyrics",
@@ -760,7 +1527,7 @@ describe("chants", () => {
   it("denies author changing counters", async () => {
     await seedVisibleChant("ch1", "user1");
     await seedUserProfile("user1");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     await assertFails(updateDoc(doc(db, "chants", "ch1"), {
       upvotes: 999,
     }));
@@ -769,7 +1536,7 @@ describe("chants", () => {
   it("denies author changing status", async () => {
     await seedVisibleChant("ch1", "user1");
     await seedUserProfile("user1");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     await assertFails(updateDoc(doc(db, "chants", "ch1"), {
       status: "canonical",
     }));
@@ -778,7 +1545,7 @@ describe("chants", () => {
   it("denies author changing hidden/removed", async () => {
     await seedVisibleChant("ch1", "user1");
     await seedUserProfile("user1");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     await assertFails(updateDoc(doc(db, "chants", "ch1"), {
       hidden: true,
     }));
@@ -787,7 +1554,7 @@ describe("chants", () => {
   it("allows operator moderation fields without changing trust state", async () => {
     await seedVisibleChant("ch1", "user1");
     await seedOperator("op1");
-    const db = testEnv.authenticatedContext("op1").firestore();
+    const db = verifiedContext("op1").firestore();
     await assertSucceeds(updateDoc(doc(db, "chants", "ch1"), {
       hidden: true,
       upvotes: 50,
@@ -802,7 +1569,7 @@ describe("chant provenance and evidence", () => {
 
   it("requires a valid origin on every new user chant", async () => {
     await seedUserProfile("user1");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     const missingOrigin = validNewChantData("user1");
     delete (missingOrigin as Partial<typeof missingOrigin>).origin;
     await assertFails(setDoc(doc(db, "chants", "missing-origin"), missingOrigin));
@@ -814,7 +1581,7 @@ describe("chant provenance and evidence", () => {
 
   it("allows Already sung with canonical YouTube evidence", async () => {
     await seedUserProfile("user1");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     await assertSucceeds(setDoc(doc(db, "chants", "sung-with-proof"), {
       ...validNewChantData("user1"),
       origin: "alreadySung",
@@ -827,7 +1594,7 @@ describe("chant provenance and evidence", () => {
 
   it("rejects malformed, noncanonical, mismatched, and forged evidence", async () => {
     await seedUserProfile("user1");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     const invalidEvidence = [
       {
         provider: "youtube",
@@ -864,7 +1631,7 @@ describe("chant provenance and evidence", () => {
       evidence: null,
     });
     await seedUserProfile("user1");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     await assertFails(updateDoc(doc(db, "chants", "ch1"), {
       origin: "alreadySung",
       updatedAt: Timestamp.now(),
@@ -888,7 +1655,7 @@ describe("chant provenance and evidence", () => {
       },
     });
     await seedUserProfile("user1");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     await assertFails(updateDoc(doc(db, "chants", "ch1"), {
       title: "Changed after review",
       updatedAt: Timestamp.now(),
@@ -904,7 +1671,7 @@ describe("direct chant schema and relationships", () => {
 
   it("allows a Player chant only for a Player on the selected Team", async () => {
     await seedPlayer("p1", "t1");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
 
     await assertSucceeds(setDoc(doc(db, "chants", "player-chant"), {
       ...validNewChantData("user1"),
@@ -914,7 +1681,7 @@ describe("direct chant schema and relationships", () => {
   });
 
   it("denies malformed fields, forged media, and unknown keys", async () => {
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     const invalidPayloads = [
       { ...validNewChantData("user1"), variations: "not-a-list" },
       {
@@ -946,7 +1713,7 @@ describe("direct chant schema and relationships", () => {
   it("denies Team hierarchy and Player relationship mismatches", async () => {
     await seedTeam("t2", "s1", "c1");
     await seedPlayer("p-on-t2", "t2");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
 
     await assertFails(setDoc(doc(db, "chants", "wrong-sport"), {
       ...validNewChantData("user1"),
@@ -972,7 +1739,7 @@ describe("direct chant schema and relationships", () => {
   });
 
   it("denies stale or future client timestamps", async () => {
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     const twoHours = 2 * 60 * 60 * 1000;
 
     await assertFails(setDoc(doc(db, "chants", "stale-created"), {
@@ -987,7 +1754,7 @@ describe("direct chant schema and relationships", () => {
 
   it("keeps dormant media and schema fields immutable for authors", async () => {
     await seedVisibleChant("ch1", "user1", { origin: "originalIdea" });
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
 
     await assertFails(updateDoc(doc(db, "chants", "ch1"), {
       coverImageUrl: "https://example.test/cover.jpg",
@@ -1006,7 +1773,7 @@ describe("votes", () => {
   it("allows create with correct userId and doc ID", async () => {
     await seedUserProfile("user1");
     await seedVisibleChant("ch1", "someone");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     await assertSucceeds(setDoc(doc(db, "votes", "user1_ch1"), {
       chantId: "ch1",
       userId: "user1",
@@ -1017,7 +1784,7 @@ describe("votes", () => {
 
   it("rejects create with wrong doc ID", async () => {
     await seedUserProfile("user1");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     await assertFails(setDoc(doc(db, "votes", "wrongid"), {
       chantId: "ch1",
       userId: "user1",
@@ -1028,7 +1795,7 @@ describe("votes", () => {
 
   it("rejects create with value other than 1 or -1", async () => {
     await seedUserProfile("user1");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     await assertFails(setDoc(doc(db, "votes", "user1_ch1"), {
       chantId: "ch1",
       userId: "user1",
@@ -1040,7 +1807,7 @@ describe("votes", () => {
   it("denies unknown and Function-owned fields on create", async () => {
     await seedUserProfile("user1");
     await seedVisibleChant("ch1", "someone");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     const base = {
       chantId: "ch1",
       userId: "user1",
@@ -1070,7 +1837,7 @@ describe("votes", () => {
       });
     });
     await seedUserProfile("user1");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     await assertSucceeds(updateDoc(doc(db, "votes", "user1_ch1"), { value: -1 }));
   });
 
@@ -1085,7 +1852,7 @@ describe("votes", () => {
       });
     });
     await seedUserProfile("user1");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     await assertFails(updateDoc(doc(db, "votes", "user1_ch1"), { userId: "user2" }));
   });
 
@@ -1102,7 +1869,7 @@ describe("votes", () => {
       });
     });
     await seedUserProfile("user1");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
 
     await assertSucceeds(updateDoc(doc(db, "votes", "user1_ch1"), {
       value: -1,
@@ -1126,7 +1893,7 @@ describe("votes", () => {
       });
     });
     await seedUserProfile("user1");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     await assertSucceeds(deleteDoc(doc(db, "votes", "user1_ch1")));
   });
 });
@@ -1137,7 +1904,7 @@ describe("reports", () => {
   it("denies direct report creation even with the legacy valid shape", async () => {
     await seedUserProfile("user1");
     await seedVisibleChant("ch1", "someone");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     await assertFails(setDoc(doc(db, "reports", "user1_ch1"), {
       chantId: "ch1",
       reportedBy: "user1",
@@ -1159,7 +1926,7 @@ describe("reports", () => {
       });
     });
     await seedUserProfile("user1");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     await assertFails(getDoc(doc(db, "reports", "r1")));
   });
 
@@ -1175,13 +1942,13 @@ describe("reports", () => {
       });
     });
     await seedOperator("op1");
-    const db = testEnv.authenticatedContext("op1").firestore();
+    const db = verifiedContext("op1").firestore();
     await assertSucceeds(getDoc(doc(db, "reports", "r1")));
   });
 
   it("denies create with status other than 'pending'", async () => {
     await seedUserProfile("user1");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     await assertFails(setDoc(doc(db, "reports", "user1_ch1"), {
       chantId: "ch1",
       reportedBy: "user1",
@@ -1197,7 +1964,7 @@ describe("reports", () => {
 describe("auditLog", () => {
   it("denies any client write", async () => {
     await seedOperator("op1");
-    const db = testEnv.authenticatedContext("op1").firestore();
+    const db = verifiedContext("op1").firestore();
     await assertFails(setDoc(doc(db, "auditLog", "log1"), {
       actorId: "op1",
       action: "remove",
@@ -1221,7 +1988,7 @@ describe("auditLog", () => {
       });
     });
     await seedOperator("op1");
-    const db = testEnv.authenticatedContext("op1").firestore();
+    const db = verifiedContext("op1").firestore();
     await assertSucceeds(getDoc(doc(db, "auditLog", "log1")));
   });
 
@@ -1238,7 +2005,7 @@ describe("auditLog", () => {
       });
     });
     await seedUserProfile("user1");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     await assertFails(getDoc(doc(db, "auditLog", "log1")));
   });
 });
@@ -1247,7 +2014,7 @@ describe("auditLog", () => {
 
 describe("feedback", () => {
   it("denies direct feedback creation even with the legacy valid shape", async () => {
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     await assertFails(addDoc(collection(db, "feedback"), {
       userId: "user1",
       category: "suggestion",
@@ -1259,7 +2026,7 @@ describe("feedback", () => {
   });
 
   it("rejects feedback with message > 1000 chars", async () => {
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     const longMessage = "x".repeat(1001);
     await assertFails(addDoc(collection(db, "feedback"), {
       userId: "user1",
@@ -1284,7 +2051,7 @@ describe("feedback", () => {
       });
     });
     await seedUserProfile("user1");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     await assertSucceeds(getDoc(doc(db, "feedback", "fb1")));
   });
 
@@ -1301,7 +2068,7 @@ describe("feedback", () => {
       });
     });
     await seedUserProfile("user1");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     await assertFails(getDoc(doc(db, "feedback", "fb1")));
   });
 
@@ -1318,12 +2085,12 @@ describe("feedback", () => {
       });
     });
     await seedOperator("op1");
-    const db = testEnv.authenticatedContext("op1").firestore();
+    const db = verifiedContext("op1").firestore();
     await assertSucceeds(getDoc(doc(db, "feedback", "fb1")));
   });
 
   it("denies create with resolved true", async () => {
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     await assertFails(addDoc(collection(db, "feedback"), {
       userId: "user1",
       category: "suggestion",
@@ -1347,12 +2114,12 @@ describe("feedback", () => {
       });
     });
     await seedUserProfile("user1");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     await assertFails(updateDoc(doc(db, "feedback", "fb1"), { resolved: true }));
   });
 
   it("denies unknown fields, invalid types, categories, and timestamps", async () => {
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     const base = {
       userId: "user1",
       category: "suggestion",
@@ -1391,8 +2158,8 @@ describe("safety rate limits", () => {
     });
     await seedUserProfile("user1");
     await seedOperator("op1");
-    const userDb = testEnv.authenticatedContext("user1").firestore();
-    const operatorDb = testEnv.authenticatedContext("op1").firestore();
+    const userDb = verifiedContext("user1").firestore();
+    const operatorDb = verifiedContext("op1").firestore();
 
     await assertFails(getDoc(doc(userDb, "safetyRateLimits", "user1")));
     await assertFails(setDoc(doc(userDb, "safetyRateLimits", "user1"), {
@@ -1410,8 +2177,8 @@ describe("account deletion jobs and pending authority", () => {
     await seedUserProfile("user1");
     await seedOperator("op1");
     await seedDeletionJob("user1");
-    const userDb = testEnv.authenticatedContext("user1").firestore();
-    const operatorDb = testEnv.authenticatedContext("op1").firestore();
+    const userDb = verifiedContext("user1").firestore();
+    const operatorDb = verifiedContext("op1").firestore();
 
     await assertFails(getDoc(doc(userDb, "accountDeletionJobs", "user1")));
     await assertFails(updateDoc(doc(userDb, "accountDeletionJobs", "user1"), {
@@ -1423,7 +2190,7 @@ describe("account deletion jobs and pending authority", () => {
 
   it("denies a late profile create after a deletion job exists", async () => {
     await seedDeletionJob("late-user");
-    const db = testEnv.authenticatedContext("late-user").firestore();
+    const db = verifiedContext("late-user").firestore();
     await assertFails(setDoc(doc(db, "profiles", "late-user"), {
       displayName: "Late user",
       role: "user",
@@ -1473,7 +2240,7 @@ describe("account deletion jobs and pending authority", () => {
       });
     });
 
-    const db = testEnv.authenticatedContext("deleting").firestore();
+    const db = verifiedContext("deleting").firestore();
     await assertFails(updateDoc(doc(db, "profiles", "deleting"), {
       deletionPending: false,
     }));
@@ -1520,7 +2287,7 @@ describe("account deletion jobs and pending authority", () => {
       createdAt: Timestamp.now(),
     }));
 
-    const operatorDb = testEnv.authenticatedContext("deleting-operator").firestore();
+    const operatorDb = verifiedContext("deleting-operator").firestore();
     await assertFails(setDoc(doc(operatorDb, "sports", "rugby"), {
       name: "Rugby",
       enabled: true,
@@ -1542,7 +2309,7 @@ describe("exact comment and comment-like schemas", () => {
   });
 
   it("allows the shipped top-level comment shape", async () => {
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     await assertSucceeds(addDoc(collection(db, "comments"), {
       chantId: "ch1",
       userId: "user1",
@@ -1558,7 +2325,7 @@ describe("exact comment and comment-like schemas", () => {
   });
 
   it("denies unknown comment fields and malformed counter or flag types", async () => {
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     const base = {
       chantId: "ch1",
       userId: "user1",
@@ -1587,7 +2354,7 @@ describe("exact comment and comment-like schemas", () => {
 
   it("denies Function-owned and unknown comment-like fields", async () => {
     await seedComment("comment1", "ch1", "someone");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     const base = {
       commentId: "comment1",
       userId: "user1",
@@ -1617,7 +2384,7 @@ describe("exact comment and comment-like schemas", () => {
         appliedValue: 1,
       });
     });
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
 
     await assertFails(updateDoc(doc(db, "commentLikes", "user1_comment1"), {
       appliedValue: -1,
@@ -1637,7 +2404,7 @@ describe("exact report schemas", () => {
   });
 
   it("denies direct chant, comment, and user report creates", async () => {
-    const db = testEnv.authenticatedContext("reporter").firestore();
+    const db = verifiedContext("reporter").firestore();
     const common = {
       reportedBy: "reporter",
       reason: "Offensive content",
@@ -1660,7 +2427,7 @@ describe("exact report schemas", () => {
   });
 
   it("denies unknown, empty, oversized, nonstring, and stale report data", async () => {
-    const db = testEnv.authenticatedContext("reporter").firestore();
+    const db = verifiedContext("reporter").firestore();
     const cases = [
       {
         collectionName: "reports",
@@ -1709,7 +2476,7 @@ describe("report write correctness", () => {
   it("denies a well-formed direct report create", async () => {
     await seedUserProfile("user1");
     await seedVisibleChant("ch1", "someone");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     await assertFails(setDoc(doc(db, "reports", "user1_ch1"), {
       chantId: "ch1",
       reportedBy: "user1",
@@ -1732,7 +2499,7 @@ describe("report write correctness", () => {
 
   it("denies report create with reportedBy != auth uid", async () => {
     await seedUserProfile("user1");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     await assertFails(setDoc(doc(db, "reports", "user1_ch1"), {
       chantId: "ch1",
       reportedBy: "someone_else",
@@ -1817,13 +2584,13 @@ describe("ban enforcement", () => {
 
   it("denies chant create by banned user", async () => {
     await seedBannedUser("banned1");
-    const db = testEnv.authenticatedContext("banned1").firestore();
+    const db = verifiedContext("banned1").firestore();
     await assertFails(setDoc(doc(db, "chants", "test-chant"), validChantData));
   });
 
   it("allows chant create by non-banned user", async () => {
     await seedUserProfile("user1");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     await assertSucceeds(setDoc(doc(db, "chants", "test-chant"), {
       ...validChantData,
       createdBy: "user1",
@@ -1832,7 +2599,7 @@ describe("ban enforcement", () => {
 
   it("denies vote create by banned user", async () => {
     await seedBannedUser("banned1");
-    const db = testEnv.authenticatedContext("banned1").firestore();
+    const db = verifiedContext("banned1").firestore();
     await assertFails(setDoc(doc(db, "votes", "banned1_ch1"), {
       chantId: "ch1",
       userId: "banned1",
@@ -1843,7 +2610,7 @@ describe("ban enforcement", () => {
 
   it("denies report create by banned user", async () => {
     await seedBannedUser("banned1");
-    const db = testEnv.authenticatedContext("banned1").firestore();
+    const db = verifiedContext("banned1").firestore();
     await assertFails(setDoc(doc(db, "reports", "banned1_ch1"), {
       chantId: "ch1",
       reportedBy: "banned1",
@@ -1855,7 +2622,7 @@ describe("ban enforcement", () => {
 
   it("denies banned user setting own banned to false (Fix 1)", async () => {
     await seedBannedUser("banned1");
-    const db = testEnv.authenticatedContext("banned1").firestore();
+    const db = verifiedContext("banned1").firestore();
     await assertFails(updateDoc(doc(db, "profiles", "banned1"), {
       banned: false,
     }));
@@ -1863,7 +2630,7 @@ describe("ban enforcement", () => {
 
   it("denies user changing own role (re-confirmed with banned field)", async () => {
     await seedUserProfile("user1");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     await assertFails(updateDoc(doc(db, "profiles", "user1"), {
       role: "operator",
     }));
@@ -1919,7 +2686,7 @@ describe("policy acceptance gate", () => {
   it("denies chant create when the user has never accepted the policy",
       async () => {
     await seedUserProfileNoPolicyAcceptance("noaccept1");
-    const db = testEnv.authenticatedContext("noaccept1").firestore();
+    const db = verifiedContext("noaccept1").firestore();
     await assertFails(setDoc(doc(db, "chants", "gated-chant"), {
       ...validChantData,
       createdBy: "noaccept1",
@@ -1928,7 +2695,7 @@ describe("policy acceptance gate", () => {
 
   it("allows chant create once the policy is accepted", async () => {
     await seedUserProfile("accepted1");
-    const db = testEnv.authenticatedContext("accepted1").firestore();
+    const db = verifiedContext("accepted1").firestore();
     await assertSucceeds(setDoc(doc(db, "chants", "gated-chant-2"), {
       ...validChantData,
       createdBy: "accepted1",
@@ -1938,7 +2705,7 @@ describe("policy acceptance gate", () => {
   it("denies comment create when the user has never accepted the policy",
       async () => {
     await seedUserProfileNoPolicyAcceptance("noaccept2");
-    const db = testEnv.authenticatedContext("noaccept2").firestore();
+    const db = verifiedContext("noaccept2").firestore();
     await assertFails(addDoc(collection(db, "comments"), {
       ...validCommentData,
       chantId: "ch1",
@@ -1949,7 +2716,7 @@ describe("policy acceptance gate", () => {
   it("allows comment create once the policy is accepted", async () => {
     await seedUserProfile("accepted2");
     await seedVisibleChant("ch1", "someone");
-    const db = testEnv.authenticatedContext("accepted2").firestore();
+    const db = verifiedContext("accepted2").firestore();
     await assertSucceeds(addDoc(collection(db, "comments"), {
       ...validCommentData,
       chantId: "ch1",
@@ -1960,7 +2727,7 @@ describe("policy acceptance gate", () => {
   it("denies comment create by a banned user even if they accepted the "
       + "policy (isNotBanned and hasAcceptedPolicy both apply)", async () => {
     await seedBannedUser("banned-accepted");
-    const db = testEnv.authenticatedContext("banned-accepted").firestore();
+    const db = verifiedContext("banned-accepted").firestore();
     await assertFails(addDoc(collection(db, "comments"), {
       ...validCommentData,
       chantId: "ch1",
@@ -1975,7 +2742,7 @@ describe("user reports", () => {
   it("denies direct user-report creation with the legacy valid shape", async () => {
     await seedUserProfile("reporter1");
     await seedUserProfile("baduser");
-    const db = testEnv.authenticatedContext("reporter1").firestore();
+    const db = verifiedContext("reporter1").firestore();
     await assertFails(setDoc(doc(db, "userReports", "reporter1_baduser"), {
       reportedUserId: "baduser",
       reportedBy: "reporter1",
@@ -1987,7 +2754,7 @@ describe("user reports", () => {
 
   it("denies reporting yourself", async () => {
     await seedUserProfile("user1");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     await assertFails(setDoc(doc(db, "userReports", "user1_user1"), {
       reportedUserId: "user1",
       reportedBy: "user1",
@@ -2001,7 +2768,7 @@ describe("user reports", () => {
       async () => {
     await seedUserProfile("reporter2");
     await seedUserProfile("baduser2");
-    const db = testEnv.authenticatedContext("reporter2").firestore();
+    const db = verifiedContext("reporter2").firestore();
     await assertFails(setDoc(doc(db, "userReports", "reporter2_baduser2"), {
       reportedUserId: "baduser2",
       reportedBy: "reporter2",
@@ -2020,7 +2787,7 @@ describe("user reports", () => {
 
   it("denies create with status other than pending", async () => {
     await seedUserProfile("reporter3");
-    const db = testEnv.authenticatedContext("reporter3").firestore();
+    const db = verifiedContext("reporter3").firestore();
     await assertFails(setDoc(doc(db, "userReports", "reporter3_baduser3"), {
       reportedUserId: "baduser3",
       reportedBy: "reporter3",
@@ -2033,7 +2800,7 @@ describe("user reports", () => {
   it("denies report create with reportedBy != auth uid (cannot forge the "
       + "reporter identity)", async () => {
     await seedUserProfile("reporter4");
-    const db = testEnv.authenticatedContext("reporter4").firestore();
+    const db = verifiedContext("reporter4").firestore();
     await assertFails(setDoc(doc(db, "userReports", "reporter4_baduser4"), {
       reportedUserId: "baduser4",
       reportedBy: "someone-else",
@@ -2045,7 +2812,7 @@ describe("user reports", () => {
 
   it("denies report create by a banned user", async () => {
     await seedBannedUser("banned-reporter");
-    const db = testEnv.authenticatedContext("banned-reporter").firestore();
+    const db = verifiedContext("banned-reporter").firestore();
     await assertFails(setDoc(doc(db, "userReports", "banned-reporter_baduser5"), {
       reportedUserId: "baduser5",
       reportedBy: "banned-reporter",
@@ -2067,7 +2834,7 @@ describe("user reports", () => {
       });
     });
     await seedUserProfile("reader1");
-    const db = testEnv.authenticatedContext("reader1").firestore();
+    const db = verifiedContext("reader1").firestore();
     await assertFails(getDoc(doc(db, "userReports", "r1_baduser")));
   });
 
@@ -2083,7 +2850,7 @@ describe("user reports", () => {
       });
     });
     await seedOperator("op1");
-    const db = testEnv.authenticatedContext("op1").firestore();
+    const db = verifiedContext("op1").firestore();
     await assertSucceeds(getDoc(doc(db, "userReports", "r2_baduser")));
   });
 });
@@ -2115,7 +2882,7 @@ describe("one-level comment replies", () => {
     await seedUserProfile("replier");
     await seedVisibleChant("ch1", "author");
     await seedComment("parent", "ch1", "author");
-    const db = testEnv.authenticatedContext("replier").firestore();
+    const db = verifiedContext("replier").firestore();
 
     await assertSucceeds(setDoc(
       doc(db, "comments", "reply"),
@@ -2131,7 +2898,7 @@ describe("one-level comment replies", () => {
     await seedComment("existing-reply", "ch1", "replier", {
       parentCommentId: "parent",
     });
-    const db = testEnv.authenticatedContext("replier").firestore();
+    const db = verifiedContext("replier").firestore();
 
     await assertFails(setDoc(
       doc(db, "comments", "nested"),
@@ -2151,7 +2918,7 @@ describe("one-level comment replies", () => {
     await seedComment("other-chant", "ch2", "author");
     await seedComment("hidden-parent", "ch1", "author", { hidden: true });
     await seedComment("removed-parent", "ch1", "author", { removed: true });
-    const db = testEnv.authenticatedContext("replier").firestore();
+    const db = verifiedContext("replier").firestore();
 
     await assertFails(setDoc(
       doc(db, "comments", "cross-chant"),
@@ -2175,7 +2942,7 @@ describe("one-level comment replies", () => {
     await seedComment("reply", "ch1", "replier", {
       parentCommentId: "parent",
     });
-    const db = testEnv.authenticatedContext("replier").firestore();
+    const db = verifiedContext("replier").firestore();
 
     await assertFails(updateDoc(doc(db, "comments", "reply"), {
       parentCommentId: null,
@@ -2191,7 +2958,7 @@ describe("one-level comment replies", () => {
 
 describe("blocks and interaction privacy", () => {
   async function block(blockerId: string, blockedUserId: string) {
-    const db = testEnv.authenticatedContext(blockerId).firestore();
+    const db = verifiedContext(blockerId).firestore();
     await assertSucceeds(setDoc(
       doc(db, "blocks", `${blockerId}_${blockedUserId}`),
       {
@@ -2207,8 +2974,8 @@ describe("blocks and interaction privacy", () => {
     await seedUserProfile("blocker");
     await seedUserProfile("target");
     await block("blocker", "target");
-    const blockerDb = testEnv.authenticatedContext("blocker").firestore();
-    const targetDb = testEnv.authenticatedContext("target").firestore();
+    const blockerDb = verifiedContext("blocker").firestore();
+    const targetDb = verifiedContext("target").firestore();
 
     await assertSucceeds(getDoc(doc(blockerDb, "blocks", "blocker_target")));
     await assertFails(getDoc(doc(targetDb, "blocks", "blocker_target")));
@@ -2218,7 +2985,7 @@ describe("blocks and interaction privacy", () => {
   it("denies self-blocks and forged block IDs", async () => {
     await seedUserProfile("blocker");
     await seedUserProfile("target");
-    const db = testEnv.authenticatedContext("blocker").firestore();
+    const db = verifiedContext("blocker").firestore();
 
     await assertFails(setDoc(doc(db, "blocks", "blocker_blocker"), {
       blockerId: "blocker",
@@ -2237,7 +3004,7 @@ describe("blocks and interaction privacy", () => {
   it("denies a new block against a deletion-pending target", async () => {
     await seedUserProfile("blocker");
     await seedDeletionPendingUser("deleting-target");
-    const db = testEnv.authenticatedContext("blocker").firestore();
+    const db = verifiedContext("blocker").firestore();
 
     await assertFails(setDoc(doc(db, "blocks", "blocker_deleting-target"), {
       blockerId: "blocker",
@@ -2254,8 +3021,8 @@ describe("blocks and interaction privacy", () => {
     await seedComment("blocker-comment", "ch1", "blocker");
     await seedComment("target-comment", "ch1", "target");
     await block("blocker", "target");
-    const blockerDb = testEnv.authenticatedContext("blocker").firestore();
-    const targetDb = testEnv.authenticatedContext("target").firestore();
+    const blockerDb = verifiedContext("blocker").firestore();
+    const targetDb = verifiedContext("target").firestore();
 
     await assertFails(setDoc(doc(blockerDb, "comments", "blocked-reply"), {
       chantId: "ch1",
@@ -2297,8 +3064,8 @@ describe("blocks and interaction privacy", () => {
     await seedUserProfile("stranger");
     await seedVisibleChant("ch1", "owner");
     await seedComment("comment", "ch1", "stranger");
-    const ownerDb = testEnv.authenticatedContext("owner").firestore();
-    const strangerDb = testEnv.authenticatedContext("stranger").firestore();
+    const ownerDb = verifiedContext("owner").firestore();
+    const strangerDb = verifiedContext("stranger").firestore();
 
     await assertSucceeds(setDoc(doc(ownerDb, "votes", "owner_ch1"), {
       chantId: "ch1",
@@ -2323,9 +3090,9 @@ describe("blocks and interaction privacy", () => {
 // ===================== BLOCK 3: PROFILE CREATE PINS BANNED =====================
 
 describe("profile create pins banned", () => {
-  it("allows create with banned == false", async () => {
-    const db = testEnv.authenticatedContext("newuser").firestore();
-    await assertSucceeds(setDoc(doc(db, "profiles", "newuser"), {
+  it("denies direct create even with banned pinned false", async () => {
+    const db = verifiedContext("newuser").firestore();
+    await assertFails(setDoc(doc(db, "profiles", "newuser"), {
       displayName: "NewFan",
       role: "user",
       banned: false,
@@ -2337,7 +3104,7 @@ describe("profile create pins banned", () => {
   });
 
   it("denies create with banned == true", async () => {
-    const db = testEnv.authenticatedContext("newuser2").firestore();
+    const db = verifiedContext("newuser2").firestore();
     await assertFails(setDoc(doc(db, "profiles", "newuser2"), {
       displayName: "Hacker",
       role: "user",
@@ -2354,7 +3121,7 @@ describe("report dedup", () => {
   it("denies a direct report with the correct legacy doc ID convention", async () => {
     await seedUserProfile("user1");
     await seedVisibleChant("ch1", "someone");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     await assertFails(setDoc(doc(db, "reports", "user1_ch1"), {
       chantId: "ch1",
       reportedBy: "user1",
@@ -2366,7 +3133,7 @@ describe("report dedup", () => {
 
   it("denies report with wrong doc ID", async () => {
     await seedUserProfile("user1");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     await assertFails(setDoc(doc(db, "reports", "wrong-id"), {
       chantId: "ch1",
       reportedBy: "user1",
@@ -2386,7 +3153,7 @@ describe("server-side length limits", () => {
 
   it("denies chant with title > 200 chars", async () => {
     await seedUserProfile("user1");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     await assertFails(setDoc(doc(db, "chants", "long-title"), {
       title: "x".repeat(201),
       sportId: "s1",
@@ -2417,7 +3184,7 @@ describe("server-side length limits", () => {
 
   it("denies chant with lyrics > 5000 chars", async () => {
     await seedUserProfile("user1");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     await assertFails(setDoc(doc(db, "chants", "long-lyrics"), {
       title: "test",
       sportId: "s1",
@@ -2448,7 +3215,7 @@ describe("server-side length limits", () => {
 
   it("allows chant with fields at max length", async () => {
     await seedUserProfile("user1");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     await assertSucceeds(setDoc(doc(db, "chants", "max-len"), {
       title: "x".repeat(200),
       sportId: "s1",
@@ -2479,7 +3246,7 @@ describe("server-side length limits", () => {
 
   it("denies chant with contextNotes > 500 chars", async () => {
     await seedUserProfile("user1");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     await assertFails(setDoc(doc(db, "chants", "long-context"), {
       title: "test",
       sportId: "s1",
@@ -2515,7 +3282,7 @@ describe("canonical promotion rules", () => {
   it("denies non-operator setting status to canonical via client write", async () => {
     await seedVisibleChant("ch1", "user1");
     await seedUserProfile("user1");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     await assertFails(updateDoc(doc(db, "chants", "ch1"), {
       status: "canonical",
     }));
@@ -2524,7 +3291,7 @@ describe("canonical promotion rules", () => {
   it("denies raw operator promotion without evidence", async () => {
     await seedVisibleChant("ch1", "user1");
     await seedOperator("op1");
-    const db = testEnv.authenticatedContext("op1").firestore();
+    const db = verifiedContext("op1").firestore();
     await assertFails(updateDoc(doc(db, "chants", "ch1"), {
       status: "canonical",
     }));
@@ -2539,7 +3306,7 @@ describe("canonical promotion rules", () => {
       },
     });
     await seedOperator("op1");
-    const db = testEnv.authenticatedContext("op1").firestore();
+    const db = verifiedContext("op1").firestore();
     await assertSucceeds(updateDoc(doc(db, "chants", "ch1"), {
       status: "canonical",
     }));
@@ -2548,7 +3315,7 @@ describe("canonical promotion rules", () => {
   it("allows the sourcing-ledger exception for a system chant", async () => {
     await seedVisibleChant("seed-chant", "system");
     await seedOperator("op1");
-    const db = testEnv.authenticatedContext("op1").firestore();
+    const db = verifiedContext("op1").firestore();
     await assertSucceeds(updateDoc(doc(db, "chants", "seed-chant"), {
       status: "canonical",
     }));
@@ -2564,7 +3331,7 @@ describe("canonical promotion rules", () => {
       },
     });
     await seedOperator("op1");
-    const db = testEnv.authenticatedContext("op1").firestore();
+    const db = verifiedContext("op1").firestore();
     await assertFails(updateDoc(doc(db, "chants", "ch1"), {
       evidence: deleteField(),
     }));
@@ -2577,7 +3344,7 @@ describe("canonical promotion rules", () => {
   it("still allows moderation of a legacy user canonical chant", async () => {
     await seedVisibleChant("legacy", "user1", { status: "canonical" });
     await seedOperator("op1");
-    const db = testEnv.authenticatedContext("op1").firestore();
+    const db = verifiedContext("op1").firestore();
     await assertSucceeds(updateDoc(doc(db, "chants", "legacy"), {
       hidden: true,
     }));
@@ -2596,7 +3363,7 @@ describe("canonical promotion rules", () => {
       });
     });
     await seedOperator("op1");
-    const db = testEnv.authenticatedContext("op1").firestore();
+    const db = verifiedContext("op1").firestore();
     await assertSucceeds(updateDoc(doc(db, "chants", "legacy-malformed"), {
       hidden: true,
     }));
@@ -2614,7 +3381,7 @@ describe("canonical promotion rules", () => {
       origin: "originalIdea",
     });
     await seedOperator("op1");
-    const db = testEnv.authenticatedContext("op1").firestore();
+    const db = verifiedContext("op1").firestore();
     await assertFails(updateDoc(doc(db, "chants", "ch1"), {
       origin: "alreadySung",
     }));
@@ -2623,7 +3390,7 @@ describe("canonical promotion rules", () => {
   it("denies author self-promoting their own chant", async () => {
     await seedVisibleChant("ch1", "user1");
     await seedUserProfile("user1");
-    const db = testEnv.authenticatedContext("user1").firestore();
+    const db = verifiedContext("user1").firestore();
     // Author update rule blocks status changes
     await assertFails(updateDoc(doc(db, "chants", "ch1"), {
       status: "canonical",

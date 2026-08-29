@@ -6,8 +6,22 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function hasVerifiedContact() {
+      return isAuth()
+        && (request.auth.token.email_verified == true
+          || (request.auth.token.phone_number is string
+            && request.auth.token.phone_number.size() > 0)
+          || request.auth.token.firebase.sign_in_provider in [
+            'apple.com', 'google.com', 'facebook.com'
+          ]
+          || (request.auth.token.firebase.identities is map
+            && request.auth.token.firebase.identities.keys().hasAny([
+              'apple.com', 'google.com', 'facebook.com'
+            ])));
+    }
+
     function isOperator() {
-      return isAuth() &&
+      return hasVerifiedContact() &&
         exists(/databases/$(database)/documents/profiles/$(request.auth.uid))
         && !exists(/databases/$(database)/documents/accountDeletionJobs/$(request.auth.uid))
         && get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.role == 'operator'
@@ -20,7 +34,8 @@ service cloud.firestore {
     }
 
     function isNotBanned() {
-      return exists(/databases/$(database)/documents/profiles/$(request.auth.uid))
+      return hasVerifiedContact()
+        && exists(/databases/$(database)/documents/profiles/$(request.auth.uid))
         && !exists(/databases/$(database)/documents/accountDeletionJobs/$(request.auth.uid))
         && get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.banned == false
         && (!('deletionPending' in get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data)
@@ -30,6 +45,7 @@ service cloud.firestore {
     function isActiveProfile(userId) {
       return exists(/databases/$(database)/documents/profiles/$(userId))
         && !exists(/databases/$(database)/documents/accountDeletionJobs/$(userId))
+        && get(/databases/$(database)/documents/profiles/$(userId)).data.banned == false
         && (!('deletionPending' in get(/databases/$(database)/documents/profiles/$(userId)).data)
             || get(/databases/$(database)/documents/profiles/$(userId)).data.deletionPending == false);
     }
@@ -199,6 +215,152 @@ service cloud.firestore {
         || hasValidEvidence(data);
     }
 
+    function validPublicPerformance(data) {
+      return data.keys().hasOnly([
+          'schemaVersion', 'chantId', 'chantTitle', 'teamId', 'teamName',
+          'playerName',
+          'chantStatus', 'creatorId', 'creatorHandle', 'creatorDisplayName',
+          'caption', 'mediaPath', 'durationMs',
+          'publicationState', 'viewCount', 'likeCount', 'commentCount',
+          'shareCount', 'uniqueSharerCount', 'weeklyUniqueSharerCount',
+          'weeklyLikeCount', 'weeklyQualifiedViewCount', 'rankingWeek',
+          'hidden', 'removed', 'sourceChantVisible', 'sourceCreatorVisible',
+          'createdAt', 'approvedAt', 'updatedAt'
+        ])
+        && data.keys().hasAll([
+          'schemaVersion', 'chantId', 'chantTitle', 'teamId', 'teamName',
+          'playerName',
+          'chantStatus', 'creatorId', 'creatorHandle', 'creatorDisplayName',
+          'caption', 'mediaPath', 'durationMs',
+          'publicationState', 'viewCount', 'likeCount', 'commentCount',
+          'shareCount', 'uniqueSharerCount', 'weeklyUniqueSharerCount',
+          'weeklyLikeCount', 'weeklyQualifiedViewCount', 'rankingWeek',
+          'hidden', 'removed', 'sourceChantVisible', 'sourceCreatorVisible',
+          'createdAt', 'approvedAt', 'updatedAt'
+        ])
+        && data.schemaVersion == 1
+        && data.chantId is string
+        && data.chantId.size() > 0
+        && data.chantId.size() <= 200
+        && data.chantTitle is string
+        && data.chantTitle.size() > 0
+        && data.chantTitle.size() <= 200
+        && data.teamId is string
+        && data.teamId.size() > 0
+        && data.teamId.size() <= 200
+        && data.teamName is string
+        && data.teamName.size() > 0
+        && data.teamName.size() <= 100
+        && (data.playerName == null
+          || (data.playerName is string && data.playerName.size() <= 100))
+        && data.chantStatus in ['canonical', 'community']
+        && data.creatorId is string
+        && data.creatorId.size() > 0
+        && data.creatorId.size() <= 200
+        && data.creatorHandle is string
+        && data.creatorHandle.matches('[a-z0-9_]{3,24}')
+        && data.creatorDisplayName is string
+        && data.creatorDisplayName.size() > 0
+        && data.creatorDisplayName.size() <= 50
+        && data.caption is string
+        && data.caption.size() <= 300
+        && data.mediaPath is string
+        && data.mediaPath.matches('performance-media/[A-Za-z0-9_-]+/source')
+        && data.durationMs is int
+        && data.durationMs > 0
+        && data.durationMs <= 30000
+        && data.publicationState == 'approved'
+        && data.viewCount is int && data.viewCount >= 0
+        && data.likeCount is int && data.likeCount >= 0
+        && data.commentCount is int && data.commentCount >= 0
+        && data.shareCount is int && data.shareCount >= 0
+        && data.uniqueSharerCount is int && data.uniqueSharerCount >= 0
+        && data.weeklyUniqueSharerCount is int
+        && data.weeklyUniqueSharerCount >= 0
+        && data.weeklyLikeCount is int && data.weeklyLikeCount >= 0
+        && data.weeklyQualifiedViewCount is int
+        && data.weeklyQualifiedViewCount >= 0
+        && data.rankingWeek is string
+        && data.rankingWeek.matches('[0-9]{4}-[0-9]{2}-[0-9]{2}')
+        && data.hidden is bool
+        && data.removed is bool
+        && data.sourceChantVisible is bool
+        && data.sourceCreatorVisible is bool
+        && data.createdAt is timestamp
+        && data.approvedAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function validPublicPerformanceComment(data) {
+      return data.keys().hasAll([
+          'schemaVersion', 'performanceId', 'performanceCreatorId',
+          'userId', 'creatorHandle', 'creatorDisplayName', 'body',
+          'hidden', 'removed', 'createdAt', 'updatedAt'
+        ])
+        && (
+          (data.schemaVersion == 1
+            && data.keys().hasOnly([
+              'schemaVersion', 'performanceId', 'performanceCreatorId',
+              'userId', 'creatorHandle', 'creatorDisplayName', 'body',
+              'hidden', 'removed', 'createdAt', 'updatedAt'
+            ]))
+          ||
+          (data.schemaVersion == 2
+            && data.keys().hasOnly([
+              'schemaVersion', 'performanceId', 'performanceCreatorId',
+              'userId', 'creatorHandle', 'creatorDisplayName', 'body',
+              'parentCommentId', 'rootCommentId', 'depth',
+              'mentionedHandles', 'hidden', 'removed', 'createdAt', 'updatedAt'
+            ])
+            && (data.parentCommentId == null
+              || (data.parentCommentId is string
+                && data.parentCommentId.size() > 0
+                && data.parentCommentId.size() <= 500))
+            && data.rootCommentId is string
+            && data.rootCommentId.size() > 0
+            && data.rootCommentId.size() <= 500
+            && data.depth is int
+            && data.depth >= 0
+            && data.depth <= 50
+            && data.mentionedHandles is list
+            && data.mentionedHandles.size() <= 5
+            && (data.mentionedHandles.size() < 1
+              || (data.mentionedHandles[0] is string
+                && data.mentionedHandles[0].matches('[a-z0-9_]{3,24}')))
+            && (data.mentionedHandles.size() < 2
+              || (data.mentionedHandles[1] is string
+                && data.mentionedHandles[1].matches('[a-z0-9_]{3,24}')))
+            && (data.mentionedHandles.size() < 3
+              || (data.mentionedHandles[2] is string
+                && data.mentionedHandles[2].matches('[a-z0-9_]{3,24}')))
+            && (data.mentionedHandles.size() < 4
+              || (data.mentionedHandles[3] is string
+                && data.mentionedHandles[3].matches('[a-z0-9_]{3,24}')))
+            && (data.mentionedHandles.size() < 5
+              || (data.mentionedHandles[4] is string
+                && data.mentionedHandles[4].matches('[a-z0-9_]{3,24}'))))
+        )
+        && data.performanceId is string
+        && data.performanceId.size() > 0
+        && data.performanceId.size() <= 200
+        && data.performanceCreatorId is string
+        && data.performanceCreatorId.size() > 0
+        && data.userId is string
+        && data.userId.size() > 0
+        && data.creatorHandle is string
+        && data.creatorHandle.matches('[a-z0-9_]{3,24}')
+        && data.creatorDisplayName is string
+        && data.creatorDisplayName.size() > 0
+        && data.creatorDisplayName.size() <= 50
+        && data.body is string
+        && data.body.size() > 0
+        && data.body.size() <= 500
+        && data.hidden is bool
+        && data.removed is bool
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
     function validEvidenceUpdate(before, after) {
       return validOptionalEvidence(after)
         || !after.diff(before).affectedKeys().hasAny(['evidence']);
@@ -253,31 +415,14 @@ service cloud.firestore {
       allow write: if isOperator();
     }
 
-    // profiles: private to the owner and operators, owner create (role, banned, ageConfirmed17Plus,
-    // userReportCount pinned; acceptedPolicyVersion/acceptedPolicyAt must be
-    // absent, only the acceptPolicy Cloud Function sets them via the Admin
-    // SDK), owner update (cannot change role, banned, ageConfirmed17Plus,
-    // acceptedPolicyVersion, acceptedPolicyAt, or userReportCount)
+    // profiles: private to the owner and operators. Initial creation and policy
+    // acceptance are server-owned so one verified-contact transaction creates
+    // a coherent account. Owners may update display name only.
     match /profiles/{userId} {
       allow get: if isAuth() && (request.auth.uid == userId || isOperator());
       allow list: if isOperator();
-      allow create: if isAuth() && request.auth.uid == userId
-        && !exists(/databases/$(database)/documents/accountDeletionJobs/$(request.auth.uid))
-        && request.resource.data.keys().hasOnly(
-            ['displayName', 'role', 'banned', 'ageConfirmed17Plus',
-             'userReportCount', 'createdAt', 'updatedAt'])
-        && request.resource.data.role == 'user'
-        && request.resource.data.banned == false
-        && request.resource.data.ageConfirmed17Plus == true
-        && request.resource.data.userReportCount == 0
-        && !('acceptedPolicyVersion' in request.resource.data)
-        && !('acceptedPolicyAt' in request.resource.data)
-        && request.resource.data.displayName is string
-        && request.resource.data.displayName.size() > 0
-        && request.resource.data.displayName.size() <= 50
-        && validRecentClientTimestamp(request.resource.data.createdAt)
-        && validRecentClientTimestamp(request.resource.data.updatedAt);
-      allow update: if isAuth() && request.auth.uid == userId
+      allow create: if false;
+      allow update: if hasVerifiedContact() && request.auth.uid == userId
         && !exists(/databases/$(database)/documents/accountDeletionJobs/$(request.auth.uid))
         && (!('deletionPending' in resource.data)
             || resource.data.deletionPending == false)
@@ -287,6 +432,125 @@ service cloud.firestore {
         && request.resource.data.displayName.size() > 0
         && request.resource.data.displayName.size() <= 50
         && validRecentClientTimestamp(request.resource.data.updatedAt);
+    }
+
+    // Public creator identity is intentionally separate from private account
+    // state. Only the server-authoritative identity callable and aggregate
+    // writers may mutate these documents or their handle reservations.
+    match /creatorProfiles/{userId} {
+      allow get: if (resource.data.hidden == false
+          && resource.data.removed == false
+          && isActiveProfile(userId))
+        || (isAuth() && request.auth.uid == userId)
+        || isOperator();
+      // A list rule cannot safely prove current private account authority for
+      // every possible public result. V1 has no creator-directory query, so
+      // public access stays exact-ID get only and operators retain list access.
+      allow list: if isOperator();
+      allow create, update, delete: if false;
+    }
+
+    match /creatorHandles/{handle} {
+      allow read, write: if false;
+    }
+
+    // Follow edges are private to the follower and server-authored. Public
+    // profiles expose only recomputed totals, never the follower graph.
+    match /creatorFollows/{followId} {
+      allow get, list: if isAuth()
+        && resource.data.followerId == request.auth.uid;
+      allow create, update, delete: if false;
+    }
+
+    // Notification inbox rows are private, server-derived activity records.
+    // Read-state mutation will be added through its authenticated callable.
+    match /creatorNotifications/{notificationId} {
+      allow get, list: if isAuth()
+        && resource.data.ownerId == request.auth.uid;
+      allow create, update, delete: if false;
+    }
+
+    // Only approved, visible, parser-safe performance projections are public.
+    // Draft ownership, upload state, moderation notes, and source interactions
+    // live outside this collection in later server-authoritative blocks.
+    match /performances/{performanceId} {
+      allow get: if (validPublicPerformance(resource.data)
+          && resource.data.hidden == false
+          && resource.data.removed == false
+          && resource.data.sourceChantVisible == true
+          && resource.data.sourceCreatorVisible == true)
+        || isOperator();
+      allow list: if isOperator()
+        || (resource.data.schemaVersion == 1
+        && resource.data.publicationState == 'approved'
+        && resource.data.hidden == false
+        && resource.data.removed == false
+        && resource.data.sourceChantVisible == true
+        && resource.data.sourceCreatorVisible == true);
+      allow create, update, delete: if false;
+    }
+
+    // Upload ownership, object metadata, and moderation state never enter the
+    // public projection. Owners can resume their own drafts and operators can
+    // review the queue. Every state transition remains server-owned.
+    match /performanceDrafts/{draftId} {
+      allow get: if isAuth()
+        && (resource.data.ownerId == request.auth.uid || isOperator());
+      allow list: if isAuth()
+        && (resource.data.ownerId == request.auth.uid || isOperator());
+      allow create, update, delete: if false;
+    }
+
+    match /performanceUploadLimits/{limitId} {
+      allow read, write: if false;
+    }
+
+    // Source interaction records stay private and server-authored. A fan can
+    // read only their own like to render current state. Playback admission and
+    // view qualification tickets are never readable from the client SDK.
+    match /performanceLikes/{likeId} {
+      allow get: if isAuth() && resource.data.userId == request.auth.uid;
+      allow list: if false;
+      allow create, update, delete: if false;
+    }
+
+    match /performanceViews/{viewId} {
+      allow read, write: if false;
+    }
+
+    match /performanceShares/{shareId} {
+      allow read, write: if false;
+    }
+
+    match /performancePlaybackSessions/{sessionId} {
+      allow read, write: if false;
+    }
+
+    // Approved performance comments are public, but every mutation and count
+    // transition remains server-authoritative. Queries must include the three
+    // visibility predicates used by the mobile repository.
+    match /performanceComments/{commentId} {
+      allow get: if (validPublicPerformanceComment(resource.data)
+          && resource.data.hidden == false
+          && resource.data.removed == false)
+        || (isAuth() && resource.data.userId == request.auth.uid)
+        || isOperator();
+      allow list: if isOperator()
+        || (resource.data.schemaVersion in [1, 2]
+        && resource.data.performanceId is string
+        && resource.data.hidden == false
+        && resource.data.removed == false);
+      allow create, update, delete: if false;
+    }
+
+    match /performanceReports/{reportId} {
+      allow read: if isOperator();
+      allow create, update, delete: if false;
+    }
+
+    match /performanceCommentReports/{reportId} {
+      allow read: if isOperator();
+      allow create, update, delete: if false;
     }
 
     // chants: public read (visible only), auth create (not banned, server-side length limits), restricted update
@@ -361,7 +625,8 @@ service cloud.firestore {
         && isVisibleChant(resource.data.chantId)
         && request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['value']);
-      allow delete: if isAuth() && resource.data.userId == request.auth.uid;
+      allow delete: if hasVerifiedContact()
+        && resource.data.userId == request.auth.uid;
     }
 
     // Report admission is server-owned so rate budget and report creation can
@@ -414,7 +679,7 @@ service cloud.firestore {
         && isVisibleChant(request.resource.data.chantId)
         && validReplyParent(request.resource.data);
       // Author can only soft-delete (set removed: true on their own comment)
-      allow update: if isAuth()
+      allow update: if hasVerifiedContact()
         && resource.data.userId == request.auth.uid
         && request.resource.data.removed == true
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['removed']);
@@ -458,7 +723,8 @@ service cloud.firestore {
             get(/databases/$(database)/documents/comments/$(resource.data.commentId)).data.userId)
         && request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['value']);
-      allow delete: if isAuth() && resource.data.userId == request.auth.uid;
+      allow delete: if hasVerifiedContact()
+        && resource.data.userId == request.auth.uid;
     }
 
     // Comment report admission is server-owned. Read behavior is unchanged.
@@ -491,7 +757,8 @@ service cloud.firestore {
         && request.resource.data.createdAt is timestamp
         && blockId == request.auth.uid + '_' + request.resource.data.blockedUserId
         && isActiveProfile(request.resource.data.blockedUserId);
-      allow delete: if isAuth() && resource.data.blockerId == request.auth.uid;
+      allow delete: if hasVerifiedContact()
+        && resource.data.blockerId == request.auth.uid;
       allow update: if false;
     }
 
@@ -510,6 +777,11 @@ service cloud.firestore {
 
     // Private server-owned cursors for retryable account deletion.
     match /accountDeletionJobs/{userId} {
+      allow read, write: if false;
+    }
+
+    // Durable server-owned jobs make terminal performance removal retryable.
+    match /performanceMediaDeletionJobs/{performanceId} {
       allow read, write: if false;
     }
   }

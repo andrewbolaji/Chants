@@ -18,6 +18,19 @@ export const ACCOUNT_DELETION_PHASES = [
   "delete-user-reports-against",
   "delete-blocks-by",
   "delete-blocks-against",
+  "delete-follows-by",
+  "delete-follows-against",
+  "delete-notifications-owned",
+  "delete-notifications-acted",
+  "delete-performance-likes",
+  "delete-performance-views",
+  "delete-performance-shares",
+  "delete-performance-playback-sessions",
+  "delete-performance-reports",
+  "delete-performance-comment-reports",
+  "anonymize-performance-comments",
+  "anonymize-performances",
+  "delete-performance-drafts",
   "anonymize-audit-by",
   "write-audit",
   "delete-auth",
@@ -142,6 +155,68 @@ const PAGE_PHASES: Partial<Record<AccountDeletionPhase, PagePhase>> = {
   "delete-blocks-against": {
     collection: "blocks",
     field: "blockedUserId",
+  },
+  "delete-follows-by": {
+    collection: "creatorFollows",
+    field: "followerId",
+  },
+  "delete-follows-against": {
+    collection: "creatorFollows",
+    field: "followedId",
+  },
+  "delete-notifications-owned": {
+    collection: "creatorNotifications",
+    field: "ownerId",
+  },
+  "delete-notifications-acted": {
+    collection: "creatorNotifications",
+    field: "actorId",
+  },
+  "delete-performance-likes": {
+    collection: "performanceLikes",
+    field: "userId",
+  },
+  "delete-performance-views": {
+    collection: "performanceViews",
+    field: "userId",
+  },
+  "delete-performance-shares": {
+    collection: "performanceShares",
+    field: "userId",
+  },
+  "delete-performance-playback-sessions": {
+    collection: "performancePlaybackSessions",
+    field: "userId",
+  },
+  "delete-performance-reports": {
+    collection: "performanceReports",
+    field: "reportedBy",
+  },
+  "delete-performance-comment-reports": {
+    collection: "performanceCommentReports",
+    field: "reportedBy",
+  },
+  "anonymize-performance-comments": {
+    collection: "performanceComments",
+    field: "userId",
+    update: {
+      userId: "deleted-user",
+      creatorHandle: "deleted",
+      creatorDisplayName: "Deleted creator",
+    },
+  },
+  "anonymize-performances": {
+    collection: "performances",
+    field: "creatorId",
+    update: {
+      creatorId: "deleted-user",
+      creatorHandle: "deleted",
+      creatorDisplayName: "Deleted creator",
+    },
+  },
+  "delete-performance-drafts": {
+    collection: "performanceDrafts",
+    field: "ownerId",
   },
   "anonymize-audit-by": {
     collection: "auditLog",
@@ -365,17 +440,32 @@ async function finalizeAccountDeletion(
   const phase: AccountDeletionPhase = "finalize";
   const jobRef = params.firestore.collection("accountDeletionJobs").doc(params.uid);
   const profileRef = params.firestore.collection("profiles").doc(params.uid);
+  const creatorRef = params.firestore.collection("creatorProfiles").doc(params.uid);
 
   const complete = await params.firestore.runTransaction(async (transaction) => {
-    const jobSnap = await transaction.get(jobRef);
+    const [jobSnap, creatorSnap] = await Promise.all([
+      transaction.get(jobRef),
+      transaction.get(creatorRef),
+    ]);
     if (!jobSnap.exists) return true;
     const current = parseJob(jobSnap.data()!);
     if (current.phase !== phase) return false;
+    const handle = creatorSnap.exists && typeof creatorSnap.data()?.handle === "string"
+      ? (creatorSnap.data()!.handle as string).toLowerCase()
+      : undefined;
+    const handleRef = handle
+      ? params.firestore.collection("creatorHandles").doc(handle)
+      : undefined;
+    const handleSnap = handleRef ? await transaction.get(handleRef) : undefined;
+    if (handleRef && handleSnap?.data()?.uid === params.uid) {
+      transaction.delete(handleRef);
+    }
+    if (creatorSnap.exists) transaction.delete(creatorRef);
     transaction.delete(profileRef);
     transaction.delete(jobRef);
     return true;
   });
-  return { phase, processed: complete ? 2 : 0, advanced: false, complete };
+  return { phase, processed: complete ? 4 : 0, advanced: false, complete };
 }
 
 export async function processAccountDeletionStep(

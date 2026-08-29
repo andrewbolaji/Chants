@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chants/app/colors.dart';
 import 'package:chants/app/providers.dart';
 import 'package:chants/app/spacing.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class PasswordResetScreen extends ConsumerStatefulWidget {
   const PasswordResetScreen({super.key});
@@ -17,6 +18,7 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
   final _emailController = TextEditingController();
   bool _loading = false;
   bool _sent = false;
+  String? _error;
 
   @override
   void dispose() {
@@ -27,17 +29,34 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
   Future<void> _sendReset() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _loading = true);
-
-    await ref
-        .read(authRepositoryProvider)
-        .sendPasswordReset(email: _emailController.text.trim());
-
-    if (!mounted) return;
     setState(() {
-      _loading = false;
-      _sent = true;
+      _loading = true;
+      _error = null;
     });
+
+    try {
+      await ref
+          .read(authRepositoryProvider)
+          .sendPasswordReset(email: _emailController.text.trim());
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _sent = true;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error =
+            error is FirebaseAuthException &&
+                error.code == 'network-request-failed'
+            ? 'You appear to be offline. Reconnect and try again.'
+            : error is FirebaseAuthException &&
+                  error.code == 'too-many-requests'
+            ? 'Too many requests. Wait a moment before trying again.'
+            : 'The reset link could not be requested. Try again.';
+      });
+    }
   }
 
   @override
@@ -46,12 +65,17 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('RESET PASSWORD')),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: Spacing.xl),
-        child: _sent
-            ? Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(
+            Spacing.xl,
+            Spacing.xl,
+            Spacing.xl,
+            Spacing.xxxl,
+          ),
+          children: _sent
+              ? [
+                  const SizedBox(height: Spacing.xxl),
                   Icon(
                     Icons.check_circle_outline,
                     size: 48,
@@ -71,45 +95,59 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
                     onPressed: () => Navigator.pop(context),
                     child: const Text('BACK TO SIGN IN'),
                   ),
+                ]
+              : [
+                  const SizedBox(height: Spacing.xxl),
+                  Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          'Enter the email you signed up with. '
+                          'We will send a link to reset your password.',
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: AppColors.textBody,
+                          ),
+                        ),
+                        const SizedBox(height: Spacing.lg),
+                        TextFormField(
+                          controller: _emailController,
+                          decoration: const InputDecoration(labelText: 'Email'),
+                          keyboardType: TextInputType.emailAddress,
+                          autofillHints: const [AutofillHints.email],
+                          validator: (value) => value == null || value.isEmpty
+                              ? 'Enter your email.'
+                              : null,
+                        ),
+                        if (_error != null) ...[
+                          const SizedBox(height: Spacing.md),
+                          Semantics(
+                            liveRegion: true,
+                            child: Text(
+                              _error!,
+                              style: const TextStyle(color: AppColors.error),
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: Spacing.xl),
+                        FilledButton(
+                          onPressed: _loading ? null : _sendReset,
+                          child: _loading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Text('SEND RESET LINK'),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
-              )
-            : Form(
-                key: _formKey,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      'Enter the email you signed up with. '
-                      'We will send a link to reset your password.',
-                      style: textTheme.bodyMedium?.copyWith(
-                        color: AppColors.textBody,
-                      ),
-                    ),
-                    const SizedBox(height: Spacing.lg),
-                    TextFormField(
-                      controller: _emailController,
-                      decoration: const InputDecoration(labelText: 'Email'),
-                      keyboardType: TextInputType.emailAddress,
-                      autofillHints: const [AutofillHints.email],
-                      validator: (v) =>
-                          v == null || v.isEmpty ? 'Enter your email.' : null,
-                    ),
-                    const SizedBox(height: Spacing.xl),
-                    FilledButton(
-                      onPressed: _loading ? null : _sendReset,
-                      child: _loading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child:
-                                  CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Text('SEND RESET LINK'),
-                    ),
-                  ],
-                ),
-              ),
+        ),
       ),
     );
   }

@@ -4,6 +4,8 @@ import { handleUserBanAction } from "../src/index";
 describe("handleUserBanAction", () => {
   it("unbans an existing profile and writes an audit entry", async () => {
     const updates: Array<{ banned: boolean }> = [];
+    const creatorUpdates: Array<{ hidden: boolean }> = [];
+    let reconciled = 0;
     const audits: Array<Record<string, string>> = [];
 
     const result = await handleUserBanAction({
@@ -16,6 +18,15 @@ describe("handleUserBanAction", () => {
           updates.push(data);
         },
       },
+      creatorProfileDocument: {
+        get: async () => ({ exists: true, data: () => ({ removed: false }) }),
+        update: async (data) => {
+          creatorUpdates.push(data);
+        },
+      },
+      reconcilePerformances: async () => {
+        reconciled += 1;
+      },
       auditWriter: async (entry) => {
         audits.push(entry);
       },
@@ -23,6 +34,8 @@ describe("handleUserBanAction", () => {
 
     assert.deepStrictEqual(result, { success: true });
     assert.deepStrictEqual(updates, [{ banned: false }]);
+    assert.deepStrictEqual(creatorUpdates, [{ hidden: false }]);
+    assert.strictEqual(reconciled, 1);
     assert.deepStrictEqual(audits, [
       {
         actorId: "operator-1",
@@ -49,6 +62,11 @@ describe("handleUserBanAction", () => {
             updated = true;
           },
         },
+        creatorProfileDocument: {
+          get: async () => ({ exists: false, data: () => undefined }),
+          update: async () => undefined,
+        },
+        reconcilePerformances: async () => undefined,
         auditWriter: async () => {
           audited = true;
         },
@@ -58,5 +76,62 @@ describe("handleUserBanAction", () => {
 
     assert.strictEqual(updated, false);
     assert.strictEqual(audited, false);
+  });
+
+  it("bans public identity and performance eligibility before auditing", async () => {
+    const order: string[] = [];
+    await handleUserBanAction({
+      action: "ban",
+      actorUid: "operator-1",
+      targetId: "user-1",
+      profileDocument: {
+        get: async () => ({ exists: true }),
+        update: async () => {
+          order.push("private-ban");
+        },
+      },
+      creatorProfileDocument: {
+        get: async () => ({ exists: true, data: () => ({ removed: false }) }),
+        update: async () => {
+          order.push("public-hide");
+        },
+      },
+      reconcilePerformances: async () => {
+        order.push("performance-hide");
+      },
+      auditWriter: async () => {
+        order.push("audit");
+      },
+    });
+    assert.deepStrictEqual(order, [
+      "private-ban",
+      "public-hide",
+      "performance-hide",
+      "audit",
+    ]);
+  });
+
+  it("does not revive performances when an unbanned user has no public identity", async () => {
+    let reconciled = 0;
+    await handleUserBanAction({
+      action: "unban",
+      actorUid: "operator-1",
+      targetId: "user-1",
+      profileDocument: {
+        get: async () => ({ exists: true }),
+        update: async () => undefined,
+      },
+      creatorProfileDocument: {
+        get: async () => ({ exists: false, data: () => undefined }),
+        update: async () => {
+          throw new Error("Missing public identity must not be updated.");
+        },
+      },
+      reconcilePerformances: async () => {
+        reconciled += 1;
+      },
+      auditWriter: async () => undefined,
+    });
+    assert.strictEqual(reconciled, 1);
   });
 });

@@ -29,8 +29,10 @@ class _FakeModerationRepository implements ModerationRepository {
   @override
   Future<void> hideComment(String commentId) async {}
   @override
-  Future<Map<String, dynamic>> mergeChants(
-      {required String sourceId, required String targetId}) async {
+  Future<Map<String, dynamic>> mergeChants({
+    required String sourceId,
+    required String targetId,
+  }) async {
     return {};
   }
 
@@ -46,6 +48,12 @@ class _FakeModerationRepository implements ModerationRepository {
   Future<void> unhideChant(String chantId) async {}
   @override
   Future<void> unhideComment(String commentId) async {}
+  @override
+  Future<void> moderatePublishedPerformance({
+    required String targetType,
+    required String targetId,
+    required String action,
+  }) async {}
 }
 
 void main() {
@@ -57,11 +65,9 @@ void main() {
   }
 
   group('PolicyAcceptanceGateScreen', () {
-    testWidgets('renders the policy text and an agree button',
-        (tester) async {
+    testWidgets('renders the policy text and an agree button', (tester) async {
       final repo = _FakeModerationRepository();
-      await tester.pumpWidget(
-          wrap(const PolicyAcceptanceGateScreen(), repo));
+      await tester.pumpWidget(wrap(const PolicyAcceptanceGateScreen(), repo));
 
       expect(find.text('CONTENT POLICY'), findsOneWidget);
       expect(find.text('I AGREE'), findsOneWidget);
@@ -69,8 +75,7 @@ void main() {
 
     testWidgets('tapping I agree calls acceptPolicy', (tester) async {
       final repo = _FakeModerationRepository();
-      await tester.pumpWidget(
-          wrap(const PolicyAcceptanceGateScreen(), repo));
+      await tester.pumpWidget(wrap(const PolicyAcceptanceGateScreen(), repo));
 
       await tester.tap(find.text('I AGREE'));
       // Not pumpAndSettle: on success the screen intentionally stays in its
@@ -83,11 +88,11 @@ void main() {
       expect(repo.acceptPolicyCalls, 1);
     });
 
-    testWidgets('shows an error and stays usable if acceptPolicy fails',
-        (tester) async {
+    testWidgets('shows an error and stays usable if acceptPolicy fails', (
+      tester,
+    ) async {
       final repo = _FakeModerationRepository()..shouldFail = true;
-      await tester.pumpWidget(
-          wrap(const PolicyAcceptanceGateScreen(), repo));
+      await tester.pumpWidget(wrap(const PolicyAcceptanceGateScreen(), repo));
 
       await tester.tap(find.text('I AGREE'));
       await tester.pumpAndSettle();

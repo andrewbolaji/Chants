@@ -10,8 +10,12 @@ class AccountDeletionService {
     required ModerationRepository moderationRepository,
     required SavedSongbookRepository savedSongbookRepository,
     required Future<void> Function() signOut,
-  }) : _moderationRepository = moderationRepository,
+  }) : // Keep public dependency names readable outside this library.
+       // ignore: prefer_initializing_formals
+       _moderationRepository = moderationRepository,
+       // ignore: prefer_initializing_formals
        _savedSongbookRepository = savedSongbookRepository,
+       // ignore: prefer_initializing_formals
        _signOut = signOut;
 
   Future<void> deleteAccount(String uid) async {

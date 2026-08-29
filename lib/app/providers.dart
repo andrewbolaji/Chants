@@ -1,9 +1,21 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chants/data/models/user_profile.dart';
+import 'package:chants/data/models/auth_feature_config.dart';
+import 'package:chants/data/models/creator_profile.dart';
 import 'package:chants/data/models/blocked_user.dart';
 import 'package:chants/data/repositories/auth_repository.dart';
 import 'package:chants/data/repositories/profile_repository.dart';
+import 'package:chants/data/repositories/creator_profile_repository.dart';
+import 'package:chants/data/repositories/creator_follow_repository.dart';
+import 'package:chants/data/repositories/creator_notification_repository.dart';
+import 'package:chants/data/repositories/performance_repository.dart';
+import 'package:chants/data/repositories/performance_interaction_repository.dart';
+import 'package:chants/data/repositories/public_share_repository.dart';
+import 'package:chants/data/repositories/performance_draft_repository.dart';
+import 'package:chants/data/services/performance_media_selection.dart';
+import 'package:chants/data/services/performance_share.dart';
+import 'package:chants/data/services/creator_share.dart';
 import 'package:chants/data/repositories/sport_repository.dart';
 import 'package:chants/data/repositories/competition_repository.dart';
 import 'package:chants/data/repositories/team_repository.dart';
@@ -13,10 +25,13 @@ import 'package:chants/data/repositories/vote_repository.dart';
 import 'package:chants/data/repositories/comment_repository.dart';
 import 'package:chants/data/repositories/block_repository.dart';
 import 'package:chants/data/repositories/moderation_repository.dart';
+import 'package:chants/data/repositories/onboarding_repository.dart';
+import 'package:chants/data/repositories/magic_link_store.dart';
 import 'package:chants/data/repositories/safety_submission_repository.dart';
 import 'package:chants/data/repositories/saved_songbook_repository.dart';
 import 'package:chants/data/repositories/songbook_storage.dart';
 import 'package:chants/data/services/account_deletion_service.dart';
+import 'package:chants/data/services/magic_link_coordinator.dart';
 import 'package:chants/data/services/chant_share.dart';
 import 'package:chants/data/services/saved_songbook_service.dart';
 import 'package:chants/data/models/saved_songbook.dart';
@@ -26,8 +41,62 @@ final authRepositoryProvider = Provider<AuthRepository>(
   (ref) => AuthRepository(),
 );
 
+final authFeatureConfigProvider = Provider<AuthFeatureConfig>(
+  (ref) => AuthFeatureConfig.fromEnvironment(),
+);
+
+final magicLinkStoreProvider = Provider<MagicLinkStore>(
+  (ref) => MagicLinkStore(),
+);
+
+final magicLinkCoordinatorProvider = Provider<MagicLinkCoordinator>(
+  (ref) => MagicLinkCoordinator(),
+);
+
 final profileRepositoryProvider = Provider<ProfileRepository>(
   (ref) => ProfileRepository(),
+);
+
+final creatorProfileRepositoryProvider = Provider<CreatorProfileRepository>(
+  (ref) => CreatorProfileRepository(),
+);
+
+final creatorFollowRepositoryProvider = Provider<CreatorFollowRepository>(
+  (ref) => CreatorFollowRepository.firebase(),
+);
+
+final creatorNotificationRepositoryProvider =
+    Provider<CreatorNotificationRepository>(
+      (ref) => CreatorNotificationRepository.firebase(),
+    );
+
+final performanceRepositoryProvider = Provider<PerformanceRepository>(
+  (ref) => PerformanceRepository(),
+);
+
+final performanceInteractionRepositoryProvider =
+    Provider<PerformanceInteractionRepository>(
+      (ref) => PerformanceInteractionRepository.firebase(),
+    );
+
+final publicShareRepositoryProvider = Provider<PublicShareRepository>(
+  (ref) => PublicShareRepository(),
+);
+
+final performanceShareGatewayProvider = Provider<PerformanceShareGateway>(
+  (ref) => PlatformPerformanceShareGateway(),
+);
+
+final creatorShareGatewayProvider = Provider<CreatorShareGateway>(
+  (ref) => PlatformCreatorShareGateway(),
+);
+
+final performanceDraftRepositoryProvider = Provider<PerformanceDraftRepository>(
+  (ref) => PerformanceDraftRepository(),
+);
+
+final performanceMediaSelectorProvider = Provider<PerformanceMediaSelector>(
+  (ref) => PerformanceMediaSelector(),
 );
 
 final sportRepositoryProvider = Provider<SportRepository>(
@@ -68,6 +137,10 @@ final blockRepositoryProvider = Provider<BlockRepository>(
 
 final moderationRepositoryProvider = Provider<ModerationRepository>(
   (ref) => ModerationRepository(),
+);
+
+final onboardingRepositoryProvider = Provider<OnboardingRepository>(
+  (ref) => OnboardingRepository(),
 );
 
 final chantShareGatewayProvider = Provider<ChantShareGateway>(
@@ -137,6 +210,13 @@ final userProfileProvider = StreamProvider.family<UserProfile?, String>((
   uid,
 ) {
   return ref.watch(profileRepositoryProvider).profileStream(uid);
+});
+
+final creatorProfileProvider = StreamProvider.family<CreatorProfile?, String>((
+  ref,
+  uid,
+) {
+  return ref.watch(creatorProfileRepositoryProvider).profileStream(uid);
 });
 
 final blockedUsersProvider = StreamProvider.family<List<BlockedUser>, String>((

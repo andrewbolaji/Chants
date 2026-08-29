@@ -5,6 +5,7 @@ import {
   onDocumentWritten,
 } from "firebase-functions/v2/firestore";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { onRequest } from "firebase-functions/v2/https";
 import { writeAuditEntry, writePrivacySafeReportAuditEntry } from "./audit";
 import {
   ChantTrustAction,
@@ -14,15 +15,62 @@ import {
 import {
   handleSubmitFeedback,
   handleSubmitReport,
-  requireAuthenticatedUid,
+  requireVerifiedUid,
 } from "./safety_submission";
+import { handleCompleteOnboarding } from "./onboarding";
 import {
   processAccountDeletionStep,
   requestAccountDeletion,
 } from "./account_deletion";
+import { handleUpdateCreatorProfile } from "./creator_profile";
+import {
+  handleSetCreatorFollow,
+  recomputeCreatorFollowCounts,
+} from "./creator_follow";
+import { handleMarkCreatorNotificationRead } from "./creator_notification";
+import { handlePublishedPerformanceModeration } from "./published_performance_moderation";
+import {
+  firebasePerformanceMediaGateway,
+  handleCancelPerformanceDraft,
+  handleCreatePerformanceDraft,
+  handleModeratePerformance,
+  handleResolvePerformancePlayback,
+  handleResolvePerformanceDraftPlayback,
+  handleSetPerformanceLike,
+  handleRecordPerformanceShare,
+  handleRecordQualifiedPerformanceView,
+  handleCreatePerformanceComment,
+  handleDeletePerformanceComment,
+  handleSubmitPerformanceDraft,
+  cleanupDeletedPerformanceDraft,
+  cleanupRemovedPerformanceMedia,
+  recomputePerformanceLikeCounts,
+  recomputePerformanceViewCounts,
+  recomputePerformanceCommentCount,
+  recomputePerformanceShareCounts,
+} from "./performance";
+import {
+  chantSourceChanged,
+  handlePerformanceVisibilityWritten,
+  reconcileChantPerformanceSource,
+  reconcileCreatorPerformanceSource,
+} from "./performance_source";
+import {
+  handleResolvePublicShareDestination,
+  handleResolvePublicPerformanceMedia,
+  performanceIdFromPublicMediaPath,
+  renderPublicPage,
+  resolvePublicPage,
+} from "./public_share";
 
 admin.initializeApp();
 const db = admin.firestore();
+
+function performanceMediaGateway() {
+  // Resolve the configured bucket only when a media callable runs. The test
+  // harness imports this module without production Firebase options.
+  return firebasePerformanceMediaGateway(admin.storage().bucket());
+}
 
 const AUTO_HIDE_THRESHOLD = 3;
 
@@ -34,7 +82,7 @@ const CURRENT_POLICY_VERSION = "v1";
 export const submitReport = onCall(
   { region: "europe-west2" },
   async (request) => {
-    const uid = requireAuthenticatedUid(request.auth);
+    const uid = requireVerifiedUid(request.auth);
     return handleSubmitReport({
       uid,
       data: request.data,
@@ -47,12 +95,405 @@ export const submitReport = onCall(
 export const submitFeedback = onCall(
   { region: "europe-west2" },
   async (request) => {
-    const uid = requireAuthenticatedUid(request.auth);
+    const uid = requireVerifiedUid(request.auth);
     return handleSubmitFeedback({
       uid,
       data: request.data,
       firestore: db,
       clock: () => admin.firestore.Timestamp.now(),
+    });
+  }
+);
+
+export const updateCreatorProfile = onCall(
+  { region: "europe-west2" },
+  async (request) => {
+    const uid = requireVerifiedUid(request.auth);
+    return handleUpdateCreatorProfile({
+      uid,
+      data: request.data,
+      firestore: db,
+      now: () => admin.firestore.Timestamp.now(),
+    });
+  }
+);
+
+export const setCreatorFollow = onCall(
+  { region: "europe-west2" },
+  async (request) => {
+    const uid = requireVerifiedUid(request.auth);
+    return handleSetCreatorFollow({
+      uid,
+      data: request.data,
+      firestore: db,
+      now: () => admin.firestore.Timestamp.now(),
+    });
+  }
+);
+
+export const markCreatorNotificationRead = onCall(
+  { region: "europe-west2" },
+  async (request) => {
+    const uid = requireVerifiedUid(request.auth);
+    return handleMarkCreatorNotificationRead({
+      uid,
+      data: request.data,
+      firestore: db,
+      now: () => admin.firestore.Timestamp.now(),
+    });
+  }
+);
+
+export const moderatePublishedPerformance = onCall(
+  { region: "europe-west2" },
+  async (request) => {
+    const actorUid = requireVerifiedUid(request.auth);
+    return handlePublishedPerformanceModeration({
+      actorUid,
+      data: request.data,
+      firestore: db,
+      now: () => admin.firestore.Timestamp.now(),
+      newAuditId: () => db.collection("auditLog").doc().id,
+    });
+  }
+);
+
+export const resolvePublicShareDestination = onCall(
+  { region: "europe-west2" },
+  async (request) => {
+    return handleResolvePublicShareDestination({
+      data: request.data,
+      firestore: db,
+    });
+  }
+);
+
+export const publicSharePage = onRequest(
+  { region: "europe-west2" },
+  async (request, response) => {
+    const page = await resolvePublicPage({ path: request.path, firestore: db });
+    response
+      .status(page.status)
+      .set("Cache-Control", "no-store")
+      .set(
+        "Content-Security-Policy",
+        "default-src 'none'; style-src 'unsafe-inline'; img-src https:; " +
+          "media-src https:; " +
+          "base-uri 'none'; frame-ancestors 'none'; form-action 'none'"
+      )
+      .set("Referrer-Policy", "no-referrer")
+      .set("X-Content-Type-Options", "nosniff")
+      .type("html")
+      .send(renderPublicPage(page));
+  }
+);
+
+export const publicPerformanceMedia = onRequest(
+  { region: "europe-west2" },
+  async (request, response) => {
+    const performanceId = performanceIdFromPublicMediaPath(request.path);
+    try {
+      const destination = await handleResolvePublicPerformanceMedia({
+        performanceId,
+        firestore: db,
+        media: performanceMediaGateway(),
+        nowMs: Date.now,
+      });
+      response
+        .status(302)
+        .set("Cache-Control", "private,no-store,max-age=0")
+        .set("Referrer-Policy", "no-referrer")
+        .set("X-Content-Type-Options", "nosniff")
+        .redirect(destination.url);
+    } catch (_) {
+      response
+        .status(404)
+        .set("Cache-Control", "private,no-store,max-age=0")
+        .set("Referrer-Policy", "no-referrer")
+        .set("X-Content-Type-Options", "nosniff")
+        .type("text")
+        .send("This performance is unavailable.");
+    }
+  }
+);
+
+export const createPerformanceDraft = onCall(
+  { region: "europe-west2" },
+  async (request) => {
+    const uid = requireVerifiedUid(request.auth);
+    return handleCreatePerformanceDraft({
+      uid,
+      data: request.data,
+      firestore: db,
+      now: () => admin.firestore.Timestamp.now(),
+      newId: () => db.collection("performanceDrafts").doc().id,
+    });
+  }
+);
+
+export const submitPerformanceDraft = onCall(
+  { region: "europe-west2", timeoutSeconds: 60 },
+  async (request) => {
+    const uid = requireVerifiedUid(request.auth);
+    return handleSubmitPerformanceDraft({
+      uid,
+      data: request.data,
+      firestore: db,
+      media: performanceMediaGateway(),
+      now: () => admin.firestore.Timestamp.now(),
+    });
+  }
+);
+
+export const cancelPerformanceDraft = onCall(
+  { region: "europe-west2" },
+  async (request) => {
+    const uid = requireVerifiedUid(request.auth);
+    return handleCancelPerformanceDraft({
+      uid,
+      data: request.data,
+      firestore: db,
+      media: performanceMediaGateway(),
+      now: () => admin.firestore.Timestamp.now(),
+    });
+  }
+);
+
+export const moderatePerformance = onCall(
+  { region: "europe-west2", timeoutSeconds: 60 },
+  async (request) => {
+    const actorUid = requireVerifiedUid(request.auth);
+    return handleModeratePerformance({
+      actorUid,
+      data: request.data,
+      firestore: db,
+      media: performanceMediaGateway(),
+      now: () => admin.firestore.Timestamp.now(),
+    });
+  }
+);
+
+export const resolvePerformancePlayback = onCall(
+  { region: "europe-west2" },
+  async (request) => {
+    const actorUid = requireVerifiedUid(request.auth);
+    return handleResolvePerformancePlayback({
+      actorUid,
+      data: request.data,
+      firestore: db,
+      media: performanceMediaGateway(),
+      now: () => admin.firestore.Timestamp.now(),
+    });
+  }
+);
+
+export const setPerformanceLike = onCall(
+  { region: "europe-west2" },
+  async (request) => {
+    const uid = requireVerifiedUid(request.auth);
+    return handleSetPerformanceLike({
+      uid,
+      data: request.data,
+      firestore: db,
+      now: () => admin.firestore.Timestamp.now(),
+    });
+  }
+);
+
+export const recordPerformanceShare = onCall(
+  { region: "europe-west2" },
+  async (request) => {
+    const uid = requireVerifiedUid(request.auth);
+    return handleRecordPerformanceShare({
+      uid,
+      data: request.data,
+      firestore: db,
+      now: () => admin.firestore.Timestamp.now(),
+    });
+  }
+);
+
+export const recordQualifiedPerformanceView = onCall(
+  { region: "europe-west2" },
+  async (request) => {
+    const uid = requireVerifiedUid(request.auth);
+    return handleRecordQualifiedPerformanceView({
+      uid,
+      data: request.data,
+      firestore: db,
+      now: () => admin.firestore.Timestamp.now(),
+    });
+  }
+);
+
+export const createPerformanceComment = onCall(
+  { region: "europe-west2" },
+  async (request) => {
+    const uid = requireVerifiedUid(request.auth);
+    return handleCreatePerformanceComment({
+      uid,
+      data: request.data,
+      firestore: db,
+      now: () => admin.firestore.Timestamp.now(),
+    });
+  }
+);
+
+export const deletePerformanceComment = onCall(
+  { region: "europe-west2" },
+  async (request) => {
+    const uid = requireVerifiedUid(request.auth);
+    return handleDeletePerformanceComment({
+      uid,
+      data: request.data,
+      firestore: db,
+      now: () => admin.firestore.Timestamp.now(),
+    });
+  }
+);
+
+export const resolvePerformanceDraftPlayback = onCall(
+  { region: "europe-west2" },
+  async (request) => {
+    const actorUid = requireVerifiedUid(request.auth);
+    return handleResolvePerformanceDraftPlayback({
+      actorUid,
+      data: request.data,
+      firestore: db,
+      media: performanceMediaGateway(),
+      now: () => admin.firestore.Timestamp.now(),
+    });
+  }
+);
+
+export const onPerformanceDraftDeleted = onDocumentDeleted(
+  { document: "performanceDrafts/{draftId}", region: "europe-west2" },
+  async (event) => {
+    await cleanupDeletedPerformanceDraft(
+      event.data?.data(),
+      performanceMediaGateway()
+    );
+  }
+);
+
+export const onPerformanceLikeWritten = onDocumentWritten(
+  { document: "performanceLikes/{likeId}", region: "europe-west2" },
+  async (event) => {
+    await recomputePerformanceLikeCounts({
+      before: event.data?.before.data(),
+      after: event.data?.after.data(),
+      firestore: db,
+      now: () => admin.firestore.Timestamp.now(),
+    });
+  }
+);
+
+export const onPerformanceViewWritten = onDocumentWritten(
+  { document: "performanceViews/{viewId}", region: "europe-west2" },
+  async (event) => {
+    await recomputePerformanceViewCounts({
+      before: event.data?.before.data(),
+      after: event.data?.after.data(),
+      firestore: db,
+      now: () => admin.firestore.Timestamp.now(),
+    });
+  }
+);
+
+export const onPerformanceShareWritten = onDocumentWritten(
+  { document: "performanceShares/{shareId}", region: "europe-west2" },
+  async (event) => {
+    await recomputePerformanceShareCounts({
+      before: event.data?.before.data(),
+      after: event.data?.after.data(),
+      firestore: db,
+      now: () => admin.firestore.Timestamp.now(),
+    });
+  }
+);
+
+export const onPerformanceCommentWritten = onDocumentWritten(
+  { document: "performanceComments/{commentId}", region: "europe-west2" },
+  async (event) => {
+    await recomputePerformanceCommentCount({
+      before: event.data?.before.data(),
+      after: event.data?.after.data(),
+      firestore: db,
+      now: () => admin.firestore.Timestamp.now(),
+    });
+  }
+);
+
+export const onPerformanceWritten = onDocumentWritten(
+  { document: "performances/{performanceId}", region: "europe-west2" },
+  async (event) => {
+    await handlePerformanceVisibilityWritten({
+      before: event.data?.before.data(),
+      after: event.data?.after.data(),
+      firestore: db,
+      now: () => admin.firestore.Timestamp.now(),
+    });
+  }
+);
+
+export const onChantWrittenForPerformances = onDocumentWritten(
+  { document: "chants/{chantId}", region: "europe-west2" },
+  async (event) => {
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
+    if (!chantSourceChanged(before, after)) return;
+    await reconcileChantPerformanceSource({
+      chantId: event.params.chantId,
+      firestore: db,
+      now: () => admin.firestore.Timestamp.now(),
+    });
+  }
+);
+
+export const onProfileAuthorityWrittenForPerformances = onDocumentWritten(
+  { document: "profiles/{userId}", region: "europe-west2" },
+  async (event) => {
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
+    if (
+      before?.banned === after?.banned &&
+      before?.deletionPending === after?.deletionPending &&
+      !!before === !!after
+    ) return;
+    await reconcileCreatorPerformanceSource({
+      creatorId: event.params.userId,
+      firestore: db,
+      now: () => admin.firestore.Timestamp.now(),
+    });
+  }
+);
+
+export const onPerformanceMediaDeletionJobWritten = onDocumentWritten(
+  {
+    document: "performanceMediaDeletionJobs/{performanceId}",
+    region: "europe-west2",
+    retry: true,
+  },
+  async (event) => {
+    const snapshot = event.data?.after;
+    if (!snapshot?.exists) return;
+    const cleaned = await cleanupRemovedPerformanceMedia(
+      snapshot.data(),
+      performanceMediaGateway(),
+    );
+    if (!cleaned) throw new Error("Invalid performance media deletion job.");
+    await snapshot.ref.delete();
+  }
+);
+
+export const onCreatorFollowWritten = onDocumentWritten(
+  { document: "creatorFollows/{followId}", region: "europe-west2" },
+  async (event) => {
+    await recomputeCreatorFollowCounts({
+      before: event.data?.before.data(),
+      after: event.data?.after.data(),
+      firestore: db,
+      now: () => admin.firestore.Timestamp.now(),
     });
   }
 );
@@ -179,6 +620,14 @@ type UserProfileDocument = {
   update: (data: { banned: boolean }) => Promise<unknown>;
 };
 
+type CreatorProfileDocument = {
+  get: () => Promise<{
+    exists: boolean;
+    data: () => admin.firestore.DocumentData | undefined;
+  }>;
+  update: (data: { hidden: boolean }) => Promise<unknown>;
+};
+
 type AuditWriter = (params: {
   actorId: string;
   action: string;
@@ -192,6 +641,8 @@ export async function handleUserBanAction(params: {
   actorUid: string;
   targetId: string;
   profileDocument: UserProfileDocument;
+  creatorProfileDocument: CreatorProfileDocument;
+  reconcilePerformances: () => Promise<unknown>;
   auditWriter: AuditWriter;
 }): Promise<{ success: true }> {
   const targetProfile = await params.profileDocument.get();
@@ -201,6 +652,13 @@ export async function handleUserBanAction(params: {
 
   const banned = params.action === "ban";
   await params.profileDocument.update({ banned });
+  const creatorProfile = await params.creatorProfileDocument.get();
+  const creatorCanReturn = creatorProfile.exists &&
+    creatorProfile.data()?.removed !== true;
+  if (creatorProfile.exists && (banned || creatorCanReturn)) {
+    await params.creatorProfileDocument.update({ hidden: banned });
+  }
+  await params.reconcilePerformances();
   await params.auditWriter({
     actorId: params.actorUid,
     action: params.action,
@@ -257,10 +715,7 @@ export const onModerationAction = onCall(
   { region: "europe-west2" },
   async (request) => {
     // Derive actor from auth context (hardening: never trust client-supplied UID)
-    if (!request.auth) {
-      throw new HttpsError("unauthenticated", "Sign in required.");
-    }
-    const actorUid = request.auth.uid;
+    const actorUid = requireVerifiedUid(request.auth);
 
     // Verify operator role via Admin SDK
     const actorProfile = await db.collection("profiles").doc(actorUid).get();
@@ -336,6 +791,13 @@ export const onModerationAction = onCall(
           actorUid,
           targetId,
           profileDocument: db.collection("profiles").doc(targetId),
+          creatorProfileDocument: db.collection("creatorProfiles").doc(targetId),
+          reconcilePerformances: () =>
+            reconcileCreatorPerformanceSource({
+              creatorId: targetId,
+              firestore: db,
+              now: () => admin.firestore.Timestamp.now(),
+            }),
           auditWriter: writeAuditEntry,
         });
       }
@@ -614,10 +1076,7 @@ export async function handleAcceptPolicy(
 export const acceptPolicy = onCall(
   { region: "europe-west2" },
   async (request) => {
-    if (!request.auth) {
-      throw new HttpsError("unauthenticated", "Sign in required.");
-    }
-    const uid = request.auth.uid;
+    const uid = requireVerifiedUid(request.auth);
 
     const result = await handleAcceptPolicy(uid, db);
     if (!result.accepted) {
@@ -636,6 +1095,20 @@ export const acceptPolicy = onCall(
   }
 );
 
+export const completeOnboarding = onCall(
+  { region: "europe-west2" },
+  async (request) => {
+    const uid = requireVerifiedUid(request.auth);
+    return handleCompleteOnboarding({
+      uid,
+      data: request.data,
+      firestore: db,
+      now: () => admin.firestore.Timestamp.now(),
+      policyVersion: CURRENT_POLICY_VERSION,
+    });
+  }
+);
+
 // --- mergeChants (callable) ---
 // Operator-only. Merges a duplicate chant (source) into a keeper (target).
 // Moves votes and reports, deletes the source, reconciles target counters,
@@ -651,10 +1124,7 @@ export function requireMergeChantsEnabled(): void {
 export const mergeChants = onCall(
   { region: "europe-west2" },
   async (request) => {
-    if (!request.auth) {
-      throw new HttpsError("unauthenticated", "Sign in required.");
-    }
-    const actorUid = request.auth.uid;
+    const actorUid = requireVerifiedUid(request.auth);
 
     // Operator check: read role from Firestore profile, same pattern as onModerationAction
     const actorProfile = await db.collection("profiles").doc(actorUid).get();

@@ -106,6 +106,18 @@ class ModerationRepository {
     });
   }
 
+  Future<void> moderatePublishedPerformance({
+    required String targetType,
+    required String targetId,
+    required String action,
+  }) async {
+    await _functions.httpsCallable('moderatePublishedPerformance').call({
+      'targetType': targetType,
+      'targetId': targetId,
+      'action': action,
+    });
+  }
+
   Future<void> deleteAccount() async {
     final data = await _deleteAccountRequest();
     if (data is! Map || data['accepted'] != true) {

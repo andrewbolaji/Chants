@@ -12,6 +12,28 @@ This is durable, evidence-backed project memory. It prevents the same failure or
 
 ## Entries
 
+### 2026-08-28T15:42:35Z A dependent public projection needs current source authority
+
+- **Status:** promoted
+- **Scope:** Published creator media whose availability depends on a creator account, public identity, chant, and moderation state
+- **Observed:** The first performance projection captured creator and chant facts at approval, but a later creator ban or chant takedown did not close every feed, action, playback, or public-page path. The same isolation let creator performance totals drift and left removed Storage media without retryable cleanup.
+- **Evidence:** Focused pre-fix tests kept a banned creator's performance and public destination available, accepted stale chant authority, denied operator preview of hidden video, found no physical media deleter, and reproduced absent Stage blocking and count repair. The corrected tests cover current source reads, projection fan-out, exact aggregate reconstruction, block filtering, hidden escalation, and deterministic cleanup work.
+- **Learning:** A denormalized public row is a query optimization, not sufficient live authority when its eligibility depends on other entities. Recheck source truth at action and public-delivery boundaries, reconcile the projection asynchronously, and commit durable cross-service cleanup work with terminal state.
+- **Applied control:** Performance source flags gate Firestore reads, current creator and chant documents gate server actions and public resolution, source triggers reconcile dependent rows and exact creator counts, and performance removal creates an exact-path retryable deletion job.
+- **Revisit when:** source fan-out or aggregate scans cross a measured budget, the data model gains another upstream authority source, or signed media requires immediate revocation.
+- **Related:** Decision 022, `functions/src/performance_source.ts`, `docs/changes/2026-08-28-pr17-post-review-takedown-integrity.md`
+
+### 2026-08-28T05:06:46Z A public page is not a public media delivery boundary
+
+- **Status:** promoted
+- **Scope:** Moderated user video shared outside the installed client
+- **Observed:** The first public performance page produced safe metadata and a valid destination but could only say `Watch on Chants`; it had no route that could deliver media while rechecking current visibility. Reusing the in-app callable or exposing a Storage URL would either fail for signed-out web viewers or bypass the public current-authority contract.
+- **Evidence:** The final page test requires a controlled video element, forbids autoplay and raw Storage paths, and the media resolver test proves exact path binding, current visible-state lookup, and a two-minute signed URL.
+- **Learning:** Public HTML and public media are separate trust boundaries. Moderated media needs a same-origin delivery route that checks the current public projection at request time and gives any residual access an explicit short lifetime.
+- **Applied control:** `publicPerformanceMedia` validates the route identity through `handleResolvePublicPerformanceMedia`, returns a no-store redirect, and uses one generic unavailable response. Direct Firebase Storage reads remain denied.
+- **Revisit when:** Production egress or signing cost is measured, immediate revocation is required, or a CDN token design can preserve current authority.
+- **Related:** Decision 019, `functions/src/public_share.ts`, `functions/test/public_share.test.ts`
+
 ### 2026-08-27T00:25:16Z Negative evidence must fail at the intended boundary
 
 - **Status:** promoted
@@ -41,7 +63,7 @@ This is durable, evidence-backed project memory. It prevents the same failure or
 - **Observed:** Home passed `rising: true` to every community preview. A stale zero-score 2024 idea therefore rendered `RISING`, while the same entity failed the shared `isRisingChant` predicate used elsewhere.
 - **Evidence:** A focused Home regression failed on the hardcoded badge. A second regression starts with a qualifying idea, emits an authoritative score-zero live snapshot, and proves the corrected badge disappears while `ORIGINAL IDEA` remains.
 - **Learning:** A collection lane identifies classification, not every derived property of its members. Compute user-visible status from the current rendered entity through the canonical predicate, and inject time when the predicate is time-dependent.
-- **Applied control:** Home-mode `_LiveChantCard` evaluates `isRisingChant` against its live chant and a deterministic evaluation time. Semantic assertions protect trust words independently of golden tolerance.
+- **Applied control:** Home-mode `_LiveChantCard` and `TeamScreen` evaluate `isRisingChant` against the live chant and an injectable evaluation time. Tests inject a stable date. Semantic assertions protect trust words independently of golden tolerance.
 - **Revisit when:** The Rising formula, live-card authority model, or Home projection changes.
 - **Related:** `lib/presentation/browse/discovery_section.dart`, `test/presentation/browse/core_journey_golden_test.dart`, independent interface-readiness review
 

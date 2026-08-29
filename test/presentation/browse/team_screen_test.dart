@@ -87,7 +87,10 @@ Widget _wrap({
         ).copyWith(textScaler: TextScaler.linear(textScale)),
         child: child!,
       ),
-      home: const TeamScreen(team: _team),
+      home: TeamScreen(
+        team: _team,
+        risingEvaluationTime: DateTime(2026, 8, 27),
+      ),
     ),
   );
 }
