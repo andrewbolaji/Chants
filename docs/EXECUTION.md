@@ -30,9 +30,11 @@ This is the chronological evidence trail for substantial engineering work. It re
 | 12:58:06 | Reconciled current milestone truth with independent CI evidence | Overview, implementation rationale, interface memory, project profile, roadmap, prior correction record, and new scoped rationale | Confirmed run `33215692105` is successful at `5350b8a` across all eight jobs. Its rules log reports 165 passing cases. Updated current records and retained historical execution entries unchanged. |
 | 13:01:43 | Completed the local verification matrix | Flutter, Functions, seed, rules TypeScript, project memory, governance, native contract, authored prose, and diff integrity | PASS: 463 Flutter tests, zero-issue `flutter analyze lib test`, 142 Functions tests, 42 seed tests plus TypeScript, rules TypeScript, all repository governance scripts, no literal or encoded em dash in changed prose, and clean diff checks. Java-backed rules remain CI-only because Java is unavailable locally. |
 | 13:03:38 | Staged and verified the exact commit boundary | Eleven intended source, test, and durable-record paths in the Git index | PASS: staged project memory, index-scoped writing, governance regressions, native contract, Dart formatter, and staged diff checks. No backend, rules, seed, native, dependency, workflow, or unrelated owner path is staged. |
+| 13:07:14 | Packaged and pushed the bounded implementation closure | Commit `e1474ad7ae362dcaaf6a19c45907024c31a60f7b` on PR 17 | Created `Close final source freeze findings` and pushed only `codex/v1-creator-platform-foundation`. The PR head matched the pushed commit exactly before CI. |
+| 13:35:47 | Completed replacement exact-head CI | GitHub Actions run `33254213575` at `e1474ad7ae362dcaaf6a19c45907024c31a60f7b` | PASS: all eight jobs succeeded, including governance, 463 Flutter tests, analysis, 142 Functions tests, 42 seed tests, 165 Java-backed Firestore and Storage cases, Android debug compile and identity inspection, and iOS simulator compile and identity inspection. |
 
-- **Current state:** Runtime, regression, current-truth reconciliation, full available local verification, and staged governance are complete. Commit, push, replacement CI, and merge remain.
-- **Resume point:** Inspect the final staged diff, create one closure commit, and push PR 17.
+- **Current state:** The runtime and regression closure is exact-head green. This evidence-only update changes no runtime source; its resulting PR head must pass the same eight-job workflow before merge.
+- **Resume point:** Commit and push the evidence-only records, require exact-head CI, then merge PR 17 only if every required job succeeds at that final SHA.
 
 ### 2026-08-28T20:59:12Z Start post-auth independent review corrections
 

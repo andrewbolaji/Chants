@@ -1,6 +1,6 @@
 # Repository implementation rationale
 
-This document explains the current Chants repository, including inherited systems and the independently reviewed creator, launch-authentication, Android, and post-auth correction work through exact combined PR 17 head `5350b8a`. It also covers the final bounded minor closure based on that head. It is a reviewer map, not proof of deployment or release readiness.
+This document explains the current Chants repository, including inherited systems and the independently reviewed creator, launch-authentication, Android, and post-auth correction work through exact combined PR 17 head `5350b8a`, plus bounded minor-closure implementation `e1474ad`. It is a reviewer map, not proof of deployment or release readiness.
 
 ## Document identity and completeness
 
@@ -9,7 +9,7 @@ This document explains the current Chants repository, including inherited system
 - **Durable creator and identity decisions:** 017 through 023
 - **Execution evidence:** `docs/EXECUTION.md`
 - **Interface memory:** `docs/INTERFACE.md`
-- **Known missing evidence:** replacement exact-head CI for the final minor closure, combined device walk, provider and production configuration, association deployment, policy, deploy, seed completion, signing, and release
+- **Known missing evidence:** required-check status at the final documentation-only PR head, combined device walk, provider and production configuration, association deployment, policy, deploy, seed completion, signing, and release
 
 ## Repository coverage ledger
 
@@ -215,18 +215,18 @@ The launch must set billing alerts, staged-object cleanup, Function alerts, mode
 | Command or probe | Result |
 |---|---|
 | Focused Flutter auth, onboarding, app-gate, reset, magic-link, provider cancellation, phone-race, stale-session, provider hierarchy, and narrow 1.8x tests | PASS at the final uncommitted launch implementation state |
-| Full `flutter test` | PASS, 463 tests at the final local minor-closure state |
-| `flutter analyze lib test` with the deterministic non-secret fixture | PASS with zero issues at the final local minor-closure state |
+| Full `flutter test` | PASS, 463 tests locally and in run `33254213575` at minor-closure implementation `e1474ad` |
+| `flutter analyze lib test` with the deterministic non-secret fixture | PASS with zero issues locally and in run `33254213575` at `e1474ad` |
 | `functions/npm test` | PASS, 142 including overlapping onboarding and explicit transaction-retry state |
-| Firestore plus Storage emulator | PASS, 165 Java-backed cases in run `33215692105` at `5350b8a`, including one cross-account Storage case with three permission assertions |
+| Firestore plus Storage emulator | PASS, 165 Java-backed cases in runs `33215692105` at `5350b8a` and `33254213575` at `e1474ad`, including one cross-account Storage case with three permission assertions |
 | `seed/npm test` | PASS, 42 |
 | Memory, writing-style, native-contract, and governance-regression scripts | PASS locally at the uncommitted launch implementation state |
 | `git diff --check` | PASS at the uncommitted launch implementation state |
-| GitHub Actions runs `33213537910` and `33215692105` | PASS, all eight jobs at correction head `6002724` and byte-identical combined head `5350b8a` |
+| GitHub Actions runs `33213537910`, `33215692105`, and `33254213575` | PASS, all eight jobs at correction head `6002724`, byte-identical combined head `5350b8a`, and final runtime implementation `e1474ad` |
 | Three targeted goldens | Updated, passing, and visually inspected |
 | CocoaPods resolution | PASS, 18 direct dependencies and 56 total pods on Firebase iOS 12.18 |
-| iOS simulator compile | PASS with bundle and source identity inspection at combined head `5350b8a`; final minor closure exact-head rerun pending |
-| Android debug compile | PASS with package and source identity inspection at combined head `5350b8a`; final minor closure exact-head rerun pending |
+| iOS simulator compile | PASS with bundle and source identity inspection at final runtime implementation `e1474ad` in run `33254213575` |
+| Android debug compile | PASS with package and source identity inspection at final runtime implementation `e1474ad` in run `33254213575` |
 
 ## Deployment and recovery
 
@@ -258,7 +258,7 @@ Recovery options are additive. Pause performance admission without removing Song
 | Durable media-deletion jobs have no production alert | Failed physical cleanup may remain queued without prompt operator attention | Before media admission opens |
 | No automated media screening | Harm detection depends on humans | When queue or incident volume justifies a reviewed provider contract |
 | No domain or store association | Public pages cannot yet guarantee app opening | Before release emits links |
-| Final minor closure awaits replacement native build evidence | Combined source and plugin linkage are proved at `5350b8a`, but the minor closure is not yet packaged | Before merge |
+| Final documentation-only head has no embedded self-referential CI result | Runtime source and native linkage are proved at `e1474ad`; GitHub required-check status at the final PR SHA remains authoritative | Before merge |
 | Requested providers are source-complete but disabled | Launch breadth depends on external console, credential, callback, privacy, cost, and device proof | Before enabling each provider flag |
 | No cross-UID account merge | A user with two existing accounts must choose one and link only credentials not already owned | When measured support demand justifies a separately reviewed recovery system |
 | Placeholder policy and no production cost controls | Public UGC release is blocked | Before public submission |

@@ -39,13 +39,13 @@ This is the current design contract and decision history for Chants. Read the re
 
 ### 2026-08-29T12:49:50Z Freeze saved onboarding values during projection recovery
 
-- **Status:** implemented and locally verified; exact-head CI pending
+- **Status:** implemented and exact-runtime-head CI verified; final documentation-only PR head remains governed by required checks
 - **Surface and user problem:** The server intentionally preserves an existing coherent profile on duplicate onboarding completion, but the post-success screen re-enabled editable fields and invited another entry. A changed display name could therefore appear saved while the server correctly ignored it.
 - **Decision:** After the first confirmed completion, freeze display name, birth date, policy acceptance, and destination. Keep Check Again and Sign Out enabled, and make Check Again reuse the original saved values.
 - **Why:** Recovery must stay available without presenting an idempotent projection check as a second editable profile submission.
 - **Required states:** first-submit validation, first-submit failure, successful completion with delayed projection, immutable saved values, repeated check, and Sign Out.
 - **Accessibility/responsive impact:** Disabled controls retain their labels and selected values. Recovery remains two written actions and does not depend on color.
-- **Implementation evidence:** Production widget regression in `test/presentation/auth/sign_up_validation_test.dart`, 463 passing Flutter tests, and zero-issue scoped analysis. Final exact-head CI remains required before merge.
+- **Implementation evidence:** Production widget regression in `test/presentation/auth/sign_up_validation_test.dart`, 463 passing Flutter tests, zero-issue scoped analysis, implementation commit `e1474ad`, and eight-job GitHub Actions run `33254213575`.
 - **Revisit when:** Onboarding receives a bounded server acknowledgement channel or profile editing becomes an explicit separate destination.
 - **Related:** `docs/CHANGE_SPEC.md`, decision 023
 

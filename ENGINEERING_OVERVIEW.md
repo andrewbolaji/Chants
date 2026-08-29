@@ -1,6 +1,6 @@
 # Chants engineering overview
 
-This is the current whole-project map for the combined PR 17 branch `codex/v1-creator-platform-foundation`, based on exact reviewed head `5350b8a`. It includes the inherited creator platform, its accepted takedown correction, V1 authentication, onboarding, Android readiness, the nine post-auth review corrections, and the final minor onboarding truthfulness closure. It describes source reality, including inherited and unchanged systems. It is not a deployment claim, provider-configuration claim, or approval record.
+This is the current whole-project map for the combined PR 17 branch `codex/v1-creator-platform-foundation`, based on exact reviewed head `5350b8a` plus bounded minor-closure implementation `e1474ad`. It includes the inherited creator platform, its accepted takedown correction, V1 authentication, onboarding, Android readiness, the nine post-auth review corrections, and the final minor onboarding truthfulness closure. It describes source reality, including inherited and unchanged systems. It is not a deployment claim, provider-configuration claim, or approval record.
 
 The active approval contract is `docs/CHANGE_SPEC.md`. Completed reasoning is in the creator-platform, takedown-correction, launch-authentication, post-auth correction, and final minor closure records under `docs/changes/`. Durable architectural choices are decisions 017 through 023. `docs/IMPLEMENTATION_RATIONALE.md` is the companion coverage ledger and verification record.
 
@@ -13,7 +13,7 @@ Chants now has the intended two-part product rather than a catalogue alone:
 
 The implementation preserves the central trust boundary. A performance has its own status, media, creator, and popularity counters. It cannot mutate the attached chant's `canonical` or `community` state (`functions/src/performance.ts :: handleModeratePerformance`; `docs/decisions/018-performance-stage-and-admission.md`).
 
-Post-auth correction commit `6002724` passed all eight jobs in run `33213537910`. PR 18 then merged into PR 17 at byte-identical head `5350b8a`, whose run `33215692105` passed 463 Flutter tests, 142 Functions tests, 42 seed tests, 165 Java-backed Firestore and Storage cases, and both native compile and identity checks. The final independent review declared that combined head clear for source freeze and found only the two minor findings closed by this bounded change. Replacement exact-head CI for the minor closure remains a merge gate. Device walkthrough, provider setup, policy, production configuration, deployment, and release remain open.
+Post-auth correction commit `6002724` passed all eight jobs in run `33213537910`. PR 18 then merged into PR 17 at byte-identical head `5350b8a`, whose run `33215692105` passed 463 Flutter tests, 142 Functions tests, 42 seed tests, 165 Java-backed Firestore and Storage cases, and both native compile and identity checks. The final independent review declared that combined head clear for source freeze and found only the two minor findings closed by implementation commit `e1474ad`. Exact-head run `33254213575` passed all eight jobs for that implementation, including both native compile and identity checks. The documentation-only closure head must satisfy the same required checks before merge. Device walkthrough, provider setup, policy, production configuration, deployment, and release remain open.
 
 ## Product and navigation
 
@@ -33,7 +33,7 @@ Firebase Auth owns the stable UID, credential, verification, and linked-provider
 
 `AuthRepository` supports email and password, Apple, Google, Facebook, magic email link, and phone, plus deliberate same-UID linking. `SignInMethodsScreen` refuses unlinking the final method. Credential collision never starts an app-level merge. A failed Google initialization is discarded so a later attempt can retry. `MagicLinkStore` retains only email, request time, and optional current UID in one versioned device record for up to one hour. An ambiguous send failure retains that binding, while completion, explicit cancellation, terminal invalidity, or expiry clears it. Phone UI discloses Google processing, applies one cooldown to every send path, and uses one monotonic credential claim across manual entry, Android auto-verification, and resends. Leaving or changing the attempt invalidates any later unused automatic credential.
 
-Verification feedback distinguishes a requested email from an already-verified account. Returning from a magic-link request says completion is pending rather than claiming the provider is connected. If `completeOnboarding` succeeds before the profile stream advances, the form restores Enter Chants and Sign Out with explicit safe-retry copy. Storage operator preview now requires the same verified-contact proof as Firestore and callable operator authority.
+Verification feedback distinguishes a requested email from an already-verified account. Returning from a magic-link request says completion is pending rather than claiming the provider is connected. If `completeOnboarding` succeeds before the profile stream advances, the saved fields freeze while Check Again and Sign Out remain available. Check Again reuses the original confirmed values instead of implying that a later edit was accepted. Storage operator preview now requires the same verified-contact proof as Firestore and callable operator authority.
 
 Provider code is not provider readiness. Firebase console enablement, Apple and Google identifiers, Meta callback and deletion configuration, SMS regions and quota, APNs or Android fingerprints, hosted association files, App Check, branding review, and real-device proof remain external gates. A provider button stays absent until an operator intentionally supplies the matching build flag.
 
@@ -137,7 +137,7 @@ The compatible rollout order is Firestore and Storage rules, Functions, Hosting,
 
 ## Unverified
 
-- Replacement exact-head CI for the final minor onboarding and documentation closure.
+- The documentation-only closure commit is mergeable only when the same eight required jobs succeed at its exact SHA; GitHub status is the authoritative result.
 - Apple, Google, Facebook, magic-link, and phone dashboard, credential, callback, domain, privacy, quota, anti-abuse, and real-device behavior. Every provider remains disabled until its own gates pass.
 - Camera and library permissions, upload progress, backgrounding, retry, cancellation, playback, share destinations, Following, notifications, deep comments, moderation, blocking, deletion, accessibility, and offline behavior on real devices.
 - `chantsfc.com` Hosting deployment, DNS, domain association, social crawler output, app/store routing, and URL-signing IAM.

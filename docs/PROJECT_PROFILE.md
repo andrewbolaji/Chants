@@ -123,7 +123,7 @@ Default lanes come from the Codex Engineering Framework.
 | Item | Consequence | Owner | Revisit trigger |
 |---|---|---|---|
 | Production Android signing values do not exist in source | Release tasks fail closed without ignored operator values, so store packaging is blocked until signing is supplied and tested | Andrew | Before the first production Android build |
-| Final minor closure CI and combined device walk are incomplete | Combined source head `5350b8a` builds Android and iOS cleanly, but this final minor closure still needs exact-head CI and no combined real-device evidence exists | Andrew | Before merge and V1 sign-off |
+| Final documentation-head check and combined device walk remain distinct gates | Minor-closure implementation `e1474ad` builds Android and iOS cleanly in run `33254213575`; the final documentation-only PR SHA must also be green, and no combined real-device evidence exists | Andrew | Before merge and V1 sign-off |
 | App Check enforcement and operational alerts are unverified | Abuse and retained-job failures may be detected late | Andrew | Before public beta and during the first telemetry window |
 | Content policy is placeholder copy | User consent and store compliance are incomplete | Andrew | Before public user submission |
 | Domain association, store fallback, URL-signing IAM, Storage cleanup, deletion-job monitoring, and media billing alerts are unverified | Public links or media delivery may fail, retained deletion work may go unnoticed, or cost may exceed expectations | Andrew | Before emitting public links from a release build |

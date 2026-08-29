@@ -1,11 +1,13 @@
 # Change spec: Final source-freeze minor closure
 
-**Status:** Implemented, locally verified, and staged; commit, exact-head CI, and merge pending
+**Status:** Implementation and exact-head evidence complete; the documentation-only closure head must pass all eight required jobs before merge
 **Updated:** 2026-08-29
 **Risk lane:** Lane 2 because the bounded interface correction sits inside authentication onboarding
 **Base:** `5350b8ae0d41665db7a41e00117b50e73c062b4e`, combined PR 17 and PR 18 head
 **Review source:** Final independent read-only review of `86603c22fbd7647f89c9276af9a60a0b3d63113b...5350b8ae0d41665db7a41e00117b50e73c062b4e`
 **Approval:** Andrew explicitly requested the two minor fixes, replacement CI, and merge on 2026-08-29.
+
+**Implementation evidence:** Commit `e1474ad7ae362dcaaf6a19c45907024c31a60f7b`; GitHub Actions run `33254213575`, eight of eight jobs successful.
 
 ## Outcome
 
