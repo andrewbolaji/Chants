@@ -1,6 +1,6 @@
 # Chants engineering overview
 
-This is the current whole-project map for the combined PR 17 branch `codex/v1-creator-platform-foundation`, based on exact reviewed head `5350b8a` plus bounded minor-closure implementation `e1474ad`. It includes the inherited creator platform, its accepted takedown correction, V1 authentication, onboarding, Android readiness, the nine post-auth review corrections, and the final minor onboarding truthfulness closure. It describes source reality, including inherited and unchanged systems. It is not a deployment claim, provider-configuration claim, or approval record.
+This is the current whole-project map for merged `main` at `e8f2591`. It includes the inherited creator platform, its accepted takedown correction, V1 authentication, onboarding, Android readiness, the nine post-auth review corrections, and the final minor onboarding truthfulness closure. It describes source reality, including inherited and unchanged systems. It is not a deployment claim, provider-configuration claim, or approval record.
 
 The active approval contract is `docs/CHANGE_SPEC.md`. Completed reasoning is in the creator-platform, takedown-correction, launch-authentication, post-auth correction, and final minor closure records under `docs/changes/`. Durable architectural choices are decisions 017 through 023. `docs/IMPLEMENTATION_RATIONALE.md` is the companion coverage ledger and verification record.
 
@@ -13,7 +13,7 @@ Chants now has the intended two-part product rather than a catalogue alone:
 
 The implementation preserves the central trust boundary. A performance has its own status, media, creator, and popularity counters. It cannot mutate the attached chant's `canonical` or `community` state (`functions/src/performance.ts :: handleModeratePerformance`; `docs/decisions/018-performance-stage-and-admission.md`).
 
-Post-auth correction commit `6002724` passed all eight jobs in run `33213537910`. PR 18 then merged into PR 17 at byte-identical head `5350b8a`, whose run `33215692105` passed 463 Flutter tests, 142 Functions tests, 42 seed tests, 165 Java-backed Firestore and Storage cases, and both native compile and identity checks. The final independent review declared that combined head clear for source freeze and found only the two minor findings closed by implementation commit `e1474ad`. Exact-head run `33254213575` passed all eight jobs for that implementation, including both native compile and identity checks. The documentation-only closure head must satisfy the same required checks before merge. Device walkthrough, provider setup, policy, production configuration, deployment, and release remain open.
+Post-auth correction commit `6002724` passed all eight jobs in run `33213537910`. PR 18 then merged into PR 17 at byte-identical head `5350b8a`, whose run `33215692105` passed the combined source. The final independent review declared that head clear for source freeze and found only the two minor findings closed by implementation commit `e1474ad`. Exact implementation run `33254213575` and documentation-head run `33255542646` each passed all eight jobs. PR 17 merged as `e8f2591`, and exact-main run `33256843751` passed 463 Flutter tests, 142 Functions tests, 42 seed tests, 165 Java-backed Firestore and Storage cases, project governance, analysis, and both native compile and identity checks. Device walkthrough, provider setup, policy, production configuration, deployment, and release remain open.
 
 ## Product and navigation
 
@@ -137,7 +137,6 @@ The compatible rollout order is Firestore and Storage rules, Functions, Hosting,
 
 ## Unverified
 
-- The documentation-only closure commit is mergeable only when the same eight required jobs succeed at its exact SHA; GitHub status is the authoritative result.
 - Apple, Google, Facebook, magic-link, and phone dashboard, credential, callback, domain, privacy, quota, anti-abuse, and real-device behavior. Every provider remains disabled until its own gates pass.
 - Camera and library permissions, upload progress, backgrounding, retry, cancellation, playback, share destinations, Following, notifications, deep comments, moderation, blocking, deletion, accessibility, and offline behavior on real devices.
 - `chantsfc.com` Hosting deployment, DNS, domain association, social crawler output, app/store routing, and URL-signing IAM.

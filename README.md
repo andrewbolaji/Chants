@@ -28,14 +28,15 @@ Chants is a mobile app where football fans find and learn terrace songs, contrib
 - **Learn-focused chant detail.** Lyrics, tune name, context notes explaining the history, and an "Also sung as" section for alternate versions when they exist.
 - **Community submission.** Any signed-in user can add a chant. Submissions enter as community content; operators can verify them.
 - **Songbook and Chant Lab.** Terrace Proven chants form the trusted archive. Original and already-sung community submissions compete separately in Chant Lab, with optional YouTube or X evidence and a soft duplicate warning before posting.
+- **Chant Stage and creator profiles.** Fans can record or choose a manually reviewed performance of up to 30 seconds, follow creators, like, share, comment, mention, and compete on server-owned popularity signals without changing the underlying chant's trust state.
 - **Voting.** Upvote, downvote, or remove your vote. Score updates instantly (optimistic UI) and reconciles against the server.
-- **Comments with likes and direct replies.** Top-level comments sort by most liked, then newest; one chronological reply level sits below each parent. Users can block another account and manage their block list.
+- **Conversation and activity.** Chant comments keep one direct reply level. Performance conversation supports continued replies with bounded visual depth, validated mentions, and a private activity inbox. Users can block another account and manage their block list.
 - **Reporting and moderation.** Flag a chant, comment, or user through server-authoritative, atomically rate-limited intake. Auto-hide at a configurable report threshold. Operator tools for hide, unhide, remove, ban, and unban, with an audit log.
-- **Discover.** A shuffled mix of chants across all clubs on the home screen, with live-updating scores.
+- **Stage discovery.** Rising, New, Terrace, and Following feeds page through approved current-authority performances without autoplay or prefetch.
 - **Search.** Filter chants by title, lyrics, tune name, or club name with results updating as you type.
 - **Saved Matchday Songbook.** Save one chant or a club's Songbook as a bounded device copy for quick offline reading at the ground.
-- **Share-out.** Send a complete, honestly labelled chant through the native share sheet without inventing a dead public link.
-- **Account management.** Email/password auth, password reset, and durable in-app account deletion with persistent unknown-request recovery, pending-account denial, bounded retry, contribution and audit anonymization, local Songbook cleanup, and counter reconciliation.
+- **Public share-out.** Resolve current visible chants, performances, and creators to stable server-rendered destinations before invoking the native share sheet.
+- **Launch authentication and account management.** Verified email, password reset, recoverable onboarding, and source-complete Apple, Google, Facebook, magic-link, phone, and same-UID linking paths. New providers remain hidden until configured. Durable account deletion preserves persistent unknown-request recovery, pending-account denial, bounded retry, contribution and audit anonymization, local Songbook cleanup, and counter reconciliation.
 
 ---
 
@@ -96,13 +97,23 @@ Sport
                     └── Report / CommentReport
 
 Block (directional, one per blocker/blocked-user pair)
+
+CreatorProfile (public allowlist; private account authority remains in Profile)
+  ├── CreatorFollow (private deterministic edge)
+  └── CreatorNotification (recipient-only activity)
+
+Performance (approved public projection attached to one chant and creator)
+  ├── private draft and exact Storage staging object
+  ├── Like / QualifiedView / Share (one deterministic record per account)
+  ├── PerformanceComment (continued replies, bounded visual depth)
+  └── report, moderation, source-reconciliation, and media-deletion lifecycle
 ```
 
-Chants are stored in a single flat Firestore collection with denormalized IDs. This gives cheap drill-down queries (all chants for a team) and cheap cross-club queries (the discover shuffle) without joins or collectionGroup queries.
+Chants are stored in a single flat Firestore collection with denormalized IDs. Performances, public creator identity, private social edges, and activity use separate collections so popularity and creator reach cannot mutate chant trust or expose private account authority.
 
 ### Cloud Functions
 
-Fifteen Functions exports in source (all configured for `europe-west2`; live deployment state is verified separately):
+Forty-four Functions exports are present in source (all configured for `europe-west2`; live deployment state is verified separately). This table shows the inherited chant, safety, account, and policy boundaries:
 
 | Function | Trigger | Purpose |
 |----------|---------|---------|
@@ -122,6 +133,8 @@ Fifteen Functions exports in source (all configured for `europe-west2`; live dep
 | `onUserReportCreated` | UserReport doc create | Recompute the reported user's distinct-report count |
 | `onUserReportDeleted` | UserReport doc delete | Repair a surviving reported user's count after cleanup |
 
+The creator-platform exports add callable and trigger boundaries for creator identity, follows, activity, performance drafts, admission, playback, interactions, comments, moderation, source reconciliation, public pages, public media, and durable media deletion. The source files and generated export count are authoritative; deployment must be checked separately.
+
 ---
 
 ## Engineering Highlights
@@ -134,7 +147,7 @@ Fifteen Functions exports in source (all configured for `europe-west2`; live dep
 
 **Content integrity.** All seed content (lyrics, squads, cultural context) is externally sourced and verified by hand. The build process can only transform supplied data in place; it never generates or rewrites content. This is a standing rule with the highest priority in the project.
 
-**Test coverage across layers.** The post-interface correction branch passes 356 Flutter tests locally. The merged PR 15 baseline passes 353 Flutter tests, 136 Firestore security-rules assertions, 78 Cloud Functions tests, and 42 seed-pipeline tests. Regression guards cover truthful Home Rising labels across live changes, useful empty recovery, core Home hierarchy and routes at normal and enlarged text, competition and player states, immutable browse inputs, late deletion responses after Home disposal, prepared and unknown deletion recovery, classified audit privacy and operator provenance, exactly-once completion, accepted-last local cleanup, cache-local Songbook actions, timing-sensitive UI, chant-ID reuse, moderation revocation, atomic safety intake, transactional counter overlap, direct-write abuse, pending-target closure, responsive states, reply grouping, offline snapshot reconstruction, and fail-closed native project ownership. The full iOS simulator app compiles locally on the project-pinned CocoaPods graph, including native Share and URL-launcher plugins. Final merged `main` at `9189c71` passed all six jobs in run `33012771517`, and PR 16 reviewed head `e810318` passed all six in run `33025564912`. Replacement CI for the final evidence-only closure remains pending.
+**Test coverage across layers.** Final merged `main` at `e8f2591` passed all eight jobs in run `33256843751`: 463 Flutter tests, zero-issue analysis, 142 Cloud Functions tests, 42 seed-pipeline tests, 165 Java-backed Firestore and Storage cases, project governance, Android debug compilation with package inspection, and iOS simulator compilation with bundle and exact-source inspection. Regression guards cover current authority, moderation and takedown, creator and chant source reconciliation, counters, upload admission, public destinations, authentication recovery, account deletion, offline Songbook, responsive layouts, and fail-closed native ownership. This is source and clean-runner evidence, not device, provider, deployment, signing, or store readiness.
 
 ---
 

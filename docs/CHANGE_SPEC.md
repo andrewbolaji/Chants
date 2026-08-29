@@ -1,81 +1,53 @@
-# Change spec: Final source-freeze minor closure
+# Change spec: Post-merge documentation closure
 
-**Status:** Implementation and exact-head evidence complete; the documentation-only closure head must pass all eight required jobs before merge
+**Status:** Implemented locally; documentation-only packaging and branch CI remain pending
 **Updated:** 2026-08-29
-**Risk lane:** Lane 2 because the bounded interface correction sits inside authentication onboarding
-**Base:** `5350b8ae0d41665db7a41e00117b50e73c062b4e`, combined PR 17 and PR 18 head
-**Review source:** Final independent read-only review of `86603c22fbd7647f89c9276af9a60a0b3d63113b...5350b8ae0d41665db7a41e00117b50e73c062b4e`
-**Approval:** Andrew explicitly requested the two minor fixes, replacement CI, and merge on 2026-08-29.
-
-**Implementation evidence:** Commit `e1474ad7ae362dcaaf6a19c45907024c31a60f7b`; GitHub Actions run `33254213575`, eight of eight jobs successful.
+**Risk lane:** Lane 0 documentation and mechanical reconciliation
+**Base:** `e8f2591740963f87623aacb82a806328cb1a98fe`, exact merged `origin/main` through PR 17
+**Approval:** Andrew requested documentation closure on 2026-08-29.
 
 ## Outcome
 
-- **Problem:** A successful onboarding request restores the whole form even though a duplicate server request preserves the existing profile. A user can therefore edit the display name, retry, and receive success copy even though the edit is intentionally ignored. Current engineering records also describe the already packaged and green post-auth correction as local or pending.
-- **Desired behavior:** After setup succeeds while profile projection is delayed, retry and Sign Out remain available, saved fields are visibly immutable, and copy describes a projection check rather than another editable submission. Durable records state the exact reviewed and clean-runner evidence while preserving real device, provider, deployment, policy, seed, and release gates.
-- **Review boundary:** Onboarding presentation, its production widget regression, current engineering truth, interface memory, roadmap, project profile, execution evidence, and one scoped completion record.
-- **Non-goal:** No callable, profile schema, Firebase rule, provider, native project, CI workflow, deployment, seed, or release behavior changes.
+- **Problem:** The creator, authentication, Android, and final correction stack is merged and exact-main green, but several canonical documents still describe draft PRs, pending final-head CI, an older `main`, or the pre-creator product surface.
+- **Desired state:** Current milestone documents identify merged `main` `e8f2591`, exact-main run `33256843751`, the implemented creator product, and the remaining device, provider, policy, seed, deployment, signing, store, and release gates without rewriting accurate historical entries.
+- **Review boundary:** `README.md`, the engineering overview, implementation rationale, interface memory, project profile, roadmap, execution ledger, the completed final-closure record, and one new documentation-closure record.
+- **Non-goal:** No application, Functions, rules, Storage, seed, dependency, native project, workflow, Firebase, provider, deployment, or release behavior change.
 
-## Approved corrections
+## Required corrections
 
-### N1: Truthful post-success onboarding
+1. Replace current-state claims that PR 17, its final documentation head, Android compilation, or replacement CI remain pending.
+2. Record documentation head `c1c4ea4`, PR 17 merge commit `e8f2591`, and exact-main run `33256843751` with the verified counts: 463 Flutter tests, 142 Functions tests, 42 seed tests, and 165 Java-backed Firestore and Storage cases.
+3. Describe the merged Chant Stage, creator profiles, social activity, public destinations, launch authentication, and source-ready Android client in the repository entry points.
+4. Preserve timestamped execution claims and prior decision context that were accurate when written.
+5. Keep real-device, provider, domain association, policy, production configuration, cost controls, App Check enforcement, remaining seed, deployment, signing, store, and release work explicitly open.
 
-1. A successful `completeOnboarding` response records that the form values are already saved.
-2. Display name, birth date, policy acceptance, and first-destination controls become read-only after that response.
-3. Retry remains available under a truthful `CHECK AGAIN` label and reuses the unchanged saved payload.
-4. Sign Out remains available.
-5. Failed first attempts remain fully editable and retryable.
-6. A late completion still checks widget lifetime before reading or mutating presentation state.
+## Acceptance criteria
 
-### N2: Exact engineering evidence
-
-1. Replace claims that the nine-finding correction is local, unpackaged, or awaiting replacement CI.
-2. Record correction commit `600272413a3350db54528b2ad6b757d07d646a96`, PR 18 merge commit `5350b8ae0d41665db7a41e00117b50e73c062b4e`, run `33213537910` at the correction head, and run `33215692105` at the byte-identical combined head.
-3. Record 463 Flutter tests, 142 Functions tests, 42 seed tests, and 165 Java-backed Firestore and Storage assertions without inflating a test case into multiple new cases.
-4. Keep the combined device walk and every provider, association, policy, signing, deployment, cost, seed, and release gate explicitly open.
-
-## Acceptance criteria and invariants
-
-1. The production onboarding widget regression inspects the display name after server success and proves the field retains the submitted value and is disabled.
-2. The same regression proves `CHECK AGAIN` and Sign Out remain enabled.
-3. A second retry sends the original saved display name and remains idempotent.
-4. Existing validation, under-age handling, first-submit destination selection, and failure recovery remain unchanged.
-5. Repository-authored current milestone documents contain no stale claim that the post-auth correction still needs packaging or replacement CI.
-6. Documentation distinguishes source freeze from device, provider, deployment, and release readiness.
-7. Focused onboarding tests, the full Flutter suite, scoped analysis, unchanged backend suites, governance, writing, native contract, and diff checks pass locally where the toolchain exists.
-8. All eight exact-head CI jobs pass after the implementation closure commit is pushed to PR 17.
-9. One documentation-only evidence commit records that run and the merge-ready state, then all eight jobs pass again at the final head.
-10. PR 17 merges into `main` only after its reviewed head and final CI head are identical and every required job is green.
-
-## Failure and recovery analysis
-
-| Condition | Required behavior | Evidence |
-|---|---|---|
-| Profile stream stalls after successful setup | Saved values are frozen; Check Again and Sign Out remain available | Production widget regression |
-| User tries to edit the saved name | The disabled field retains the server-submitted value | Production widget regression |
-| User checks again | The original saved payload is reused and no edit is implied | Repository call capture in the widget regression |
-| First request fails | Form controls restore and retained values remain editable | Existing onboarding recovery coverage |
-| Documentation is read after CI | Exact commit, run, counts, and remaining gates agree across current records | Bounded search plus changed-line review |
-| Replacement CI fails | Do not merge; diagnose and correct or report the exact blocker | GitHub Actions job evidence |
+1. Every modified path is documentation.
+2. Current milestone documents agree on the exact merged-main identity and clean-runner evidence.
+3. The README no longer presents the pre-creator product or obsolete test matrix as current.
+4. The roadmap distinguishes source completion from launch readiness and names the real remaining gates.
+5. Historical execution entries remain intact unless a current-state summary explicitly supersedes them.
+6. Repository memory, writing-style, governance, native-contract, and diff checks pass for the staged documentation boundary.
+7. Authored prose contains no literal or encoded em dash.
 
 ## Verification plan
 
-- Extend the existing production onboarding widget test around the known post-success state.
-- Run the focused onboarding test file, then the complete Flutter suite and scoped analysis.
-- Run Functions and seed tests because the final merge range includes those systems even though this closure does not change them.
-- Run rules TypeScript plus Java-backed rules in CI, project memory, writing style, native contract, governance regressions, formatting, and diff checks.
-- Inspect the staged diff and generated native artifacts through the existing eight-job workflow.
-- Verify the PR head and CI head before merge, then verify the resulting `main` merge commit and clean PR state.
+- Inspect the diff by canonical document group and search current-state prose for obsolete branch, CI, native-build, and resolver claims.
+- Confirm `origin/main`, PR 17, and GitHub Actions identities independently.
+- Confirm the source still exports 44 Cloud Functions before updating the README count.
+- Stage only the approved documentation paths.
+- Run Lane 0 project-memory, writing-style, governance-regression, native-contract, authored-prose, and staged diff checks.
+- Do not rerun Flutter, Functions, rules, seed, or native builds because this closure changes no executable input and exact-main run `33256843751` already supplies that evidence.
 
 ## Rollout and recovery
 
-1. Package one cohesive implementation closure commit on PR 17.
-2. Push only that branch and require replacement exact-head CI.
-3. If the run is green, record its identity and merge-ready state in one documentation-only evidence commit.
-4. Require all eight jobs again at that final documentation head, then merge PR 17 into `main` only when every job succeeds.
-5. If the onboarding copy or frozen-state behavior regresses, revert the implementation closure commit without changing stored data or server authority.
-6. No production deployment follows from this merge.
+1. Keep the work isolated from Andrew's dirty owner checkout.
+2. Package one documentation-only commit only after explicit packaging authorization.
+3. Push a narrow review branch and require its configured checks before merge when authorized.
+4. If a claim is disputed, retain the prior text until commit, run, source, or historical evidence resolves it.
+5. Reverting this documentation-only change restores the prior records and changes no runtime state.
 
 ## Excluded authority
 
-This approval includes the bounded source and documentation edits, local checks, one commit, push to PR 17, replacement CI, and merge into `main` when green. It does not authorize provider-console changes, Firebase or Storage writes, SMS sends, credentials, association deployment, signing, store actions, seed writes, application deployment, or public release.
+This approval covers the bounded documentation edits and local verification only. It does not authorize commit, push, pull-request creation, production configuration, provider or domain changes, Firebase or Storage writes, SMS sends, seed writes, deployment, signing, store actions, or release.
