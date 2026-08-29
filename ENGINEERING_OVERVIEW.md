@@ -1,8 +1,8 @@
 # Chants engineering overview
 
-This is the current whole-project map for merged `main` at `e8f2591`. It includes the inherited creator platform, its accepted takedown correction, V1 authentication, onboarding, Android readiness, the nine post-auth review corrections, and the final minor onboarding truthfulness closure. It describes source reality, including inherited and unchanged systems. It is not a deployment claim, provider-configuration claim, or approval record.
+This is the current whole-project map for `main` through documentation merge `9c6286a` plus the approved V1 launch-services range. The feature source remains byte-identical to creator-stack merge `e8f2591` before this range. The map includes inherited and unchanged systems, and it is not a deployment or release-readiness claim.
 
-The active approval contract is `docs/CHANGE_SPEC.md`. Completed reasoning is in the creator-platform, takedown-correction, launch-authentication, post-auth correction, and final minor closure records under `docs/changes/`. Durable architectural choices are decisions 017 through 023. `docs/IMPLEMENTATION_RATIONALE.md` is the companion coverage ledger and verification record.
+The active approval contract is `docs/CHANGE_SPEC.md`. Completed reasoning is in the creator-platform, takedown-correction, launch-authentication, post-auth correction, final minor closure, and V1 launch-services records under `docs/changes/`. Durable architectural choices are decisions 017 through 024. `docs/IMPLEMENTATION_RATIONALE.md` is the companion coverage ledger and verification record.
 
 ## Review outcome
 
@@ -13,7 +13,7 @@ Chants now has the intended two-part product rather than a catalogue alone:
 
 The implementation preserves the central trust boundary. A performance has its own status, media, creator, and popularity counters. It cannot mutate the attached chant's `canonical` or `community` state (`functions/src/performance.ts :: handleModeratePerformance`; `docs/decisions/018-performance-stage-and-admission.md`).
 
-Post-auth correction commit `6002724` passed all eight jobs in run `33213537910`. PR 18 then merged into PR 17 at byte-identical head `5350b8a`, whose run `33215692105` passed the combined source. The final independent review declared that head clear for source freeze and found only the two minor findings closed by implementation commit `e1474ad`. Exact implementation run `33254213575` and documentation-head run `33255542646` each passed all eight jobs. PR 17 merged as `e8f2591`, and exact-main run `33256843751` passed 463 Flutter tests, 142 Functions tests, 42 seed tests, 165 Java-backed Firestore and Storage cases, project governance, analysis, and both native compile and identity checks. Device walkthrough, provider setup, policy, production configuration, deployment, and release remain open.
+Post-auth correction commit `6002724` passed all eight jobs in run `33213537910`. PR 18 then merged into PR 17 at byte-identical head `5350b8a`, whose run `33215692105` passed the combined source. The final independent review declared that head clear for source freeze and found only the two minor findings closed by implementation commit `e1474ad`. Exact implementation run `33254213575` and documentation-head run `33255542646` each passed all eight jobs. PR 17 merged as `e8f2591`, and run `33256843751` passed 463 Flutter tests, 142 Functions tests, 42 seed tests, 165 Java-backed Firestore and Storage cases, project governance, analysis, and both native compile and identity checks. Documentation-only PR 19 merged as `9c6286a` after all eight jobs passed. The launch-services range adds source and selected reversible console settings; device walkthrough, remaining provider setup, policy text, deployment, and release remain open.
 
 ## Product and navigation
 
@@ -23,7 +23,7 @@ Post-auth correction commit `6002724` passed all eight jobs in run `33213537910`
 
 Feed is `lib/presentation/feed/chant_stage_screen.dart :: ChantStageScreen`. Clubs preserves the inherited competition, team, player, Songbook, and Chant Lab routes. Create exposes both words-first chant submission and the performance path through `lib/presentation/create/create_hub_screen.dart :: CreateHubScreen`. Songbook retains the device-local matchday library. You owns creator identity, private draft activity, notifications, policy, feedback, blocking, operator moderation, sign out, and account deletion (`lib/presentation/profile/creator_profile_screen.dart :: CreatorProfileScreen`; `lib/presentation/settings/account_actions_menu.dart :: AccountActionsMenu`).
 
-Routing remains Navigator-based. `MagicLinkGate` wraps the navigator so an initial or resumed HTTPS email link can complete without bypassing the account gate. The native auth path is declared for Apple and Android, but no production domain association is claimed.
+Routing remains Navigator-based. `MagicLinkGate` wraps the navigator so an initial or resumed HTTPS email link can complete without bypassing the account gate. The native auth path is declared for Apple and Android. The launch-services block adds an exact Apple association file and live Firebase Auth authorization for `chantsfc.com` and `auth.chantsfc.com`; Hosting deployment, DNS routing, CDN pickup, Android Asset Links, and device opening remain unverified.
 
 ## Authentication and initial profile authority
 
@@ -35,7 +35,7 @@ Firebase Auth owns the stable UID, credential, verification, and linked-provider
 
 Verification feedback distinguishes a requested email from an already-verified account. Returning from a magic-link request says completion is pending rather than claiming the provider is connected. If `completeOnboarding` succeeds before the profile stream advances, the saved fields freeze while Check Again and Sign Out remain available. Check Again reuses the original confirmed values instead of implying that a later edit was accepted. Storage operator preview now requires the same verified-contact proof as Firestore and callable operator authority.
 
-Provider code is not provider readiness. Firebase console enablement, Apple and Google identifiers, Meta callback and deletion configuration, SMS regions and quota, APNs or Android fingerprints, hosted association files, App Check, branding review, and real-device proof remain external gates. A provider button stays absent until an operator intentionally supplies the matching build flag.
+Provider code is not provider readiness. The iOS Firebase app is now registered with App Attest at the default one-hour TTL and remains unenforced. Android App Check, provider console enablement, Apple and Google identifiers, Meta callback and deletion configuration, SMS regions and quota, APNs or Android fingerprints, deployed association files, branding review, and real-device proof remain external gates. A provider button stays absent until an operator intentionally supplies the matching build flag.
 
 ## Creator identity
 
@@ -115,15 +115,15 @@ The seed pipeline still validates explicit chant identity and content shape befo
 
 The auth client adds Google Sign-In, Facebook Auth, app links, and shared preferences. FlutterFire resolves as one current graph in `pubspec.lock`; iOS resolves 18 direct dependencies and 56 total pods against Firebase iOS 12.18. Google Sign-In 9.2 moves `GTMSessionFetcher` from 5.3.1 to compatible 3.5.0. CocoaPods warns that its Firebase distribution will stop receiving new versions after October 2026, but the repository intentionally remains CocoaPods-owned under the existing native decision. A future dependency-manager migration requires its own compatibility block.
 
-Android declares Internet access, uses the Chants label, owns the approved auth and public HTTPS paths, and refuses debug signing for release, including when an aggregate Gradle task reaches a release task indirectly. Exact PR 18 clean CI built and inspected the debug APK; the local machine still has no Android SDK. iOS Runner carries Sign in with Apple plus auth and public-domain entitlements, and exact PR 18 CI built and inspected the simulator bundle. Neither compile proves provider, signing, association, device, or distribution readiness.
+Android declares Internet access, uses the Chants label, owns the approved auth and public HTTPS paths, applies the Google Services and Crashlytics plugins, and refuses debug signing for release, including when an aggregate Gradle task reaches a release task indirectly. Exact PR 18 clean CI built and inspected the debug APK; the local machine still has no Android SDK. iOS Runner carries Sign in with Apple plus auth and public-domain entitlements and now has a release-only FlutterFire symbol-upload phase. The launch-services branch also built and inspected `com.chants.chants` as a local iOS simulator app. Neither compile proves provider, signing, deployed association, device, Crashlytics delivery, or distribution readiness.
 
 ## Deployment, cost, and recovery
 
 CI verifies and does not deploy. The source names one Firebase project and no staging environment. No public Function, Hosting route, rule, index, Storage rule, or client has been deployed by this work.
 
-Performance read and upload surfaces have explicit limits: ten-record feed pages, 30-second and 50-MiB uploads, no autoplay or prefetch, one deterministic ranking contribution per account, short playback URLs, and manual approval. Creator and chant source fan-out plus exact aggregate reconstruction are not globally bounded and have no measured production budget. Production read, write, signing, storage, moderation, cleanup, and egress measurements do not exist.
+Performance read and upload surfaces have explicit limits: ten-record feed pages, 30-second and 50-MiB uploads, no autoplay or prefetch, one deterministic ranking contribution per account, short playback URLs, and manual approval. The launch-services branch adds one daily 100-row abandoned-draft cleanup page and two 101-row capped stale-job probes every 15 minutes. Creator and chant source fan-out plus exact aggregate reconstruction are not globally bounded and have no measured production budget. Production read, write, signing, storage, moderation, cleanup, and egress measurements do not exist.
 
-The compatible rollout order is Firestore and Storage rules, Functions, Hosting, then client. Before rollout, verify URL-signing IAM, domain and app associations, store destinations, App Check, billing and Function alerts, staged-media cleanup, moderation staffing, privacy and content policy, and deployed parity. Recovery can pause admission while keeping Songbook and words-only Chant Lab available.
+The compatible rollout order is Firestore and Storage rules, Functions, Hosting, then client. Before rollout, verify URL-signing IAM, domain and app associations, store destinations, App Check, observed billing and Function alert delivery, staged-media cleanup, moderation staffing, privacy and content policy, and deployed parity. Recovery can pause admission while keeping Songbook and words-only Chant Lab available.
 
 ## Where I most want your eyes
 
@@ -140,5 +140,5 @@ The compatible rollout order is Firestore and Storage rules, Functions, Hosting,
 - Apple, Google, Facebook, magic-link, and phone dashboard, credential, callback, domain, privacy, quota, anti-abuse, and real-device behavior. Every provider remains disabled until its own gates pass.
 - Camera and library permissions, upload progress, backgrounding, retry, cancellation, playback, share destinations, Following, notifications, deep comments, moderation, blocking, deletion, accessibility, and offline behavior on real devices.
 - `chantsfc.com` Hosting deployment, DNS, domain association, social crawler output, app/store routing, and URL-signing IAM.
-- Production App Check, alerts, billing controls, staged-object cleanup, moderation response time, backup or restore, data export, and deployed parity.
+- Android App Check, App Check enforcement and observation, alert delivery, deployed signal production, billing-threshold delivery, deployed staged-object cleanup, moderation response time, backup or restore, data export, and deployed parity.
 - Final content policy, privacy policy, terms, media rules, signing, store metadata, seed completion, and release.

@@ -1,15 +1,15 @@
 # Repository implementation rationale
 
-This document explains the current Chants repository, including inherited systems and the independently reviewed creator, launch-authentication, Android, post-auth correction, and minor-closure work merged to `main` at `e8f2591`. It is a reviewer map, not proof of deployment or release readiness.
+This document explains the current Chants repository through documentation merge `9c6286a` and the approved V1 launch-services range, including inherited systems and the independently reviewed creator, launch-authentication, Android, post-auth correction, and minor-closure work. It is a reviewer map, not proof of deployment or release readiness.
 
 ## Document identity and completeness
 
 - **Current change:** `docs/CHANGE_SPEC.md`
-- **Completed change reasoning:** `docs/changes/2026-08-27-creator-platform-foundation.md`, `docs/changes/2026-08-28-pr17-post-review-takedown-integrity.md`, `docs/changes/2026-08-28-v1-launch-auth-onboarding-android.md`, `docs/changes/2026-08-28-post-auth-independent-review-corrections.md`, and `docs/changes/2026-08-29-final-source-freeze-minor-closure.md`
-- **Durable creator and identity decisions:** 017 through 023
+- **Completed change reasoning:** `docs/changes/2026-08-27-creator-platform-foundation.md`, `docs/changes/2026-08-28-pr17-post-review-takedown-integrity.md`, `docs/changes/2026-08-28-v1-launch-auth-onboarding-android.md`, `docs/changes/2026-08-28-post-auth-independent-review-corrections.md`, `docs/changes/2026-08-29-final-source-freeze-minor-closure.md`, and `docs/changes/2026-08-29-v1-launch-services-configuration.md`
+- **Durable creator, identity, and launch decisions:** 017 through 024
 - **Execution evidence:** `docs/EXECUTION.md`
 - **Interface memory:** `docs/INTERFACE.md`
-- **Known missing evidence:** combined device walk, provider and production configuration, association deployment, policy, deploy, seed completion, signing, and release
+- **Known missing evidence:** combined device walk, remaining provider configuration, association deployment, final policy text, source deployment, observed alert delivery, seed completion, signing, and release
 
 ## Repository coverage ledger
 
@@ -200,6 +200,8 @@ iOS remains on the project-owned CocoaPods path. The auth graph resolves 18 dire
 - Feed pages are limited to ten records.
 - Following V1 is limited to 30 followed creator IDs.
 - Upload is limited to one 30-second, 50-MiB object per draft.
+- Abandoned staging cleanup reads and attempts at most 100 exact-path drafts per daily run.
+- Retained deletion monitoring reads at most 101 rows per collection every 15 minutes and logs aggregate counts only.
 - Video does not autoplay, prefetch, or retry indefinitely.
 - Public signed playback URLs last two minutes; in-app signed playback URLs last ten minutes.
 - Interaction totals recompute from all source rows for a performance, which favors correctness over large-scale write cost.
@@ -208,7 +210,7 @@ iOS remains on the project-owned CocoaPods path. The auth graph resolves 18 dire
 - Phone production cost is controlled by provider quotas, permitted regions, test numbers, billing alerts, and first-cohort observation, not the source cooldown alone. Phone remains disabled until those gates exist.
 - Production reads, writes, signing, storage, egress, moderation time, and cost are unmeasured.
 
-The launch must set billing alerts, staged-object cleanup, Function alerts, moderation response expectations, and an admission pause procedure.
+The launch-services block provides bounded staged-object cleanup and the privacy-safe stale-job signal in source. The two operational policies and USD 25 alert-only budget are saved, enabled, and re-read. Launch still requires deployment, observed signal and notification delivery, moderation response expectations, and an admission pause procedure.
 
 ## Verification performed
 
@@ -218,6 +220,8 @@ The launch must set billing alerts, staged-object cleanup, Function alerts, mode
 | Full `flutter test` | PASS, 463 tests locally and in exact-main run `33256843751` at `e8f2591` |
 | `flutter analyze lib test` with the deterministic non-secret fixture | PASS with zero issues locally and in exact-main run `33256843751` |
 | `functions/npm test` | PASS, 142 including overlapping onboarding and explicit transaction-retry state |
+| Launch-services Functions suite | PASS, 146 including bounded cleanup, exact retry, stale boundaries, count caps, and privacy-safe logging |
+| Launch-services Flutter suite and analysis | PASS, 465 tests and zero analyzer issues after the private cleanup-state parser regression |
 | Firestore plus Storage emulator | PASS, 165 Java-backed cases in exact-main run `33256843751`, including one cross-account Storage case with three permission assertions |
 | `seed/npm test` | PASS, 42 |
 | Memory, writing-style, native-contract, and governance-regression scripts | PASS in exact-main run `33256843751`; rerun against the documentation-only staged boundary |
@@ -226,11 +230,13 @@ The launch must set billing alerts, staged-object cleanup, Function alerts, mode
 | Three targeted goldens | Updated, passing, and visually inspected |
 | CocoaPods resolution | PASS, 18 direct dependencies and 56 total pods on Firebase iOS 12.18 |
 | iOS simulator compile | PASS with bundle and exact-source inspection at merged `main` `e8f2591` in run `33256843751` |
+| Launch-services iOS simulator compile | PASS locally; `Runner.app` reports `com.chants.chants` and the Crashlytics pod symbol tool is present |
 | Android debug compile | PASS with package and source identity inspection at merged `main` `e8f2591` in run `33256843751` |
+| Launch-services Android debug compile | BLOCKED locally because this machine has no Android SDK; replacement clean-runner CI remains the source gate |
 
 ## Deployment and recovery
 
-Nothing in this range is deployed. No live Firestore or Storage mutation, seed write, signing, or store action occurred.
+No repository artifact in this range is deployed. The approved Auth domains, unenforced iOS App Attest registration, operational policies, private notification channel, and alert-only budget are saved and re-read in their owning consoles. No live Firestore or Storage mutation, seed write, signing, or store action occurred.
 
 Compatible deployment order is rules, Functions, Hosting, then client. Public URLs should not ship until Hosting, domain, IAM signing, and store routing are verified. Media admission should not open until policy, moderation, cleanup, billing, and alert gates are operational.
 
@@ -240,11 +246,11 @@ Recovery options are additive. Pause performance admission without removing Song
 
 | Record | Current meaning |
 |---|---|
-| `docs/CHANGE_SPEC.md` | Approved final source-freeze minor closure plus remaining gates |
-| Five current change records dated 2026-08-27 through 2026-08-29 | Creator implementation, takedown correction, launch authentication extension, post-auth correction, and final minor closure |
-| Decisions 017 through 023 | Shell, creator, performance, public, social, safety, source eligibility, and verified identity architecture |
+| `docs/CHANGE_SPEC.md` | Approved V1 launch-services source and reversible configuration contract |
+| Six current change records dated 2026-08-27 through 2026-08-29 | Creator implementation, takedown correction, launch authentication extension, post-auth correction, final minor closure, and V1 launch services |
+| Decisions 017 through 024 | Shell, creator, performance, public, social, safety, source eligibility, verified identity, and staged launch integrity architecture |
 | `docs/INTERFACE.md` | Current launch, Stage, creator, conversation, moderation, and inherited interaction contract |
-| `docs/ROADMAP.md` | Launch source implementation merged and exact-main green; device evidence, provider configuration, policy, seed, and release remain |
+| `docs/ROADMAP.md` | Feature source merged; launch services are packaged separately; device evidence, remaining provider configuration, policy, seed, deployment, and release remain |
 | `ENGINEERING_OVERVIEW.md` | Reviewer-oriented current code map |
 
 ## Known compromises and uncertainty
@@ -255,12 +261,12 @@ Recovery options are additive. Pause performance admission without removing Song
 | Following query cap | More than 30 followed creators are not represented in one V1 page query | When real accounts cross the cap |
 | Signed URL residual | Hide is not instantaneous for an already issued public two-minute or in-app ten-minute URL | When risk requires stronger revocation |
 | Source fan-out and ground-truth aggregate scans | Trigger time and write cost grow with dependent performance volume and popularity | Before public volume or when telemetry crosses budget |
-| Durable media-deletion jobs have no production alert | Failed physical cleanup may remain queued without prompt operator attention | Before media admission opens |
+| Durable media-deletion monitoring is source-only until deployment, and saved policy delivery is unobserved | Failed physical cleanup may remain queued without prompt operator attention | Before media admission opens |
 | No automated media screening | Harm detection depends on humans | When queue or incident volume justifies a reviewed provider contract |
-| No domain or store association | Public pages cannot yet guarantee app opening | Before release emits links |
+| Apple association is source-ready but not hosted; Android and store association remain absent | Public pages cannot yet guarantee app opening | Before release emits links |
 | Requested providers are source-complete but disabled | Launch breadth depends on external console, credential, callback, privacy, cost, and device proof | Before enabling each provider flag |
 | No cross-UID account merge | A user with two existing accounts must choose one and link only credentials not already owned | When measured support demand justifies a separately reviewed recovery system |
-| Placeholder policy and no production cost controls | Public UGC release is blocked | Before public submission |
+| Policy copy is placeholder and the saved alert-only cost control has no observed delivery | Public UGC release remains blocked on policy and operational proof | Before public submission |
 | No staging, restore proof, or export | Operational recovery remains manual | Before public beta or meaningful user data |
 
 ## Material files

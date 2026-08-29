@@ -20,6 +20,10 @@ jobs:
         run: ./scripts/check-writing-style.sh
       - name: Check native project contract
         run: ./scripts/check-native-project.sh
+      - name: Check launch services contract
+        run: node scripts/check-launch-services.mjs
+      - name: Test launch services checks
+        run: node scripts/test-launch-services-check.mjs
       - name: Test project governance checks
         run: ./scripts/test-project-governance.sh
 

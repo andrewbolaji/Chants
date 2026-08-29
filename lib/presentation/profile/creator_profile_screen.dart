@@ -208,6 +208,12 @@ class _PerformanceDraftCard extends StatelessWidget {
         AppColors.error,
         'This draft never reached review. Start a fresh take from the chant.',
       ),
+      PerformanceDraftState.cleanupPending => (
+        'EXPIRING DRAFT',
+        Icons.auto_delete_outlined,
+        AppColors.textMuted,
+        'The unfinished upload is being removed safely.',
+      ),
       PerformanceDraftState.pendingReview => (
         'PENDING REVIEW',
         Icons.hourglass_top,

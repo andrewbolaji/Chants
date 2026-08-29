@@ -81,6 +81,14 @@
       ]
     },
     {
+      "collectionGroup": "performanceDrafts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "state", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "performanceComments",
       "queryScope": "COLLECTION",
       "fields": [

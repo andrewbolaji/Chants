@@ -203,6 +203,7 @@
 				3B06AD1E1E4923F5004D2608 /* Thin Binary */,
 				7AFBAB9807AD7E940E791351 /* [CP] Embed Pods Frameworks */,
 				17C377296C4A6A31450E55BB /* [CP] Copy Pods Resources */,
+				029C95157F12F5B17E204F1E /* FlutterFire: "flutterfire upload-crashlytics-symbols" */,
 			);
 			buildRules = (
 			);
@@ -283,6 +284,24 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		029C95157F12F5B17E204F1E /* FlutterFire: "flutterfire upload-crashlytics-symbols" */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "FlutterFire: \"flutterfire upload-crashlytics-symbols\"";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\n#!/bin/sh\nif [ \"${CONFIGURATION}\" != \"Release\" ]; then\n  exit 0\nfi\n\nPATH=\"${PATH}:$FLUTTER_ROOT/bin:${PUB_CACHE}/bin\"\nif [ -z \"$PODS_ROOT\" ] || [ ! -f \"$PODS_ROOT/FirebaseCrashlytics/run\" ]; then\n  echo \"error: Firebase Crashlytics upload script is unavailable.\" >&2\n  exit 1\nfi\nif ! command -v flutterfire >/dev/null 2>&1; then\n  echo \"error: FlutterFire CLI is required for a release archive.\" >&2\n  exit 1\nfi\nflutterfire upload-crashlytics-symbols --upload-symbols-script-path=\"$PODS_ROOT/FirebaseCrashlytics/run\" --platform=ios --apple-project-path=\"${SRCROOT}\" --env-platform-name=\"${PLATFORM_NAME}\" --env-configuration=\"${CONFIGURATION}\" --env-project-dir=\"${PROJECT_DIR}\" --env-built-products-dir=\"${BUILT_PRODUCTS_DIR}\" --env-dwarf-dsym-folder-path=\"${DWARF_DSYM_FOLDER_PATH}\" --env-dwarf-dsym-file-name=\"${DWARF_DSYM_FILE_NAME}\" --env-infoplist-path=\"${INFOPLIST_PATH}\" --default-config=default\n";
+		};
 		17C377296C4A6A31450E55BB /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;

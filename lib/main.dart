@@ -19,7 +19,7 @@ Future<void> main() async {
   // App Check: debug provider for dev, real providers for release (C14)
   // Non-blocking so a token failure never prevents startup or auth.
   try {
-    debugPrint('[AppCheck] Activating — kDebugMode=$kDebugMode');
+    debugPrint('[AppCheck] Activating: kDebugMode=$kDebugMode');
     if (kDebugMode) {
       await FirebaseAppCheck.instance.activate(
         providerApple: AppleDebugProvider(),

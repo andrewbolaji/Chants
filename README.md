@@ -49,7 +49,7 @@ Chants is a mobile app where football fans find and learn terrace songs, contrib
 | Auth | Firebase Auth | ^6.5.1 |
 | Database | Cloud Firestore | ^6.4.1 |
 | Server logic | Cloud Functions (TypeScript, Node 20) | firebase-functions ^6.3.0, firebase-admin ^13.0.0 |
-| Integrity | Firebase App Check | ^0.4.4+1 (soft-enforce, DeviceCheck / Play Integrity) |
+| Integrity | Firebase App Check | ^0.4.4+1 (unenforced; iOS App Attest registered, Android pending) |
 | Observability | Firebase Crashlytics | ^5.2.2 |
 | Testing | flutter_test, Mockito, Mocha | Widget, model, security-rules, and Cloud Functions tests |
 
@@ -113,7 +113,7 @@ Chants are stored in a single flat Firestore collection with denormalized IDs. P
 
 ### Cloud Functions
 
-Forty-four Functions exports are present in source (all configured for `europe-west2`; live deployment state is verified separately). This table shows the inherited chant, safety, account, and policy boundaries:
+Forty-six Functions exports are present in source (all configured for `europe-west2`; live deployment state is verified separately). This table shows the inherited chant, safety, account, policy, and launch-operations boundaries:
 
 | Function | Trigger | Purpose |
 |----------|---------|---------|
@@ -128,6 +128,8 @@ Forty-four Functions exports are present in source (all configured for `europe-w
 | `onModerationAction` | HTTPS callable | Operator hide/unhide/remove/ban and promote/demote actions with audit log |
 | `deleteAccount` | HTTPS callable | Durably accept account deletion and mark the profile pending |
 | `onAccountDeletionJobWritten` | AccountDeletionJob doc write | Advance one bounded retryable cleanup phase or page |
+| `cleanupAbandonedPerformanceDraftsJob` | Daily schedule | Remove one bounded page of abandoned staging objects after an exact transactional claim |
+| `monitorOperationalBacklogsJob` | 15-minute schedule | Emit aggregate-only errors when account or media deletion work stops progressing |
 | `mergeChants` | HTTPS callable | Disabled operator boundary that exits before request parsing or mutation until resumable recovery and privacy-safe audit design are approved |
 | `acceptPolicy` | HTTPS callable | Validate and record acceptance of the current content policy |
 | `onUserReportCreated` | UserReport doc create | Recompute the reported user's distinct-report count |
@@ -147,7 +149,7 @@ The creator-platform exports add callable and trigger boundaries for creator ide
 
 **Content integrity.** All seed content (lyrics, squads, cultural context) is externally sourced and verified by hand. The build process can only transform supplied data in place; it never generates or rewrites content. This is a standing rule with the highest priority in the project.
 
-**Test coverage across layers.** Final merged `main` at `e8f2591` passed all eight jobs in run `33256843751`: 463 Flutter tests, zero-issue analysis, 142 Cloud Functions tests, 42 seed-pipeline tests, 165 Java-backed Firestore and Storage cases, project governance, Android debug compilation with package inspection, and iOS simulator compilation with bundle and exact-source inspection. Regression guards cover current authority, moderation and takedown, creator and chant source reconciliation, counters, upload admission, public destinations, authentication recovery, account deletion, offline Songbook, responsive layouts, and fail-closed native ownership. This is source and clean-runner evidence, not device, provider, deployment, signing, or store readiness.
+**Test coverage across layers.** Creator and authentication feature source at `e8f2591` passed all eight jobs in run `33256843751`: 463 Flutter tests, zero-issue analysis, 142 Cloud Functions tests, 42 seed-pipeline tests, 165 Java-backed Firestore and Storage cases, project governance, Android debug compilation with package inspection, and iOS simulator compilation with bundle and exact-source inspection. Documentation-only PR 19 later advanced `main` without changing those executable inputs. Regression guards cover current authority, moderation and takedown, creator and chant source reconciliation, counters, upload admission, public destinations, authentication recovery, account deletion, offline Songbook, responsive layouts, and fail-closed native ownership. This is source and clean-runner evidence, not device, provider, deployment, signing, or store readiness.
 
 ---
 
