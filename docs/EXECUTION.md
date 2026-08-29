@@ -13,6 +13,27 @@ This is the chronological evidence trail for substantial engineering work. It re
 
 ## Entries
 
+### 2026-08-29T12:49:50Z Close final source-freeze minor findings
+
+- **Status:** Approved and in progress
+- **Scope:** Correct the final independent review's two minor findings: freeze already-saved onboarding fields while retaining truthful retry and Sign Out, then reconcile current engineering evidence with the packaged and green PR 18 and combined PR 17 heads. No callable, schema, rule, provider, native, deployment, seed, or release behavior changes.
+- **Reference:** `docs/CHANGE_SPEC.md`, approved final source-freeze minor closure
+- **Approval:** Andrew explicitly requested the minor fixes, replacement CI, and merge on 2026-08-29.
+- **Operator:** Codex
+
+| UTC time | Action | Target/environment | Result and evidence |
+|---|---|---|---|
+| 12:49:50 | Re-established the exact combined branch and reviewed current framework and project contracts | PR 17 worktree, local Codex framework, project profile, active learnings, interface memory, onboarding source, tests, and current milestone records | Fast-forwarded the clean PR 17 worktree to `5350b8a`. Confirmed the merge tree is the reviewed combined head, the two minor findings remain present, and no unrelated owner changes exist in the worktree. |
+| 12:49:50 | Recorded the bounded correction contract | `docs/CHANGE_SPEC.md` | Classified the change as Lane 2 because it touches authentication onboarding. Limited runtime scope to post-success field immutability and truthful retry copy. Preserved server idempotency, authority, provider flags, native projects, and every external release gate. |
+| 12:55:00 | Implemented truthful projection recovery and strengthened its production widget regression | Onboarding screen and signup validation widget suite | Saved fields now freeze after the first confirmed completion. Check Again and Sign Out remain available. The regression requires the same original display name on both calls and would fail against the reviewed pre-correction behavior. |
+| 12:56:00 | Ran focused onboarding verification | `flutter test test/presentation/auth/sign_up_validation_test.dart` | PASS: 10 tests, including the changed post-success regression. Dependency resolution used the committed lockfile; available-upgrade notices did not change dependencies. |
+| 12:58:06 | Reconciled current milestone truth with independent CI evidence | Overview, implementation rationale, interface memory, project profile, roadmap, prior correction record, and new scoped rationale | Confirmed run `33215692105` is successful at `5350b8a` across all eight jobs. Its rules log reports 165 passing cases. Updated current records and retained historical execution entries unchanged. |
+| 13:01:43 | Completed the local verification matrix | Flutter, Functions, seed, rules TypeScript, project memory, governance, native contract, authored prose, and diff integrity | PASS: 463 Flutter tests, zero-issue `flutter analyze lib test`, 142 Functions tests, 42 seed tests plus TypeScript, rules TypeScript, all repository governance scripts, no literal or encoded em dash in changed prose, and clean diff checks. Java-backed rules remain CI-only because Java is unavailable locally. |
+| 13:03:38 | Staged and verified the exact commit boundary | Eleven intended source, test, and durable-record paths in the Git index | PASS: staged project memory, index-scoped writing, governance regressions, native contract, Dart formatter, and staged diff checks. No backend, rules, seed, native, dependency, workflow, or unrelated owner path is staged. |
+
+- **Current state:** Runtime, regression, current-truth reconciliation, full available local verification, and staged governance are complete. Commit, push, replacement CI, and merge remain.
+- **Resume point:** Inspect the final staged diff, create one closure commit, and push PR 17.
+
 ### 2026-08-28T20:59:12Z Start post-auth independent review corrections
 
 - **Status:** Approved and in progress

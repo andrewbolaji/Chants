@@ -22,11 +22,13 @@ class _ValidationOnlyAuthRepository extends Mock implements AuthRepository {
 class _FakeOnboardingRepository extends Mock implements OnboardingRepository {
   int calls = 0;
   String? displayName;
+  final displayNames = <String>[];
 
   @override
   Future<void> complete({required String displayName}) async {
     calls += 1;
     this.displayName = displayName;
+    displayNames.add(displayName);
   }
 }
 
@@ -210,46 +212,72 @@ void main() {
       expect(destination, 3);
     });
 
-    testWidgets('successful setup restores retry and sign-out controls', (
-      tester,
-    ) async {
-      final onboarding = _FakeOnboardingRepository();
-      await tester.pumpWidget(
-        wrap(
-          OnboardingScreen(onDestinationSelected: (_) {}),
-          onboarding: onboarding,
-        ),
-      );
-      await tester.enterText(
-        find.widgetWithText(TextFormField, 'Display name'),
-        'Testuser',
-      );
-      await pickDateOfBirth(tester, 20);
-      await tester.tap(find.byType(Checkbox));
-      await tester.tap(find.text('ENTER CHANTS'));
-      await tester.pump();
+    testWidgets(
+      'successful setup freezes saved fields and keeps truthful recovery',
+      (tester) async {
+        final onboarding = _FakeOnboardingRepository();
+        await tester.pumpWidget(
+          wrap(
+            OnboardingScreen(onDestinationSelected: (_) {}),
+            onboarding: onboarding,
+          ),
+        );
+        await tester.enterText(
+          find.widgetWithText(TextFormField, 'Display name'),
+          'Testuser',
+        );
+        await pickDateOfBirth(tester, 20);
+        await tester.tap(find.byType(Checkbox));
+        await tester.tap(find.text('ENTER CHANTS'));
+        await tester.pump();
 
-      expect(find.textContaining('Setup was saved'), findsOneWidget);
-      await tester.scrollUntilVisible(
-        find.text('ENTER CHANTS'),
-        200,
-        scrollable: find.byType(Scrollable).first,
-      );
-      expect(
-        tester
-            .widget<FilledButton>(
-              find.widgetWithText(FilledButton, 'ENTER CHANTS'),
-            )
-            .onPressed,
-        isNotNull,
-      );
-      expect(
-        tester
-            .widget<TextButton>(find.widgetWithText(TextButton, 'SIGN OUT'))
-            .onPressed,
-        isNotNull,
-      );
-    });
+        expect(find.textContaining('Setup is saved'), findsOneWidget);
+        await tester.scrollUntilVisible(
+          find.text('CHECK AGAIN'),
+          200,
+          scrollable: find.byType(Scrollable).first,
+        );
+        expect(find.text('ENTER CHANTS'), findsNothing);
+        final displayNameField = tester.widget<TextFormField>(
+          find.widgetWithText(TextFormField, 'Display name'),
+        );
+        expect(displayNameField.enabled, isFalse);
+        expect(displayNameField.controller?.text, 'Testuser');
+        expect(
+          tester
+              .widget<CheckboxListTile>(find.byType(CheckboxListTile))
+              .onChanged,
+          isNull,
+        );
+        expect(
+          tester
+              .widget<SegmentedButton<int>>(find.byType(SegmentedButton<int>))
+              .onSelectionChanged,
+          isNull,
+        );
+        expect(
+          tester
+              .widget<FilledButton>(
+                find.widgetWithText(FilledButton, 'CHECK AGAIN'),
+              )
+              .onPressed,
+          isNotNull,
+        );
+        expect(
+          tester
+              .widget<TextButton>(find.widgetWithText(TextButton, 'SIGN OUT'))
+              .onPressed,
+          isNotNull,
+        );
+
+        await tester.tap(find.text('CHECK AGAIN'));
+        await tester.pump();
+
+        expect(onboarding.calls, 2);
+        expect(onboarding.displayNames, ['Testuser', 'Testuser']);
+        expect(find.textContaining('Setup is saved'), findsOneWidget);
+      },
+    );
 
     testWidgets('destination selector has a 48-pixel minimum target', (
       tester,

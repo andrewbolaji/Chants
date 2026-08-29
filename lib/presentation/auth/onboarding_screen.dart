@@ -22,6 +22,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   DateTime? _dateOfBirth;
   bool _policyAccepted = false;
   bool _loading = false;
+  bool _setupSaved = false;
   bool _leaving = false;
   int _destination = 0;
   String? _error;
@@ -97,7 +98,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _status = 'Setup was saved. You can safely enter again or sign out.';
+        _setupSaved = true;
+        _status =
+            'Setup is saved. If your profile is still loading, check again '
+            'or sign out.';
       });
     } catch (error) {
       if (!mounted) return;
@@ -158,6 +162,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             const SizedBox(height: Spacing.xl),
             TextFormField(
               controller: _displayNameController,
+              enabled: !_loading && !_setupSaved,
               decoration: const InputDecoration(labelText: 'Display name'),
               autofillHints: const [AutofillHints.name],
               textInputAction: TextInputAction.done,
@@ -170,9 +175,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             ),
             const SizedBox(height: Spacing.md),
             InkWell(
-              onTap: _loading ? null : _pickDateOfBirth,
+              onTap: _loading || _setupSaved ? null : _pickDateOfBirth,
               child: InputDecorator(
-                decoration: const InputDecoration(labelText: 'Date of birth'),
+                decoration: InputDecoration(
+                  labelText: 'Date of birth',
+                  enabled: !_loading && !_setupSaved,
+                ),
                 child: Text(
                   _dateOfBirth == null
                       ? 'Tap to choose'
@@ -188,7 +196,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               contentPadding: EdgeInsets.zero,
               value: _policyAccepted,
               controlAffinity: ListTileControlAffinity.leading,
-              onChanged: _loading
+              onChanged: _loading || _setupSaved
                   ? null
                   : (value) => setState(() => _policyAccepted = value ?? false),
               title: const Text('I agree to the Content Policy.'),
@@ -218,7 +226,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 ButtonSegment(value: 3, label: Text('Songbook')),
               ],
               selected: {_destination},
-              onSelectionChanged: _loading
+              onSelectionChanged: _loading || _setupSaved
                   ? null
                   : (selection) =>
                         setState(() => _destination = selection.single),
@@ -252,7 +260,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       height: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('ENTER CHANTS'),
+                  : Text(_setupSaved ? 'CHECK AGAIN' : 'ENTER CHANTS'),
             ),
             if (underage) ...[
               const SizedBox(height: Spacing.md),

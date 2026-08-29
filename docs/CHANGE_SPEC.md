@@ -1,113 +1,79 @@
-# Change spec: Post-auth independent review corrections
+# Change spec: Final source-freeze minor closure
 
-**Status:** Implemented and locally verified; packaging and exact-head CI pending
-**Updated:** 2026-08-28
-**Risk lane:** Lane 2, authentication recovery, verified-contact authorization, SMS abuse controls, magic-link persistence, and launch onboarding
-**Base:** `db40f4257679cd368dc1d4ff5bcd532f324e5a37`, exact PR 18 clean-runner head
-**Review source:** Independent read-only review of `86603c22fbd7647f89c9276af9a60a0b3d63113b..db40f4257679cd368dc1d4ff5bcd532f324e5a37`
-**Approval:** Andrew explicitly approved `post-auth independent review correction spec` on 2026-08-28.
+**Status:** Implemented, locally verified, and staged; commit, exact-head CI, and merge pending
+**Updated:** 2026-08-29
+**Risk lane:** Lane 2 because the bounded interface correction sits inside authentication onboarding
+**Base:** `5350b8ae0d41665db7a41e00117b50e73c062b4e`, combined PR 17 and PR 18 head
+**Review source:** Final independent read-only review of `86603c22fbd7647f89c9276af9a60a0b3d63113b...5350b8ae0d41665db7a41e00117b50e73c062b4e`
+**Approval:** Andrew explicitly requested the two minor fixes, replacement CI, and merge on 2026-08-29.
 
 ## Outcome
 
-- **Problem:** The combined creator and launch-authentication stack has no source-freeze blocker, but the independent review found four medium and five low defects in recovery, rule consistency, SMS throttling, magic-link state, truthful feedback, and touch-target behavior.
-- **Desired behavior:** Enabled authentication methods remain retryable, onboarding always preserves an escape or retry action, phone attempts cannot bypass the visible cooldown or revive after cancellation, client and server verified-contact authority remain consistent, and every confirmation states only what actually happened.
-- **Review boundary:** `storage.rules`, authentication repository primitives, phone, magic-link, verification, onboarding and sign-in-methods presentation, focused tests, interface memory, execution evidence, decision 023, current milestone truth, and the completed change record.
-- **Freeze position:** This correction may close source defects. It does not convert provider configuration or device evidence into source-complete claims.
+- **Problem:** A successful onboarding request restores the whole form even though a duplicate server request preserves the existing profile. A user can therefore edit the display name, retry, and receive success copy even though the edit is intentionally ignored. Current engineering records also describe the already packaged and green post-auth correction as local or pending.
+- **Desired behavior:** After setup succeeds while profile projection is delayed, retry and Sign Out remain available, saved fields are visibly immutable, and copy describes a projection check rather than another editable submission. Durable records state the exact reviewed and clean-runner evidence while preserving real device, provider, deployment, policy, seed, and release gates.
+- **Review boundary:** Onboarding presentation, its production widget regression, current engineering truth, interface memory, roadmap, project profile, execution evidence, and one scoped completion record.
+- **Non-goal:** No callable, profile schema, Firebase rule, provider, native project, CI workflow, deployment, seed, or release behavior changes.
 
 ## Approved corrections
 
-### M1: Storage verified-contact parity
+### N1: Truthful post-success onboarding
 
-1. Storage operator authority must require the same verified-contact facts as Firestore operator authority.
-2. An unverified operator may not read another account's staged performance media.
-3. An active verified operator retains the intended narrow staging-preview access.
-4. A user may retain only the existing owner read behavior allowed by the approved policy. This correction does not expand any Storage path.
+1. A successful `completeOnboarding` response records that the form values are already saved.
+2. Display name, birth date, policy acceptance, and first-destination controls become read-only after that response.
+3. Retry remains available under a truthful `CHECK AGAIN` label and reuses the unchanged saved payload.
+4. Sign Out remains available.
+5. Failed first attempts remain fully editable and retryable.
+6. A late completion still checks widget lifetime before reading or mutating presentation state.
 
-### M2: Retryable Google initialization
+### N2: Exact engineering evidence
 
-1. One successful Google initialization may be shared by later Google sign-in or linking calls.
-2. A rejected initialization must not remain cached.
-3. A later call may initialize again without restarting the app.
-4. Concurrent callers may share one in-flight initialization rather than starting duplicate initialization work.
-
-### M3: Recoverable post-callable onboarding
-
-1. The onboarding submit operation disables mutation controls only while the callable is in flight.
-2. If the callable succeeds but the profile stream does not advance, the screen restores Enter Chants and Sign Out.
-3. A repeated Enter Chants action remains safe because `completeOnboarding` is idempotent.
-4. The screen states that setup was saved and a retry is safe when it remains visible after success.
-5. A late completion may not access disposed widget or Riverpod state.
-
-### M4: Cooldown across every phone send
-
-1. The 60-second cooldown applies to every new SMS request from the screen, not only the explicit resend button.
-2. Change Number may restore editable input but cannot enable another send until the current cooldown ends.
-3. Cancelling or changing the attempt prevents a late unused credential from being accepted.
-4. Firebase quota, region, billing, and platform anti-abuse controls remain the real production boundary.
-
-### L1 through L5: Narrow recovery and interface truth
-
-1. An ambiguous magic-link send failure preserves the newly written pending binding because Firebase may have accepted the request before the transport error surfaced.
-2. Phone attempt cancellation remains terminal even when cancellation occurs while one credential is in flight and that credential later fails.
-3. Returning from a successful magic-link send in Sign-in methods reports that a link was sent and still needs completion. It does not claim the provider is connected.
-4. Email-verification send returns whether a message was actually requested. Callers do not claim a send when the current user was already verified.
-5. The onboarding destination selector has a minimum 48 logical-pixel target without forcing unrelated segmented controls through a global visual change.
+1. Replace claims that the nine-finding correction is local, unpackaged, or awaiting replacement CI.
+2. Record correction commit `600272413a3350db54528b2ad6b757d07d646a96`, PR 18 merge commit `5350b8ae0d41665db7a41e00117b50e73c062b4e`, run `33213537910` at the correction head, and run `33215692105` at the byte-identical combined head.
+3. Record 463 Flutter tests, 142 Functions tests, 42 seed tests, and 165 Java-backed Firestore and Storage assertions without inflating a test case into multiple new cases.
+4. Keep the combined device walk and every provider, association, policy, signing, deployment, cost, seed, and release gate explicitly open.
 
 ## Acceptance criteria and invariants
 
-1. Storage and Firestore use the same verified-contact requirement for operator authority.
-2. Disabling or failing one provider flow cannot poison every later attempt in the same process.
-3. No onboarding path leaves every actionable control disabled after remote work has completed.
-4. No screen path can request more than one phone verification message during the active cooldown.
-5. Cancellation is monotonic for one phone verification attempt.
-6. Ambiguous remote delivery never destroys the only local state required to complete a possibly delivered magic link.
-7. The app distinguishes `requested`, `already complete`, and `failed` verification outcomes in user-facing copy.
-8. No new provider becomes visible and no production configuration is inferred from source.
-9. Existing deletion-first routing, server onboarding, UID preservation, last-method protection, creator-platform authority, and protected mutation boundaries remain unchanged.
-10. Focused tests reproduce every finding at the production boundary and fail if its correction is removed.
-11. Full Flutter, Functions, seed, analysis, rules compilation, governance, writing-style, native-contract, and diff checks pass locally where the toolchain exists.
-12. Java-backed rules and both native clean builds remain exact-head clean-runner gates after packaging is separately authorized.
+1. The production onboarding widget regression inspects the display name after server success and proves the field retains the submitted value and is disabled.
+2. The same regression proves `CHECK AGAIN` and Sign Out remain enabled.
+3. A second retry sends the original saved display name and remains idempotent.
+4. Existing validation, under-age handling, first-submit destination selection, and failure recovery remain unchanged.
+5. Repository-authored current milestone documents contain no stale claim that the post-auth correction still needs packaging or replacement CI.
+6. Documentation distinguishes source freeze from device, provider, deployment, and release readiness.
+7. Focused onboarding tests, the full Flutter suite, scoped analysis, unchanged backend suites, governance, writing, native contract, and diff checks pass locally where the toolchain exists.
+8. All eight exact-head CI jobs pass after the implementation closure commit is pushed to PR 17.
+9. One documentation-only evidence commit records that run and the merge-ready state, then all eight jobs pass again at the final head.
+10. PR 17 merges into `main` only after its reviewed head and final CI head are identical and every required job is green.
 
 ## Failure and recovery analysis
 
 | Condition | Required behavior | Evidence |
 |---|---|---|
-| Unverified operator reads staged media | Storage denies the read | Storage emulator assertion |
-| Google initialization fails once | First call fails; second initialization may succeed | Auth repository regression |
-| Onboarding callable succeeds but profile stream stalls | Controls restore, setup-saved copy appears, retry and Sign Out remain available | Production widget regression |
-| User changes number during cooldown | Number becomes editable; send remains disabled with countdown | Phone screen widget regression |
-| Phone credential is cancelled while in flight and then fails | Later automatic credential is rejected | Attempt state-machine regression |
-| Magic-link request returns an ambiguous failure | Pending binding remains and retry is possible | Magic-link widget and store assertion |
-| Magic-link request is sent from Sign-in methods | Copy says completion is still required | Sign-in-methods widget regression |
-| Verification resend is requested after the user is already verified | No false sent confirmation is shown | Repository and widget regression |
-| Onboarding destination is rendered at narrow width and enlarged text | Every destination remains present with at least a 48-pixel target | Widget accessibility assertion |
+| Profile stream stalls after successful setup | Saved values are frozen; Check Again and Sign Out remain available | Production widget regression |
+| User tries to edit the saved name | The disabled field retains the server-submitted value | Production widget regression |
+| User checks again | The original saved payload is reused and no edit is implied | Repository call capture in the widget regression |
+| First request fails | Form controls restore and retained values remain editable | Existing onboarding recovery coverage |
+| Documentation is read after CI | Exact commit, run, counts, and remaining gates agree across current records | Bounded search plus changed-line review |
+| Replacement CI fails | Do not merge; diagnose and correct or report the exact blocker | GitHub Actions job evidence |
 
 ## Verification plan
 
-- Add focused Storage emulator coverage for unverified and verified operator reads.
-- Add repository tests for failed-then-successful Google initialization and cancellation during an in-flight phone claim.
-- Add production widget tests for post-callable onboarding recovery, change-number cooldown, magic-link pending-state retention, accurate method-link copy, accurate verification copy, and the 48-pixel destination target.
-- Run focused tests during implementation and prove critical guards can fail against the reviewed behavior where practical.
-- Run the complete Flutter, Functions, seed, analysis, rules TypeScript, governance, native-contract, writing-style, memory, and diff matrix.
-- After separate packaging and push authorization, require all eight exact-head CI jobs on PR 18.
-
-## Deliberately deferred launch gates
-
-- Firebase, Apple, Google, Meta, APNs, Play, Hosting, App Check, quota, billing, and provider-console changes.
-- `assetlinks.json`, `apple-app-site-association`, the hosted magic-link completion route, and deployed domain verification until exact signing and Apple-team facts exist.
-- Facebook Android identifiers and callback entries until the operator supplies reviewed non-secret identifiers and the provider is ready for device verification.
-- Android merged-manifest inspection on an Android 11 or later device.
-- Android release signing with and without an operator `key.properties` file.
-- Real SMS auto-retrieval, magic-link cold start, App Links, Universal Links, provider login, physical-device, store, deploy, seed, and production observation work.
+- Extend the existing production onboarding widget test around the known post-success state.
+- Run the focused onboarding test file, then the complete Flutter suite and scoped analysis.
+- Run Functions and seed tests because the final merge range includes those systems even though this closure does not change them.
+- Run rules TypeScript plus Java-backed rules in CI, project memory, writing style, native contract, governance regressions, formatting, and diff checks.
+- Inspect the staged diff and generated native artifacts through the existing eight-job workflow.
+- Verify the PR head and CI head before merge, then verify the resulting `main` merge commit and clean PR state.
 
 ## Rollout and recovery
 
-1. Keep every new provider flag disabled through this correction.
-2. Package the correction only after local evidence and durable records agree.
-3. Run replacement exact-head clean CI before treating the correction as source-verified.
-4. Use one narrow independent closure of only the correction range if Andrew requests it. Do not repeat the full combined-stack review.
-5. Configure and enable one provider at a time only after its external and device gates pass.
+1. Package one cohesive implementation closure commit on PR 17.
+2. Push only that branch and require replacement exact-head CI.
+3. If the run is green, record its identity and merge-ready state in one documentation-only evidence commit.
+4. Require all eight jobs again at that final documentation head, then merge PR 17 into `main` only when every job succeeds.
+5. If the onboarding copy or frozen-state behavior regresses, revert the implementation closure commit without changing stored data or server authority.
+6. No production deployment follows from this merge.
 
 ## Excluded authority
 
-Approval authorizes local source, focused tests, and durable-record changes inside this correction boundary. It does not authorize provider-console changes, Firebase writes, SMS sends, credentials, association deployment, signing keys, Android SDK installation, deployment, seed writes, commit, push, merge, store actions, or release.
+This approval includes the bounded source and documentation edits, local checks, one commit, push to PR 17, replacement CI, and merge into `main` when green. It does not authorize provider-console changes, Firebase or Storage writes, SMS sends, credentials, association deployment, signing, store actions, seed writes, application deployment, or public release.

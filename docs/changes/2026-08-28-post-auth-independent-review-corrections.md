@@ -33,12 +33,14 @@ An ambiguous magic-link send failure retains the pending device binding because 
 
 ## Verification record
 
-Local evidence at the final uncommitted correction state:
+Local and clean-runner evidence at the packaged correction and combined merge trees:
 
 - 463 Flutter tests pass. Nine new regressions cover failed Google initialization retry, verification request truth, in-flight phone cancellation, post-callable onboarding recovery, destination target height, Change Number cooldown, ambiguous magic-link delivery, actual email-link return copy, and already-verified email copy.
 - Flutter analysis of `lib` and `test` passes with zero issues.
 - 142 Functions tests and 42 seed tests pass unchanged.
-- Storage rule tests type-check. Java-backed execution remains exact-head clean-runner work because Java is absent locally.
+- Run `33213537910` passed all eight jobs at correction commit `6002724`.
+- Run `33215692105` passed all eight jobs at byte-identical combined head `5350b8a`, including 165 Java-backed Firestore and Storage cases and both native compile and identity checks.
+- The Storage addition is one cross-account emulator case containing three permission assertions: owner upload, unverified-operator denial, and verified-operator access.
 - Project memory, writing style, native project contract, project governance regressions, and `git diff --check` pass locally.
 
 ## Deliberately unchanged and remaining gates
@@ -46,4 +48,4 @@ Local evidence at the final uncommitted correction state:
 - The callable, Firestore, Functions, native projects, provider flags, provider dashboards, and deployed infrastructure are otherwise unchanged.
 - Association files wait for exact Android signing and Apple team facts. Facebook Android identifiers wait for reviewed operator values. Android package visibility waits for a reproduced need.
 - Real SMS, magic-link cold start, App Links, Universal Links, OAuth providers, release signing, physical devices, production policy, billing, quotas, App Check, deployment, seeding, and store work remain release gates.
-- Replacement exact-head CI remains required after Andrew separately authorizes packaging and push.
+- Provider, device, production, seed, deployment, and release evidence remains required as listed above. The post-auth correction itself is packaged and exact-head clean-runner verified.
