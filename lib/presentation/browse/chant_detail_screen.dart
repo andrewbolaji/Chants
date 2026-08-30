@@ -329,6 +329,53 @@ class _ChantDetailScreenState extends ConsumerState<ChantDetailScreen> {
                       ),
                     ),
                   ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    Spacing.lg,
+                    0,
+                    Spacing.lg,
+                    Spacing.xl,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      OutlinedButton.icon(
+                        key: const Key('suggest-chant-update'),
+                        onPressed: actionsEnabled
+                            ? () {
+                                if (user == null) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Sign in to suggest a chant update.',
+                                      ),
+                                    ),
+                                  );
+                                  return;
+                                }
+                                Navigator.pushNamed(
+                                  context,
+                                  AppRouter.suggestChantUpdate,
+                                  arguments: live,
+                                );
+                              }
+                            : null,
+                        icon: const Icon(Icons.edit_note_outlined),
+                        label: const Text('SUGGEST AN EDIT'),
+                      ),
+                      const SizedBox(height: Spacing.xs),
+                      const Text(
+                        'Wrong, dated, or another version? Tell us here. '
+                        'Use Report for abuse or unsafe content.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: AppColors.textMuted,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
                 CommentSection(
                   chantId: live.id,
                   commentCount: live.commentCount,

@@ -105,6 +105,115 @@ The operator-seeded Songbook makes the app useful on day one. Chant Lab, player 
 ### Expansion
 Architecture is sport-agnostic and league-agnostic from Block 1. Expansion is data, not code. v1 is Football and the Premier League. v2 adds leagues or sports based on usage data.
 
+### Living Songbook
+
+**DONE IN SOURCE FOR V1:** Chant detail has a correction, variation, and post-submission evidence block. The source implementation keeps it separate from safety reporting, gives the submitter a private status view, gives operators a stale-aware review queue, and lets reviewed evidence promote a user chant to Terrace Proven atomically. Local Functions, Flutter, seed, analysis, typecheck, and governance evidence is green. Clean-runner rules, device walk, deployment, and release remain open.
+
+The product loop is: idea to performances to sharing to sung live to evidence to Terrace Proven.
+
+The durable authority is Decision 025. A suggestion never edits canonical wording automatically. Accepted corrections and variations still travel through the reviewed content or seed path.
+
+## V1.1 candidate backlog
+
+These ideas are pinned for deliberate V1.1 evaluation. They are not launch promises or hidden V1 scope. Each begins with a small slice and has a trigger for deciding whether it deserves a full build.
+
+### 1. Chant Call-Ups
+
+- **Purpose:** Turn transfer windows and players without chants into a visible creation competition.
+- **Smallest first slice:** A club or player page card that names one active player with no visible chant and opens the existing words-first submission path with club and player prefilled.
+- **Success signal:** meaningful submissions per call-up, shares, repeat creators, and at least one idea later supported by real evidence.
+- **Keep out initially:** prizes, brackets, automatic winners, paid promotion, and a separate contest backend.
+- **Decision trigger:** ship the first call-ups when the V1 creator flow is stable and current player data can be maintained reliably.
+
+### 2. Matchday Mode
+
+- **Purpose:** Make the Saved Matchday Songbook faster to use in a noisy stand with unreliable connectivity.
+- **Smallest first slice:** A full-screen offline reader with oversized lyrics, high contrast, swipe between saved chants, and an optional user-arranged club setlist.
+- **Success signal:** saved-songbook opens on matchdays, offline completion, repeat use within the same fixture, and low accidental-exit rate.
+- **Keep out initially:** live score integration, location tracking, background audio, stadium chat, and synchronized crowd playback.
+- **Decision trigger:** build after the V1 airplane-mode walk passes and real users save enough chants to justify a dedicated mode.
+
+### 3. Tune Families
+
+- **Purpose:** Help supporters learn a new chant by recognizing the shared melody behind it.
+- **Smallest first slice:** Normalize operator-reviewed tune names and link chants that share that label. No audio is hosted.
+- **Success signal:** tune-family opens lead to chant detail, saves, or successful submissions.
+- **Keep out initially:** melody fingerprinting, copyrighted backing tracks, automatic tune identification, and unreviewed user tags.
+- **Decision trigger:** proceed when seed cleanup shows tune names can be normalized without creating misleading families.
+
+### 4. Heard at the Ground
+
+- **Purpose:** Capture a useful fan signal that a chant has moved beyond the app.
+- **Smallest first slice:** One rate-limited, match-scoped confirmation with visible wording that it is a fan signal, not proof.
+- **Success signal:** geographically and temporally diverse confirmations correlate with later reviewed evidence without abuse spikes.
+- **Keep out initially:** automatic Terrace Proven promotion, location collection, anonymous mass voting, and a public factual claim.
+- **Decision trigger:** reconsider only after beta volume supports an abuse model and the Living Songbook evidence queue has real operating data.
+
+### 5. Followed-club chant alerts
+
+- **Purpose:** Give supporters a reason to return when their club gains a new or newly verified chant.
+- **Smallest first slice:** A private club-follow preference and one in-app activity item for a new Terrace Proven chant. No push notification until consent and delivery operations are approved.
+- **Success signal:** alert opens, club follows, return sessions, and low mute or complaint rate.
+- **Keep out initially:** marketing blasts, match alerts, inferred fandom, and notification to every user.
+- **Decision trigger:** build after the seed is complete enough that alert cadence represents real new information.
+
+### 6. Lyric-level search and historic filters
+
+- **Purpose:** Make large club collections useful as they grow and preserve departed-player songs instead of deleting them.
+- **Smallest first slice:** Search normalized lyric text plus explicit Current, Historic, and Variations filters within a club.
+- **Success signal:** successful searches that would have missed title, club, and player matching; historic chant opens and saves.
+- **Keep out initially:** semantic search, automatic era inference, universal web indexing, and unreviewed age claims.
+- **Decision trigger:** add when launch collections are large enough that current navigation produces measurable zero-result or long-scroll friction.
+
+### 7. Creator lyric-video tools
+
+- **Purpose:** Let shy or editing-focused creators publish a performance format closer to karaoke without singing on camera.
+- **Smallest first slice:** Review whether users already upload externally edited lyric videos through the existing 30-second media path, then add safe templates only if that behavior is common.
+- **Success signal:** approved lyric-video submissions, completion rate, sharing, and no material moderation or rights increase.
+- **Keep out initially:** beat detection, licensed backing tracks, copyrighted master audio, duet or remix, and a full mobile editor.
+- **Decision trigger:** prototype only after V1 media operations are stable and real upload patterns justify it.
+
+### 8. Commercial creator opportunities
+
+- **Purpose:** Preserve the long-term path from a widely shared creator performance to club, supporter-group, event, or brand opportunity.
+- **Smallest first slice:** Research opt-in contact and attribution terms after the creator graph has real traction. No marketplace is implied.
+- **Success signal:** credible inbound opportunities and creators who explicitly want them.
+- **Keep out initially:** payouts, sponsorship matching, rights representation, exclusivity, and rankings presented as professional worth.
+- **Decision trigger:** legal and rights review plus meaningful creator and share volume.
+
+Deep comment mentions and nesting beyond the current performance-thread design, duet or remix, licensed music, beat-synced karaoke, personalized recommendations, automated large-scale media screening, and creator payouts remain future work with their existing safety, rights, privacy, cost, and operations gates.
+
+## FanChants reference audit, checked 2026-08-29
+
+FanChants is useful market evidence, not seed authority and not a design template.
+
+### What Chants should learn from
+
+- Team-first discovery, lyric search, deep club songbooks, newest and curated fallbacks, historic or vintage preservation, offline access, and new-chant alerts solve real supporter jobs.
+- FanChants' large global archive shows that club songbooks can become a long-lived product, while Chants should prove the Premier League loop before widening the catalogue.
+- Its commercial business shows that owned recordings and licensing can become a separate future revenue route. It also confirms that recording rights and underlying melody rights are different clearance problems.
+- Historic songs for departed players should normally become archive content, not disappear. Currentness, trust, subject, and popularity should remain separate fields.
+
+### What Chants should not copy
+
+- Spotify plays or in-product popularity must never prove that a chant is genuinely sung.
+- One genre per chant is too coarse. Chants needs separate trust, era, subject, tone, and evidence dimensions.
+- FanChants' downloadable recordings, ringtones, Spotify releases, and licensing inventory depend on a rights chain Chants does not own.
+- A broad commercial sublicense for user uploads should not be hidden in general terms. Creator ownership, right-to-share, platform use, moderation, and takedown terms need plain language before release.
+- Rivalry content cannot be excused as banter when it crosses the Chants safety policy.
+- FanChants content may help discover a lead or corroborate evidence, but its lyrics and descriptions are not copied into the seed and are never the sole verification source.
+- Core learning should not require signup solely to unlock an arbitrary audio preview limit.
+
+### Sources
+
+- [FanChants home and account offering](https://www.fanchants.com/)
+- [Manchester United team songbook example](https://www.fanchants.com/football-team/manchester_united/)
+- [FanChants search](https://www.fanchants.com/search/)
+- [FanChants about](https://www.fanchants.com/about/about-fanchants/)
+- [FanChants commercial licensing](https://www.fanchants.com/commercial/)
+- [FanChants submission and licensing terms](https://www.fanchants.com/legals/disclaimer/)
+- [FanChants genre model](https://www.fanchants.com/genres/)
+
 ---
 
 ## v1 Launch Readiness

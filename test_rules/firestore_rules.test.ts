@@ -2147,6 +2147,103 @@ describe("feedback", () => {
   });
 });
 
+describe("Living Songbook chant updates", () => {
+  async function seedUpdate(id: string, submittedBy: string) {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), "chantUpdateSuggestions", id), {
+        schemaVersion: 1,
+        chantId: "chant-1",
+        chantTitleSnapshot: "North Bank Song",
+        submittedBy,
+        kind: "correction",
+        category: "lyrics",
+        message: "The second line needs the away wording.",
+        evidence: null,
+        chantUpdatedAt: Timestamp.now(),
+        status: "received",
+        resolutionKind: null,
+        resolutionNote: null,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+        resolvedAt: null,
+      });
+    });
+  }
+
+  it("allows an owner to get and query only their own update rows", async () => {
+    await seedUserProfile("owner");
+    await seedUpdate("own", "owner");
+    await seedUpdate("other", "someone-else");
+    const db = verifiedContext("owner").firestore();
+
+    await assertSucceeds(
+      getDoc(doc(db, "chantUpdateSuggestions", "own")),
+    );
+    await assertFails(
+      getDoc(doc(db, "chantUpdateSuggestions", "other")),
+    );
+    await assertSucceeds(
+      getDocs(query(
+        collection(db, "chantUpdateSuggestions"),
+        where("submittedBy", "==", "owner"),
+        orderBy("createdAt", "desc"),
+        limit(100),
+      )),
+    );
+    await assertFails(getDocs(collection(db, "chantUpdateSuggestions")));
+  });
+
+  it("allows an active operator to inspect the bounded queue", async () => {
+    await seedOperator("operator");
+    await seedUpdate("request-1", "owner");
+    const db = verifiedContext("operator").firestore();
+
+    await assertSucceeds(
+      getDoc(doc(db, "chantUpdateSuggestions", "request-1")),
+    );
+    await assertSucceeds(
+      getDocs(query(
+        collection(db, "chantUpdateSuggestions"),
+        where("status", "in", ["received", "planned"]),
+        orderBy("createdAt", "asc"),
+        limit(50),
+      )),
+    );
+  });
+
+  it("denies every direct mutation to owners and operators", async () => {
+    await seedUserProfile("owner");
+    await seedOperator("operator");
+    await seedUpdate("request-1", "owner");
+    const ownerDb = verifiedContext("owner").firestore();
+    const operatorDb = verifiedContext("operator").firestore();
+    const forged = {
+      schemaVersion: 1,
+      submittedBy: "owner",
+      status: "received",
+    };
+
+    await assertFails(
+      setDoc(doc(ownerDb, "chantUpdateSuggestions", "forged"), forged),
+    );
+    await assertFails(
+      updateDoc(
+        doc(ownerDb, "chantUpdateSuggestions", "request-1"),
+        { status: "updated" },
+      ),
+    );
+    await assertFails(
+      deleteDoc(doc(ownerDb, "chantUpdateSuggestions", "request-1")),
+    );
+    await assertFails(
+      updateDoc(
+        doc(operatorDb, "chantUpdateSuggestions", "request-1"),
+        { status: "updated" },
+      ),
+    );
+  });
+});
+
 describe("safety rate limits", () => {
   it("denies client reads and writes for users and operators", async () => {
     await testEnv.withSecurityRulesDisabled(async (context) => {

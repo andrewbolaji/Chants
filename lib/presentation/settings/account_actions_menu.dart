@@ -45,6 +45,8 @@ class AccountActionsMenu extends ConsumerWidget {
                 Navigator.pushNamed(context, AppRouter.contentPolicy);
               case 'blocked':
                 Navigator.pushNamed(context, AppRouter.blockedUsers);
+              case 'chant-updates':
+                Navigator.pushNamed(context, AppRouter.myChantUpdates);
               case 'signin':
                 Navigator.pushNamed(context, AppRouter.signInMethods);
               case 'signout':
@@ -77,6 +79,16 @@ class AccountActionsMenu extends ConsumerWidget {
                 value: 'signin',
                 child: Text(
                   'Sign-in methods',
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: AppColors.textHeadline,
+                  ),
+                ),
+              ),
+            if (user != null)
+              PopupMenuItem(
+                value: 'chant-updates',
+                child: Text(
+                  'My chant updates',
                   style: textTheme.bodyMedium?.copyWith(
                     color: AppColors.textHeadline,
                   ),
@@ -127,7 +139,8 @@ Future<void> showDeleteAccountDialog(
       title: const Text('Delete your account?'),
       content: const Text(
         'This starts permanent deletion of your account, public creator '
-        'profile, votes, likes, reports, feedback, and blocks. Your submitted '
+        'profile, votes, likes, reports, feedback, private chant-update '
+        'requests, and blocks. Your submitted '
         'chants, comments, and replies stay as community content with your '
         'name removed. Your Saved Matchday Songbook is locked immediately '
         'and removed once the request is confirmed. Safety records for '

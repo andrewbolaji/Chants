@@ -26,6 +26,8 @@ import 'package:chants/presentation/profile/edit_creator_profile_screen.dart';
 import 'package:chants/presentation/profile/public_creator_profile_screen.dart';
 import 'package:chants/presentation/profile/creator_notifications_screen.dart';
 import 'package:chants/presentation/create/perform_chant_screen.dart';
+import 'package:chants/presentation/updates/my_chant_updates_screen.dart';
+import 'package:chants/presentation/updates/suggest_chant_update_screen.dart';
 
 class ChantDetailRouteArguments {
   final Chant chant;
@@ -78,6 +80,8 @@ class AppRouter {
   static const String creatorProfile = '/creator';
   static const String creatorNotifications = '/creator/activity';
   static const String performChant = '/perform';
+  static const String suggestChantUpdate = '/chant/suggest-update';
+  static const String myChantUpdates = '/chant/my-updates';
 
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -185,6 +189,13 @@ class AppRouter {
         return MaterialPageRoute(
           builder: (_) => PerformChantScreen(chant: chant),
         );
+      case suggestChantUpdate:
+        final chant = settings.arguments as Chant;
+        return MaterialPageRoute(
+          builder: (_) => SuggestChantUpdateScreen(chant: chant),
+        );
+      case myChantUpdates:
+        return MaterialPageRoute(builder: (_) => const MyChantUpdatesScreen());
       case home:
       default:
         return MaterialPageRoute(builder: (_) => const HomeScreen());

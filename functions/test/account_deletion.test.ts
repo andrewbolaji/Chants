@@ -226,6 +226,9 @@ describe("account deletion recovery", () => {
       "unhide",
       "remove",
       "merge_chants",
+      "accept-chant-evidence",
+      "resolve-chant-update",
+      "decline-chant-update",
     ]) {
       assert.deepStrictEqual(
         auditRedactionForDeletedActor({
@@ -345,6 +348,31 @@ describe("account deletion recovery", () => {
     });
   });
 
+  it("deletes non-safety Living Songbook requests by submitter", async () => {
+    db.set(
+      "accountDeletionJobs",
+      "fan",
+      job("delete-chant-update-suggestions")
+    );
+    db.set("chantUpdateSuggestions", "request", {
+      submittedBy: "fan",
+      message: "A private proposed correction.",
+      evidence: {
+        provider: "youtube",
+        url: "https://www.youtube.com/watch?v=abcdefghijk",
+      },
+    });
+
+    await processAccountDeletionStep({
+      uid: "fan", firestore: db.firestore, auth, now,
+    });
+
+    assert.strictEqual(
+      db.get("chantUpdateSuggestions", "request"),
+      undefined
+    );
+  });
+
   it("removes private performance activity and anonymizes retained content", async () => {
     for (const [phase, collection, ownerField] of [
       ["delete-performance-likes", "performanceLikes", "userId"],
@@ -435,6 +463,7 @@ describe("account deletion recovery", () => {
     const pagePhases = [
       "delete-votes",
       "delete-chant-reports",
+      "delete-chant-update-suggestions",
       "delete-feedback",
       "anonymize-chants",
       "anonymize-comments",

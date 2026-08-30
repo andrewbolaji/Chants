@@ -4,6 +4,7 @@ enum CreatorNotificationType {
   creatorFollow,
   performanceMention,
   performanceReply,
+  chantPromoted,
 }
 
 class CreatorNotification {
@@ -17,6 +18,7 @@ class CreatorNotification {
   final CreatorNotificationType type;
   final String? performanceId;
   final String? commentId;
+  final String? chantId;
   final bool read;
   final DateTime createdAt;
   final DateTime? readAt;
@@ -30,6 +32,7 @@ class CreatorNotification {
     required this.type,
     required this.performanceId,
     required this.commentId,
+    this.chantId,
     required this.read,
     required this.createdAt,
     required this.readAt,
@@ -46,6 +49,7 @@ class CreatorNotification {
       'creator_follow' => CreatorNotificationType.creatorFollow,
       'performance_mention' => CreatorNotificationType.performanceMention,
       'performance_reply' => CreatorNotificationType.performanceReply,
+      'chant_promoted' => CreatorNotificationType.chantPromoted,
       _ => throw const FormatException(
         'Unsupported creator notification type.',
       ),
@@ -59,6 +63,7 @@ class CreatorNotification {
       type: type,
       performanceId: json['performanceId'] as String?,
       commentId: json['commentId'] as String?,
+      chantId: json['chantId'] as String?,
       read: json['read'] as bool,
       createdAt: (json['createdAt'] as Timestamp).toDate(),
       readAt: (json['readAt'] as Timestamp?)?.toDate(),

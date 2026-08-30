@@ -47,6 +47,15 @@ export type AbandonedDraftCleanupResult = {
   failures: number;
 };
 
+export function abandonedDraftCleanupDisposition(
+  result: AbandonedDraftCleanupResult,
+): { shouldRetry: boolean; shouldWarn: boolean } {
+  return {
+    shouldRetry: result.failures > 0,
+    shouldWarn: result.invalid > 0,
+  };
+}
+
 type BacklogCount = {
   staleCount: number;
   moreThanLimit: boolean;

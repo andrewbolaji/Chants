@@ -15,6 +15,7 @@ import 'package:chants/presentation/shared/chant_provenance_label.dart';
 import 'package:chants/presentation/shared/evidence_link_action.dart';
 import 'package:chants/presentation/shared/error_state.dart';
 import 'package:chants/presentation/feed/performance_video_player.dart';
+import 'package:chants/presentation/moderation/chant_update_moderation_tab.dart';
 
 class ModerationScreen extends ConsumerWidget {
   const ModerationScreen({super.key});
@@ -50,7 +51,7 @@ class ModerationScreen extends ConsumerWidget {
         .snapshots();
 
     return DefaultTabController(
-      length: 8,
+      length: 9,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('MODERATION'),
@@ -62,6 +63,7 @@ class ModerationScreen extends ConsumerWidget {
               Tab(text: 'Performances'),
               Tab(text: 'Reported media'),
               Tab(text: 'Promote'),
+              Tab(text: 'Updates'),
               Tab(text: 'Feedback'),
               Tab(text: 'Reported users'),
               Tab(text: 'User access'),
@@ -170,6 +172,8 @@ class ModerationScreen extends ConsumerWidget {
               },
             ),
             // Tab 6: feedback
+            const ChantUpdateModerationTab(),
+            // Tab 7: feedback
             StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
               stream: feedbackStream,
               builder: (context, snap) {

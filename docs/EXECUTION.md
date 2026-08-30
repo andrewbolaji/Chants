@@ -13,6 +13,53 @@ This is the chronological evidence trail for substantial engineering work. It re
 
 ## Entries
 
+### 2026-08-30T06:28:07Z Correct the independent Living Songbook review findings
+
+- **Status:** Implemented, locally verified, and staged; clean-runner CI pending
+- **Scope:** Close the independent review's queue, evidence, failure-meaning, authority-test, audit-privacy, malformed-row, cleanup, notification, schema, timestamp, ordering, and documentation findings before packaging the staged Living Songbook block.
+- **Reference:** `docs/CHANGE_SPEC.md`, Decision 025, and the independent read-only review of committed head `ef7195c` plus the staged implementation
+- **Approval:** Andrew explicitly approved `post-Living Songbook independent review correction spec` on 2026-08-30.
+- **Operator:** Codex
+
+| UTC time | Action | Target/environment | Result and evidence |
+|---|---|---|---|
+| 06:28:07 | Re-derived all fourteen findings against the staged source and recorded the approved Lane 2 correction contract | Functions, Flutter repositories and interfaces, Firestore index, operational cleanup, audit, and current engineering memory | Confirmed one high, five medium, and eight low findings. Preserved direct-write denial, server-derived authority, version gating, safety separation, and account-deletion coverage. No commit, push, deployment, seed write, or production action occurred. |
+| 06:31:00 | Added focused backend regressions before runtime corrections | Living Songbook and launch operations Functions tests | RED as intended: TypeScript could not import the absent cleanup retry classifier. The new cases also define unavailable closure, reason-coded failures, authority denials, evidence replacement, exact audit content, system-community attachment, and sentinel notification behavior. |
+| 06:36:00 | Implemented the server, schema, repository, queue, and interface corrections | Functions, Flutter, Firestore index, and rules query fixtures | Added typed precondition reasons, Not changed closure for unavailable sources, explicit evidence replacement, prior-evidence audit, sentinel exclusion, invalid-row isolation, removed supporter-visible operator UID, oldest-first queue order, and nonretry invalid-cleanup warnings. |
+| 06:44:00 | Added production operator and submitter widget evidence | Operator Updates queue and My chant updates | The first run exposed a dialog-controller disposal race and a 21-pixel canonical-path dropdown overflow. Replaced controller ownership with dialog-local values and expanded the dropdown. All five new production-widget cases then passed. |
+| 06:53:28 | Ran the complete local implementation matrix | Flutter 3.44.8, Node, TypeScript, JSON, and deterministic ignored Firebase fixture | PASS: 163 Functions tests plus production build, 488 Flutter tests, 42 seed tests plus TypeScript, rules TypeScript, index JSON validation, and zero-issue `flutter analyze lib test`. The temporary ignored analysis fixture was removed. Java-backed emulator execution remains clean-runner-only because Java is absent locally. |
+| 06:57:16 | Staged the complete Living Songbook feature and correction boundary, then ran the repository governance gates against that exact index | 42 staged paths; Lane 2 project memory, writing style, governance regressions, native project contract, and staged diff integrity | PASS: every framework gate completed successfully, formatter verification changed no Dart file, and both staged and unstaged whitespace checks are clean. No commit, push, deployment, seed write, or production action occurred. |
+| 07:00:33 | Received explicit authorization to package one commit, push the branch, and run exact-head clean CI | Staged Living Songbook feature and post-review correction boundary | Packaging authorized. Deployment, seed writes, merge, store action, and release remain outside scope. |
+| 07:07:01 | Inspected the first exact-head clean-runner result | PR 21 run `33298273292` at `aedc30c` | Functions, seed, Java-backed rules, analysis, and governance passed. Flutter reported 487 passing tests and one renderer-only failure: the inspected Chant Detail golden differed by 2.28% on Ubuntu Flutter 3.47.2 against its macOS Flutter 3.44.8 baseline, just above its 2.0% image-local bound. Raised only that image's measured boundary to 2.3%; its production widget regression separately requires the Living Songbook action and safety distinction. Replacement exact-head CI is required. |
+
+- **Current state:** All reviewed corrections, the two regression-discovered UI fixes, and the measured image-local runner correction are locally green. PR 21 retains a one-commit boundary through amendment; replacement exact-head clean CI remains.
+- **Resume point:** Amend the single package, force-push with lease, and follow replacement exact-head clean CI before review or merge.
+
+### 2026-08-29T21:00:00Z Build V1 Living Songbook update flow
+
+- **Status:** Implemented and locally verified. Packaging, clean-runner CI, deployment, and device walkthrough are pending.
+- **Scope:** Chant-specific correction, variation, and post-submission evidence intake; private user status; operator resolution; promotion milestone; deletion coverage; interface and roadmap memory.
+- **Reference:** `docs/CHANGE_SPEC.md`
+- **Approval:** Andrew explicitly approved `V1 Living Songbook update flow spec` on 2026-08-29.
+- **Operator:** Codex
+
+| UTC time | Action | Target/environment | Result and evidence |
+|---|---|---|---|
+| 21:00:00 | Refreshed `origin/main` and created isolated worktree `chants-v1-living-songbook` on `codex/v1-living-songbook-update-flow` | Local repository | Started from `ef7195c`. The staged launch-command-center files in the launch-services worktree remain untouched. |
+| 21:05:00 | Read the current framework, project profile, learnings, interface, roadmap, provenance decision, rules, Functions, moderation, notification, and deletion boundaries | Local source and current Codex framework | Classified the approved work as Lane 2. Confirmed the missing post-submission evidence path, existing YouTube or X evidence contract, server-owned safety intake, direct-write denial pattern, private activity inbox, and durable deletion phases. |
+| 21:12:00 | Audited FanChants' current consumer catalogue, club songbook, search, history, licensing, and legal surfaces | Public web, read only | Confirmed useful archive, offline, lyric-search, historic, and notification mechanics. Recorded boundaries against popularity-based truth, broad upload licensing, rights-heavy audio downloads, coarse single-genre labeling, and catalogue copying. |
+| 21:35:00 | Proved the approved authority boundary with focused tests, then implemented it | Flutter, Cloud Functions, Firestore rules, account deletion, and activity | Added a private correction, variation, and evidence intake; deterministic duplicate identity; independent hourly and daily budgets; submitter status; bounded operator review; stale-source checks; reviewed evidence attachment; atomic community-to-canonical promotion; privacy-safe audit; one creator milestone; and deletion coverage. |
+| 22:20:00 | Reviewed the complete interaction and moderation path | Chant detail golden, form, user history, operator queue, callables, rules, indexes, and notification navigation | Accepted the intentional Chant Detail golden change after visual inspection. Corrected the operator query so terminal history cannot crowd out open work, hid content-resolution actions from evidence requests, and enforced the same request/action match on the server. |
+| 04:28:00 | Ran local subsystem and governance verification | Local macOS, Flutter, Node, TypeScript, JSON, and repository scripts | PASS: 156 Functions tests and production build, 42 seed tests, rules TypeScript, index JSON, fixture-backed `flutter analyze lib test`, project memory, project-governance regressions, and whitespace checks. Java is absent, so emulator rules execution remains a clean-runner gate. |
+| 04:35:00 | Completed product and market memory | Roadmap, decision 025, interface, learnings, overview, rationale, README, and completed change record | Pinned eight bounded V1.1 candidates with purpose, smallest slice, success signal, non-goals, and decision trigger. Recorded the FanChants lessons and explicit do-not-copy boundaries without using its catalogue as seed truth. |
+| 04:42:00 | Completed the final client regression run | Local Flutter 3.44.8 | PASS: all 476 Flutter tests, including the current-authority Terrace Proven activity destination and the reviewed Chant Detail golden. |
+| 04:48:00 | Corrected an over-broad formatter verification command | Staged handoff | The first read-only formatter probe accidentally passed Markdown, TypeScript, and a PNG to the Dart formatter and failed on file type, not source. The corrected Dart-only command checked all 16 staged Dart files and changed none. |
+
+- **Files/artifacts:** Flutter form, private status, operator queue, activity milestone, callables, rules and index, deletion phase, focused and full tests, decision 025, roadmap evaluation backlog, market audit, updated engineering memory, and `docs/changes/2026-08-29-v1-living-songbook-update-flow.md`.
+- **Skipped or blocked:** Java-backed Firestore rules execution, clean-runner CI, native device walkthrough, packaging, push, deployment, seed writes, and release. No external state was changed.
+- **Final state:** Source implementation and local evidence complete with 476 Flutter, 156 Functions, and 42 seed tests passing.
+- **Follow-up:** Package only on authorization, run exact-head clean CI including emulator rules, then perform the combined device walkthrough before deployment.
+
 ### 2026-08-29T16:30:00Z Configure V1 launch services
 
 - **Status:** Approved and in progress; source implementation, full local Flutter and Functions checks, and iOS compile are green. Android local compile is environment-blocked. Live Auth domains, iOS App Attest, monitoring, and the alert-only budget are saved and re-read. Packaging and replacement clean-runner evidence remain pending.

@@ -104,6 +104,16 @@ Draft approval is separate from published-media response. `handlePublishedPerfor
 
 Directional blocks suppress Stage cards, public creator access in the app, ordinary viewing interaction, follow, comment, mention fan-out, and notification delivery. Stage cards and public creator profiles expose a confirmed Block action. Operator preview is a narrow inspection exception for approved, nonremoved hidden media, not a social-action bypass.
 
+## Critical path: keep the Songbook current
+
+`submitChantUpdateSuggestion` parses one exact correction, variation, or evidence shape, derives the verified caller, and rereads the private profile, deletion job, and current visible chant. A server-read timestamp becomes the source version. A deterministic hash of user, chant, version, purpose, and correction category prevents duplicate work before any rate write.
+
+The same transaction commits the private request and independent 5-per-hour plus 20-per-day anchored counters. These fields share the private rate-state document for deletion and storage economy, but never share report or feedback counts. A suggestion never increments flags, hides content, or writes safety state.
+
+`moderateChantUpdateSuggestion` reauthorizes the operator and compares the stored source version to the current chant. Evidence acceptance rejects every stale version. Correction and variation resolution requires explicit stale acknowledgement, but it never writes canonical content. Operators apply those accepted changes through the reviewed content path before marking the request Updated.
+
+Reviewed evidence can be attached to a current Terrace Proven or system-owned community chant without a trust transition. A user-created community chant receives evidence and canonical status atomically. Only that real promotion creates the deterministic private Your chant made the terrace activity item, and sentinel owners never receive it. Replacing different existing evidence requires a separate acknowledgement. Ordinary audit detail records IDs and outcome class. A replacement audit also retains the prior public evidence map, but no audit retains proposed lyrics, request text, proposed evidence, or submitter identity.
+
 ## Critical path: source reconciliation and creator totals
 
 `functions/src/performance_source.ts` derives creator and chant eligibility from current documents. Profile and chant triggers fan out server-owned source flags to dependent performances. Each dependent write rereads its current source in the same transaction, so a concurrent source change causes an older handler to retry. Chant reconciliation also updates the attached title and trust status. Live server actions and public HTTP handlers still read current source documents because trigger delivery is asynchronous.
@@ -114,7 +124,7 @@ Approval retains an idempotent immediate `performanceCount` update. Lifecycle re
 
 The client still durably marks local Songbook state before requesting deletion. The server accepts deletion into a private job, sets pending authority, and advances bounded phases under retry.
 
-The phase set now removes creator handle and profile, drafts and staging references, interactions, follows in both directions, notifications, user-authored report material, and other inherited private rows. Retained approved content loses active creator linkage. Delayed audit writes still pass through privacy-safe classification. Auth deletion and finalization remain idempotent.
+The phase set now removes creator handle and profile, drafts and staging references, interactions, follows in both directions, notifications, private chant-update suggestions, user-authored report material, and other inherited private rows. Retained approved content loses active creator linkage. Delayed audit writes still pass through privacy-safe classification. Auth deletion and finalization remain idempotent.
 
 ## Persistent state and ownership
 
@@ -135,6 +145,7 @@ The phase set now removes creator handle and profile, drafts and staging referen
 | `creatorFollows` | Follower only | Server callable |
 | `creatorNotifications` | Recipient only | Server fan-out and read callable |
 | Performance reports | Operator only | Server safety callable |
+| `chantUpdateSuggestions` | Submitter and active operator only | Server submission and moderation callables |
 | Audit and deletion jobs | Operator or server only according to path | Server |
 | Saved Matchday Songbook | Device-local, UID-scoped | Local repository |
 
@@ -157,6 +168,7 @@ The phase set now removes creator handle and profile, drafts and staging referen
 | Client cannot forge counters, rank, moderation, or media path | Direct writes denied, exact projection parser, server recompute | Hostile rules and handler tests |
 | One account contributes once to competition signals | Deterministic interaction IDs | Duplicate and overlap tests |
 | New actions require current target authority | Callable reads and current-visible repository fetch | Handler and widget tests |
+| Accuracy intake cannot become automatic truth, a safety action, or unclosable work | Separate collection, copy, counters, oldest-first queue, version check, unavailable-source closure, and canonical content path | Living Songbook Functions, Flutter production widgets, deletion, and rules tests |
 | Follow graph and inbox remain private | Recipient or follower rules, aggregate public profile only | Rules and repository tests |
 | Replies stay same-target and acyclic | Parent/root/depth validation | Functions and widget tests |
 | Block suppresses social fan-out in both directions | Server block reads and callable denial | Functions tests |
@@ -222,6 +234,10 @@ The launch-services block provides bounded staged-object cleanup and the privacy
 | `functions/npm test` | PASS, 142 including overlapping onboarding and explicit transaction-retry state |
 | Launch-services Functions suite | PASS, 146 including bounded cleanup, exact retry, stale boundaries, count caps, and privacy-safe logging |
 | Launch-services Flutter suite and analysis | PASS, 465 tests and zero analyzer issues after the private cleanup-state parser regression |
+| Complete Functions and focused deletion suite after Living Songbook corrections | PASS, 163 tests covering exact parsing, derived identity, inactive admission, dedupe, independent limits, retry classification, action-to-request matching, unavailable closure, stale review, evidence replacement, exact audit content, attachment, atomic promotion, sentinel-safe notification, and deletion |
+| Complete Flutter suite after Living Songbook corrections | PASS, 488 tests including the reviewed Chant Detail golden, current-authority promotion activity, typed failures, malformed-row isolation, operator review, and private history |
+| Living Songbook Flutter tests and fixture-backed scoped analysis | PASS for repository authority, correction and evidence forms, retained failure values, invalid link refusal, chant-detail separation, promotion navigation, unavailable closure, replacement confirmation, attach versus promote, stale acknowledgement, private status, responsive dialog behavior, intentional golden review, and zero-issue `flutter analyze lib test` |
+| Living Songbook Firestore rules TypeScript | PASS; Java is absent locally, so owner, cross-user, operator, and direct-write emulator cases require clean-runner execution |
 | Firestore plus Storage emulator | PASS, 165 Java-backed cases in exact-main run `33256843751`, including one cross-account Storage case with three permission assertions |
 | `seed/npm test` | PASS, 42 |
 | Memory, writing-style, native-contract, and governance-regression scripts | PASS in exact-main run `33256843751`; rerun against the documentation-only staged boundary |

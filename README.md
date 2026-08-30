@@ -35,6 +35,7 @@ Chants is a mobile app where football fans find and learn terrace songs, contrib
 - **Stage discovery.** Rising, New, Terrace, and Following feeds page through approved current-authority performances without autoplay or prefetch.
 - **Search.** Filter chants by title, lyrics, tune name, or club name with results updating as you type.
 - **Saved Matchday Songbook.** Save one chant or a club's Songbook as a bounded device copy for quick offline reading at the ground.
+- **Living Songbook updates.** Suggest a chant correction, preserve another version, or add reviewed YouTube or X proof from chant detail. Private status and a stale-aware operator queue keep accuracy separate from safety reporting and automatic truth.
 - **Public share-out.** Resolve current visible chants, performances, and creators to stable server-rendered destinations before invoking the native share sheet.
 - **Launch authentication and account management.** Verified email, password reset, recoverable onboarding, and source-complete Apple, Google, Facebook, magic-link, phone, and same-UID linking paths. New providers remain hidden until configured. Durable account deletion preserves persistent unknown-request recovery, pending-account denial, bounded retry, contribution and audit anonymization, local Songbook cleanup, and counter reconciliation.
 
@@ -76,6 +77,7 @@ lib/
     shared/       # Reusable widgets (vote controls, chant card, empty/error states)
     submit/       # Chant submission screen
     feedback/     # Suggestion box
+    updates/      # Chant correction, variation, and evidence status
 
 functions/src/    # Cloud Functions (TypeScript)
 seed/             # Admin SDK seed script and validation
@@ -113,12 +115,14 @@ Chants are stored in a single flat Firestore collection with denormalized IDs. P
 
 ### Cloud Functions
 
-Forty-six Functions exports are present in source (all configured for `europe-west2`; live deployment state is verified separately). This table shows the inherited chant, safety, account, policy, and launch-operations boundaries:
+Forty-eight Functions exports are present in source (all configured for `europe-west2`; live deployment state is verified separately). This table shows the inherited chant, safety, account, policy, Living Songbook, and launch-operations boundaries:
 
 | Function | Trigger | Purpose |
 |----------|---------|---------|
 | `submitReport` | HTTPS callable | Validate the caller and current target, atomically enforce the shared report budget, and create a server-owned report |
 | `submitFeedback` | HTTPS callable | Validate feedback, atomically enforce its private budget, and create the server-owned feedback row |
+| `submitChantUpdateSuggestion` | HTTPS callable | Validate a current chant-specific correction, variation, or evidence request, deduplicate its source version, and enforce independent hourly and daily budgets |
+| `moderateChantUpdateSuggestion` | HTTPS callable | Reauthorize an operator, resolve stale-aware update intake, and atomically attach evidence or promote where allowed |
 | `onVoteWritten` | Vote doc write | Recompute chant score, upvotes, downvotes from all vote docs |
 | `onChantCreated` | Chant doc create | Rate-limit enforcement (auto-hide excess) |
 | `onCommentWritten` | Comment doc write | Recompute commentCount on the parent chant; rate-limit on create |
@@ -145,7 +149,7 @@ The creator-platform exports add callable and trigger boundaries for creator ide
 
 **Optimistic UI with server reconciliation.** Votes and comment likes update the display instantly, then reconcile when the server stream delivers the Cloud Function's recomputed value. A busy guard drops taps while a write is in flight, and a pending-intent latch collapses rapid taps into at most two writes, preventing the score drift that would otherwise occur from concurrent writes to the same document.
 
-**Security-first Firestore rules.** Rules start locked (deny by default). Privileged profile and counter fields are constrained against client writes, interaction targets must exist and be visible, reply depth and relationships are enforced server-side, report and feedback creates are callable-only, and vote/like/profile reads are limited to their owner or an operator.
+**Security-first Firestore rules.** Rules start locked (deny by default). Privileged profile and counter fields are constrained against client writes, interaction targets must exist and be visible, reply depth and relationships are enforced server-side, report, feedback, and chant-update creates are callable-only, and private reads are limited to their owner or an operator.
 
 **Content integrity.** All seed content (lyrics, squads, cultural context) is externally sourced and verified by hand. The build process can only transform supplied data in place; it never generates or rewrites content. This is a standing rule with the highest priority in the project.
 
