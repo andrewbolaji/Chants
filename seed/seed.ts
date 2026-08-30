@@ -10,6 +10,7 @@ import {
   upsertSeededChantInTransaction,
 } from "./chant_identity";
 import { executeSeedPlan, parseSeedArguments } from "./seed_plan";
+import { buildSeededChantData, CHANT_CONTENT_FIELDS } from "./seed_chant_data";
 
 // --- Init ---
 const serviceAccountPath = resolve(__dirname, "serviceAccountKey.json");
@@ -24,12 +25,6 @@ admin.initializeApp({
 const db = admin.firestore();
 
 // --- Helpers ---
-const CONTENT_FIELDS_CHANT = [
-  "title", "lyrics", "tuneName", "contextNotes", "subjectTag",
-  "playerId", "chantType", "mediaType", "coverImageUrl", "mediaUrl",
-  "variations",
-];
-
 const CONTENT_FIELDS_PLAYER = ["name"];
 const CONTENT_FIELDS_TEAM = ["name", "crestImageUrl"];
 
@@ -219,33 +214,14 @@ async function seedClub(
       ? compositeSlug(teamSlug, chant.playerName)
       : null;
 
-    const fullData: Record<string, unknown> = {
-      title: chant.title,
-      sportId: sportSlug,
-      competitionId: compSlug,
-      teamId: teamSlug,
+    const fullData = buildSeededChantData({
+      chant,
+      sportSlug,
+      competitionSlug: compSlug,
+      teamSlug,
       playerId,
-      subjectTag: chant.subjectTag,
-      lyrics: chant.lyrics,
-      tuneName: chant.tuneName,
-      contextNotes: chant.contextNotes ?? null,
-      coverImageUrl: null,
-      mediaUrl: null,
-      mediaType: chant.mediaType,
-      status: "canonical",
-      chantType: chant.chantType,
-      variations: chant.variations ?? [],
-      upvotes: 0,
-      downvotes: 0,
-      score: 0,
-      commentCount: 0,
-      createdBy: "system",
-      createdAt: now,
-      updatedAt: now,
-      flagCount: 0,
-      hidden: false,
-      removed: false,
-    };
+      timestamp: now,
+    });
 
     const chantRef = db.collection("chants").doc(chantId);
     const chantResult = await upsertSeededChantInTransaction({
@@ -265,7 +241,7 @@ async function seedClub(
       referenceId: chantId,
       teamSlug,
       fullData,
-      contentFields: CONTENT_FIELDS_CHANT,
+      contentFields: CHANT_CONTENT_FIELDS,
       updatedAtValue: admin.firestore.FieldValue.serverTimestamp(),
     });
     console.log(`    Chant "${chant.title}" (${chantId}): ${chantResult}`);

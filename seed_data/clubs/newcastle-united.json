@@ -1,0 +1,218 @@
+{
+  "team": {
+    "name": "Newcastle United",
+    "crestImageUrl": null
+  },
+  "catalogue": {
+    "version": 1,
+    "rosterSource": "https://fantasy.premierleague.com/api/bootstrap-static/",
+    "rosterAsOf": "2026-08-30"
+  },
+  "squad": [
+    {
+      "name": "Aladji Bamba"
+    },
+    {
+      "name": "Alex Murphy"
+    },
+    {
+      "name": "Amar Dedic"
+    },
+    {
+      "name": "Anthony Elanga"
+    },
+    {
+      "name": "Bazoumana Touré"
+    },
+    {
+      "name": "Dan Burn"
+    },
+    {
+      "name": "Ewen Jaouen"
+    },
+    {
+      "name": "Fabian Schär"
+    },
+    {
+      "name": "Harvey Barnes"
+    },
+    {
+      "name": "Jacob Murphy"
+    },
+    {
+      "name": "Jacob Ramsey"
+    },
+    {
+      "name": "Joe Willock"
+    },
+    {
+      "name": "Joelinton Cássio Apolinário de Lira"
+    },
+    {
+      "name": "Leo Shahar"
+    },
+    {
+      "name": "Lewis Hall"
+    },
+    {
+      "name": "Lewis Miley"
+    },
+    {
+      "name": "Lukás Hornícek"
+    },
+    {
+      "name": "Malick Thiaw"
+    },
+    {
+      "name": "Mark Gillespie"
+    },
+    {
+      "name": "Nick Pope"
+    },
+    {
+      "name": "Nick Woltemade"
+    },
+    {
+      "name": "Nico González Iglesias"
+    },
+    {
+      "name": "Sean Neave"
+    },
+    {
+      "name": "Sean Steur"
+    },
+    {
+      "name": "Sven Botman"
+    },
+    {
+      "name": "Tino Livramento"
+    },
+    {
+      "name": "William Osula"
+    },
+    {
+      "name": "Yoane Wissa"
+    }
+  ],
+  "chants": [
+    {
+      "id": "newcastle-united-woltemade",
+      "title": "Woltemade",
+      "subjectTag": "player",
+      "playerName": "Nick Woltemade",
+      "lyrics": "Woltemade, Woltemade,\nOle, ole, ole!",
+      "tuneName": "Ole Ole Ole",
+      "contextNotes": "For current player Nick Woltemade.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "current",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://footballgroundguide.com/news/newcastle-united-football-chants-lyrics.html"
+      ]
+    },
+    {
+      "id": "newcastle-united-blaydon-races",
+      "title": "Blaydon Races",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Oh me lads, you should've seen us gannin',\nPassing the folks along the road,\nJust as they were stannin',\nAll the lads and lasses there,\nAll wi' smiling faces,\nGannin' along the Scotswood Road,\nTo see the Blaydon Races!",
+      "tuneName": "Blaydon Races",
+      "contextNotes": "Newcastle's Geordie anthem.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://footballgroundguide.com/news/newcastle-united-football-chants-lyrics.html"
+      ]
+    },
+    {
+      "id": "newcastle-united-when-the-mags-go-marching-in",
+      "title": "When the Mags Go Marching In",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Oh when the Mags go marching in,\nOh when the Mags go marching in,\nI want to be in that number,\nOh when the Mags go marching in!",
+      "tuneName": "When the Saints Go Marching In",
+      "contextNotes": "A Magpies adaptation.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.fanchants.com/football-songs/newcastle_united-chants/when-the-mags-go-marching/"
+      ]
+    },
+    {
+      "id": "newcastle-united-we-are-the-geordies",
+      "title": "We Are the Geordies",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "We are the Geordies,\nThe Geordie boot boys,\nAnd we are mental,\nAnd we are mad!",
+      "tuneName": "Traditional terrace tune",
+      "contextNotes": "A Geordie identity chant.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://footballgroundguide.com/news/newcastle-united-football-chants-lyrics.html"
+      ]
+    },
+    {
+      "id": "newcastle-united-spell-it-out-nufc",
+      "title": "Spell It Out NUFC",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "N-E-W-C-A-S-T-L-E,\nU-N-I-T-E-D,\nNewcastle United F.C.!",
+      "tuneName": "Stadium spelling call",
+      "contextNotes": "Spells out the club name.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.fanchants.com/football-songs/newcastle_united-chants/spell-it-out-nufc/"
+      ]
+    },
+    {
+      "id": "newcastle-united-who-s-that-team-we-call-united",
+      "title": "Who's That Team We Call United",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Who's that team we call United?\nWho's that team we all adore?\nWe play in black and white,\nAnd we know how to fight,\nWe'll support you ever more!",
+      "tuneName": "Traditional terrace tune",
+      "contextNotes": "A black-and-white support chant.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.fanchants.com/football-songs/newcastle_united-chants/whos-that-team-we-call-united/"
+      ]
+    },
+    {
+      "id": "newcastle-united-who-put-the-ball-in-the-mackems-net",
+      "title": "Who Put the Ball in the Mackems' Net",
+      "subjectTag": "rival",
+      "playerName": null,
+      "lyrics": "Who put the ball in the Mackems' net?\nO'Brien, O'Brien,\nLiam O'Brien, Andy O'Brien,\nAny, any O'Brien!",
+      "tuneName": "Traditional O'Brien chant",
+      "contextNotes": "Historic Tyne-Wear derby banter.",
+      "chantType": "novelty",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://footballgroundguide.com/news/newcastle-united-football-chants-lyrics.html"
+      ]
+    }
+  ]
+}

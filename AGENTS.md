@@ -17,7 +17,7 @@ flutter test                              # models, services, widgets. Needs no 
 
 # Backend suites (Node 20), each self-contained. Verified green here:
 cd functions && npm install && npm test   # Cloud Functions, 146 tests
-cd seed && npm install && npm test        # seed validation, 42 tests
+cd seed && npm install && npm test        # seed validation, 54 tests
 
 # Firestore rules tests need Java plus firebase-tools:
 npm --prefix test_rules install

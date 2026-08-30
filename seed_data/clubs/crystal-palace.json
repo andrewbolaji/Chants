@@ -1,0 +1,336 @@
+{
+  "team": {
+    "name": "Crystal Palace",
+    "crestImageUrl": null
+  },
+  "catalogue": {
+    "version": 1,
+    "rosterSource": "https://fantasy.premierleague.com/api/bootstrap-static/",
+    "rosterAsOf": "2026-08-30"
+  },
+  "squad": [
+    {
+      "name": "Adam Wharton"
+    },
+    {
+      "name": "Anan Khalaili"
+    },
+    {
+      "name": "Axel Disasi"
+    },
+    {
+      "name": "Borna Sosa"
+    },
+    {
+      "name": "Chadi Riad Dnanou"
+    },
+    {
+      "name": "Cheick Doucouré"
+    },
+    {
+      "name": "Chris Richards"
+    },
+    {
+      "name": "Christantus Uche"
+    },
+    {
+      "name": "Daichi Kamada"
+    },
+    {
+      "name": "Daniel Muñoz Mejía"
+    },
+    {
+      "name": "Dean Henderson"
+    },
+    {
+      "name": "Dwight McNeil"
+    },
+    {
+      "name": "Eddie Nketiah"
+    },
+    {
+      "name": "Evann Guessand"
+    },
+    {
+      "name": "Ismaïla Sarr"
+    },
+    {
+      "name": "Jaydee Canvot"
+    },
+    {
+      "name": "Jean-Philippe Mateta"
+    },
+    {
+      "name": "Jefferson Lerma Solís"
+    },
+    {
+      "name": "Jesurun Rak-Sakyi"
+    },
+    {
+      "name": "Joél Drakes-Thomas"
+    },
+    {
+      "name": "Jørgen Strand Larsen"
+    },
+    {
+      "name": "Justin Devenny"
+    },
+    {
+      "name": "Matheus França de Oliveira"
+    },
+    {
+      "name": "Oscar Mingueza"
+    },
+    {
+      "name": "Remi Matthews"
+    },
+    {
+      "name": "Rio Cardines"
+    },
+    {
+      "name": "Romain Esse"
+    },
+    {
+      "name": "Takehiro Tomiyasu"
+    },
+    {
+      "name": "Tyrick Mitchell"
+    },
+    {
+      "name": "Walter Benítez"
+    },
+    {
+      "name": "Will Hughes"
+    },
+    {
+      "name": "Yéremy Pino Santos"
+    },
+    {
+      "name": "Zavier Gozo"
+    }
+  ],
+  "chants": [
+    {
+      "id": "crystal-palace-mateta-s-in-the-room",
+      "title": "Mateta's in the Room",
+      "subjectTag": "player",
+      "playerName": "Jean-Philippe Mateta",
+      "lyrics": "Boom, boom, boom,\nMateta's in the room,\nThere ain't no striker better,\nThan Jean-Philippe Mateta!",
+      "tuneName": "Boom, Boom, Boom, Boom!! (Vengaboys)",
+      "contextNotes": "For current striker Jean-Philippe Mateta.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "current",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.givemesport.com/crystal-palace-chants-premier-league/"
+      ]
+    },
+    {
+      "id": "crystal-palace-glad-all-over",
+      "title": "Glad All Over",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "I'm feeling glad all over,\nYes, I'm glad all over,\nBaby, I'm glad all over,\nSo glad you're mine!",
+      "tuneName": "Glad All Over (The Dave Clark Five)",
+      "contextNotes": "The short anthem hook used at Selhurst Park.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.givemesport.com/crystal-palace-chants-premier-league/"
+      ]
+    },
+    {
+      "id": "crystal-palace-famous-red-and-blue",
+      "title": "Famous Red and Blue",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "So here's to you, famous red and blue,\nSelhurst loves you more than you will know,\nWe'll fight for you, famous red and blue,\nPalace boys are with you when you play!",
+      "tuneName": "Mrs Robinson (Simon & Garfunkel)",
+      "contextNotes": "A red-and-blue Selhurst anthem.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.givemesport.com/crystal-palace-chants-premier-league/"
+      ]
+    },
+    {
+      "id": "crystal-palace-we-love-you",
+      "title": "We Love You",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "We love you, we love you, we love you,\nAnd where you play, we follow, we follow, we follow,\n'Cos we support the Palace, the Palace, the Palace,\nAnd that's the way we like it, we like it, we like it,\nWhoa!",
+      "tuneName": "Traditional terrace tune",
+      "contextNotes": "A club-following anthem.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.givemesport.com/crystal-palace-chants-premier-league/"
+      ]
+    },
+    {
+      "id": "crystal-palace-pride-of-south-london",
+      "title": "Pride of South London",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "We're the pride of South London,\nSouth London's number one,\nYou know it's true,\nWe're the red and blue!",
+      "tuneName": "Traditional terrace tune",
+      "contextNotes": "Claims Palace's South London identity.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.givemesport.com/crystal-palace-chants-premier-league/"
+      ]
+    },
+    {
+      "id": "crystal-palace-red-and-blue-army",
+      "title": "Red and Blue Army",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "We're the red and blue army,\nWe're the red and blue army,\nWe're the red and blue army!",
+      "tuneName": "Stadium call",
+      "contextNotes": "A repeated club-colour chant.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.givemesport.com/crystal-palace-chants-premier-league/"
+      ]
+    },
+    {
+      "id": "crystal-palace-we-hate-brighton",
+      "title": "We Hate Brighton",
+      "subjectTag": "rival",
+      "playerName": null,
+      "lyrics": "We hate Brighton,\nWe hate Brighton,\nWe hate Brighton,\nWe are the Brighton haters!",
+      "tuneName": "Traditional terrace tune",
+      "contextNotes": "Palace and Brighton rivalry banter.",
+      "chantType": "novelty",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.fanchants.com/football-songs/crystal_palace-chants/we-hate-brighton/"
+      ]
+    },
+    {
+      "id": "crystal-palace-eagles-eagles",
+      "title": "Eagles Eagles",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Eagles!\nEagles!\nEagles!",
+      "tuneName": "Stadium call",
+      "contextNotes": "A repeated club nickname call.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.givemesport.com/crystal-palace-chants-premier-league/"
+      ]
+    },
+    {
+      "id": "crystal-palace-from-father-to-son",
+      "title": "From Father to Son",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "From father to son,\nThe Palace goes on,\nFrom father to son,\nThe Palace goes on!",
+      "tuneName": "Traditional terrace tune",
+      "contextNotes": "A generational support chant.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.givemesport.com/crystal-palace-chants-premier-league/"
+      ]
+    },
+    {
+      "id": "crystal-palace-when-i-was-a-young-boy",
+      "title": "When I Was a Young Boy",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "When I was a young boy,\nMy father said to me,\nListen here, my son,\nYou're Palace till you die!",
+      "tuneName": "Traditional terrace tune",
+      "contextNotes": "A generational declaration of Palace support.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.givemesport.com/crystal-palace-chants-premier-league/"
+      ]
+    },
+    {
+      "id": "crystal-palace-tsa-mina-mina-palace",
+      "title": "Tsa Mina Mina Palace",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Tsa mina mina, eh eh,\nWaka waka, eh eh,\nTwelfth again,\nWe've won the FA Cup!",
+      "tuneName": "Waka Waka (Shakira)",
+      "contextNotes": "Palace-specific cup celebration.",
+      "chantType": "novelty",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.givemesport.com/crystal-palace-chants-premier-league/"
+      ]
+    },
+    {
+      "id": "crystal-palace-cpfc",
+      "title": "CPFC",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "C-P-F-C!\nC-P-F-C!\nC-P-F-C!",
+      "tuneName": "Stadium call",
+      "contextNotes": "Spells out the club initials.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.givemesport.com/crystal-palace-chants-premier-league/"
+      ]
+    },
+    {
+      "id": "crystal-palace-wahey-hey-wilfried-zaha",
+      "title": "Wahey Hey Wilfried Zaha",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Wahey, hey, Wilfried Zaha,\nOoh, ahh,\nI wanna know,\nIf you'll score a goal!",
+      "tuneName": "Hey Baby (Bruce Channel)",
+      "contextNotes": "A historic Wilfried Zaha chant.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "historic",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.givemesport.com/crystal-palace-chants-premier-league/"
+      ],
+      "historicSubject": "Wilfried Zaha"
+    }
+  ]
+}

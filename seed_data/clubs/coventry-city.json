@@ -1,0 +1,239 @@
+{
+  "team": {
+    "name": "Coventry City",
+    "crestImageUrl": null
+  },
+  "catalogue": {
+    "version": 1,
+    "rosterSource": "https://fantasy.premierleague.com/api/bootstrap-static/",
+    "rosterAsOf": "2026-08-30"
+  },
+  "squad": [
+    {
+      "name": "Aurèle Amenda"
+    },
+    {
+      "name": "Ben Wilson"
+    },
+    {
+      "name": "Bobby Thomas"
+    },
+    {
+      "name": "Brandon Thomas-Asante"
+    },
+    {
+      "name": "Caleb Yirenkyi"
+    },
+    {
+      "name": "Carl Rushworth"
+    },
+    {
+      "name": "Dan Bentley"
+    },
+    {
+      "name": "Ellis Simms"
+    },
+    {
+      "name": "Ephron Mason-Clark"
+    },
+    {
+      "name": "Ethan Pinnock"
+    },
+    {
+      "name": "Frank Onyeka"
+    },
+    {
+      "name": "George Shepherd"
+    },
+    {
+      "name": "Gustavo Hamer"
+    },
+    {
+      "name": "Haji Wright"
+    },
+    {
+      "name": "Jack Rudoni"
+    },
+    {
+      "name": "Jahnoah Markelo"
+    },
+    {
+      "name": "Jake Bidwell"
+    },
+    {
+      "name": "Jay Dasilva"
+    },
+    {
+      "name": "Joel Latibeaudiere"
+    },
+    {
+      "name": "Josh Eccles"
+    },
+    {
+      "name": "Kai Andrews"
+    },
+    {
+      "name": "Kaine Kesler-Hayden"
+    },
+    {
+      "name": "Liam Kitching"
+    },
+    {
+      "name": "Loum Tchaouna"
+    },
+    {
+      "name": "Luke Woolfenden"
+    },
+    {
+      "name": "Matt Grimes"
+    },
+    {
+      "name": "Miguel Brau"
+    },
+    {
+      "name": "Milan van Ewijk"
+    },
+    {
+      "name": "Norman Bassette"
+    },
+    {
+      "name": "Oliver Dovin"
+    },
+    {
+      "name": "Raphael Borges Rodrigues"
+    },
+    {
+      "name": "Sidiki Cherif"
+    },
+    {
+      "name": "Taiwo Awoniyi"
+    },
+    {
+      "name": "Tatsuhiro Sakamoto"
+    },
+    {
+      "name": "Victor Torp"
+    }
+  ],
+  "chants": [
+    {
+      "id": "coventry-city-ccfc-sky-blue-army",
+      "title": "CCFC Sky Blue Army",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Allez, allez, allez, oh,\nAllez, allez, allez, oh,\nC.C.F.C.,\nSky blue army!",
+      "tuneName": "Allez Allez Allez",
+      "contextNotes": "Spells out CCFC and celebrates the Sky Blues.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://englishchants.com/coventry-city/"
+      ]
+    },
+    {
+      "id": "coventry-city-in-our-coventry-homes",
+      "title": "In Our Coventry Homes",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "In our Coventry homes,\nWe speak with an accent exceedingly rare,\nYou want a cathedral, we've got one to spare,\nIn our Coventry homes!",
+      "tuneName": "In Our Liverpool Home",
+      "contextNotes": "A Coventry city-identity chant.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://englishchants.com/coventry-city/"
+      ]
+    },
+    {
+      "id": "coventry-city-city-till-i-die",
+      "title": "City Till I Die",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "City till I die,\nI'm City till I die,\nI know I am,\nI'm sure I am,\nI'm City till I die!",
+      "tuneName": "Traditional terrace tune",
+      "contextNotes": "A declaration of lifelong support.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://englishchants.com/coventry-city/"
+      ]
+    },
+    {
+      "id": "coventry-city-come-on-city",
+      "title": "Come On City",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Come on City!\nCome on City!\nCome on City!\nCome on City!",
+      "tuneName": "Stadium call",
+      "contextNotes": "A simple matchday call.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://englishchants.com/coventry-city/"
+      ]
+    },
+    {
+      "id": "coventry-city-let-s-all-sing-together",
+      "title": "Let's All Sing Together",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Let's all sing together,\nPlay up Sky Blues,\nWhile we sing together,\nWe will never lose,\nTottenham or Chelsea, United or anyone,\nThey shan't defeat us,\nWe'll fight till the game is won,\nCity! City!",
+      "tuneName": "Traditional club song",
+      "contextNotes": "A long-standing Sky Blues anthem.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://englishchants.com/coventry-city/"
+      ]
+    },
+    {
+      "id": "coventry-city-take-me-home-highfield-road",
+      "title": "Take Me Home Highfield Road",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Take me home,\nHighfield Road,\nTo the place I belong,\nThe West Terrace,\nTo see the City,\nTake me home,\nHighfield Road!",
+      "tuneName": "Take Me Home, Country Roads (John Denver)",
+      "contextNotes": "A historic-ground chant built around Highfield Road.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://englishchants.com/coventry-city/"
+      ]
+    },
+    {
+      "id": "coventry-city-leicester-reject",
+      "title": "Leicester Reject",
+      "subjectTag": "rival",
+      "playerName": null,
+      "lyrics": "Leicester reject, Leicester reject,\nOh, woah,\nLeicester reject, Leicester reject,\nOh, woah!",
+      "tuneName": "Traditional terrace tune",
+      "contextNotes": "Rivalry taunt aimed at Leicester links.",
+      "chantType": "novelty",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://englishchants.com/coventry-city/"
+      ]
+    }
+  ]
+}

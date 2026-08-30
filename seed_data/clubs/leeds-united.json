@@ -1,0 +1,198 @@
+{
+  "team": {
+    "name": "Leeds United",
+    "crestImageUrl": null
+  },
+  "catalogue": {
+    "version": 1,
+    "rosterSource": "https://fantasy.premierleague.com/api/bootstrap-static/",
+    "rosterAsOf": "2026-08-30"
+  },
+  "squad": [
+    {
+      "name": "Alfie Cresswell"
+    },
+    {
+      "name": "Anton Stach"
+    },
+    {
+      "name": "Brenden Aaronson"
+    },
+    {
+      "name": "Daniel James"
+    },
+    {
+      "name": "Dominic Calvert-Lewin"
+    },
+    {
+      "name": "Ethan Ampadu"
+    },
+    {
+      "name": "Gabriel Gudmundsson"
+    },
+    {
+      "name": "Harry Wilson"
+    },
+    {
+      "name": "Ilia Gruev"
+    },
+    {
+      "name": "Jack Harrison"
+    },
+    {
+      "name": "Jaka Bijol"
+    },
+    {
+      "name": "James Justin"
+    },
+    {
+      "name": "James Trafford"
+    },
+    {
+      "name": "Jayden Bogle"
+    },
+    {
+      "name": "Jayden Lienou"
+    },
+    {
+      "name": "Joe Rodon"
+    },
+    {
+      "name": "Joël Piroe"
+    },
+    {
+      "name": "Lucas Estella Perri"
+    },
+    {
+      "name": "Lukas Nmecha"
+    },
+    {
+      "name": "Mateo Joseph Fernández-Regatillo"
+    },
+    {
+      "name": "Nico Elvedi"
+    },
+    {
+      "name": "Noah Okafor"
+    },
+    {
+      "name": "Sean Longstaff"
+    },
+    {
+      "name": "Sebastiaan Bornauw"
+    },
+    {
+      "name": "Tanaka Ao"
+    },
+    {
+      "name": "Tarik Muharemović"
+    },
+    {
+      "name": "Wilfried Gnonto"
+    }
+  ],
+  "chants": [
+    {
+      "id": "leeds-united-marching-on-together",
+      "title": "Marching On Together",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Marching on together,\nWe're gonna see you win,\nWe are so proud,\nWe shout it out loud,\nWe love you Leeds! Leeds! Leeds!",
+      "tuneName": "Leeds, Leeds, Leeds (Marching On Together)",
+      "contextNotes": "The short anthem chorus sung at Elland Road.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://footballgroundguide.com/news/leeds-united-football-chants-lyrics-of-marching-on-together-leeds-are-falling-apart-again-and-more.html"
+      ]
+    },
+    {
+      "id": "leeds-united-we-are-leeds",
+      "title": "We Are Leeds",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "We are Leeds,\nWe are Leeds,\nWe are Leeds from Elland Road,\nWe are Leeds!",
+      "tuneName": "Traditional terrace tune",
+      "contextNotes": "An Elland Road identity chant.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://footballgroundguide.com/news/leeds-united-football-chants-lyrics-of-marching-on-together-leeds-are-falling-apart-again-and-more.html"
+      ]
+    },
+    {
+      "id": "leeds-united-glory-glory-leeds-united",
+      "title": "Glory Glory Leeds United",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Glory, glory Leeds United,\nGlory, glory Leeds United,\nGlory, glory Leeds United,\nAs the Whites go marching on, on, on!",
+      "tuneName": "Battle Hymn of the Republic",
+      "contextNotes": "A traditional Leeds anthem.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://footballgroundguide.com/news/leeds-united-football-chants-lyrics-of-marching-on-together-leeds-are-falling-apart-again-and-more.html"
+      ]
+    },
+    {
+      "id": "leeds-united-leeds-are-falling-apart-again",
+      "title": "Leeds Are Falling Apart Again",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Leeds are falling apart again,\nLeeds are falling apart again,\nLa la la la,\nLa la la la,\nLeeds are falling apart again!",
+      "tuneName": "Love Will Tear Us Apart (Joy Division)",
+      "contextNotes": "A self-deprecating terrace adaptation.",
+      "chantType": "novelty",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://footballgroundguide.com/news/leeds-united-football-chants-lyrics-of-marching-on-together-leeds-are-falling-apart-again-and-more.html"
+      ]
+    },
+    {
+      "id": "leeds-united-stand-up-if-you-hate-man-u",
+      "title": "Stand Up If You Hate Man U",
+      "subjectTag": "rival",
+      "playerName": null,
+      "lyrics": "Stand up if you hate Man U!\nStand up if you hate Man U!",
+      "tuneName": "Stadium call",
+      "contextNotes": "Manchester United rivalry chant.",
+      "chantType": "novelty",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://footballgroundguide.com/news/leeds-united-football-chants-lyrics-of-marching-on-together-leeds-are-falling-apart-again-and-more.html"
+      ]
+    },
+    {
+      "id": "leeds-united-ampadu",
+      "title": "Ampadu",
+      "subjectTag": "player",
+      "playerName": "Ethan Ampadu",
+      "lyrics": "Ampadu, du, du,\nPlays in yellow, white and blue,\nAmpadu, du, du,\nHe hates scum like me and you!",
+      "tuneName": "Agadoo (Black Lace)",
+      "contextNotes": "Short current-player version for Ethan Ampadu.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "current",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://footballgroundguide.com/news/leeds-united-football-chants-lyrics-of-marching-on-together-leeds-are-falling-apart-again-and-more.html"
+      ]
+    }
+  ]
+}

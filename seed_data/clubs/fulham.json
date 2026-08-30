@@ -1,0 +1,257 @@
+{
+  "team": {
+    "name": "Fulham",
+    "crestImageUrl": null
+  },
+  "catalogue": {
+    "version": 1,
+    "rosterSource": "https://fantasy.premierleague.com/api/bootstrap-static/",
+    "rosterAsOf": "2026-08-30"
+  },
+  "squad": [
+    {
+      "name": "Alex Iwobi"
+    },
+    {
+      "name": "Alfie McNally"
+    },
+    {
+      "name": "Antonee Robinson"
+    },
+    {
+      "name": "Benjamin Lecomte"
+    },
+    {
+      "name": "Bernd Leno"
+    },
+    {
+      "name": "Calvin Bassey"
+    },
+    {
+      "name": "César Palacios"
+    },
+    {
+      "name": "Emile Smith Rowe"
+    },
+    {
+      "name": "Gonzalo García"
+    },
+    {
+      "name": "Harrison Reed"
+    },
+    {
+      "name": "Joachim Andersen"
+    },
+    {
+      "name": "Jonah Kusi-Asare"
+    },
+    {
+      "name": "Jorge Cuenca Barreno"
+    },
+    {
+      "name": "Josh King"
+    },
+    {
+      "name": "Kenny Tete"
+    },
+    {
+      "name": "Kevin Santos Lopes de Macedo"
+    },
+    {
+      "name": "Luc De Fougerolles"
+    },
+    {
+      "name": "Oscar Bobb"
+    },
+    {
+      "name": "Rodrigo Muniz Carvalho"
+    },
+    {
+      "name": "Ryan Sessegnon"
+    },
+    {
+      "name": "Sander Berge"
+    },
+    {
+      "name": "Shea Charles"
+    },
+    {
+      "name": "Timothy Castagne"
+    },
+    {
+      "name": "Tom Cairney"
+    }
+  ],
+  "chants": [
+    {
+      "id": "fulham-que-sera-sera",
+      "title": "Que Sera Sera",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Que sera, sera,\nWhatever will be, will be,\nWe're going to Wembley,\nQue sera, sera!",
+      "tuneName": "Que Sera, Sera",
+      "contextNotes": "A short cup-run adaptation.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://englishchants.com/fc-fulham/"
+      ]
+    },
+    {
+      "id": "fulham-our-fulham",
+      "title": "Our Fulham",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Ba ba ba na na na na,\nOur Fulham,\nCraven Cottage is our home,\nNow we're packing up our bags and we're not alone,\nWe've travelled far on land and sea,\nNow we're gonna take our place in history,\nStanding tall and proud,\nWe'll hear it from the crowd,\nOne more time out loud,\nOur Fulham!",
+      "tuneName": "Our Fulham",
+      "contextNotes": "A shortened section of the club song.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.fanchants.com/football-songs/fulham-chants/our-fulham/"
+      ]
+    },
+    {
+      "id": "fulham-stamford-bridge-is-falling-down",
+      "title": "Stamford Bridge Is Falling Down",
+      "subjectTag": "rival",
+      "playerName": null,
+      "lyrics": "Stamford Bridge is falling down,\nFalling down,\nFalling down,\nStamford Bridge is falling down,\nPoor old Chelsea,\nBuild it up in black and white,\nBlack and white,\nBlack and white,\nBuild it up in black and white,\nPoor old Chelsea!",
+      "tuneName": "London Bridge Is Falling Down",
+      "contextNotes": "West London rivalry banter.",
+      "chantType": "novelty",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://englishchants.com/fc-fulham/"
+      ]
+    },
+    {
+      "id": "fulham-we-are-fulham",
+      "title": "We Are Fulham",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "We are Fulham,\nWe are Fulham,\nWe are Fulham, FFC,\nWe are Fulham,\nSuper Fulham,\nWe are Fulham,\nF**k Chelsea!",
+      "tuneName": "Traditional terrace tune",
+      "contextNotes": "Club support and Chelsea rivalry. Contains mature language.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://englishchants.com/fc-fulham/"
+      ]
+    },
+    {
+      "id": "fulham-come-on-fulham",
+      "title": "Come On Fulham",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Come on Fulham!\nCome on Fulham!\nCome on Fulham!",
+      "tuneName": "Stadium call",
+      "contextNotes": "A simple matchday call.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://englishchants.com/fc-fulham/"
+      ]
+    },
+    {
+      "id": "fulham-and-it-s-super-fulham",
+      "title": "And It's Super Fulham",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "And it's super Fulham,\nSuper Fulham F.C.,\nWe're by far the greatest team,\nThe world has ever seen!",
+      "tuneName": "Traditional terrace tune",
+      "contextNotes": "A club superlative chant.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://englishchants.com/fc-fulham/"
+      ]
+    },
+    {
+      "id": "fulham-come-on-you-whites",
+      "title": "Come On You Whites",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Come on you Whites!\nCome on you Whites!\nCome on you Whites!",
+      "tuneName": "Stadium call",
+      "contextNotes": "A club-colour matchday call.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.fanchants.com/football-songs/fulham-chants/come-on-you-whites/"
+      ]
+    },
+    {
+      "id": "fulham-ginger-iniesta",
+      "title": "Ginger Iniesta",
+      "subjectTag": "player",
+      "playerName": "Harrison Reed",
+      "lyrics": "De de de,\nGinger Iniesta,\nDe de de,\nGinger Iniesta!",
+      "tuneName": "Traditional terrace tune",
+      "contextNotes": "For current midfielder Harrison Reed.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "current",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://englishchants.com/fc-fulham/"
+      ]
+    },
+    {
+      "id": "fulham-black-and-white-army",
+      "title": "Black and White Army",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Black and white army,\nBlack and white army,\nBlack and white army,\nBlack and white army!",
+      "tuneName": "Stadium call",
+      "contextNotes": "A club-colour chant.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://englishchants.com/fc-fulham/"
+      ]
+    },
+    {
+      "id": "fulham-you-are-my-fulham",
+      "title": "You Are My Fulham",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "You are my Fulham,\nMy only Fulham,\nYou make me happy when skies are grey,\nYou'll never know just how much I love you,\nPlease don't take my Fulham away!",
+      "tuneName": "You Are My Sunshine",
+      "contextNotes": "A direct support adaptation.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://englishchants.com/fc-fulham/"
+      ]
+    }
+  ]
+}

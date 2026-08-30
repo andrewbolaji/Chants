@@ -1,0 +1,198 @@
+{
+  "team": {
+    "name": "Sunderland",
+    "crestImageUrl": null
+  },
+  "catalogue": {
+    "version": 1,
+    "rosterSource": "https://fantasy.premierleague.com/api/bootstrap-static/",
+    "rosterAsOf": "2026-08-30"
+  },
+  "squad": [
+    {
+      "name": "Anthony Patterson"
+    },
+    {
+      "name": "Arthur Masuaku"
+    },
+    {
+      "name": "Brian Brobbey"
+    },
+    {
+      "name": "Chemsdine Talbi"
+    },
+    {
+      "name": "Chris Rigg"
+    },
+    {
+      "name": "Daniel Ballard"
+    },
+    {
+      "name": "Dayann Méthalie"
+    },
+    {
+      "name": "Djiamgone Jocelin Ta Bi"
+    },
+    {
+      "name": "Enzo Le Fée"
+    },
+    {
+      "name": "Granit Xhaka"
+    },
+    {
+      "name": "Habib Diarra"
+    },
+    {
+      "name": "Jenson Seelt"
+    },
+    {
+      "name": "Jules Ahoka"
+    },
+    {
+      "name": "Leo Fuhr Hjelde"
+    },
+    {
+      "name": "Luke O'Nien"
+    },
+    {
+      "name": "Melker Ellborg"
+    },
+    {
+      "name": "Nilson Angulo"
+    },
+    {
+      "name": "Noah Sadiki"
+    },
+    {
+      "name": "Nordi Mukiele"
+    },
+    {
+      "name": "Omar Alderete"
+    },
+    {
+      "name": "Reinildo Mandava"
+    },
+    {
+      "name": "Robin Roefs"
+    },
+    {
+      "name": "Romaine Mundle"
+    },
+    {
+      "name": "Simon Adingra"
+    },
+    {
+      "name": "Thomas Meunier"
+    },
+    {
+      "name": "Trai Hume"
+    },
+    {
+      "name": "Wilson Isidor"
+    }
+  ],
+  "chants": [
+    {
+      "id": "sunderland-sunderland-till-i-die",
+      "title": "Sunderland Till I Die",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Sunderland till I die,\nI'm Sunderland till I die,\nI know I am,\nI'm sure I am,\nI'm Sunderland till I die!",
+      "tuneName": "Traditional terrace tune",
+      "contextNotes": "A declaration of lifelong support.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.fanchants.com/football-team/sunderland/"
+      ]
+    },
+    {
+      "id": "sunderland-ready-to-go",
+      "title": "Ready to Go",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Baby, I'm ready to go,\nI'm back and ready to go,\nFrom the rooftops, shout it out!",
+      "tuneName": "Ready to Go (Republica)",
+      "contextNotes": "The short walk-out anthem hook.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.fanchants.com/football-team/sunderland/"
+      ]
+    },
+    {
+      "id": "sunderland-wise-men-say",
+      "title": "Wise Men Say",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Wise men say,\nOnly fools rush in,\nBut I can't help,\nFalling in love with you,\nSunderland!",
+      "tuneName": "Can't Help Falling in Love (Elvis Presley)",
+      "contextNotes": "A short Sunderland love-song adaptation.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.fanchants.com/football-team/sunderland/"
+      ]
+    },
+    {
+      "id": "sunderland-ha-way-the-lads",
+      "title": "Ha'way the Lads",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Ha'way the lads!\nHa'way the lads!\nHa'way the lads!",
+      "tuneName": "Stadium call",
+      "contextNotes": "A Wearside matchday call.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.fanchants.com/football-team/sunderland/"
+      ]
+    },
+    {
+      "id": "sunderland-the-greatest-team",
+      "title": "The Greatest Team",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Sunderland A.F.C.,\nThe greatest team the world has ever seen!",
+      "tuneName": "Traditional terrace tune",
+      "contextNotes": "A club superlative chant.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.fanchants.com/football-team/sunderland/"
+      ]
+    },
+    {
+      "id": "sunderland-you-laughed-at-us",
+      "title": "You Laughed at Us",
+      "subjectTag": "rival",
+      "playerName": null,
+      "lyrics": "You laughed at us,\nWhen we were sh*te,\nWe came back up,\nAnd beat you twice,\nOne-nil at home,\nTwo-one away,\nAll the Geordies ran away!",
+      "tuneName": "Traditional terrace tune",
+      "contextNotes": "A 2026 Tyne-Wear rivalry chant. Contains mature language.",
+      "chantType": "novelty",
+      "mediaType": "none",
+      "era": "current",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://footballgroundguide.com/news/sunderland-fans-fire-fresh-dig-at-newcastle-united-with-catchy-new-chant-after-beating-everton.html"
+      ]
+    }
+  ]
+}

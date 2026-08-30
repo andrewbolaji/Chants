@@ -1,0 +1,242 @@
+{
+  "team": {
+    "name": "Manchester City",
+    "crestImageUrl": null
+  },
+  "catalogue": {
+    "version": 1,
+    "rosterSource": "https://fantasy.premierleague.com/api/bootstrap-static/",
+    "rosterAsOf": "2026-08-30"
+  },
+  "squad": [
+    {
+      "name": "Abdukodir Khusanov"
+    },
+    {
+      "name": "Antoine Semenyo"
+    },
+    {
+      "name": "Ayyoub Bouaddi"
+    },
+    {
+      "name": "Claudio Echeverri"
+    },
+    {
+      "name": "Divine Mukasa"
+    },
+    {
+      "name": "Elliot Anderson"
+    },
+    {
+      "name": "Erling Haaland"
+    },
+    {
+      "name": "Gerónimo Rulli"
+    },
+    {
+      "name": "Gianluigi Donnarumma"
+    },
+    {
+      "name": "Jack Grealish"
+    },
+    {
+      "name": "Jérémy Doku"
+    },
+    {
+      "name": "Jeremy Monga"
+    },
+    {
+      "name": "Joško Gvardiol"
+    },
+    {
+      "name": "Kaden Braithwaite"
+    },
+    {
+      "name": "Kalvin Phillips"
+    },
+    {
+      "name": "Marc Guéhi"
+    },
+    {
+      "name": "Marcus Bettinelli"
+    },
+    {
+      "name": "Mateo Kovačić"
+    },
+    {
+      "name": "Matheus Nunes"
+    },
+    {
+      "name": "Max Alleyne"
+    },
+    {
+      "name": "Nico O'Reilly"
+    },
+    {
+      "name": "Phil Foden"
+    },
+    {
+      "name": "Rayan Aït-Nouri"
+    },
+    {
+      "name": "Rayan Cherki"
+    },
+    {
+      "name": "Rico Lewis"
+    },
+    {
+      "name": "Rodrigo 'Rodri' Hernandez Cascante"
+    },
+    {
+      "name": "Rúben dos Santos Gato Alves Dias"
+    },
+    {
+      "name": "Ryan McAidoo"
+    },
+    {
+      "name": "Tijjani Reijnders"
+    },
+    {
+      "name": "Vitor de Oliveira Nunes dos Reis"
+    }
+  ],
+  "chants": [
+    {
+      "id": "manchester-city-blue-moon",
+      "title": "Blue Moon",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Blue Moon,\nYou saw me standing alone,\nWithout a dream in my heart,\nWithout a love of my own.",
+      "tuneName": "Blue Moon",
+      "contextNotes": "The short anthem verse sung by City supporters.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://footballgroundguide.com/news/manchester-city-football-chants"
+      ]
+    },
+    {
+      "id": "manchester-city-the-boys-in-blue",
+      "title": "The Boys in Blue",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "City,\nManchester City,\nWe are the lads who are playing to win,\nCity,\nThe Boys in Blue never give in!",
+      "tuneName": "The Boys in Blue",
+      "contextNotes": "The short club-specific chorus.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://footballgroundguide.com/news/manchester-city-football-chants"
+      ]
+    },
+    {
+      "id": "manchester-city-we-re-not-really-here",
+      "title": "We're Not Really Here",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "We're not really here,\nWe're not really here,\nJust like the fans of the Invisible Man,\nWe're not really here!",
+      "tuneName": "The Invisible Man",
+      "contextNotes": "A self-aware City support chant.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://footballgroundguide.com/news/manchester-city-football-chants"
+      ]
+    },
+    {
+      "id": "manchester-city-when-the-blues-go-marching-in",
+      "title": "When the Blues Go Marching In",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Oh when the Blues go marching in,\nOh when the Blues go marching in,\nI want to be in that number,\nOh when the Blues go marching in!",
+      "tuneName": "When the Saints Go Marching In",
+      "contextNotes": "A City-colour adaptation.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://footballgroundguide.com/news/manchester-city-football-chants"
+      ]
+    },
+    {
+      "id": "manchester-city-haaland-ha-ha-ha",
+      "title": "Haaland Ha Ha Ha",
+      "subjectTag": "player",
+      "playerName": "Erling Haaland",
+      "lyrics": "Haaland, Haaland,\nHe's a blue just like his dad,\nNow he's at the Etihad,\nHa, ha, ha, Haaland!",
+      "tuneName": "Traditional terrace tune",
+      "contextNotes": "For current striker Erling Haaland.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "current",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://footballgroundguide.com/news/manchester-city-football-chants"
+      ]
+    },
+    {
+      "id": "manchester-city-never-felt-more-like-singing-the-blues",
+      "title": "Never Felt More Like Singing the Blues",
+      "subjectTag": "rival",
+      "playerName": null,
+      "lyrics": "I've never felt more like singing the Blues,\nCity win, United lose,\nOh City, you've got me singing the Blues!",
+      "tuneName": "Singing the Blues",
+      "contextNotes": "Manchester derby banter.",
+      "chantType": "novelty",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://footballgroundguide.com/news/manchester-city-football-chants"
+      ]
+    },
+    {
+      "id": "manchester-city-if-you-all-hate-man-united-clap-your-hands",
+      "title": "If You All Hate Man United Clap Your Hands",
+      "subjectTag": "rival",
+      "playerName": null,
+      "lyrics": "If you all hate Man United, clap your hands!\nClap, clap!\nIf you all hate Man United, clap your hands!\nClap, clap!",
+      "tuneName": "If You're Happy and You Know It",
+      "contextNotes": "Manchester derby banter.",
+      "chantType": "novelty",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://bleacherreport.com/articles/1777894-20-chants-every-true-manchester-city-fan-should-know"
+      ]
+    },
+    {
+      "id": "manchester-city-here-s-to-you-vincent-kompany",
+      "title": "Here's to You Vincent Kompany",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Here's to you, Vincent Kompany,\nCity loves you more than you will know,\nWoah!",
+      "tuneName": "Mrs Robinson (Simon & Garfunkel)",
+      "contextNotes": "A historic Vincent Kompany chant.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "historic",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.fanchants.com/football-songs/manchester_city-chants/heres-to-you-vincent-kompany/"
+      ],
+      "historicSubject": "Vincent Kompany"
+    }
+  ]
+}

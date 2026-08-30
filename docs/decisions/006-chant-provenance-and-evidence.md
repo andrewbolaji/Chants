@@ -24,7 +24,7 @@ evidence: {
 
 The only canonical stored URL forms are a YouTube watch URL with an exact 11-character video ID and an X status URL with a bounded handle and a 1-to-25-digit numeric status ID. The client derives the provider while normalizing approved YouTube, youtu.be, X, and Twitter inputs. Firestore rules and Cloud Functions independently validate the canonical stored form.
 
-A user-created chant can become `canonical`, shown as Terrace Proven, only after valid evidence is retained and an operator explicitly promotes it. Votes never promote or prove a chant. The `createdBy: "system"` sourcing-ledger exception preserves seeded canonical records without requiring a public clip on every document.
+A user-created chant can become `canonical`, shown as Terrace Proven, only after valid evidence is retained and an operator explicitly promotes it. Votes never promote or prove a chant. The `createdBy: "system"` sourcing-ledger exception preserves seeded canonical records without requiring a public clip on every document. New seed projections explicitly set `origin: alreadySung`; dated review sources remain offline catalogue metadata and are not misrepresented as canonical public YouTube or X evidence.
 
 Origin is immutable. Authors may edit the existing content allowlist only while a chant is `community`. Removing evidence from a user-created canonical chant deletes the evidence and demotes it to `community` in the same server transaction. Existing documents with absent or malformed provenance remain readable and moderatable, but malformed evidence is never rendered as a link or accepted for promotion.
 

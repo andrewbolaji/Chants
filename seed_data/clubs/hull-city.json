@@ -1,0 +1,347 @@
+{
+  "team": {
+    "name": "Hull City",
+    "crestImageUrl": null
+  },
+  "catalogue": {
+    "version": 1,
+    "rosterSource": "https://fantasy.premierleague.com/api/bootstrap-static/",
+    "rosterAsOf": "2026-08-30"
+  },
+  "squad": [
+    {
+      "name": "Abdülkadir Ömür"
+    },
+    {
+      "name": "Abu Kamara"
+    },
+    {
+      "name": "Cathal McCarthy"
+    },
+    {
+      "name": "Charlie Hughes"
+    },
+    {
+      "name": "Cody Drameh"
+    },
+    {
+      "name": "Darko Gyabi"
+    },
+    {
+      "name": "David Akintola"
+    },
+    {
+      "name": "Dillon Phillips"
+    },
+    {
+      "name": "Eliot Matazo"
+    },
+    {
+      "name": "Elliot Stroud"
+    },
+    {
+      "name": "Enis Destan"
+    },
+    {
+      "name": "Harvey Cartwright"
+    },
+    {
+      "name": "Hidemasa Morita"
+    },
+    {
+      "name": "Jack Butland"
+    },
+    {
+      "name": "Jens Hjertø-Dahl"
+    },
+    {
+      "name": "Joe Gelhardt"
+    },
+    {
+      "name": "John Egan"
+    },
+    {
+      "name": "Kieran Dowell"
+    },
+    {
+      "name": "Konstantinos Tzolakis"
+    },
+    {
+      "name": "Lewie Coyle"
+    },
+    {
+      "name": "Liam Millar"
+    },
+    {
+      "name": "Lucas Gourna-Douath"
+    },
+    {
+      "name": "Lucas Herrington"
+    },
+    {
+      "name": "Mason Burstow"
+    },
+    {
+      "name": "Matt Crooks"
+    },
+    {
+      "name": "Matt Targett"
+    },
+    {
+      "name": "Matty Jacob"
+    },
+    {
+      "name": "Mohamed Belloumi"
+    },
+    {
+      "name": "Mohamed-Ali Cho"
+    },
+    {
+      "name": "Nobel Mendy"
+    },
+    {
+      "name": "Oli McBurnie"
+    },
+    {
+      "name": "Óscar Zambrano"
+    },
+    {
+      "name": "Paddy McNair"
+    },
+    {
+      "name": "Regan Slater"
+    },
+    {
+      "name": "Ryan Giles"
+    },
+    {
+      "name": "Semi Ajayi"
+    },
+    {
+      "name": "Thimothée Lo-Tutala"
+    }
+  ],
+  "chants": [
+    {
+      "id": "hull-city-mauled-by-the-tigers",
+      "title": "Mauled by the Tigers",
+      "subjectTag": "rival",
+      "playerName": null,
+      "lyrics": "Mauled by the Tigers,\nYou're getting mauled by the Tigers,\nMauled by the Tigers,\nYou're getting mauled by the Tigers!",
+      "tuneName": "Traditional terrace tune",
+      "contextNotes": "A Tigers matchday taunt.",
+      "chantType": "novelty",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://englishchants.com/hull-city-1"
+      ]
+    },
+    {
+      "id": "hull-city-city-till-i-die",
+      "title": "City Till I Die",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "City till I die,\nI'm City till I die,\nI know I am,\nI'm sure I am,\nI'm City till I die!",
+      "tuneName": "Traditional terrace tune",
+      "contextNotes": "A declaration of lifelong support.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://englishchants.com/hull-city-1"
+      ]
+    },
+    {
+      "id": "hull-city-we-are-hull",
+      "title": "We Are Hull",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "We are Hull,\nWe are Hull,\nWe are Hull,\nWe are Hull,\nWe are Hull,\nWe are Hull,\nWe are Hull!",
+      "tuneName": "Stadium call",
+      "contextNotes": "A repeated club-name chant.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://englishchants.com/hull-city-1"
+      ]
+    },
+    {
+      "id": "hull-city-hull-flag",
+      "title": "Hull Flag",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Flying high, up in the sky,\nWe'll keep the Hull flag flying high,\nFrom Boothferry to Wembley,\nWe'll keep the Hull flag flying high!",
+      "tuneName": "Traditional terrace tune",
+      "contextNotes": "References Boothferry Park and Wembley.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://englishchants.com/hull-city-1"
+      ]
+    },
+    {
+      "id": "hull-city-the-tigers",
+      "title": "The Tigers",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "The Tigers!\nClap, clap, clap!\nThe Tigers!\nClap, clap, clap!",
+      "tuneName": "Stadium call",
+      "contextNotes": "A club nickname and clapping chant.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://englishchants.com/hull-city-1"
+      ]
+    },
+    {
+      "id": "hull-city-silverware",
+      "title": "Silverware",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Silverware,\nWe don't care,\nWe follow City everywhere,\nSilverware,\nWe don't care,\nWe follow City everywhere!",
+      "tuneName": "Traditional terrace tune",
+      "contextNotes": "Puts following the club above trophies.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://englishchants.com/hull-city-1"
+      ]
+    },
+    {
+      "id": "hull-city-we-re-going-up",
+      "title": "We're Going Up",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "We're going up,\nWe're going up,\nWe're going,\nCity's going up!",
+      "tuneName": "Traditional terrace tune",
+      "contextNotes": "A promotion-season chant.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://englishchants.com/hull-city-1"
+      ]
+    },
+    {
+      "id": "hull-city-we-ll-score-when-we-want",
+      "title": "We'll Score When We Want",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "We'll score when we want,\nWe'll score when we want,\nWe are Hull City,\nWe'll score when we want!",
+      "tuneName": "Sloop John B",
+      "contextNotes": "A confident scoring chant.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://englishchants.com/hull-city-1"
+      ]
+    },
+    {
+      "id": "hull-city-best-team-in-yorkshire",
+      "title": "Best Team in Yorkshire",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Best team in Yorkshire,\nBest team in Yorkshire,\nBest team in Yorkshire,\nBest team in Yorkshire!",
+      "tuneName": "Traditional terrace tune",
+      "contextNotes": "Claims Yorkshire bragging rights.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://englishchants.com/hull-city-1"
+      ]
+    },
+    {
+      "id": "hull-city-city-we-love-you",
+      "title": "City We Love You",
+      "subjectTag": "rival",
+      "playerName": null,
+      "lyrics": "We hate Nottingham Forest,\nWe hate Liverpool too,\nAnd Leicester,\nWe hate Leeds United,\nBut City, we love you!",
+      "tuneName": "Land of Hope and Glory",
+      "contextNotes": "A traditional rivalry list ending in support for City.",
+      "chantType": "novelty",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://englishchants.com/hull-city-1"
+      ]
+    },
+    {
+      "id": "hull-city-i-love-city-till-i-die",
+      "title": "I Love City Till I Die",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Singing, I love City till I die,\nSinging, I love City till I die,\nSinging, I love City,\nI love City,\nI love City till I die!",
+      "tuneName": "Traditional terrace tune",
+      "contextNotes": "A second Hull identity anthem.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.fanchants.com/football-songs/hull_city-chants/city-till-i-die-3/"
+      ]
+    },
+    {
+      "id": "hull-city-we-are-hull-city",
+      "title": "We Are Hull City",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "We are Hull City,\nWe are Hull City,\nAnd everywhere we go,\nEveryone will know,\nWe are Hull City!",
+      "tuneName": "Traditional terrace tune",
+      "contextNotes": "An away-day identity chant.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://englishchants.com/hull-city-1"
+      ]
+    },
+    {
+      "id": "hull-city-super-hull-city",
+      "title": "Super Hull City",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Win, lose or draw,\nWe don't give a f**k,\nWe're Super Hull City,\nAnd we're going up!",
+      "tuneName": "Traditional terrace tune",
+      "contextNotes": "A promotion chant with mature language.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://englishchants.com/hull-city-1"
+      ]
+    }
+  ]
+}
