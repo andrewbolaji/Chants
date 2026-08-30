@@ -114,6 +114,17 @@ Crashlytics and general Function-error alerts begin with event detection rather 
 - **Recovery verification:** The plan is collision-free, a title rename preserves the document ID, a second run is idempotent, and the reviewed source round-trips.
 - **Escalate when:** Any existing public or externally referenced identity would change.
 
+### Prepare and verify a live seed rollout
+
+- **Prerequisites:** Work from an exact reviewed source head. Keep the Firebase Admin JSON only at ignored path `seed/serviceAccountKey.json` with owner-only file permissions. The CLI accepts only project `chants-f95b4`; never paste, print, stage, or record credential contents.
+- **Refresh the roster gate:** Save the official bootstrap response outside the repository, then run `cd seed && npm run roster:check -- /absolute/path/to/bootstrap-static.json`. Require exactly 20 clubs, 622 reviewed rows from 623 raw rows, 17 reviewed display aliases, three owner membership overrides, and zero unreviewed differences. Any new difference returns the work to content review.
+- **Run read-only identity checks:** From `seed/`, run `npm run seed -- --preflight-only arsenal.json`, then `npm run seed -- --preflight-only`. Both commands are read-only. Stop on any collision, credential mismatch, rejected access, timeout, or ambiguous result.
+- **Establish the baseline:** From `seed/`, run `npm run seed -- --readback-only`. Missing rows are expected before a new-club rollout; mismatches and orphans require diagnosis. Record only aggregate counts and source-safe IDs or field names, never raw production documents.
+- **Arsenal reconciliation hold point:** Only after exact-head source review and explicit production approval, run `npm run seed -- arsenal.json`, then `npm run seed -- --readback-only arsenal.json`. If the only remaining differences are the three approved unreferenced departures, run `npm run seed -- --retire-approved-arsenal-players`, then repeat Arsenal readback. The retirement mode accepts no club argument, targets only the three reviewed IDs, rechecks exact Arsenal identity plus zero chant references in one transaction, and treats already-absent targets idempotently.
+- **Canary hold point:** Do not run a normal seed command merely because preflight is clean. After explicit owner release, the bounded canary command is `npm run seed -- leeds-united.json`, followed immediately by `npm run seed -- --readback-only leeds-united.json`. Widening requires an exact canary and a separately recorded bounded sequence.
+- **Recovery:** A failed or ambiguous write stops the rollout. Run readback-only before deciding whether a retry is safe. Correct allowlisted source content and rerun only the affected club. Never improvise deletion, rename a stable ID, or remove an orphan without a separate exact-target destructive plan.
+- **Escalate when:** The credential names another project, any source-owned field mismatches, an unexpected orphan exists, a stable identity would change, a write result is ambiguous, or recovery would delete data.
+
 ### Saved matchday content is unavailable offline
 
 - **Likely causes:** Snapshot was never saved, UID changed, local file is corrupt or from a future schema, deletion lock is active, or the operating system removed application data.

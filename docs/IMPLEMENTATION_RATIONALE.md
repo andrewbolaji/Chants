@@ -25,7 +25,7 @@ This document explains the current Chants repository through documentation merge
 | `storage.rules` | Yes | Exact draft staging admission and denial of direct published-media reads |
 | `firestore.indexes.json` | Yes | Stage, profile, notification, moderation, and deletion query indexes |
 | `firebase.json`, `hosting/` | Yes | Functions, Hosting rewrites, public fallback assets, Firestore and Storage emulator config |
-| `seed/`, `seed_data/` | Yes | Stable IDs, review metadata, dated roster snapshot, validation, runtime projection, preflight, Admin writes, and counter reconciliation |
+| `seed/`, `seed_data/` | Yes | Stable IDs, review metadata, dated roster source, 20-club currentness and owner overrides, validation, runtime projection, named-project preflight, writer-free readback, exact guarded player retirement, Admin writes, and counter reconciliation |
 | `.github/`, `scripts/` | Yes | Clean-runner jobs, memory contract, writing, native contract, and governance regressions |
 | `test/`, `functions/test/`, `test_rules/` | Yes | Unit, widget, golden, handler, overlap, authority, and lifecycle evidence |
 | Android and iOS projects | Yes in source | Auth plugins, permissions, deep links, entitlements, deployment target, CocoaPods lock, fail-closed release signing, compile fixtures, and remaining SDK or provider gates |
@@ -239,7 +239,8 @@ The launch-services block provides bounded staged-object cleanup and the privacy
 | Living Songbook Flutter tests and fixture-backed scoped analysis | PASS for repository authority, correction and evidence forms, retained failure values, invalid link refusal, chant-detail separation, promotion navigation, unavailable closure, replacement confirmation, attach versus promote, stale acknowledgement, private status, responsive dialog behavior, intentional golden review, and zero-issue `flutter analyze lib test` |
 | Living Songbook Firestore rules TypeScript | PASS; Java is absent locally, so owner, cross-user, operator, and direct-write emulator cases require clean-runner execution |
 | Firestore plus Storage emulator | PASS, 165 Java-backed cases in exact-main run `33256843751`, including one cross-account Storage case with three permission assertions |
-| `seed/npm test` | PASS, 54 after the 20-club catalogue block; exact-head clean-runner evidence remains pending |
+| `seed/npm test` | PASS, 71 after exact Arsenal reconciliation; TypeScript and the real 20-club currentness check also pass locally; exact-head clean-runner evidence remains pending |
+| Named-project seed preflight and baseline | PASS for 12 Arsenal and 192 all-club chant identities with no writes; baseline confirms 19 absent teams, 598 absent players, 180 absent chants, 12 Arsenal `origin` mismatches, and three unreferenced departed Arsenal player rows |
 | Memory, writing-style, native-contract, and governance-regression scripts | PASS in exact-main run `33256843751`; rerun against the documentation-only staged boundary |
 | `git diff --check` | PASS for the reviewed implementation heads; rerun against the documentation-only staged boundary |
 | GitHub Actions runs `33254213575`, `33255542646`, and `33256843751` | PASS, all eight jobs at runtime implementation `e1474ad`, documentation head `c1c4ea4`, and merged `main` `e8f2591` |
