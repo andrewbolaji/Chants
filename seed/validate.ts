@@ -22,6 +22,14 @@ export interface ChantVariationData {
   contextNote?: string;
 }
 
+export type CatalogueEra = "current" | "historic" | "evergreen";
+
+export interface CatalogueMetadata {
+  version: number;
+  rosterSource: string;
+  rosterAsOf: string;
+}
+
 export interface ChantData {
   id: string;
   title: string;
@@ -33,6 +41,11 @@ export interface ChantData {
   chantType: string;
   mediaType: string;
   variations?: ChantVariationData[];
+  era?: CatalogueEra;
+  historicSubject?: string;
+  reviewedAsOf?: string;
+  ownerVerified?: boolean;
+  sources?: string[];
 }
 
 export interface ClubData {
@@ -42,6 +55,27 @@ export interface ClubData {
   };
   squad: SquadMember[];
   chants: ChantData[];
+  catalogue?: CatalogueMetadata;
+}
+
+const VALID_CATALOGUE_ERAS = ["current", "historic", "evergreen"];
+const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+function isHttpsUrl(value: unknown): value is string {
+  if (typeof value !== "string") return false;
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "https:" && parsed.hostname.length > 0;
+  } catch {
+    return false;
+  }
+}
+
+function isIsoDate(value: unknown): value is string {
+  if (typeof value !== "string" || !ISO_DATE_PATTERN.test(value)) return false;
+  const parsed = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(parsed.getTime()) &&
+    parsed.toISOString().slice(0, 10) === value;
 }
 
 const VALID_SUBJECT_TAGS = ["player", "coach", "club", "rival"];
@@ -99,6 +133,38 @@ export function validateClub(
     errors.push({ field: "team.name", message: "Team name is required." });
   }
 
+  // Optional offline catalogue metadata. Legacy files remain valid, but once a
+  // catalogue block is present its contract is strict.
+  if (d.catalogue !== undefined) {
+    const catalogue = d.catalogue as unknown;
+    if (!catalogue || typeof catalogue !== "object" || Array.isArray(catalogue)) {
+      errors.push({
+        field: "catalogue",
+        message: "catalogue must be an object.",
+      });
+    } else {
+      const metadata = catalogue as Partial<CatalogueMetadata>;
+      if (metadata.version !== 1) {
+        errors.push({
+          field: "catalogue.version",
+          message: "catalogue.version must be 1.",
+        });
+      }
+      if (!isHttpsUrl(metadata.rosterSource)) {
+        errors.push({
+          field: "catalogue.rosterSource",
+          message: "catalogue.rosterSource must be an HTTPS URL.",
+        });
+      }
+      if (!isIsoDate(metadata.rosterAsOf)) {
+        errors.push({
+          field: "catalogue.rosterAsOf",
+          message: "catalogue.rosterAsOf must use a real YYYY-MM-DD date.",
+        });
+      }
+    }
+  }
+
   // Squad
   if (!Array.isArray(d.squad) || d.squad.length === 0) {
     errors.push({ field: "squad", message: "At least one squad member is required." });
@@ -147,6 +213,11 @@ export function validateClub(
 
       if (typeof c.title !== "string" || c.title.length === 0) {
         errors.push({ field: `chants[${i}].title`, message: "Chant title is required." });
+      } else if (c.title.length > 200) {
+        errors.push({
+          field: `chants[${i}].title`,
+          message: "Chant title must be at most 200 characters.",
+        });
       }
       if (!VALID_SUBJECT_TAGS.includes(c.subjectTag)) {
         errors.push({
@@ -156,9 +227,28 @@ export function validateClub(
       }
       if (typeof c.lyrics !== "string" || c.lyrics.length === 0) {
         errors.push({ field: `chants[${i}].lyrics`, message: "Lyrics are required." });
+      } else if (c.lyrics.length > 5000) {
+        errors.push({
+          field: `chants[${i}].lyrics`,
+          message: "Lyrics must be at most 5000 characters.",
+        });
       }
       if (typeof c.tuneName !== "string" || c.tuneName.length === 0) {
         errors.push({ field: `chants[${i}].tuneName`, message: "Tune name is required." });
+      } else if (c.tuneName.length > 200) {
+        errors.push({
+          field: `chants[${i}].tuneName`,
+          message: "Tune name must be at most 200 characters.",
+        });
+      }
+      if (
+        c.contextNotes !== null &&
+        (typeof c.contextNotes !== "string" || c.contextNotes.length > 500)
+      ) {
+        errors.push({
+          field: `chants[${i}].contextNotes`,
+          message: "Context notes must be null or at most 500 characters.",
+        });
       }
       if (!VALID_CHANT_TYPE.includes(c.chantType)) {
         errors.push({
@@ -171,6 +261,64 @@ export function validateClub(
           field: `chants[${i}].mediaType`,
           message: `Invalid mediaType "${c.mediaType}". Must be one of: ${VALID_MEDIA_TYPES.join(", ")}.`,
         });
+      }
+
+      if (d.catalogue !== undefined) {
+        if (!c.era || !VALID_CATALOGUE_ERAS.includes(c.era)) {
+          errors.push({
+            field: `chants[${i}].era`,
+            message: `Invalid era "${c.era}". Must be one of: ${VALID_CATALOGUE_ERAS.join(", ")}.`,
+          });
+        }
+        if (c.ownerVerified !== true) {
+          errors.push({
+            field: `chants[${i}].ownerVerified`,
+            message: "Catalogue chants must be owner verified.",
+          });
+        }
+        if (
+          typeof c.reviewedAsOf !== "string" ||
+          !isIsoDate(c.reviewedAsOf)
+        ) {
+          errors.push({
+            field: `chants[${i}].reviewedAsOf`,
+            message: "Catalogue chants must record reviewedAsOf as YYYY-MM-DD.",
+          });
+        }
+        if (
+          !Array.isArray(c.sources) ||
+          c.sources.length === 0 ||
+          c.sources.some(
+            (source) => !isHttpsUrl(source)
+          )
+        ) {
+          errors.push({
+            field: `chants[${i}].sources`,
+            message: "Catalogue chants must have at least one HTTPS source URL.",
+          });
+        }
+        if (c.era === "historic") {
+          if (c.subjectTag !== "club" || c.playerName !== null) {
+            errors.push({
+              field: `chants[${i}].era`,
+              message: "Historic chants must use club linkage and null playerName.",
+            });
+          }
+          if (
+            typeof c.historicSubject !== "string" ||
+            c.historicSubject.length === 0
+          ) {
+            errors.push({
+              field: `chants[${i}].historicSubject`,
+              message: "Historic chants must name their historic subject.",
+            });
+          }
+        } else if (c.historicSubject !== undefined) {
+          errors.push({
+            field: `chants[${i}].historicSubject`,
+            message: "Only historic chants may set historicSubject.",
+          });
+        }
       }
 
       // subjectTag / playerName consistency

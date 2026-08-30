@@ -207,6 +207,26 @@ describe("validateClub", () => {
     assert.ok(errors.some((e) => e.field.includes("mediaType")));
   });
 
+  it("fails content that exceeds the runtime chant bounds", () => {
+    const bad = {
+      ...validClub,
+      chants: [
+        {
+          ...validClub.chants[0],
+          title: "t".repeat(201),
+          lyrics: "l".repeat(5001),
+          tuneName: "u".repeat(201),
+          contextNotes: "c".repeat(501),
+        },
+      ],
+    };
+    const errors = validateClub(bad, "arsenal");
+    assert.ok(errors.some((error) => error.field === "chants[0].title"));
+    assert.ok(errors.some((error) => error.field === "chants[0].lyrics"));
+    assert.ok(errors.some((error) => error.field === "chants[0].tuneName"));
+    assert.ok(errors.some((error) => error.field === "chants[0].contextNotes"));
+  });
+
   it("fails for duplicate normalized chant titles with different IDs", () => {
     const bad = {
       ...validClub,
@@ -237,6 +257,89 @@ describe("validateClub", () => {
 
   it("passes for chant with no variations key", () => {
     assert.deepEqual(validateClub(validClub, "arsenal"), []);
+  });
+
+  it("passes strict offline catalogue metadata", () => {
+    const good = {
+      ...validClub,
+      catalogue: {
+        version: 1,
+        rosterSource: "https://example.com/roster",
+        rosterAsOf: "2026-08-30",
+      },
+      chants: [
+        {
+          ...validClub.chants[0],
+          era: "evergreen",
+          reviewedAsOf: "2026-08-30",
+          ownerVerified: true,
+          sources: ["https://example.com/source"],
+        },
+      ],
+    };
+    assert.deepEqual(validateClub(good, "arsenal"), []);
+  });
+
+  it("fails malformed offline catalogue metadata", () => {
+    const bad = {
+      ...validClub,
+      catalogue: {
+        version: 2,
+        rosterSource: "http://example.com/roster",
+        rosterAsOf: "August 30",
+      },
+      chants: [
+        {
+          ...validClub.chants[0],
+          era: "old",
+          reviewedAsOf: "August 30",
+          ownerVerified: false,
+          sources: [],
+        },
+      ],
+    };
+    const errors = validateClub(bad, "arsenal");
+    assert.ok(errors.some((error) => error.field === "catalogue.version"));
+    assert.ok(errors.some((error) => error.field === "catalogue.rosterSource"));
+    assert.ok(errors.some((error) => error.field === "catalogue.rosterAsOf"));
+    assert.ok(errors.some((error) => error.field === "chants[0].era"));
+    assert.ok(errors.some((error) => error.field === "chants[0].reviewedAsOf"));
+    assert.ok(errors.some((error) => error.field === "chants[0].ownerVerified"));
+    assert.ok(errors.some((error) => error.field === "chants[0].sources"));
+  });
+
+  it("fails non-object catalogue metadata without throwing", () => {
+    const bad = {
+      ...validClub,
+      catalogue: null,
+    };
+    const errors = validateClub(bad, "arsenal");
+    assert.ok(errors.some((error) => error.field === "catalogue"));
+  });
+
+  it("requires safe club linkage for historic catalogue subjects", () => {
+    const bad = {
+      ...validClub,
+      catalogue: {
+        version: 1,
+        rosterSource: "https://example.com/roster",
+        rosterAsOf: "2026-08-30",
+      },
+      chants: [
+        {
+          ...validClub.chants[0],
+          subjectTag: "player",
+          playerName: "Bukayo Saka",
+          era: "historic",
+          reviewedAsOf: "2026-08-30",
+          ownerVerified: true,
+          sources: ["https://example.com/source"],
+        },
+      ],
+    };
+    const errors = validateClub(bad, "arsenal");
+    assert.ok(errors.some((error) => error.message.includes("club linkage")));
+    assert.ok(errors.some((error) => error.field === "chants[0].historicSubject"));
   });
 
   it("passes for chant with valid variations", () => {

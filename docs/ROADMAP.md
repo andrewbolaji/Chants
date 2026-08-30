@@ -10,6 +10,7 @@ The path from code-complete to public launch, with concrete triggers on every ga
 - v1 feature set: auth, agnostic Sport/Competition/Team/Chant data model, browse and search, chant detail, user submission, moderation (report, remove, ban, unban, rate limits, audit log), voting with counter reconciliation, one-level comment replies with likes, user blocking, and suggestion box.
 - v1 hardening in source: account deletion, App Check client wiring, complete native Crashlytics delivery hooks, bounded abandoned-media cleanup, and privacy-safe stale deletion-job detection. iOS App Attest is registered but unenforced; two operational policies and the alert-only budget are saved. Android registration, first Crashlytics delivery, observed alert delivery, and deployment remain release-verification items.
 - Stable seeded chant identity in source: explicit immutable IDs, collision preflight, and transactional ownership checks. The separately authorized live preflight remains pending.
+- V1 Premier League catalogue source: complete for all 20 approved clubs. The 19 new files contain 180 owner-reviewed chants, dated squad and source metadata, explicit current or historic treatment, and a normalized 2026-08-30 roster snapshot. Local seed validation passes; no live preflight or Firebase write has occurred.
 - The complete V1 feature and remediation stack from PRs 4 through 10 and 12 through 14 is merged to `main`. It includes provenance and evidence, Songbook and Chant Lab, Saved Matchday Songbook, Basic Share-Out, parser-safe authority boundaries, server-authoritative report and feedback intake, durable account deletion, and the final freeze corrections.
 - Creator and authentication feature source merged at `e8f2591740963f87623aacb82a806328cb1a98fe`. GitHub Actions run `33256843751` passed all eight jobs there: 463 Flutter tests, analysis, 142 Functions tests, 42 seed tests, 165 Firestore and Storage assertions, governance, and both native compile and identity checks. Documentation-only PR 19 later advanced `main` to `9c6286a` without changing executable input.
 - Claude independently reviewed the freeze ranges through final closure. The last review approved the minimal disposed-Home correction and dormant merge privacy gate with no new defect.
@@ -22,7 +23,7 @@ The path from code-complete to public launch, with concrete triggers on every ga
 **Not yet done:**
 - Complete remaining provider dashboards and credentials, Android association, deployed Apple association, production signing, policy, observed cost and abuse controls, and the combined iOS and Android V1 device walkthrough. Feature source at `e8f2591` compiles and passes identity inspection on both clean runners.
 - The read-only live chant-identity preflight before the next production seed write.
-- The remaining verified club seed.
+- Read-only live chant-identity preflight, refreshed transfer-sensitive roster review, controlled club writes, and post-write readback for the source-complete 20-club catalogue.
 - Saved Matchday Songbook airplane-mode device walk; its iOS client compilation now passes.
 - Camera and library permission, upload recovery, playback, public sharing, Following, activity, threaded conversation, moderation, block, and deletion device walks.
 - Content policy, privacy, terms, association deployment, store destinations, URL-signing IAM, cleanup deployment, Android App Check, observed alert and billing delivery, deployed parity, signing, and store assets.
@@ -40,11 +41,11 @@ Run on device, confirm font weights render bold and heavy, walk all core flows a
 
 ## Phase 2: Stable identity and seed
 
-Andrew can continue source and lyric verification without waiting on engineering. The repository now uses explicit seeded chant IDs and freezes Arsenal to its expected legacy IDs. Before the remaining clubs are written to live Firestore or chant URLs are made public, run the separately authorized read-only preflight against the named project. If live state differs, stop and prepare a migration-specific plan instead of writing.
+The repository uses explicit seeded chant IDs and freezes Arsenal to its expected legacy IDs. The owner review is complete, and source now contains all 20 approved clubs. Before the 19 new clubs are written to live Firestore or chant URLs are made public, refresh the dated roster snapshot and run the separately authorized read-only preflight against the named project. If live state differs, stop and prepare a migration-specific plan instead of writing.
 
-Then seed around five verified, externally sourced, policy-checked chants per Premier League club for the 19 unseeded clubs, plus verifying the Arsenal placeholder set. Content-integrity rule applies: lyrics and squads are sourced and verified externally, never authored from model memory.
+The prepared catalogue has 192 chants in total, including 180 across the 19 new files. Every new club clears the three-chant floor, and larger supported songbooks were retained instead of applying the old five-chant cap. Content-integrity remains fail-closed: correct source JSON rather than improvising a lyric, player, context claim, or evidence link during rollout.
 
-Source verification in this phase and the application work in Phase 3 may run in parallel. The stable-ID gate applies to live data writes, not to Andrew's sourcing documents or club JSON preparation.
+The stable-ID and current-roster gates apply to live data writes, not to the completed source catalogue. The live rollout remains a separate, explicitly authorized operation with one-club write and readback before widening.
 
 **Trigger to exit:** The live identity preflight reports no collision, stable IDs preserve the document through a rename test, and all 20 clubs have a verified canonical primer set.
 
@@ -248,11 +249,11 @@ The implementation boundary and remaining verification gate live in `docs/CHANGE
 
 ### Content (owner: Andrew, critical path)
 
-- **IN PROGRESS** Arsenal seeded and verified. Lyrics confirmed, three context notes confirmed factual and unflagged, plus several more verified chants added (player, club, and manager subjects). Arsenal is the showcase club and is effectively complete.
-- **TODO** Seed the other 19 Premier League clubs. Target about 5 chants per club, roughly 100 total. Floor: no club below 3 genuinely iconic chants. All externally sourced and verified against a real version, never generated. Ship trigger: every club clears the floor and the marquee clubs sit at about 5.
-- **IN PROGRESS** Premier League chant seed. Arsenal is the only club JSON currently in source. The working handoff records lyric gathering and review from Aston Villa through Fulham, nine clubs, but those clubs still need final decisions, reviewed JSON packaging, validation, and live writes. Hull City onward, ten clubs, still needs manual lyric and context verification. Content-integrity rule remains absolute: lyrics and source claims are never generated.
-  - Status: manual verification is roughly halfway; technical packaging and live seed completion remain 1 of 20 clubs.
-  - Trigger to prepare a club seed file: its chants have verified lyrics filled in. Source work can continue now. The live Firestore write waits for the stable-ID precondition above, then follows the tested seed path with round-trip and duplicate checks, using the current `chantType` values `sincere` and `novelty`.
+- **DONE IN SOURCE** Arsenal remains the showcase seed with its frozen legacy-compatible IDs.
+- **DONE IN SOURCE** All 19 remaining approved Premier League clubs have reviewed JSON. The new files contain 180 chants, all clubs clear the three-chant floor, and larger verified collections remain intact.
+- **DONE IN SOURCE** Every new chant carries an era, review date, owner-verification marker, and source URL. Historic people remain club-linked rather than entering current squads. Current player chants must match the dated roster snapshot. The seed projection publishes `origin: alreadySung` but excludes offline review metadata.
+  - Source verification: complete as of 2026-08-30.
+  - Live status: not started. Refresh transfer-sensitive squads, run the read-only identity preflight, then use the approved one-club write and readback sequence before widening.
 - **TODO** Write the real content policy to replace the placeholder in content_policy_screen.dart. Required for app store review since submission is live. Andrew owns the wording.
 
 ### Polish and ship

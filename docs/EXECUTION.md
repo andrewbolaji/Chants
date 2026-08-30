@@ -13,6 +13,36 @@ This is the chronological evidence trail for substantial engineering work. It re
 
 ## Entries
 
+### 2026-08-30T15:00:00Z Build the V1 Premier League seed catalogue
+
+- **Status:** Approved and in progress
+- **Scope:** Consolidate the completed owner chant research into nineteen new offline club seed files, retain dated squad and chant provenance, extend seed-only validation, and perform local catalogue verification. No Firebase access or write.
+- **Reference:** `docs/CHANGE_SPEC.md`, Decision 005, the completed confirmation sheet, the supplied seed workbook, and the resolved seeding records
+- **Approval:** Andrew approved the offline catalogue block with `ok lets do it` on 2026-08-30.
+- **Operator:** Codex
+
+| UTC time | Action | Target/environment | Result and evidence |
+|---|---|---|---|
+| 15:00:00 | Fetched merged PR 21 and created `codex/v1-seed-catalogue` from exact `origin/main` merge `35feff9` | Isolated local worktree `chants-v1-seed-catalogue` | Completed. Andrew's dirty `chants-repo` checkout and prior feature worktrees remain untouched. |
+| 15:08:00 | Reconciled the live confirmation sheet with the local workbook, Notes paste, resolved decisions, repository seed state, and command-center gates | Read-only local files and Google Sheets | Confirmed all three owner questions are complete and owner research has zero remaining actions. Arsenal remains the only club JSON, so technical packaging and later live writes remain open for nineteen clubs. |
+| 15:18:00 | Recorded the approved Lane 2 offline catalogue contract | `docs/CHANGE_SPEC.md` | Approved source authority, settled exclusions, no arbitrary chant cap, offline provenance, current-player linkage, historic club-level fallback, deterministic validation, and separate live preflight and write gates. |
+| 15:24:00 | Downloaded the official Fantasy Premier League bootstrap snapshot | Read-only HTTPS, saved outside the repository | The 2026-27 feed contains the exact approved twenty clubs and 623 player rows. It is a dated build input only and must be refreshed before any later live write. No Firebase credential or project was accessed. |
+| 14:39:14 | Corrected this entry's provisional wall-clock labels | This execution entry | The earlier 15:00 through 15:24 labels were recorded as provisional future UTC values. This correction preserves them rather than silently rewriting the log. Row order remains the action order. |
+| 14:39:15 | Added the focused catalogue contract before source generation | Seed tests against the Arsenal-only source state | RED as intended: the exact 20-club assertion found only Arsenal, and the settled historic Salah inclusion could not be found. |
+| 14:39:16 | Added strict offline metadata validation and a pure runtime projection | `seed/validate.ts`, `seed/seed_chant_data.ts`, seed command integration, and tests | Catalogue metadata now fails on malformed roster source, date, era, review date, owner marker, source list, or historic linkage. Runtime projection sets `origin: alreadySung` and excludes offline metadata. |
+| 14:39:17 | Built the 19 missing club files and normalized dated roster artifact | `seed_data/clubs/` and `seed_data/rosters/fpl-2026-08-30.json` | Completed 160 new chants and 594 new squad rows. Every club clears the three-chant floor; no arbitrary cap was applied. Settled exclusions and historic/current treatment are explicit. |
+| 14:39:18 | Ran focused and complete seed verification | Node 20, Mocha, TypeScript, JSON, and repository diff | PASS: 51 seed tests, `npx tsc --noEmit`, `git diff --check`, exact 20-club set, exact new-squad snapshot match, zero duplicate chant IDs, 34 distinct source URLs, and no offline metadata in the runtime projection. |
+| 14:39:19 | Reconciled durable engineering and product truth | Roadmap, decisions 005 and 006, overview, implementation rationale, and completed change record | Source completion, runtime provenance, historic fallback, dated roster risk, and pending live preflight and write gates now agree. No Firebase access, live write, deployment, commit, push, or merge occurred. |
+| 14:39:20 | Rechecked the generated files against every owner workbook row after removing the old five-song cap | Bournemouth, Fulham, Hull, Ipswich, Liverpool, Manchester City, Newcastle, Sunderland, and Tottenham source | Restored 20 real supported entries that the capped planning sheet had displaced. Final local totals are 192 chants, 180 new chants, 22 current subjects, 12 historic subjects, and 43 distinct source URLs. Focused catalogue tests remained green. |
+| 14:39:21 | Matched seed validation to the existing runtime content limits | Chant title, lyrics, tune, and context fields | Added a regression for all four length boundaries. The final complete seed suite passes 52 tests and TypeScript remains clean. |
+| 14:39:22 | Pinned the restored uncapped workbook set in regression coverage | Nine club catalogues with formerly displaced entries | The source contract now names Bournemouth, Fulham, Hull, Ipswich, Liverpool, Manchester City, Newcastle, Sunderland, and Tottenham restorations directly. The final complete seed suite passes 53 tests. |
+| 14:39:23 | Hardened malformed catalogue parsing during final self-review | Offline catalogue URL, date, and object validation | Replaced prefix-only URL and shape-only date checks with parsed HTTPS URLs and real calendar dates. Null or non-object catalogue blocks now return validation errors instead of throwing. The final complete seed suite passes 54 tests. |
+| 15:13:25 | Independently reviewed the exact staged catalogue boundary | Seed runtime projection, identity controls, validation, 20 club files, roster snapshot, source reachability, tests, and durable records | No implementation, authority, privacy, identity, roster-linkage, or count defect found. One Crystal Palace citation entered a publisher-owned case-redirect loop; replaced it with the already retained Palace roundup supporting the same chant. Automated FanChants requests were bot-denied, so their browser reachability remains unverified rather than falsely reported as missing. Final distinct source count is 42. |
+| 15:13:25 | Authorized packaging after independent review | Local Git branch and clean GitHub runner | Andrew requested one commit, push, and clean-runner CI. Live Firebase access, preflight, writes, deployment, and release remain unauthorized. |
+
+- **Current state:** The offline 20-club source catalogue is complete, independently reviewed, corrected, and authorized for one commit, push, and exact-head clean CI. Live identity preflight, current-roster refresh, Firebase writes, and readback remain separately authorized gates.
+- **Resume point:** Re-run the local seed and framework matrix against the corrected staged boundary, create one commit, push the branch, and require all clean-runner jobs to pass at that exact commit without accessing Firebase.
+
 ### 2026-08-30T06:28:07Z Correct the independent Living Songbook review findings
 
 - **Status:** Implemented, locally verified, and staged; clean-runner CI pending

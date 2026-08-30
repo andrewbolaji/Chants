@@ -9,7 +9,7 @@ This document explains the current Chants repository through documentation merge
 - **Durable creator, identity, and launch decisions:** 017 through 024
 - **Execution evidence:** `docs/EXECUTION.md`
 - **Interface memory:** `docs/INTERFACE.md`
-- **Known missing evidence:** combined device walk, remaining provider configuration, association deployment, final policy text, source deployment, observed alert delivery, seed completion, signing, and release
+- **Known missing evidence:** combined device walk, remaining provider configuration, association deployment, final policy text, source deployment, observed alert delivery, live seed preflight and rollout, signing, and release
 
 ## Repository coverage ledger
 
@@ -25,7 +25,7 @@ This document explains the current Chants repository through documentation merge
 | `storage.rules` | Yes | Exact draft staging admission and denial of direct published-media reads |
 | `firestore.indexes.json` | Yes | Stage, profile, notification, moderation, and deletion query indexes |
 | `firebase.json`, `hosting/` | Yes | Functions, Hosting rewrites, public fallback assets, Firestore and Storage emulator config |
-| `seed/`, `seed_data/` | Yes | Stable IDs, validation, preflight, Admin writes, and counter reconciliation |
+| `seed/`, `seed_data/` | Yes | Stable IDs, review metadata, dated roster snapshot, validation, runtime projection, preflight, Admin writes, and counter reconciliation |
 | `.github/`, `scripts/` | Yes | Clean-runner jobs, memory contract, writing, native contract, and governance regressions |
 | `test/`, `functions/test/`, `test_rules/` | Yes | Unit, widget, golden, handler, overlap, authority, and lifecycle evidence |
 | Android and iOS projects | Yes in source | Auth plugins, permissions, deep links, entitlements, deployment target, CocoaPods lock, fail-closed release signing, compile fixtures, and remaining SDK or provider gates |
@@ -239,7 +239,7 @@ The launch-services block provides bounded staged-object cleanup and the privacy
 | Living Songbook Flutter tests and fixture-backed scoped analysis | PASS for repository authority, correction and evidence forms, retained failure values, invalid link refusal, chant-detail separation, promotion navigation, unavailable closure, replacement confirmation, attach versus promote, stale acknowledgement, private status, responsive dialog behavior, intentional golden review, and zero-issue `flutter analyze lib test` |
 | Living Songbook Firestore rules TypeScript | PASS; Java is absent locally, so owner, cross-user, operator, and direct-write emulator cases require clean-runner execution |
 | Firestore plus Storage emulator | PASS, 165 Java-backed cases in exact-main run `33256843751`, including one cross-account Storage case with three permission assertions |
-| `seed/npm test` | PASS, 42 |
+| `seed/npm test` | PASS, 54 after the 20-club catalogue block; exact-head clean-runner evidence remains pending |
 | Memory, writing-style, native-contract, and governance-regression scripts | PASS in exact-main run `33256843751`; rerun against the documentation-only staged boundary |
 | `git diff --check` | PASS for the reviewed implementation heads; rerun against the documentation-only staged boundary |
 | GitHub Actions runs `33254213575`, `33255542646`, and `33256843751` | PASS, all eight jobs at runtime implementation `e1474ad`, documentation head `c1c4ea4`, and merged `main` `e8f2591` |
@@ -266,7 +266,7 @@ Recovery options are additive. Pause performance admission without removing Song
 | Six current change records dated 2026-08-27 through 2026-08-29 | Creator implementation, takedown correction, launch authentication extension, post-auth correction, final minor closure, and V1 launch services |
 | Decisions 017 through 024 | Shell, creator, performance, public, social, safety, source eligibility, verified identity, and staged launch integrity architecture |
 | `docs/INTERFACE.md` | Current launch, Stage, creator, conversation, moderation, and inherited interaction contract |
-| `docs/ROADMAP.md` | Feature source merged; launch services are packaged separately; device evidence, remaining provider configuration, policy, seed, deployment, and release remain |
+| `docs/ROADMAP.md` | Feature and 20-club catalogue source are complete; device evidence, remaining provider configuration, policy, live seed rollout, deployment, and release remain |
 | `ENGINEERING_OVERVIEW.md` | Reviewer-oriented current code map |
 
 ## Known compromises and uncertainty

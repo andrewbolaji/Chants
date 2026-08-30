@@ -1,0 +1,238 @@
+{
+  "team": {
+    "name": "Manchester United",
+    "crestImageUrl": null
+  },
+  "catalogue": {
+    "version": 1,
+    "rosterSource": "https://fantasy.premierleague.com/api/bootstrap-static/",
+    "rosterAsOf": "2026-08-30"
+  },
+  "squad": [
+    {
+      "name": "Altay Bayındır"
+    },
+    {
+      "name": "Amad Diallo"
+    },
+    {
+      "name": "Andrey Nascimento dos Santos"
+    },
+    {
+      "name": "Ayden Heaven"
+    },
+    {
+      "name": "Bendito Mantato"
+    },
+    {
+      "name": "Benjamin Sesko"
+    },
+    {
+      "name": "Bruno Borges Fernandes"
+    },
+    {
+      "name": "Bryan Mbeumo"
+    },
+    {
+      "name": "Carlos Baleba"
+    },
+    {
+      "name": "Chido Obi"
+    },
+    {
+      "name": "Diogo Dalot Teixeira"
+    },
+    {
+      "name": "Harry Amass"
+    },
+    {
+      "name": "Harry Maguire"
+    },
+    {
+      "name": "Jack Fletcher"
+    },
+    {
+      "name": "Joshua Zirkzee"
+    },
+    {
+      "name": "Karl Darlow"
+    },
+    {
+      "name": "Kobbie Mainoo"
+    },
+    {
+      "name": "Leny Yoro"
+    },
+    {
+      "name": "Lisandro Martínez"
+    },
+    {
+      "name": "Luke Shaw"
+    },
+    {
+      "name": "Manuel Ugarte Ribeiro"
+    },
+    {
+      "name": "Marcus Rashford"
+    },
+    {
+      "name": "Mason Mount"
+    },
+    {
+      "name": "Matheus Santos Carneiro da Cunha"
+    },
+    {
+      "name": "Matthijs de Ligt"
+    },
+    {
+      "name": "Noussair Mazraoui"
+    },
+    {
+      "name": "Patrick Dorgu"
+    },
+    {
+      "name": "Senne Lammens"
+    },
+    {
+      "name": "Shea Lacey"
+    },
+    {
+      "name": "Toby Collyer"
+    },
+    {
+      "name": "Tom Heaton"
+    },
+    {
+      "name": "Tyler Fletcher"
+    },
+    {
+      "name": "Tyler Fredricson"
+    },
+    {
+      "name": "Youri Tielemans"
+    }
+  ],
+  "chants": [
+    {
+      "id": "manchester-united-glory-glory-man-united",
+      "title": "Glory Glory Man United",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Glory, glory Man United,\nGlory, glory Man United,\nGlory, glory Man United,\nAs the Reds go marching on, on, on!",
+      "tuneName": "Battle Hymn of the Republic",
+      "contextNotes": "The short United anthem chorus.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.goal.com/en-gb/news/manchester-united-chants-lyrics-videos-most-popular-old-trafford-songs/6gg2ihh94e11anhtzmntwscu"
+      ]
+    },
+    {
+      "id": "manchester-united-bruno-fernandes",
+      "title": "Bruno Fernandes",
+      "subjectTag": "player",
+      "playerName": "Bruno Borges Fernandes",
+      "lyrics": "Bruno, Bruno, Bruno,\nHe came from Sporting like Cristiano,\nHe goes left,\nHe goes right,\nMakes defences look sh*te,\nHe's our Portuguese magnifico!",
+      "tuneName": "Traditional terrace tune",
+      "contextNotes": "For current Manchester United player Bruno Fernandes.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "current",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.goal.com/en-gb/news/manchester-united-chants-lyrics-videos-most-popular-old-trafford-songs/6gg2ihh94e11anhtzmntwscu"
+      ]
+    },
+    {
+      "id": "manchester-united-u-n-i-t-e-d",
+      "title": "U-N-I-T-E-D",
+      "subjectTag": "rival",
+      "playerName": null,
+      "lyrics": "U-N-I-T-E-D,\nUnited are the team for me,\nWith a knick-knack paddywhack,\nGive a dog a bone,\nWhy don't City f**k off home?",
+      "tuneName": "This Old Man",
+      "contextNotes": "Manchester derby chant. Contains mature language.",
+      "chantType": "novelty",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.goal.com/en-gb/news/manchester-united-chants-lyrics-videos-most-popular-old-trafford-songs/6gg2ihh94e11anhtzmntwscu"
+      ]
+    },
+    {
+      "id": "manchester-united-take-me-home-united-road",
+      "title": "Take Me Home United Road",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Take me home,\nUnited Road,\nTo the place I belong,\nTo Old Trafford,\nTo see United,\nTake me home,\nUnited Road!",
+      "tuneName": "Take Me Home, Country Roads (John Denver)",
+      "contextNotes": "An Old Trafford home chant.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.goal.com/en-gb/news/manchester-united-chants-lyrics-videos-most-popular-old-trafford-songs/6gg2ihh94e11anhtzmntwscu"
+      ]
+    },
+    {
+      "id": "manchester-united-viva-ronaldo",
+      "title": "Viva Ronaldo",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Viva Ronaldo!\nViva Ronaldo!\nRunning down the wing,\nHear United sing,\nViva Ronaldo!",
+      "tuneName": "Traditional terrace tune",
+      "contextNotes": "A historic Cristiano Ronaldo chant.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "historic",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.goal.com/en-gb/news/manchester-united-chants-lyrics-videos-most-popular-old-trafford-songs/6gg2ihh94e11anhtzmntwscu"
+      ],
+      "historicSubject": "Cristiano Ronaldo"
+    },
+    {
+      "id": "manchester-united-spirit-in-the-sky",
+      "title": "Spirit in the Sky",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Going on up to the spirit in the sky,\nIt's where I'm gonna go when I die,\nWhen I die and they lay me to rest,\nI'm gonna go on the p*ss with Georgie Best!",
+      "tuneName": "Spirit in the Sky (Norman Greenbaum)",
+      "contextNotes": "A historic George Best tribute. Contains mature language.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "historic",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.goal.com/en-gb/news/manchester-united-chants-lyrics-videos-most-popular-old-trafford-songs/6gg2ihh94e11anhtzmntwscu"
+      ],
+      "historicSubject": "George Best"
+    },
+    {
+      "id": "manchester-united-sunderland-get-battered",
+      "title": "Sunderland Get Battered",
+      "subjectTag": "rival",
+      "playerName": null,
+      "lyrics": "Sunderland get battered,\nEverywhere they go,\nSunderland get battered,\nEverywhere they go!",
+      "tuneName": "Traditional terrace tune",
+      "contextNotes": "Sunderland rivalry taunt.",
+      "chantType": "novelty",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.goal.com/en-gb/news/manchester-united-chants-lyrics-videos-most-popular-old-trafford-songs/6gg2ihh94e11anhtzmntwscu"
+      ]
+    }
+  ]
+}

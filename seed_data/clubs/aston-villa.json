@@ -1,0 +1,199 @@
+{
+  "team": {
+    "name": "Aston Villa",
+    "crestImageUrl": null
+  },
+  "catalogue": {
+    "version": 1,
+    "rosterSource": "https://fantasy.premierleague.com/api/bootstrap-static/",
+    "rosterAsOf": "2026-08-30"
+  },
+  "squad": [
+    {
+      "name": "Aaron Wan-Bissaka"
+    },
+    {
+      "name": "Alejandro Garnacho Ferreyra"
+    },
+    {
+      "name": "Alysson Edward Franco da Rocha dos Santos"
+    },
+    {
+      "name": "Amadou Onana"
+    },
+    {
+      "name": "Andrés García"
+    },
+    {
+      "name": "Boubacar Kamara"
+    },
+    {
+      "name": "Bradley Burrowes"
+    },
+    {
+      "name": "Brian Madjo"
+    },
+    {
+      "name": "Emiliano Buendía Stati"
+    },
+    {
+      "name": "George Hemmings"
+    },
+    {
+      "name": "Ian Maatsen"
+    },
+    {
+      "name": "Joao Gomes"
+    },
+    {
+      "name": "Johan Manzambi"
+    },
+    {
+      "name": "John McGinn"
+    },
+    {
+      "name": "Kosta Nedeljkovic"
+    },
+    {
+      "name": "Lamare Bogarde"
+    },
+    {
+      "name": "Leon Bailey"
+    },
+    {
+      "name": "Leon Goretzka"
+    },
+    {
+      "name": "Lucas Digne"
+    },
+    {
+      "name": "Luka Lynch"
+    },
+    {
+      "name": "Marco Bizot"
+    },
+    {
+      "name": "Matteo Ruggeri"
+    },
+    {
+      "name": "Matty Cash"
+    },
+    {
+      "name": "Nicolas Jackson"
+    },
+    {
+      "name": "Ollie Watkins"
+    },
+    {
+      "name": "Pau Torres"
+    },
+    {
+      "name": "Ross Barkley"
+    },
+    {
+      "name": "Samuel Iling-Junior"
+    },
+    {
+      "name": "Tammy Abraham"
+    },
+    {
+      "name": "Triston Rowe"
+    },
+    {
+      "name": "Tyrone Mings"
+    },
+    {
+      "name": "Victor Lindelöf"
+    },
+    {
+      "name": "Zion Suzuki"
+    }
+  ],
+  "chants": [
+    {
+      "id": "aston-villa-villa-till-i-die",
+      "title": "Villa Till I Die",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Villa till I die,\nI'm Villa till I die,\nI know I am, I'm sure I am,\nI'm Villa till I die.",
+      "tuneName": "Plunkett & Macleane soundtrack",
+      "contextNotes": "A declaration of lifelong support.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://footballgroundguide.com/news/aston-villa-football-chants-lyrics-of-holte-enders-in-the-sky-villa-till-i-die-and-more.html"
+      ]
+    },
+    {
+      "id": "aston-villa-birmingham-are-you-listening",
+      "title": "Birmingham, Are You Listening?",
+      "subjectTag": "rival",
+      "playerName": null,
+      "lyrics": "Birmingham, are you listening,\nTo the song that we're singing?\nWe're walking along,\nSinging our song,\nSh*tting on the City as we go.",
+      "tuneName": "Winter Wonderland",
+      "contextNotes": "Second City derby banter. Contains mature language.",
+      "chantType": "novelty",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://astonvillausablog.wordpress.com/2013/10/23/birmingham-are-you-listening-aston-villa-songbook/"
+      ]
+    },
+    {
+      "id": "aston-villa-hi-ho-aston-villa",
+      "title": "Hi Ho Aston Villa",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Hi Ho Aston Villa!",
+      "tuneName": "Hi Ho Silver Lining (Jeff Beck)",
+      "contextNotes": "The short Villa-specific stadium hook.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://footballgroundguide.com/news/aston-villa-football-chants-lyrics-of-holte-enders-in-the-sky-villa-till-i-die-and-more.html"
+      ]
+    },
+    {
+      "id": "aston-villa-super-john-mcginn",
+      "title": "Super John McGinn",
+      "subjectTag": "player",
+      "playerName": "John McGinn",
+      "lyrics": "We've got McGinn,\nSuper John McGinn,\nI just don't think you understand,\nHe's Unai Emery's man,\nHe's better than Zidane,\nWe've got Super John McGinn!",
+      "tuneName": "Dirty Old Town",
+      "contextNotes": "For current midfielder John McGinn.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "current",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://footballgroundguide.com/news/aston-villa-football-chants-lyrics-of-holte-enders-in-the-sky-villa-till-i-die-and-more.html"
+      ]
+    },
+    {
+      "id": "aston-villa-allez-allez-allez",
+      "title": "Allez Allez Allez",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Every week we follow,\nThe boys in claret and blue,\nWe even conquered Europe,\nIn 1982,\nThe Villa boys from Aston,\nWe travel near and far,\nYou can hear us singing,\nFrom the stands at Villa Park,\nAllez, allez, allez!",
+      "tuneName": "Allez Allez Allez",
+      "contextNotes": "Celebrates Villa's European Cup win in 1982.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://footballgroundguide.com/news/aston-villa-football-chants-lyrics-of-holte-enders-in-the-sky-villa-till-i-die-and-more.html"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,204 @@
+{
+  "team": {
+    "name": "Nottingham Forest",
+    "crestImageUrl": null
+  },
+  "catalogue": {
+    "version": 1,
+    "rosterSource": "https://fantasy.premierleague.com/api/bootstrap-static/",
+    "rosterAsOf": "2026-08-30"
+  },
+  "squad": [
+    {
+      "name": "Arnaud Kalimuendo"
+    },
+    {
+      "name": "Callum Hudson-Odoi"
+    },
+    {
+      "name": "Chris Wood"
+    },
+    {
+      "name": "Dan Ndoye"
+    },
+    {
+      "name": "Dilane Bakwa"
+    },
+    {
+      "name": "Felipe Rodrigues da Silva"
+    },
+    {
+      "name": "Ibrahim Sangaré"
+    },
+    {
+      "name": "Igor Jesus Maciel da Cruz"
+    },
+    {
+      "name": "Jair Paula da Cunha Filho"
+    },
+    {
+      "name": "James McAtee"
+    },
+    {
+      "name": "John Victor Maciel Furtado"
+    },
+    {
+      "name": "Liam Delap"
+    },
+    {
+      "name": "Luca Netz"
+    },
+    {
+      "name": "Matz Sels"
+    },
+    {
+      "name": "Morgan Gibbs-White"
+    },
+    {
+      "name": "Murillo Costa dos Santos"
+    },
+    {
+      "name": "Neco Williams"
+    },
+    {
+      "name": "Nicolás Domínguez"
+    },
+    {
+      "name": "Nicolò Savona"
+    },
+    {
+      "name": "Nikola Milenković"
+    },
+    {
+      "name": "Ola Aina"
+    },
+    {
+      "name": "Omar Richards"
+    },
+    {
+      "name": "Omari Hutchinson"
+    },
+    {
+      "name": "Ousmane Diomande"
+    },
+    {
+      "name": "Ryan Yates"
+    },
+    {
+      "name": "Steven Benda"
+    },
+    {
+      "name": "Tyler Bindon"
+    },
+    {
+      "name": "Xaver Schlager"
+    },
+    {
+      "name": "Zach Abbott"
+    }
+  ],
+  "chants": [
+    {
+      "id": "nottingham-forest-come-on-you-reds",
+      "title": "Come On You Reds",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Come on you Reds!\nCome on you Reds!\nCome on you Reds!\nCome on you Reds!",
+      "tuneName": "Stadium call",
+      "contextNotes": "A simple club-colour call.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.byfarthegreatestteam.com/posts/nottingham-forest-songs/"
+      ]
+    },
+    {
+      "id": "nottingham-forest-morgan-gibbs-white",
+      "title": "Morgan Gibbs-White",
+      "subjectTag": "player",
+      "playerName": "Morgan Gibbs-White",
+      "lyrics": "Oh baby, do you know what's worth?\nMorgan Gibbs-White is the best on earth,\nLeft foot, right foot, he's just what we need,\nHe's taking Forest to the Champions League!",
+      "tuneName": "Heaven Is a Place on Earth (Belinda Carlisle)",
+      "contextNotes": "For current player Morgan Gibbs-White.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "current",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.byfarthegreatestteam.com/posts/nottingham-forest-songs/"
+      ]
+    },
+    {
+      "id": "nottingham-forest-city-ground",
+      "title": "City Ground",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "City Ground,\nOh mist rolling in from the Trent,\nMy desire,\nIs always to be here,\nOh City Ground!",
+      "tuneName": "Mull of Kintyre (Wings)",
+      "contextNotes": "Forest's City Ground anthem.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.byfarthegreatestteam.com/posts/nottingham-forest-songs/"
+      ]
+    },
+    {
+      "id": "nottingham-forest-you-are-my-forest",
+      "title": "You Are My Forest",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "You are my Forest,\nMy only Forest,\nYou make me happy when skies are grey,\nYou never notice,\nHow much I love you,\nPlease don't take my Forest away!",
+      "tuneName": "You Are My Sunshine",
+      "contextNotes": "A direct support adaptation.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.byfarthegreatestteam.com/posts/nottingham-forest-songs/"
+      ]
+    },
+    {
+      "id": "nottingham-forest-we-love-you-forest",
+      "title": "We Love You Forest",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "We love you Forest,\nWe do,\nWe love you Forest,\nWe do,\nWe love you Forest,\nWe do,\nOh Forest, we love you!",
+      "tuneName": "We Love You refrain",
+      "contextNotes": "A direct support chant.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.byfarthegreatestteam.com/posts/nottingham-forest-songs/"
+      ]
+    },
+    {
+      "id": "nottingham-forest-chris-wood-s-on-fire",
+      "title": "Chris Wood's on Fire",
+      "subjectTag": "player",
+      "playerName": "Chris Wood",
+      "lyrics": "Chris Wood's on fire,\nYour defence is terrified,\nChris Wood's on fire,\nYour defence is terrified,\nChris Wood's on fire,\nNa na na na na na na!",
+      "tuneName": "Freed from Desire (Gala)",
+      "contextNotes": "For current striker Chris Wood.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "current",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.byfarthegreatestteam.com/posts/nottingham-forest-songs/"
+      ]
+    }
+  ]
+}

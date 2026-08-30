@@ -9,7 +9,7 @@
 
 The seed previously derived each chant document ID from its mutable title. A title correction therefore targeted a new Firestore document and left the old document plus its votes, comments, reports, saves, evidence, and future public links behind. This failure was reproduced before the framework was adopted. Its cost grows as engagement and public references accumulate.
 
-Community chants already use Firestore-generated identities. The problem is limited to operator-seeded canonical chants. Arsenal is the only club seed file currently in the repository, so the compatibility boundary can be established before the remaining clubs are written live.
+Community chants already use Firestore-generated identities. The problem is limited to operator-seeded canonical chants. Arsenal was the only club seed file when this decision was accepted, which allowed its compatibility boundary to be established before the remaining clubs were written live. Source now contains all 20 approved clubs, while the live preflight and 19 new club writes remain pending.
 
 ## Decision
 
@@ -41,9 +41,10 @@ Before the first club write, the seed reads the club's existing chants and every
 - Positive: predictable IDs cannot silently overwrite community content.
 - Negative: every seed source must choose and retain an explicit club-prefixed ID.
 - Negative: a live mismatch stops seeding and requires operator investigation.
+- Operational: the 19 new source files retain offline review metadata and a dated roster snapshot, but the runtime projection writes only supported chant fields. Historic subjects remain club-linked until a separately reviewed archive model exists.
 - Operational: source implementation does not prove production compatibility. Andrew must separately authorize and inspect the read-only live preflight before the next seed write.
 
 ## Validation and revisit trigger
 
-- **Evidence:** Focused tests prove title independence, exact Arsenal legacy equivalence, duplicate-ID and normalized-title rejection, each collision class, transactional ownership recheck, safe create, and content-only update. The complete seed suite and TypeScript compiler pass.
+- **Evidence:** Focused tests prove title independence, exact Arsenal legacy equivalence, duplicate-ID and normalized-title rejection, each collision class, transactional ownership recheck, safe create, content-only update, the exact 20-club source roster, current-player linkage, offline metadata validation, and exclusion of that metadata from runtime writes. The complete seed suite and TypeScript compiler pass.
 - **Revisit when:** Seeded identity must span multiple clubs for one chant, a verified live collision requires migration, or the public URL design needs an identity layer that is not the Firestore document ID.

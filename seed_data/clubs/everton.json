@@ -1,0 +1,343 @@
+{
+  "team": {
+    "name": "Everton",
+    "crestImageUrl": null
+  },
+  "catalogue": {
+    "version": 1,
+    "rosterSource": "https://fantasy.premierleague.com/api/bootstrap-static/",
+    "rosterAsOf": "2026-08-30"
+  },
+  "squad": [
+    {
+      "name": "Adam Aznou"
+    },
+    {
+      "name": "Brennan Johnson"
+    },
+    {
+      "name": "Carlos Alcaraz Durán"
+    },
+    {
+      "name": "Christian Nørgaard"
+    },
+    {
+      "name": "Harrison Armstrong"
+    },
+    {
+      "name": "Hayden Hackney"
+    },
+    {
+      "name": "Iliman Ndiaye"
+    },
+    {
+      "name": "Jake O'Brien"
+    },
+    {
+      "name": "James Garner"
+    },
+    {
+      "name": "James Tarkowski"
+    },
+    {
+      "name": "Jarrad Branthwaite"
+    },
+    {
+      "name": "Jordan Pickford"
+    },
+    {
+      "name": "Kiernan Dewsbury-Hall"
+    },
+    {
+      "name": "Mark Travers"
+    },
+    {
+      "name": "Merlin Röhl"
+    },
+    {
+      "name": "Michael Keane"
+    },
+    {
+      "name": "Nathan Patterson"
+    },
+    {
+      "name": "Norberto Bercique Gomes Betuncal"
+    },
+    {
+      "name": "Thierno Barry"
+    },
+    {
+      "name": "Tim Iroegbunam"
+    },
+    {
+      "name": "Tom King"
+    },
+    {
+      "name": "Tyler Dibling"
+    },
+    {
+      "name": "Tyrique George"
+    },
+    {
+      "name": "Vitalii Mykolenko"
+    }
+  ],
+  "chants": [
+    {
+      "id": "everton-z-cars",
+      "title": "Z-Cars",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Z-Cars",
+      "tuneName": "Theme from Z-Cars / Johnny Todd",
+      "contextNotes": "Everton's instrumental walk-out anthem; there are no sung lyrics.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://footballgroundguide.com/news/everton-football-chants"
+      ]
+    },
+    {
+      "id": "everton-it-s-a-grand-old-team",
+      "title": "It's a Grand Old Team",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "And it's a grand old team to play for,\nAnd it's a grand old team to support,\nAnd if you know your history,\nIt's enough to make your heart go woah,\nWe don't care what the Red sh*te say,\nWhat the f**k do we care?\nBecause we always know,\nThat there's gonna be a show,\nWhen the Everton boys are there!",
+      "tuneName": "The Celtic Song / traditional football version",
+      "contextNotes": "A long-standing Everton anthem. Contains mature language.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://footballgroundguide.com/news/everton-football-chants"
+      ]
+    },
+    {
+      "id": "everton-spirit-of-the-blues",
+      "title": "Spirit of the Blues",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Everton, we never shone so brightly,\nEverton, the spirit of the Blues,\nEverton, we never shone so brightly,\nEverton, the spirit of the Blues!",
+      "tuneName": "Spirit of the Blues",
+      "contextNotes": "The short Everton-specific chorus.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://footballgroundguide.com/news/everton-football-chants"
+      ]
+    },
+    {
+      "id": "everton-goodison-gang",
+      "title": "Goodison Gang",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Marching down the Goodison Road,\nAll the windows open wide,\nWhen you hear the copper shout,\n'Hey, put the candle out,'\nWe are the Goodison Gang!",
+      "tuneName": "Traditional terrace song",
+      "contextNotes": "A Goodison Road identity song.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://footballgroundguide.com/news/everton-football-chants"
+      ]
+    },
+    {
+      "id": "everton-60-grand-seamus-coleman",
+      "title": "60 Grand Seamus Coleman",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Sixty grand, sixty grand, Seamus Coleman,\nSixty grand, sixty grand, I say,\nSixty grand, sixty grand, Seamus Coleman,\nPlaying football the Everton way!",
+      "tuneName": "Give Me Oil in My Lamp",
+      "contextNotes": "A historic Seamus Coleman chant.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "historic",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://footballgroundguide.com/news/everton-football-chants"
+      ],
+      "historicSubject": "Seamus Coleman"
+    },
+    {
+      "id": "everton-singing-the-blues",
+      "title": "Singing the Blues",
+      "subjectTag": "rival",
+      "playerName": null,
+      "lyrics": "I've never felt more like singing the Blues,\nWhen Everton win and Liverpool lose,\nOh Everton, you've got me singing the Blues!",
+      "tuneName": "Singing the Blues",
+      "contextNotes": "Merseyside rivalry chant.",
+      "chantType": "novelty",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.fanchants.com/football-songs/everton-chants/singing-the-blues-6/"
+      ]
+    },
+    {
+      "id": "everton-we-shall-not-be-moved",
+      "title": "We Shall Not Be Moved",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "We shall not,\nWe shall not be moved,\nWe shall not,\nWe shall not be moved,\nJust like the team that's going to win the FA Cup,\nWe shall not be moved!",
+      "tuneName": "We Shall Not Be Moved",
+      "contextNotes": "A cup-run support chant.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://footballgroundguide.com/news/everton-football-chants"
+      ]
+    },
+    {
+      "id": "everton-forever-everton",
+      "title": "Forever Everton",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Everton, Everton,\nWe're forever Everton,\nAll for one,\nOne for all,\nEverton's the team that plays beautiful football!",
+      "tuneName": "Forever Everton",
+      "contextNotes": "The short club-specific chorus.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://footballgroundguide.com/news/everton-football-chants"
+      ]
+    },
+    {
+      "id": "everton-here-we-go",
+      "title": "Here We Go",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Here we go, here we go, here we go,\nEverton is the best we all know,\nWe're the team, we're supreme, number one,\nAnd we love you, Everton,\nE-V-E-R-T-O-N,\nWe're Everton and we'll be Everton forever!",
+      "tuneName": "Here We Go",
+      "contextNotes": "A shortened Everton anthem section.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://footballgroundguide.com/news/everton-football-chants"
+      ]
+    },
+    {
+      "id": "everton-jingle-bells",
+      "title": "Jingle Bells",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Jingle bells, jingle bells,\nJingle all the way,\nOh what fun it is to see,\nThe Everton win away, hey!",
+      "tuneName": "Jingle Bells",
+      "contextNotes": "Away-win adaptation of the public-domain tune.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://footballgroundguide.com/news/everton-football-chants"
+      ]
+    },
+    {
+      "id": "everton-we-love-you-everton",
+      "title": "We Love You Everton",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "We love you Everton,\nWe do,\nWe love you Everton,\nWe do,\nWe love you Everton,\nWe do,\nOh Everton, we love you!",
+      "tuneName": "We Love You refrain",
+      "contextNotes": "A direct support chant.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://footballgroundguide.com/news/everton-football-chants"
+      ]
+    },
+    {
+      "id": "everton-our-number-ten-iliman-ndiaye",
+      "title": "Our Number Ten Iliman Ndiaye",
+      "subjectTag": "player",
+      "playerName": "Iliman Ndiaye",
+      "lyrics": "I am in love,\nI can't deny,\nOur number ten, his name is Iliman Ndiaye,\nFrom Senegal to Bramley-Moore,\nHe's f**king magic,\nHe's the one that we adore,\nOle, ole,\nOle, ola!",
+      "tuneName": "Traditional terrace tune",
+      "contextNotes": "For current player Iliman Ndiaye. Contains mature language.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "current",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://footballgroundguide.com/news/everton-football-chants"
+      ]
+    },
+    {
+      "id": "everton-moyesy-had-a-dream",
+      "title": "Moyesy Had a Dream",
+      "subjectTag": "coach",
+      "playerName": null,
+      "lyrics": "Moyesy had a dream,\nTo build a football team,\nHe went to City and signed Jack Grealish on loan,\nWe play from the back,\nNdiaye in attack,\nThe School of Science is on its way back!",
+      "tuneName": "Sloop John B",
+      "contextNotes": "Current manager version supplied by the owner.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "current",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://footballgroundguide.com/news/everton-football-chants"
+      ]
+    },
+    {
+      "id": "everton-david-moyes-hair",
+      "title": "David Moyes Hair",
+      "subjectTag": "coach",
+      "playerName": null,
+      "lyrics": "David Moyes,\nDavid Moyes,\nDavid, David Moyes,\nHe's got red hair,\nBut we don't care,\nDavid, David Moyes!",
+      "tuneName": "Traditional terrace tune",
+      "contextNotes": "A current manager chant.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "current",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://footballgroundguide.com/news/everton-football-chants"
+      ]
+    },
+    {
+      "id": "everton-jordan-pickford-is-dynamite",
+      "title": "Jordan Pickford Is Dynamite",
+      "subjectTag": "player",
+      "playerName": "Jordan Pickford",
+      "lyrics": "He's a Mackem, he's a Blue,\nHe's a Toffee through and through,\nHe hates Newcastle, he hates the sh*te,\nJordan Pickford is dynamite!",
+      "tuneName": "Dynamite (Taio Cruz)",
+      "contextNotes": "For current goalkeeper Jordan Pickford. Contains mature language.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "current",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://footballgroundguide.com/jordan-pickford-chant-lyrics-tune-story"
+      ]
+    }
+  ]
+}

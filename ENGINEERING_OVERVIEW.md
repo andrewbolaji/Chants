@@ -118,7 +118,7 @@ Retained public content follows the existing privacy decisions: active public cr
 
 The creator expansion does not replace the established chant model. Canonical content remains Terrace Proven; community content remains Chant Lab. Submission origin, optional external evidence, promotion requirements, stable seeded IDs, live current-authority checks, cache-readable but non-actionable fallback, one-level chant comments, votes, reports, blocking, Saved Matchday Songbook, and disabled merge behavior remain as recorded in decisions 003 through 016.
 
-The seed pipeline still validates explicit chant identity and content shape before Admin writes (`seed/validate.ts`; `seed/chant_identity.ts`; `seed/seed_plan.ts`). Only Arsenal JSON is packaged in source. Remaining club lyrics and context must be externally sourced and manually verified. No live preflight or seed write was authorized in this change.
+The seed pipeline validates explicit chant identity, content shape, review provenance, current-player linkage, and historic-subject fallback before Admin writes (`seed/validate.ts`; `seed/chant_identity.ts`; `seed/seed_chant_data.ts`; `seed/seed_plan.ts`). Source now packages all 20 approved clubs: Arsenal plus 19 new files with 180 reviewed chants and a normalized 2026-08-30 roster snapshot (`seed_data/clubs/`; `seed_data/rosters/fpl-2026-08-30.json`). Runtime projection adds `origin: alreadySung` and excludes offline era, review, historic-subject, and source metadata. No live preflight or seed write was authorized in this change.
 
 ## CI, dependencies, and native status
 
@@ -152,4 +152,4 @@ The compatible rollout order is Firestore and Storage rules, Functions, Hosting,
 - Camera and library permissions, upload progress, backgrounding, retry, cancellation, playback, share destinations, Following, notifications, deep comments, moderation, blocking, deletion, accessibility, and offline behavior on real devices.
 - `chantsfc.com` Hosting deployment, DNS, domain association, social crawler output, app/store routing, and URL-signing IAM.
 - Android App Check, App Check enforcement and observation, alert delivery, deployed signal production, billing-threshold delivery, deployed staged-object cleanup, moderation response time, backup or restore, data export, and deployed parity.
-- Final content policy, privacy policy, terms, media rules, signing, store metadata, seed completion, and release.
+- Final content policy, privacy policy, terms, media rules, signing, store metadata, live seed preflight and rollout, and release.

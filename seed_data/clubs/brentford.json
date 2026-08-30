@@ -1,0 +1,212 @@
+{
+  "team": {
+    "name": "Brentford",
+    "crestImageUrl": null
+  },
+  "catalogue": {
+    "version": 1,
+    "rosterSource": "https://fantasy.premierleague.com/api/bootstrap-static/",
+    "rosterAsOf": "2026-08-30"
+  },
+  "squad": [
+    {
+      "name": "Aaron Hickey"
+    },
+    {
+      "name": "Antoni Milambo"
+    },
+    {
+      "name": "Callum Wilson"
+    },
+    {
+      "name": "Caoimhín Kelleher"
+    },
+    {
+      "name": "Dango Ouattara"
+    },
+    {
+      "name": "El Hadji Malick Diouf"
+    },
+    {
+      "name": "Fábio Freitas Gouveia Carvalho"
+    },
+    {
+      "name": "Hákon Rafn Valdimarsson"
+    },
+    {
+      "name": "Igor Thiago"
+    },
+    {
+      "name": "Jaidon Anthony"
+    },
+    {
+      "name": "Jannik Schuster"
+    },
+    {
+      "name": "Josh Dasilva"
+    },
+    {
+      "name": "Kaye Furo"
+    },
+    {
+      "name": "Keane Lewis-Potter"
+    },
+    {
+      "name": "Kevin Schade"
+    },
+    {
+      "name": "Kim Ji-soo"
+    },
+    {
+      "name": "Kristoffer Ajer"
+    },
+    {
+      "name": "Mamadou Sangaré"
+    },
+    {
+      "name": "Mathias Jensen"
+    },
+    {
+      "name": "Michael Kayode"
+    },
+    {
+      "name": "Mikkel Damsgaard"
+    },
+    {
+      "name": "Nathan Collins"
+    },
+    {
+      "name": "Rico Henry"
+    },
+    {
+      "name": "Sepp van den Berg"
+    },
+    {
+      "name": "Vitaly Janelt"
+    },
+    {
+      "name": "Yehor Yarmoliuk"
+    }
+  ],
+  "chants": [
+    {
+      "id": "brentford-hey-brentford",
+      "title": "Hey Brentford",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Na na na,\nNa na na na Brentford!",
+      "tuneName": "Hey Jude (The Beatles)",
+      "contextNotes": "The Brentford-specific stadium hook only.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://sqaf.club/why-do-brentford-sing-hey-jude/"
+      ]
+    },
+    {
+      "id": "brentford-thiago",
+      "title": "Thiago",
+      "subjectTag": "player",
+      "playerName": "Igor Thiago",
+      "lyrics": "Thi-a-go!",
+      "tuneName": "Gold (Spandau Ballet)",
+      "contextNotes": "The short player-specific hook for Igor Thiago.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "current",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.byfarthegreatestteam.com/posts/brentford-songs-and-famous-chants/"
+      ]
+    },
+    {
+      "id": "brentford-our-name-is-brentford",
+      "title": "Our Name Is Brentford",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "We are B-R-E-N-T-F-O-R-D,\nOur name is Brentford,\nWe're the best team in the land,\nOne single goal is all we need,\nTo sing our team to victory,\nIf you think we're wrong,\nWhy don't you come along,\nTo see the team that we support.",
+      "tuneName": "Traditional terrace tune",
+      "contextNotes": "Spells out the club name and backs the team.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.byfarthegreatestteam.com/posts/brentford-songs-and-famous-chants/"
+      ]
+    },
+    {
+      "id": "brentford-diego-forlan",
+      "title": "Diego Forlan",
+      "subjectTag": "rival",
+      "playerName": null,
+      "lyrics": "Diego, woah!\nDiego, woah!\nHe came from Uruguay,\nHe made the Fulham cry!",
+      "tuneName": "Traditional terrace tune",
+      "contextNotes": "Anti-Fulham rivalry chant about Diego Forlan.",
+      "chantType": "novelty",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.byfarthegreatestteam.com/posts/brentford-songs-and-famous-chants/"
+      ]
+    },
+    {
+      "id": "brentford-brentford-till-i-die",
+      "title": "Brentford Till I Die",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Brentford till I die,\nI'm Brentford till I die,\nI know I am,\nI'm sure I am,\nI'm Brentford till I die.",
+      "tuneName": "Traditional terrace tune",
+      "contextNotes": "A declaration of lifelong support.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.byfarthegreatestteam.com/posts/brentford-songs-and-famous-chants/"
+      ]
+    },
+    {
+      "id": "brentford-barcelona-of-the-lower-leagues",
+      "title": "Barcelona of the Lower Leagues",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "We're too big for this league,\nWe're too big for this league,\nWe are the Barcelona,\nOf the lower leagues!",
+      "tuneName": "Traditional terrace tune",
+      "contextNotes": "A tongue-in-cheek club boast.",
+      "chantType": "novelty",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.byfarthegreatestteam.com/posts/brentford-songs-and-famous-chants/"
+      ]
+    },
+    {
+      "id": "brentford-bees-up-fulham-down",
+      "title": "Bees Up Fulham Down",
+      "subjectTag": "rival",
+      "playerName": null,
+      "lyrics": "Bees up, Fulham down,\nBees up, Fulham down,\nBees up, Bees up,\nBees up, Bees up,\nBees up, Fulham down!",
+      "tuneName": "Traditional terrace tune",
+      "contextNotes": "West London rivalry banter.",
+      "chantType": "novelty",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.byfarthegreatestteam.com/posts/brentford-songs-and-famous-chants/"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,251 @@
+{
+  "team": {
+    "name": "Tottenham Hotspur",
+    "crestImageUrl": null
+  },
+  "catalogue": {
+    "version": 1,
+    "rosterSource": "https://fantasy.premierleague.com/api/bootstrap-static/",
+    "rosterAsOf": "2026-08-30"
+  },
+  "squad": [
+    {
+      "name": "Andrew Robertson"
+    },
+    {
+      "name": "Antonín Kinský"
+    },
+    {
+      "name": "Archie Gray"
+    },
+    {
+      "name": "Ashley Phillips"
+    },
+    {
+      "name": "Ben Davies"
+    },
+    {
+      "name": "Brandon Austin"
+    },
+    {
+      "name": "Callum Olusesi"
+    },
+    {
+      "name": "Conor Gallagher"
+    },
+    {
+      "name": "Cristian Romero"
+    },
+    {
+      "name": "Dane Scarlett"
+    },
+    {
+      "name": "Dejan Kulusevski"
+    },
+    {
+      "name": "Destiny Udogie"
+    },
+    {
+      "name": "Djed Spence"
+    },
+    {
+      "name": "Dominic Solanke-Mitchell"
+    },
+    {
+      "name": "Guglielmo Vicario"
+    },
+    {
+      "name": "James Maddison"
+    },
+    {
+      "name": "James Rowswell"
+    },
+    {
+      "name": "Jan Paul van Hecke"
+    },
+    {
+      "name": "João Victor de Souza Menezes"
+    },
+    {
+      "name": "Jun'ai Byfield"
+    },
+    {
+      "name": "Kevin Danso"
+    },
+    {
+      "name": "Luca Williams-Barnett"
+    },
+    {
+      "name": "Lucas Bergvall"
+    },
+    {
+      "name": "Marcos Senesi Barón"
+    },
+    {
+      "name": "Martin Dubravka"
+    },
+    {
+      "name": "Mateus Fernandes"
+    },
+    {
+      "name": "Mathys Tel"
+    },
+    {
+      "name": "Micky van de Ven"
+    },
+    {
+      "name": "Mikey Moore"
+    },
+    {
+      "name": "Mohammed Kudus"
+    },
+    {
+      "name": "Omar Marmoush"
+    },
+    {
+      "name": "Pape Matar Sarr"
+    },
+    {
+      "name": "Pedro Porro Sauceda"
+    },
+    {
+      "name": "Richarlison de Andrade"
+    },
+    {
+      "name": "Rodrigo Bentancur"
+    },
+    {
+      "name": "Sandro Tonali"
+    },
+    {
+      "name": "Sávio Moreira de Oliveira"
+    },
+    {
+      "name": "Wilson Odobert"
+    },
+    {
+      "name": "Xavi Simons"
+    }
+  ],
+  "chants": [
+    {
+      "id": "tottenham-hotspur-come-on-you-spurs",
+      "title": "Come On You Spurs",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Come on you Spurs!\nCome on you Spurs!\nCome on you Spurs!\nCome on you Spurs!",
+      "tuneName": "Stadium call",
+      "contextNotes": "A simple matchday call.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.90min.com/posts/tottenham-chants-videos-lyrics-tottenham-spurs-songs"
+      ]
+    },
+    {
+      "id": "tottenham-hotspur-glory-glory-tottenham-hotspur",
+      "title": "Glory Glory Tottenham Hotspur",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Glory, glory Tottenham Hotspur,\nGlory, glory Tottenham Hotspur,\nGlory, glory Tottenham Hotspur,\nAnd the Spurs go marching on!",
+      "tuneName": "Battle Hymn of the Republic",
+      "contextNotes": "A traditional Spurs anthem.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.90min.com/posts/tottenham-chants-videos-lyrics-tottenham-spurs-songs"
+      ]
+    },
+    {
+      "id": "tottenham-hotspur-when-the-spurs-go-marching-in",
+      "title": "When the Spurs Go Marching In",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Oh when the Spurs go marching in,\nOh when the Spurs go marching in,\nI wanna be in that number,\nWhen the Spurs go marching in!",
+      "tuneName": "When the Saints Go Marching In",
+      "contextNotes": "A Spurs adaptation.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.90min.com/posts/tottenham-chants-videos-lyrics-tottenham-spurs-songs"
+      ]
+    },
+    {
+      "id": "tottenham-hotspur-gimme-gimme-gimme-kulusevski",
+      "title": "Gimme Gimme Gimme Kulusevski",
+      "subjectTag": "player",
+      "playerName": "Dejan Kulusevski",
+      "lyrics": "There's not a soul out there,\nNo one to hear my prayers,\nGimme, gimme, gimme a ginger from Sweden,\nHe came from Juventus,\nAnd he plays on the wing!",
+      "tuneName": "Gimme! Gimme! Gimme! (ABBA)",
+      "contextNotes": "For current player Dejan Kulusevski.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "current",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.goal.com/en-my/news/kulusevski-gimme-gimme-gimme-chant-lyrics-and-meaning-behind-tottenham-fan-song/blt819f59bed25855e2"
+      ]
+    },
+    {
+      "id": "tottenham-hotspur-we-hate-arsenal",
+      "title": "We Hate Arsenal",
+      "subjectTag": "rival",
+      "playerName": null,
+      "lyrics": "We hate Arsenal and we hate Arsenal,\nWe hate Arsenal and we hate Arsenal,\nWe hate Arsenal and we hate Arsenal,\nWe are the Arsenal haters!",
+      "tuneName": "Traditional terrace tune",
+      "contextNotes": "North London rivalry banter.",
+      "chantType": "novelty",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.90min.com/posts/tottenham-chants-videos-lyrics-tottenham-spurs-songs"
+      ]
+    },
+    {
+      "id": "tottenham-hotspur-we-shall-not-be-moved",
+      "title": "We Shall Not Be Moved",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "We shall not,\nWe shall not be moved,\nWe shall not,\nWe shall not be moved,\nJust like the team that's gonna win the Champions League,\nWe shall not be moved!",
+      "tuneName": "We Shall Not Be Moved",
+      "contextNotes": "A European support chant.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.90min.com/posts/tottenham-chants-videos-lyrics-tottenham-spurs-songs"
+      ]
+    },
+    {
+      "id": "tottenham-hotspur-a-grand-old-team",
+      "title": "A Grand Old Team",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "It's a grand old team to play for,\nIt's a grand old team to see,\nAnd if you know your history,\nIt's enough to make your heart go woah,\nWe don't care what the other teams say,\nWhat the hell do we care?\nFor we only know that there's gonna be a show,\nAnd Tottenham Hotspur will be there!",
+      "tuneName": "A Grand Old Team",
+      "contextNotes": "A traditional Spurs matchday song.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.90min.com/posts/tottenham-chants-videos-lyrics-tottenham-spurs-songs"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,274 @@
+{
+  "team": {
+    "name": "Liverpool",
+    "crestImageUrl": null
+  },
+  "catalogue": {
+    "version": 1,
+    "rosterSource": "https://fantasy.premierleague.com/api/bootstrap-static/",
+    "rosterAsOf": "2026-08-30"
+  },
+  "squad": [
+    {
+      "name": "Alexander Isak"
+    },
+    {
+      "name": "Alexis Mac Allister"
+    },
+    {
+      "name": "Alisson Becker"
+    },
+    {
+      "name": "Armin Pecsi"
+    },
+    {
+      "name": "Calvin Ramsay"
+    },
+    {
+      "name": "Cody Gakpo"
+    },
+    {
+      "name": "Conor Bradley"
+    },
+    {
+      "name": "Curtis Jones"
+    },
+    {
+      "name": "Dominik Szoboszlai"
+    },
+    {
+      "name": "Endo Wataru"
+    },
+    {
+      "name": "Federico Chiesa"
+    },
+    {
+      "name": "Florian Wirtz"
+    },
+    {
+      "name": "Freddie Woodman"
+    },
+    {
+      "name": "Giorgi Mamardashvili"
+    },
+    {
+      "name": "Giovanni Leoni"
+    },
+    {
+      "name": "Harvey Davies"
+    },
+    {
+      "name": "Harvey Elliott"
+    },
+    {
+      "name": "Hugo Ekitiké"
+    },
+    {
+      "name": "James McConnell"
+    },
+    {
+      "name": "Jayden Danns"
+    },
+    {
+      "name": "Jeremie Frimpong"
+    },
+    {
+      "name": "Jeremy Jacquet"
+    },
+    {
+      "name": "Joe Gomez"
+    },
+    {
+      "name": "Kostas Tsimikas"
+    },
+    {
+      "name": "Lewis Koumas"
+    },
+    {
+      "name": "Milos Kerkez"
+    },
+    {
+      "name": "Rio Ngumoha"
+    },
+    {
+      "name": "Ronald Araujo"
+    },
+    {
+      "name": "Ryan Gravenberch"
+    },
+    {
+      "name": "Stefan Bajčetić Maquieira"
+    },
+    {
+      "name": "Trey Nyoni"
+    },
+    {
+      "name": "Victor Munoz"
+    },
+    {
+      "name": "Virgil van Dijk"
+    },
+    {
+      "name": "Vitezslav Jaros"
+    },
+    {
+      "name": "Wellity Lucky"
+    }
+  ],
+  "chants": [
+    {
+      "id": "liverpool-red-and-white-kop",
+      "title": "Red and White Kop",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "On a Saturday afternoon,\nWe support a team called Liverpool,\nAnd we sing until we drop,\nOn the famous Spion Kop,\nWe all live in a red and white Kop,\nA red and white Kop,\nA red and white Kop!",
+      "tuneName": "Yellow Submarine (The Beatles)",
+      "contextNotes": "A Kop identity song.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.goal.com/en-gb/news/liverpool-chants-lyrics--videos-to-the-most-popular-anfield-songs/1pmrvdtnqdefm15w8cdb3ynknc"
+      ]
+    },
+    {
+      "id": "liverpool-we-ll-be-coming-down-the-road",
+      "title": "We'll Be Coming Down the Road",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "We'll be coming,\nWe'll be coming down the road,\nWhen you hear that noise,\nFrom the Bill Shankly boys,\nWe'll be coming down the road!",
+      "tuneName": "Traditional Scottish football song",
+      "contextNotes": "A travelling-support chant.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.goal.com/en-gb/news/liverpool-chants-lyrics--videos-to-the-most-popular-anfield-songs/1pmrvdtnqdefm15w8cdb3ynknc"
+      ]
+    },
+    {
+      "id": "liverpool-we-love-you-liverpool",
+      "title": "We Love You Liverpool",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "We love you Liverpool,\nWe do,\nWe love you Liverpool,\nWe do,\nWe love you Liverpool,\nWe do,\nOh Liverpool, we love you!",
+      "tuneName": "We Love You refrain",
+      "contextNotes": "A direct support chant.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.goal.com/en-gb/news/liverpool-chants-lyrics--videos-to-the-most-popular-anfield-songs/1pmrvdtnqdefm15w8cdb3ynknc"
+      ]
+    },
+    {
+      "id": "liverpool-alisson-becker",
+      "title": "Alisson Becker",
+      "subjectTag": "player",
+      "playerName": "Alisson Becker",
+      "lyrics": "Alisson Becker,\nThe Brazilian in our goal,\nWe love him as our own,\nHe loves to get the ball to Mo,\nThere was once a corner,\nAli ran up on his own,\nWhat happened, don't you know?\nHe scored a f***ing wonder goal!",
+      "tuneName": "Dragostea Din Tei (O-Zone)",
+      "contextNotes": "For current goalkeeper Alisson Becker. Contains mature language.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "current",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://footballgroundguide.com/alisson-becker-chant-lyrics-tune-story"
+      ]
+    },
+    {
+      "id": "liverpool-mo-salah-egyptian-king",
+      "title": "Mo Salah Egyptian King",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Mo Salah, Mo Salah,\nMo Salah, running down the wing,\nSalah, la la la la,\nThe Egyptian King!",
+      "tuneName": "Sit Down (James)",
+      "contextNotes": "A historic Mohamed Salah chant retained in Liverpool's songbook.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "historic",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.liverpoolfc.com/news/features/303025-liverpool-fc-tim-booth-mohamed-salah-song"
+      ],
+      "historicSubject": "Mohamed Salah"
+    },
+    {
+      "id": "liverpool-you-ll-never-walk-alone",
+      "title": "You'll Never Walk Alone",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "Walk on, walk on,\nWith hope in your heart,\nAnd you'll never walk alone,\nYou'll never walk alone!",
+      "tuneName": "You'll Never Walk Alone (Gerry & the Pacemakers)",
+      "contextNotes": "The short anthem closing sung before kickoff.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.goal.com/en-gb/news/liverpool-chants-lyrics--videos-to-the-most-popular-anfield-songs/1pmrvdtnqdefm15w8cdb3ynknc"
+      ]
+    },
+    {
+      "id": "liverpool-allez-allez-allez",
+      "title": "Allez Allez Allez",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "We've conquered all of Europe,\nWe're never going to stop,\nFrom Paris down to Turkey,\nWe've won the f**king lot,\nBob Paisley and Bill Shankly,\nThe Fields of Anfield Road,\nWe are loyal supporters,\nAnd we come from Liverpool,\nAllez, allez, allez!",
+      "tuneName": "L'estate sta finendo (Righeira)",
+      "contextNotes": "A European honours chant with mature language.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.goal.com/en-gb/news/liverpool-chants-lyrics--videos-to-the-most-popular-anfield-songs/1pmrvdtnqdefm15w8cdb3ynknc"
+      ]
+    },
+    {
+      "id": "liverpool-he-s-virgil-van-dijk",
+      "title": "He's Virgil van Dijk",
+      "subjectTag": "player",
+      "playerName": "Virgil van Dijk",
+      "lyrics": "He's a centre-half,\nHe's a number four,\nWatch him defend,\nAnd we watch him score,\nHe'll pass the ball,\nCalm as you like,\nHe's Virgil van Dijk,\nHe's Virgil van Dijk!",
+      "tuneName": "Dirty Old Town",
+      "contextNotes": "For current defender Virgil van Dijk.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "current",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.goal.com/en/news/liverpool-virgil-van-dijk-chant-lyrics-to-reds-fans-song-for-netherlands-defender/blt83212f94bb3f12f5"
+      ]
+    },
+    {
+      "id": "liverpool-we-hate-man-united-and-everton",
+      "title": "We Hate Man United and Everton",
+      "subjectTag": "rival",
+      "playerName": null,
+      "lyrics": "We hate Nottingham Forest,\nWe hate Everton too, sh*t,\nWe hate Man United,\nBut Liverpool, we love you!",
+      "tuneName": "Traditional terrace tune",
+      "contextNotes": "A traditional rivalry list with mature language.",
+      "chantType": "novelty",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-08-30",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.anfield-online.co.uk/features/lfcsongs.htm"
+      ]
+    }
+  ]
+}
