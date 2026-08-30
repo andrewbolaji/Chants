@@ -42,6 +42,10 @@ The official feed still contains Fábio Vieira and Reiss Nelson, but the owner c
 
 ## Remaining gates
 
-The baseline correctly stopped the rollout, and the approved fail-closed retirement source is locally complete. Package the complete source boundary and require exact-head clean CI before seeking production approval.
+PR 23 merged the complete source boundary after exact-head run `33325900749` passed all eight jobs at `b3f5099`. Andrew then released the bounded Arsenal production step. Immediate pre-write checks matched the prior baseline exactly. The normal upsert created the four approved additions and reconciled all 12 chant projections. Post-upsert readback left only the three approved zero-reference departures. The guarded transaction deleted exactly those three documents, and final Arsenal readback reports one matching team, 28 matching players, 12 matching chants, and zero missing, mismatching, or orphan rows.
 
-Even clean source and CI do not authorize a write. Andrew must separately release the normal Arsenal upsert and guarded three-target removal. Exact Arsenal readback precedes the Leeds United canary, and exact Leeds readback precedes bounded widening. Recovery is forward-only by default, and any other deletion or identity change requires a separate exact-target plan.
+Andrew separately released Leeds United as the canary. Immediate preflight remained safe, the writer created only one team, 27 players, and six chants, and exact readback reports every row matching with no mismatch or orphan. The post-canary all-club preflight keeps all 192 chant identities safe. Readback reports only the expected absent 18 teams, 567 players, and 174 chants, with no mismatch or orphan.
+
+Andrew released the recorded six-group widening sequence. Every group passed a fresh identity preflight, wrote only its three named club files, and completed exact same-group readback before the next group began. The final all-club preflight reports all 192 chant identities safe. Final production readback reports 20 matching teams, 622 matching players, 192 matching chants, and zero missing, mismatching, or orphan rows.
+
+No seed recovery or retry is pending. Configured-device catalogue inspection remains. The evidence-only documentation boundary is authorized for one commit, push, and exact-head clean CI. Any later seed write, deletion, or identity change requires a new or exact rerun authorization.
