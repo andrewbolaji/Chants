@@ -4,6 +4,7 @@
   "scripts": {
     "seed": "ts-node seed.ts",
     "seed:club": "ts-node seed.ts",
+    "roster:check": "ts-node check_roster.ts",
     "test": "mocha --require ts-node/register --timeout 10000 --exit '*.test.ts'"
   },
   "dependencies": {

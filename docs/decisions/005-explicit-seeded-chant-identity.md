@@ -9,7 +9,7 @@
 
 The seed previously derived each chant document ID from its mutable title. A title correction therefore targeted a new Firestore document and left the old document plus its votes, comments, reports, saves, evidence, and future public links behind. This failure was reproduced before the framework was adopted. Its cost grows as engagement and public references accumulate.
 
-Community chants already use Firestore-generated identities. The problem is limited to operator-seeded canonical chants. Arsenal was the only club seed file when this decision was accepted, which allowed its compatibility boundary to be established before the remaining clubs were written live. Source now contains all 20 approved clubs, while the live preflight and 19 new club writes remain pending.
+Community chants already use Firestore-generated identities. The problem is limited to operator-seeded canonical chants. Arsenal was the only club seed file when this decision was accepted, which allowed its compatibility boundary to be established before the remaining clubs were written live. Source now contains all 20 approved clubs, and named-project preflight found all 192 targets collision-free. Arsenal reconciliation and the 19 new club writes remain behind explicit production hold points.
 
 ## Decision
 
@@ -24,7 +24,9 @@ Seeded IDs must:
 
 The current Arsenal IDs are frozen to the exact values produced by the legacy title-derived algorithm. This makes the expected rollout an in-place contract change, not a document move.
 
-Before the first club write, the seed reads the club's existing chants and every explicit target. It aborts if a target is not system-owned, belongs to another team, or a same-title system chant exists at another ID. `--preflight-only` exposes the check without calling any seed writer. Each chant create or update then repeats the target ownership and team check inside its Firestore transaction. A mismatch stops the run. The seed never guesses at, deletes, or automatically migrates conflicting live state.
+Before the first club write, the seed reads the club's existing chants and every explicit target. It aborts if a target is not system-owned, belongs to another team, or a same-title system chant exists at another ID. `--preflight-only` exposes the check without calling any seed writer. Each chant create or update then repeats the target ownership and team check inside its Firestore transaction. A mismatch stops the run. Normal seed and readback paths never guess at, delete, or automatically migrate conflicting live state.
+
+One separately approved reconciliation exception can retire only `players/arsenal-christian-norgaard`, `players/arsenal-leandro-trossard`, and `players/arsenal-tommy-setford`. The command accepts no club argument. One transaction re-reads all three exact Arsenal identities and chant-reference counts before scheduling a delete; any changed identity, reference, or invalid count aborts the entire action. Missing targets are idempotent. This is not a general orphan-deletion facility, and any target expansion requires a new decision and production hold point.
 
 ## Alternatives considered
 
@@ -42,9 +44,9 @@ Before the first club write, the seed reads the club's existing chants and every
 - Negative: every seed source must choose and retain an explicit club-prefixed ID.
 - Negative: a live mismatch stops seeding and requires operator investigation.
 - Operational: the 19 new source files retain offline review metadata and a dated roster snapshot, but the runtime projection writes only supported chant fields. Historic subjects remain club-linked until a separately reviewed archive model exists.
-- Operational: source implementation does not prove production compatibility. Andrew must separately authorize and inspect the read-only live preflight before the next seed write.
+- Operational: read-only source compatibility does not authorize production mutation. Andrew must separately release Arsenal upsert and retirement, Leeds canary, and bounded widening after exact-head evidence.
 
 ## Validation and revisit trigger
 
-- **Evidence:** Focused tests prove title independence, exact Arsenal legacy equivalence, duplicate-ID and normalized-title rejection, each collision class, transactional ownership recheck, safe create, content-only update, the exact 20-club source roster, current-player linkage, offline metadata validation, and exclusion of that metadata from runtime writes. The complete seed suite and TypeScript compiler pass.
+- **Evidence:** Focused tests prove title independence, exact Arsenal legacy equivalence, duplicate-ID and normalized-title rejection, each collision class, transactional ownership recheck, safe create, content-only update, the exact 20-club source roster, current-player linkage, offline metadata validation, exclusion of that metadata from runtime writes, the exact three retirement targets, all checks before deletes, idempotence, identity and reference refusal, and persistent dangling-reference detection. The complete seed suite and TypeScript compiler pass.
 - **Revisit when:** Seeded identity must span multiple clubs for one chant, a verified live collision requires migration, or the public URL design needs an identity layer that is not the Firestore document ID.
