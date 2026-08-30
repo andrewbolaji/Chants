@@ -12,6 +12,14 @@ This is durable, evidence-backed project memory. It prevents the same failure or
 
 ## Entries
 
+### 2026-08-29T21:00:00Z Accuracy intake needs version authority and a separate safety meaning
+
+- **Observation:** A chant-specific correction can look like generic feedback or a report, but those inherited paths either lose source context or carry hiding and abuse consequences. The same proposed correction can also become wrong while an operator reviews it if the chant changes, and the source can disappear before the private request is closed.
+- **Why it matters:** Reusing a safety path can hide valid content and corrupt abuse counters. Storing only a chant ID lets an old suggestion overwrite a newer canonical version. Requiring a visible target for every resolution turns disappeared targets into permanent queue rows. Treating a supporter claim as an edit makes intake itself a truth boundary.
+- **Rule or heuristic:** Accuracy intake gets its own collection, copy, budget, and queue. Capture the server-read source version, show staleness, reject stale evidence acceptance, require explicit replacement of existing proof, keep target mutation behind current authority, and preserve a nonmutating terminal closure when the target disappears.
+- **Evidence:** Focused regressions reproduce the unavailable-request dead end, silent evidence replacement, and review-dialog controller disposal. `functions/src/living_songbook.ts`, `lib/presentation/moderation/chant_update_moderation_tab.dart`, and Decision 025 hold the corrected boundary.
+- **Revisit trigger:** a reusable framework abstraction proves it can preserve these separate meanings without combining collections, counters, or side effects.
+
 ### 2026-08-28T15:42:35Z A dependent public projection needs current source authority
 
 - **Status:** promoted

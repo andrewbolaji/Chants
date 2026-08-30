@@ -28,6 +28,7 @@ import 'package:chants/data/repositories/moderation_repository.dart';
 import 'package:chants/data/repositories/onboarding_repository.dart';
 import 'package:chants/data/repositories/magic_link_store.dart';
 import 'package:chants/data/repositories/safety_submission_repository.dart';
+import 'package:chants/data/repositories/chant_update_repository.dart';
 import 'package:chants/data/repositories/saved_songbook_repository.dart';
 import 'package:chants/data/repositories/songbook_storage.dart';
 import 'package:chants/data/services/account_deletion_service.dart';
@@ -125,6 +126,10 @@ final voteRepositoryProvider = Provider<VoteRepository>(
 
 final safetySubmissionRepositoryProvider = Provider<SafetySubmissionRepository>(
   (ref) => SafetySubmissionRepository(),
+);
+
+final chantUpdateRepositoryProvider = Provider<ChantUpdateRepository>(
+  (ref) => ChantUpdateRepository(),
 );
 
 final commentRepositoryProvider = Provider<CommentRepository>(

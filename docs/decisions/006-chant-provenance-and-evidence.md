@@ -46,10 +46,10 @@ Evidence opens only through an explicit operating-system link-out. Chants does n
 - Positive: Submission stays open to fans without immediate evidence, while promotion remains evidence-gated.
 - Positive: The stored link surface is small, canonical, provider-bound, and removable.
 - Negative: The client, rules, and Functions validators duplicate a security contract and must change together.
-- Negative: V1 has no author flow for attaching evidence after submission. That remains a separately approved follow-up.
+- Positive: Decision 025 adds a private, reviewed post-submission evidence path without changing this provider or promotion contract.
 - Operational: Firestore rules must reach clients before the origin-aware release, and Functions must reach operators before the new promotion workflow. Exact projects and deployment commands require separate authorization.
 
 ## Validation and revisit trigger
 
 - **Evidence:** Focused Dart, widget, Functions, and rules tests cover accepted and deceptive URLs, absent legacy fields, required origin, one-write duplicate review, honest labels, link launch failure, promotion rejection, system compatibility, and evidence-removal demotion. Representative 390 by 844 goldens cover the new form hierarchy.
-- **Revisit when:** YouTube or X link availability is too low for legitimate promotion, another provider has an approved moderation and canonicalization contract, authors need to add evidence after posting, or hosted media has proven demand plus approved legal, safety, privacy, cost, and operational controls.
+- **Revisit when:** YouTube or X link availability is too low for legitimate promotion, another provider has an approved moderation and canonicalization contract, or hosted media has proven demand plus approved legal, safety, privacy, cost, and operational controls.

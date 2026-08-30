@@ -10,6 +10,7 @@ import {
   OperationalCleanupMedia,
   OperationalDocument,
   OperationalStore,
+  abandonedDraftCleanupDisposition,
   cleanupAbandonedPerformanceDrafts,
   monitorOperationalBacklogs,
   operationalBacklogLog,
@@ -146,6 +147,23 @@ describe("launch operations", () => {
   beforeEach(() => {
     store = new StoreHarness();
     media = new MediaHarness();
+  });
+
+  it("warns without retrying invalid rows and retries actual failures", () => {
+    assert.deepStrictEqual(abandonedDraftCleanupDisposition({
+      scanned: 1,
+      claimed: 0,
+      deleted: 0,
+      invalid: 1,
+      failures: 0,
+    }), { shouldRetry: false, shouldWarn: true });
+    assert.deepStrictEqual(abandonedDraftCleanupDisposition({
+      scanned: 1,
+      claimed: 1,
+      deleted: 0,
+      invalid: 0,
+      failures: 1,
+    }), { shouldRetry: true, shouldWarn: false });
   });
 
   it("cleans only the bounded page of expired upload drafts", async () => {

@@ -770,6 +770,15 @@ service cloud.firestore {
       allow create, update, delete: if false;
     }
 
+    // Living Songbook requests are private, server-authored intake rows.
+    // A submitter can inspect only their own status; operators review the
+    // bounded queue. Canonical chant mutation remains behind callables.
+    match /chantUpdateSuggestions/{suggestionId} {
+      allow get, list: if isOperator()
+        || (isAuth() && resource.data.submittedBy == request.auth.uid);
+      allow create, update, delete: if false;
+    }
+
     // Private server-owned anchored-window counters for safety submissions.
     match /safetyRateLimits/{userId} {
       allow read, write: if false;

@@ -8,6 +8,7 @@ export const ACCOUNT_DELETION_PHASES = [
   "disable-auth",
   "delete-votes",
   "delete-chant-reports",
+  "delete-chant-update-suggestions",
   "delete-feedback",
   "delete-safety-rate",
   "anonymize-chants",
@@ -96,6 +97,9 @@ const OPERATOR_AUDIT_ACTIONS = new Set<string>([
   "unhide",
   "remove",
   "merge_chants",
+  "accept-chant-evidence",
+  "resolve-chant-update",
+  "decline-chant-update",
 ]);
 
 export function auditRedactionForDeletedActor(
@@ -127,6 +131,10 @@ export function auditRedactionForDeletedActor(
 const PAGE_PHASES: Partial<Record<AccountDeletionPhase, PagePhase>> = {
   "delete-votes": { collection: "votes", field: "userId" },
   "delete-chant-reports": { collection: "reports", field: "reportedBy" },
+  "delete-chant-update-suggestions": {
+    collection: "chantUpdateSuggestions",
+    field: "submittedBy",
+  },
   "delete-feedback": { collection: "feedback", field: "userId" },
   "anonymize-chants": {
     collection: "chants",

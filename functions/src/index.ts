@@ -30,6 +30,10 @@ import {
   recomputeCreatorFollowCounts,
 } from "./creator_follow";
 import { handleMarkCreatorNotificationRead } from "./creator_notification";
+import {
+  handleModerateChantUpdateSuggestion,
+  handleSubmitChantUpdateSuggestion,
+} from "./living_songbook";
 import { handlePublishedPerformanceModeration } from "./published_performance_moderation";
 import {
   firebasePerformanceMediaGateway,
@@ -66,6 +70,7 @@ import {
 } from "./public_share";
 import {
   cleanupAbandonedPerformanceDrafts as cleanupAbandonedPerformanceDraftsBatch,
+  abandonedDraftCleanupDisposition,
   firebaseOperationalStore,
   monitorOperationalBacklogs,
   operationalBacklogLog,
@@ -95,18 +100,27 @@ export const cleanupAbandonedPerformanceDraftsJob = onSchedule(
       media: performanceMediaGateway(),
       now: () => admin.firestore.Timestamp.now(),
     });
-    if (result.failures > 0 || result.invalid > 0) {
+    const disposition = abandonedDraftCleanupDisposition(result);
+    if (disposition.shouldWarn) {
+      logger.warn("Abandoned performance cleanup found invalid rows.", {
+        operationalSignal: "abandoned-performance-cleanup-invalid",
+        scanned: result.scanned,
+        claimed: result.claimed,
+        deleted: result.deleted,
+        invalid: result.invalid,
+      });
+    }
+    if (disposition.shouldRetry) {
       logger.error("Abandoned performance cleanup did not finish.", {
         operationalSignal: "abandoned-performance-cleanup-failed",
         scanned: result.scanned,
         claimed: result.claimed,
         deleted: result.deleted,
-        invalid: result.invalid,
         failures: result.failures,
       });
       throw new Error("Abandoned performance cleanup did not finish.");
     }
-    if (result.deleted > 0 || result.invalid > 0) {
+    if (result.deleted > 0) {
       logger.info("Abandoned performance cleanup completed.", {
         operationalSignal: "abandoned-performance-cleanup",
         scanned: result.scanned,
@@ -165,6 +179,33 @@ export const submitFeedback = onCall(
       data: request.data,
       firestore: db,
       clock: () => admin.firestore.Timestamp.now(),
+    });
+  }
+);
+
+export const submitChantUpdateSuggestion = onCall(
+  { region: "europe-west2" },
+  async (request) => {
+    const uid = requireVerifiedUid(request.auth);
+    return handleSubmitChantUpdateSuggestion({
+      uid,
+      data: request.data,
+      firestore: db,
+      clock: () => admin.firestore.Timestamp.now(),
+    });
+  }
+);
+
+export const moderateChantUpdateSuggestion = onCall(
+  { region: "europe-west2" },
+  async (request) => {
+    const actorUid = requireVerifiedUid(request.auth);
+    return handleModerateChantUpdateSuggestion({
+      actorUid,
+      data: request.data,
+      firestore: db,
+      clock: () => admin.firestore.Timestamp.now(),
+      newAuditId: () => db.collection("auditLog").doc().id,
     });
   }
 );

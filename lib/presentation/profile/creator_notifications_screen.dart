@@ -38,6 +38,31 @@ class CreatorNotificationsScreen extends ConsumerWidget {
       );
       return;
     }
+    if (notification.type == CreatorNotificationType.chantPromoted) {
+      final chantId = notification.chantId;
+      if (chantId == null) return;
+      try {
+        final chant = await ref.read(chantRepositoryProvider).getChant(chantId);
+        if (!context.mounted) return;
+        if (chant == null || chant.hidden || chant.removed) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('This chant is unavailable.')),
+          );
+          return;
+        }
+        await Navigator.pushNamed(
+          context,
+          AppRouter.chantDetail,
+          arguments: ChantDetailRouteArguments(chant: chant),
+        );
+      } catch (_) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('This chant is unavailable.')),
+        );
+      }
+      return;
+    }
     final performanceId = notification.performanceId;
     if (performanceId == null) return;
     try {
@@ -99,7 +124,8 @@ class CreatorNotificationsScreen extends ConsumerWidget {
                     child: Padding(
                       padding: EdgeInsets.all(Spacing.xl),
                       child: Text(
-                        'No activity yet. Follows, mentions, and replies will show up here.',
+                        'No activity yet. Follows, mentions, replies, and chant '
+                        'milestones will show up here.',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: AppColors.textMuted),
                       ),
@@ -129,7 +155,12 @@ class CreatorNotificationsScreen extends ConsumerWidget {
                         ),
                       ),
                       title: Text(_message(notification)),
-                      subtitle: Text('@${notification.actorHandle}'),
+                      subtitle: Text(
+                        notification.type ==
+                                CreatorNotificationType.chantPromoted
+                            ? 'Terrace Proven'
+                            : '@${notification.actorHandle}',
+                      ),
                       trailing: notification.read
                           ? null
                           : Semantics(
@@ -160,6 +191,7 @@ class CreatorNotificationsScreen extends ConsumerWidget {
         '${notification.actorDisplayName} mentioned you',
       CreatorNotificationType.performanceReply =>
         '${notification.actorDisplayName} replied to you',
+      CreatorNotificationType.chantPromoted => 'Your chant made the terrace',
     };
   }
 }

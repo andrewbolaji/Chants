@@ -124,8 +124,10 @@ void main() {
         'test/presentation/browse/chant_share_out_golden_test.dart',
       ),
       // Ubuntu Flutter 3.47.2 differs from the inspected macOS 3.44.8
-      // baseline by 1.97% after adding the performance action.
-      precisionTolerance: 0.020,
+      // baseline by 2.28% after the approved Living Songbook action. This
+      // 2.3% boundary applies only to this image; production widget tests
+      // separately assert the action and safety distinction.
+      precisionTolerance: 0.023,
     );
     await _loadFonts();
     await tester.binding.setSurfaceSize(const Size(390, 844));

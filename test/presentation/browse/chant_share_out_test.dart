@@ -608,4 +608,27 @@ void main() {
     expect(find.byTooltip('Report this chant'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('chant update entry stays distinct from safety reporting', (
+    tester,
+  ) async {
+    final repository = _ChantRepository();
+    final gateway = _ShareGateway();
+    addTearDown(repository.controller.close);
+
+    await tester.pumpWidget(
+      _app(chant: _chant(), repository: repository, gateway: gateway),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('suggest-chant-update')), findsOneWidget);
+    expect(find.byTooltip('Report this chant'), findsOneWidget);
+    expect(
+      find.textContaining('Use Report for abuse or unsafe content'),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const Key('suggest-chant-update')));
+    await tester.pump();
+    expect(find.text('Sign in to suggest a chant update.'), findsOneWidget);
+  });
 }

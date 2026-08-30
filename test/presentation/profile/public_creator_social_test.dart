@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:chants/app/providers.dart';
 import 'package:chants/app/router.dart';
 import 'package:chants/app/theme.dart';
+import 'package:chants/data/models/chant.dart';
 import 'package:chants/data/models/creator_notification.dart';
 import 'package:chants/data/models/creator_profile.dart';
 import 'package:chants/data/models/blocked_user.dart';
@@ -10,6 +11,7 @@ import 'package:chants/data/models/performance.dart';
 import 'package:chants/data/repositories/creator_follow_repository.dart';
 import 'package:chants/data/repositories/block_repository.dart';
 import 'package:chants/data/repositories/creator_notification_repository.dart';
+import 'package:chants/data/repositories/chant_repository.dart';
 import 'package:chants/data/repositories/performance_interaction_repository.dart';
 import 'package:chants/data/repositories/performance_repository.dart';
 import 'package:chants/data/repositories/public_share_repository.dart';
@@ -29,6 +31,15 @@ class _User extends Mock implements User {
 }
 
 class _Firestore extends Mock implements FirebaseFirestore {}
+
+class _NotificationChantRepository extends ChantRepository {
+  final Chant chant;
+
+  _NotificationChantRepository(this.chant) : super(firestore: _Firestore());
+
+  @override
+  Future<Chant?> getChant(String id) async => id == chant.id ? chant : null;
+}
 
 class _BlockRepository extends BlockRepository {
   final blocked = <String>[];
@@ -104,6 +115,27 @@ Performance _performance() {
     rankingWeek: '2026-08-24',
     createdAt: now,
     approvedAt: now,
+    updatedAt: now,
+  );
+}
+
+Chant _promotedChant() {
+  final now = DateTime.utc(2026, 8, 29);
+  return Chant(
+    id: 'chant-1',
+    title: 'North Bank Song',
+    sportId: 'football',
+    competitionId: 'premier-league',
+    teamId: 'arsenal',
+    subjectTag: 'club',
+    lyrics: 'North Bank, sing it loud.',
+    tuneName: 'Traditional',
+    mediaType: 'none',
+    status: 'canonical',
+    chantType: 'real',
+    origin: ChantOrigin.originalIdea,
+    createdBy: 'viewer-1',
+    createdAt: now,
     updatedAt: now,
   );
 }
@@ -335,5 +367,70 @@ void main() {
       find.text('No comments yet. Be the first voice in the stand.'),
       findsOneWidget,
     );
+  });
+
+  testWidgets('chant milestone opens the current visible promoted chant', (
+    tester,
+  ) async {
+    final reads = <String>[];
+    final now = DateTime.utc(2026, 8, 29);
+    final notification = CreatorNotification(
+      id: 'promotion-1',
+      ownerId: 'viewer-1',
+      actorId: 'chants',
+      actorHandle: 'chants',
+      actorDisplayName: 'Chants',
+      type: CreatorNotificationType.chantPromoted,
+      performanceId: null,
+      commentId: null,
+      chantId: 'chant-1',
+      read: false,
+      createdAt: now,
+      readAt: null,
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authStateProvider.overrideWith(
+            (ref) => Stream.value(_User() as User?),
+          ),
+          creatorNotificationRepositoryProvider.overrideWithValue(
+            CreatorNotificationRepository(
+              notificationLoader: (_) => Stream.value([notification]),
+              readAction: (id) async => reads.add(id),
+            ),
+          ),
+          chantRepositoryProvider.overrideWithValue(
+            _NotificationChantRepository(_promotedChant()),
+          ),
+        ],
+        child: MaterialApp(
+          theme: ChantTheme.dark,
+          onGenerateRoute: (settings) {
+            if (settings.name == AppRouter.chantDetail) {
+              final arguments = settings.arguments as ChantDetailRouteArguments;
+              return MaterialPageRoute<void>(
+                settings: settings,
+                builder: (_) => Scaffold(body: Text(arguments.chant.title)),
+              );
+            }
+            return null;
+          },
+          home: const CreatorNotificationsScreen(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Your chant made the terrace'), findsOneWidget);
+    expect(find.text('Terrace Proven'), findsOneWidget);
+    await tester.tap(
+      find.byKey(const ValueKey('creator-notification-promotion-1')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(reads, ['promotion-1']);
+    expect(find.text('North Bank Song'), findsOneWidget);
   });
 }

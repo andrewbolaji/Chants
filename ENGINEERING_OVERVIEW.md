@@ -1,15 +1,16 @@
 # Chants engineering overview
 
-This is the current whole-project map for `main` through documentation merge `9c6286a` plus the approved V1 launch-services range. The feature source remains byte-identical to creator-stack merge `e8f2591` before this range. The map includes inherited and unchanged systems, and it is not a deployment or release-readiness claim.
+This is the current whole-project map for `main` through launch-services merge `ef7195c` plus the approved V1 Living Songbook range. The map includes inherited and unchanged systems, and it is not a deployment or release-readiness claim.
 
-The active approval contract is `docs/CHANGE_SPEC.md`. Completed reasoning is in the creator-platform, takedown-correction, launch-authentication, post-auth correction, final minor closure, and V1 launch-services records under `docs/changes/`. Durable architectural choices are decisions 017 through 024. `docs/IMPLEMENTATION_RATIONALE.md` is the companion coverage ledger and verification record.
+The active approval contract is `docs/CHANGE_SPEC.md`. Completed reasoning is in the creator-platform, takedown-correction, launch-authentication, post-auth correction, final minor closure, and V1 launch-services records under `docs/changes/`. Durable architectural choices now run through decision 025. `docs/IMPLEMENTATION_RATIONALE.md` is the companion coverage ledger and verification record.
 
 ## Review outcome
 
-Chants now has the intended two-part product rather than a catalogue alone:
+Chants now has two core product surfaces plus a maintenance loop rather than a catalogue alone:
 
 1. A trusted football Songbook and words-first Chant Lab, where archive evidence remains distinct from community backing (`docs/decisions/004-songbook-and-chant-lab.md`).
 2. A creator stage where fans publish manually approved short performances around a chant, compete on performance reach, follow creators, converse, and share public destinations (`lib/presentation/feed/chant_stage_screen.dart :: ChantStageScreen`; `functions/src/performance.ts :: handleSubmitPerformanceDraft`).
+3. A private Living Songbook loop where supporters propose a correction, another real version, or public proof; operators review the exact source version; and accepted evidence can move a user chant to Terrace Proven without confusing popularity with proof (`functions/src/living_songbook.ts`; decision 025).
 
 The implementation preserves the central trust boundary. A performance has its own status, media, creator, and popularity counters. It cannot mutate the attached chant's `canonical` or `community` state (`functions/src/performance.ts :: handleModeratePerformance`; `docs/decisions/018-performance-stage-and-admission.md`).
 
@@ -95,9 +96,19 @@ Legacy chant comments remain one direct reply level under decision 002. The deep
 
 Manual pre-publication review is the V1 safety model. No automated provider-scale media screening exists. Policy wording, queue response target, staffing, and escalation remain launch work.
 
+## Living Songbook accuracy and provenance
+
+`lib/presentation/browse/chant_detail_screen.dart :: ChantDetailScreen` exposes Suggest an edit separately from Report. `SuggestChantUpdateScreen` captures one of three exact purposes: correction, variation, or evidence. The form retains values after failure and normalizes evidence through the existing YouTube or X parser.
+
+`functions/src/living_songbook.ts :: handleSubmitChantUpdateSuggestion` derives the submitter, current chant version, timestamps, status, and deterministic request ID. It requires an active verified account and current visible chant, rejects a duplicate before budget mutation, and commits independent 5-per-hour and 20-per-day counters in the existing private rate-state document. Direct suggestion mutation is denied; only the submitter and an active operator may read a row (`firestore.rules :: match /chantUpdateSuggestions/{suggestionId}`).
+
+`ChantUpdateModerationTab` compares each valid request to a live non-cache chant and shows both submitted and current versions. Correction and variation requests can be planned, marked updated after the reviewed canonical path changes, or closed with a reason. A source that becomes unavailable leaves only Not changed enabled. Stale resolution requires explicit acknowledgement, while evidence acceptance always rejects staleness. A current Terrace Proven or system-owned community chant can receive reviewed evidence without a trust transition. A current user-created community chant receives evidence and canonical status in one transaction. Replacing different evidence requires explicit confirmation and retains only the prior public proof in operator audit. Promotion notifications exclude system and deleted-user sentinels.
+
+`MyChantUpdatesScreen` shows Received, Planned, Updated, and Not changed without promising a response time or automatic truth. Malformed or future-version rows are dropped independently, and supporter-readable requests retain no operator UID. Account deletion removes the private request rows before profile finalization. Safety reports, flag counts, hiding, report budgets, and report resolution are never involved.
+
 ## Durable account deletion
 
-The inherited deletion system remains a durable, bounded, retryable worker (`functions/src/account_deletion.ts :: processAccountDeletionStep`). The phase list now includes creator handles and profiles, performance drafts, private interaction records, both follow directions, notifications, new report collections, and retained public creator attribution.
+The inherited deletion system remains a durable, bounded, retryable worker (`functions/src/account_deletion.ts :: processAccountDeletionStep`). The phase list now includes creator handles and profiles, performance drafts, private interaction records, both follow directions, notifications, new report collections, chant-update suggestions, and retained public creator attribution.
 
 New actions check the private pending job as well as profile state before mutation. The client still prepares local Songbook deletion before requesting remote deletion and preserves unknown acknowledgement across relaunch (`lib/data/services/account_deletion_service.dart`; `lib/presentation/auth/account_deletion_recovery_screen.dart`).
 
