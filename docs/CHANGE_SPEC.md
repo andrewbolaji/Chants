@@ -1,10 +1,10 @@
 # Change spec: V1 Premier League live seed rollout
 
-**Status:** Implemented and locally verified; packaging and production holds remain
+**Status:** Production catalogue exact; configured-device inspection remains
 **Updated:** 2026-08-30
 **Risk lane:** Lane 2 production data writes with a Lane 3 hold point before the first write
 **Base:** `1a509c80d88bfd92370f3974cd9f2f50c307f519`, merged PR 22
-**Approval:** Andrew approved `V1 Premier League live seed rollout spec` on 2026-08-30, approved the exact Arsenal amendment with owner overrides for Fábio Vieira, Reiss Nelson, and Marli Salmon, then approved `exact Arsenal live reconciliation spec`. These approvals authorize source implementation and verification only. Production writes retain separate hold points.
+**Approval:** Andrew approved `V1 Premier League live seed rollout spec` on 2026-08-30, approved the exact Arsenal amendment with owner overrides for Fábio Vieira, Reiss Nelson, and Marli Salmon, then approved `exact Arsenal live reconciliation spec`. After PR 23 merged and its exact-head CI passed, Andrew released the bounded Arsenal production hold point with `23 merged. can continue`, then approved `Leeds United production canary` and `six-group Premier League production widening sequence`.
 
 ## Outcome
 
@@ -22,6 +22,11 @@
 5. `seed_data/clubs/` is the content source of truth. Live Firestore is the source of truth for collision, ownership, and orphan state. The readback comparison must project source through `buildSeededChantData` rather than maintain a second runtime schema.
 6. The named-project Arsenal preflight reports all 12 chant targets safe. The all-club preflight reports all 192 targets safe. Both completed without writes.
 7. The production baseline contains the foundation plus Arsenal only. Across the reviewed target it reports 19 missing teams, 598 missing players, 180 missing chants, four missing Arsenal players, 12 Arsenal chants differing only on `origin`, and three departed Arsenal player documents. The three departed documents have zero chant references. No other mismatch or orphan was found.
+8. PR 23 merged the rollout controls at `fa4290505256ab23bf36051e6bc3c943940741e7`. Exact-head CI run `33325900749` passed all eight jobs at reviewed source commit `b3f50990d165f575e460ab58b2a356996c3d5f29`.
+9. The bounded Arsenal production sequence completed against `chants-f95b4`. The normal upsert created the four approved players and reconciled all 12 chants. The guarded transaction then removed only the three approved zero-reference departures. Final readback reports one matching team, 28 matching players, 12 matching chants, and zero missing, mismatching, or orphan rows.
+10. The post-Arsenal Leeds preflight reported all six chant identities safe with no write. The approved canary then created one team, 27 players, and six chants. Immediate readback reports every row matching with zero missing, mismatch, or orphan.
+11. The post-canary all-club preflight reported all 192 chant identities safe with no write. The six approved groups then completed with exact same-group readback after every write.
+12. Final all-club preflight keeps all 192 chant identities safe. Final readback reports 20 matching teams, 622 matching players, 192 matching chants, and zero missing, mismatching, or orphan rows.
 
 ## Acceptance criteria and invariants
 
@@ -82,12 +87,23 @@ Invariants:
 4. Run Arsenal read-only identity preflight. Complete, 12 safe targets.
 5. Run all-club read-only identity preflight. Complete, 192 safe targets.
 6. Run all-club readback-only to establish the pre-write baseline and expected absence or existing-state counts. Complete; the exact result is recorded above.
-7. Build the approved exact Arsenal reconciliation amendment. Complete locally: the fail-closed retirement action and persistent dangling-reference readback pass focused tests. Exact-head clean-runner verification remains.
-8. Stop again for the explicit production-write hold point. If released, run the normal Arsenal upsert, then read back before any removal.
-9. Remove only the three named departed Arsenal player documents after exact identity and zero-reference checks, then require exact Arsenal readback.
-10. Write Leeds United only and run immediate Leeds readback and orphan checks.
-11. If both bounded steps are exact, widen through approved club groups with immediate readback. If any result differs or is ambiguous, stop.
-12. After all clubs, run all-club preflight and readback again, then inspect the app on a real configured device before calling the live seed complete.
+7. Build the approved exact Arsenal reconciliation amendment and require exact-head clean-runner verification. Complete: PR 23 merged and all eight jobs passed at `b3f5099`.
+8. Stop again for the explicit production-write hold point. Complete: Andrew released the bounded Arsenal step after PR 23 merged; the normal upsert completed and post-upsert readback found only the three approved zero-reference departures.
+9. Remove only the three named departed Arsenal player documents after exact identity and zero-reference checks, then require exact Arsenal readback. Complete: the guarded transaction deleted exactly three rows, and final readback is exact with zero orphans.
+10. Write Leeds United only and run immediate Leeds readback and orphan checks. Complete: one team, 27 players, and six chants match exactly with zero orphan.
+11. If both bounded steps are exact, widen through approved club groups with immediate readback. Complete: all six groups passed preflight, write, and exact same-group readback without mismatch, orphan, timeout, or ambiguity.
+12. After all clubs, run all-club preflight and readback again, then inspect the app on a real configured device before calling the live seed complete. Data verification is complete; configured-device inspection remains.
+
+Executed deterministic widening sequence:
+
+1. Aston Villa, Bournemouth, Brentford.
+2. Brighton and Hove Albion, Chelsea, Coventry City.
+3. Crystal Palace, Everton, Fulham.
+4. Hull City, Ipswich Town, Liverpool.
+5. Manchester City, Manchester United, Newcastle United.
+6. Nottingham Forest, Sunderland, Tottenham Hotspur.
+
+Each group wrote only its three named files, then ran readback on those same three files. Every group completed exactly. The largest group had 144 expected team, player, and chant documents, keeping every step bounded while avoiding 18 separate approval cycles.
 
 Recovery is forward-only by default. Correct reviewed content and rerun the affected club when an allowlisted content field is wrong. If a created document must be removed or an identity must change, prepare a separate exact-target destructive plan. Do not improvise deletion or broad rollback. Andrew owns every write and destructive hold point.
 
@@ -106,7 +122,7 @@ Recovery is forward-only by default. Correct reviewed content and rerun the affe
 
 ## Open decisions and hold points
 
-1. The exact Arsenal reconciliation source amendment is implemented and locally verified. Packaging and exact-head clean-runner verification require the next authorization.
+1. All 20 production clubs are complete and exact. No retry, rollback, or recovery action is pending.
 2. The validated credential is present only at the ignored local path and must not be pasted, printed, or committed.
-3. Clean preflight does not itself release production writes. Andrew must explicitly approve the Arsenal upsert and three guarded removals after the reconciliation implementation is exact-head green.
-4. Leeds and widening remain later hold points. Any other deletion, identity migration, or unexpected existing data requires a new plan.
+3. The configured-device catalogue inspection remains before the live seed rollout is called complete at the product boundary.
+4. Any later seed write, deletion, identity migration, or unexpected existing data requires a new plan or exact rerun authorization.

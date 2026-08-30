@@ -9,7 +9,7 @@
 
 The seed previously derived each chant document ID from its mutable title. A title correction therefore targeted a new Firestore document and left the old document plus its votes, comments, reports, saves, evidence, and future public links behind. This failure was reproduced before the framework was adopted. Its cost grows as engagement and public references accumulate.
 
-Community chants already use Firestore-generated identities. The problem is limited to operator-seeded canonical chants. Arsenal was the only club seed file when this decision was accepted, which allowed its compatibility boundary to be established before the remaining clubs were written live. Source now contains all 20 approved clubs, and named-project preflight found all 192 targets collision-free. Arsenal reconciliation and the 19 new club writes remain behind explicit production hold points.
+Community chants already use Firestore-generated identities. The problem is limited to operator-seeded canonical chants. Arsenal was the only club seed file when this decision was accepted, which allowed its compatibility boundary to be established before the remaining clubs were written live. Source and production now contain all 20 approved clubs. Final named-project preflight found all 192 targets collision-free, and final readback reports 20 matching teams, 622 matching players, 192 matching chants, and zero difference.
 
 ## Decision
 
@@ -44,7 +44,7 @@ One separately approved reconciliation exception can retire only `players/arsena
 - Negative: every seed source must choose and retain an explicit club-prefixed ID.
 - Negative: a live mismatch stops seeding and requires operator investigation.
 - Operational: the 19 new source files retain offline review metadata and a dated roster snapshot, but the runtime projection writes only supported chant fields. Historic subjects remain club-linked until a separately reviewed archive model exists.
-- Operational: read-only source compatibility does not authorize production mutation. Andrew must separately release Arsenal upsert and retirement, Leeds canary, and bounded widening after exact-head evidence.
+- Operational: read-only source compatibility does not authorize production mutation. Andrew separately released the exact-head-green Arsenal upsert and guarded retirement, the Leeds canary, and the six-group widening sequence. Completion does not create standing permission for a later rerun or new write.
 
 ## Validation and revisit trigger
 

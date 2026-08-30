@@ -9,7 +9,7 @@ This document explains the current Chants repository through documentation merge
 - **Durable creator, identity, and launch decisions:** 017 through 024
 - **Execution evidence:** `docs/EXECUTION.md`
 - **Interface memory:** `docs/INTERFACE.md`
-- **Known missing evidence:** combined device walk, remaining provider configuration, association deployment, final policy text, source deployment, observed alert delivery, live seed preflight and rollout, signing, and release
+- **Known missing evidence:** combined device walk, including live catalogue inspection; remaining provider configuration; association deployment; final policy text; source deployment; observed alert delivery; signing; and release
 
 ## Repository coverage ledger
 
@@ -239,8 +239,8 @@ The launch-services block provides bounded staged-object cleanup and the privacy
 | Living Songbook Flutter tests and fixture-backed scoped analysis | PASS for repository authority, correction and evidence forms, retained failure values, invalid link refusal, chant-detail separation, promotion navigation, unavailable closure, replacement confirmation, attach versus promote, stale acknowledgement, private status, responsive dialog behavior, intentional golden review, and zero-issue `flutter analyze lib test` |
 | Living Songbook Firestore rules TypeScript | PASS; Java is absent locally, so owner, cross-user, operator, and direct-write emulator cases require clean-runner execution |
 | Firestore plus Storage emulator | PASS, 165 Java-backed cases in exact-main run `33256843751`, including one cross-account Storage case with three permission assertions |
-| `seed/npm test` | PASS, 71 after exact Arsenal reconciliation; TypeScript and the real 20-club currentness check also pass locally; exact-head clean-runner evidence remains pending |
-| Named-project seed preflight and baseline | PASS for 12 Arsenal and 192 all-club chant identities with no writes; baseline confirms 19 absent teams, 598 absent players, 180 absent chants, 12 Arsenal `origin` mismatches, and three unreferenced departed Arsenal player rows |
+| `seed/npm test` | PASS, 71 after exact Arsenal reconciliation; TypeScript and the real 20-club currentness check also pass locally; exact-head run `33325900749` passed the seed job and all seven peer jobs at `b3f5099` |
+| Named-project seed preflight, bounded production, and final readback | PASS: all 192 chant identities are safe. Arsenal, Leeds, and all six widening groups completed with exact immediate readback. Final production readback reports 20 matching teams, 622 matching players, 192 matching chants, and zero missing, mismatch, or orphan |
 | Memory, writing-style, native-contract, and governance-regression scripts | PASS in exact-main run `33256843751`; rerun against the documentation-only staged boundary |
 | `git diff --check` | PASS for the reviewed implementation heads; rerun against the documentation-only staged boundary |
 | GitHub Actions runs `33254213575`, `33255542646`, and `33256843751` | PASS, all eight jobs at runtime implementation `e1474ad`, documentation head `c1c4ea4`, and merged `main` `e8f2591` |
@@ -267,7 +267,7 @@ Recovery options are additive. Pause performance admission without removing Song
 | Six current change records dated 2026-08-27 through 2026-08-29 | Creator implementation, takedown correction, launch authentication extension, post-auth correction, final minor closure, and V1 launch services |
 | Decisions 017 through 024 | Shell, creator, performance, public, social, safety, source eligibility, verified identity, and staged launch integrity architecture |
 | `docs/INTERFACE.md` | Current launch, Stage, creator, conversation, moderation, and inherited interaction contract |
-| `docs/ROADMAP.md` | Feature and 20-club catalogue source are complete; device evidence, remaining provider configuration, policy, live seed rollout, deployment, and release remain |
+| `docs/ROADMAP.md` | Feature source and all 20 production clubs are exact; device evidence, remaining provider configuration, policy, deployment, and release remain |
 | `ENGINEERING_OVERVIEW.md` | Reviewer-oriented current code map |
 
 ## Known compromises and uncertainty
