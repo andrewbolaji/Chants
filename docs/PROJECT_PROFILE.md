@@ -50,7 +50,7 @@ This is the compact source of truth to read before changing Chants. Detailed cur
 | Install Flutter dependencies | `flutter pub get` | Repository root | Resolved packages and `pubspec.lock` consistency |
 | Full Flutter tests | `flutter test` | Repository root, no live Firebase required | Passing model, service, repository, widget, and golden suite |
 | Scoped static analysis | `cp lib/firebase_options.dart.example lib/firebase_options.dart && flutter analyze lib test` | Repository root with deterministic non-secret fixture | No analyzer issues in project Dart source and tests |
-| Functions tests | `npm ci && npm test` | `functions/`, Node 20 | TypeScript test build and Mocha results |
+| Functions production build and tests | `npm ci && npm run build && npm test` | `functions/`, Node 22 | Production `lib/index.js`, test build, and 163 Mocha results; isolated local check passed on Node 22.23.2 |
 | Seed tests | `npm ci && npm test && npx tsc --noEmit` | `seed/`, Node 20 | Mocha results and TypeScript type check |
 | Firestore and Storage rules | `npm ci` in `test_rules/`, then `firebase emulators:exec --only firestore,storage --project chants-f95b4 "cd test_rules && npm test"` from the repository root | Java, Node 20, Firebase emulator, configured project ID | Java-backed authority assertions and emulator exit status |
 | Project-memory structure | `./scripts/check-project-memory.sh` | Repository root | Required memory files and agent references present |
@@ -73,7 +73,7 @@ The project has proved the Flutter, Functions, seed, rules, analysis, and clean-
 | Flutter and Dart | `pubspec.yaml` | `pubspec.lock`; Flutter 3.44.8 and Dart 3.12.2 are the verified native toolchain; CI follows movable stable | Flutter SDK and package registry release notes when an upgrade is proposed; no lower Flutter bound is claimed for `FlutterImplicitEngineDelegate` | Andrew |
 | Firebase mobile SDKs | `pubspec.yaml`, `firebase.json` | `pubspec.lock`; project ID `chants-f95b4` in source config | Firebase and package advisories when reviewed | Andrew |
 | Riverpod | `pubspec.yaml` | `pubspec.lock` | Package release notes when reviewed | Andrew |
-| Cloud Functions | `functions/package.json`, `functions/tsconfig.json`, `firebase.json` | `functions/package-lock.json`; Node 20 | Firebase, Node, and npm advisories when reviewed | Andrew |
+| Cloud Functions | `functions/package.json`, `functions/tsconfig.json`, `firebase.json` | `functions/package-lock.json`; Node 22 in source/CI, nine live Functions still Node 20 | Firebase, Node, and npm advisories when reviewed | Andrew |
 | Seed Admin client | `seed/package.json`, `seed/tsconfig.json` | `seed/package-lock.json` | Firebase Admin and npm advisories when reviewed | Andrew |
 | Rules emulator | `test_rules/package.json`, `firebase.json` | `test_rules/package-lock.json`; CI pins Java 21 and firebase-tools 15 | Firebase emulator release notes when reviewed | Andrew |
 | Android client | `android/` Gradle files | Gradle wrapper and plugin versions in source | Android and Flutter release guidance when reviewed | Andrew |
@@ -104,12 +104,12 @@ No version in this table is an instruction to upgrade. A change needs a compatib
 
 ## Release and recovery
 
-- **Environments:** Local and emulator are evidenced. One Firebase project ID is in source. No repository-defined staging environment exists, and deployed production parity is unverified.
+- **Environments:** Local and emulator are evidenced. The read-only 2026-08-30 inventory confirms production is behind source: nine July Functions in `europe-west2`, Firestore and event location `nam5`, old Firestore rules, and two of sixteen required indexes. No repository-defined staging environment exists.
 - **Deployment path:** CI verifies and does not deploy. Firebase and store deployment require explicit authorization and an operator-owned release procedure.
 - **Migration order:** Verify deployed baseline first. For the current authority model, compatible rules and Functions precede clients. Live seed writes require the read-only stable-identity preflight.
 - **Feature flags or staging:** No general feature-flag system. `mergeChants` is stopped in runtime source before request parsing or mutation.
 - **Healthy after deploy means:** Core signed-in and signed-out journeys work on representative iOS and Android devices, rules and Functions reject unauthorized cases, Crashlytics and Function errors stay within an explicitly chosen observation window, and no retained deletion job or counter drift is observed.
-- **Rollback or forward recovery:** Redeploy a reviewed prior rules or Functions version when compatible, ship a corrected client, reconcile counters from stored documents, and reproduce seed state from reviewed JSON. Account deletion is forward-recovered by its durable worker. Merge has no approved recovery design and remains disabled.
+- **Rollback or forward recovery:** Use only a reviewed compatible artifact, ship a corrected client, reconcile counters from stored documents, and reproduce seed state from reviewed JSON. The actual July source archive was recovered with pinned generations and verified hashes, but its weaker rules, blind report increments, active merge, and old deletion make it unsuitable as a blanket fallback. Source merge is disabled; the downloaded live predecessor lacks that stop. Cutover and executable forward recovery remain held in `docs/changes/2026-08-30-v1-backend-rollout-readiness.md`.
 - **Backup or restore evidence:** No checked-in backup, point-in-time recovery, or restore-exercise evidence. This is a release-readiness gap.
 
 ## Risk lane overrides
@@ -123,6 +123,9 @@ Default lanes come from the Codex Engineering Framework.
 
 | Item | Consequence | Owner | Revisit trigger |
 |---|---|---|---|
+| Nine deployed Functions versus 48 source exports; two created-to-written report cutovers; actual predecessor has blind increments and active merge | No overlap or blanket rollback is safe. Readiness source is locally verified but a tested maintenance/repair boundary and production amendment are required | Andrew | Exact-head CI and consolidated Claude review, then separately approved production cutover |
+| Firebase Storage and Cloud Scheduler APIs are disabled; expected media bucket and Storage rules release are absent; fourteen indexes are missing | Video and scheduled operations cannot work against the live baseline | Andrew | Approve bucket location/provisioning, services/IAM, index readiness, resource/retention settings, and separate destructive-worker activation before admission |
+| Development certificate setup is complete; provisioning and signed device execution are unverified | The 2026-08-30 packaging check reports one valid identity for the existing Chants team after owner-controlled certificate creation and WWDR G3 import. This does not prove a phone build or install | Andrew | After backend readiness, connect the phone and verify provisioning/build without changing the team, bundle identity, or entitlements |
 | Production Android signing values do not exist in source | Release tasks fail closed without ignored operator values, so store packaging is blocked until signing is supplied and tested | Andrew | Before the first production Android build |
 | Combined device walk is incomplete | Merged `main` `e8f2591` builds Android and iOS cleanly in run `33256843751`, but no combined real-device evidence exists | Andrew | Before V1 sign-off |
 | iOS App Attest is registered but Android registration and enforcement remain open; saved alert policies have not produced an observed notification | Abuse or operational delivery failure may remain invisible | Andrew | Before public beta and during the first telemetry window |

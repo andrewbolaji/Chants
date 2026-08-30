@@ -1,6 +1,6 @@
 # Chants engineering overview
 
-This is the current whole-project map for `main` through launch-services merge `ef7195c` plus the approved V1 Living Songbook range. The map includes inherited and unchanged systems, and it is not a deployment or release-readiness claim.
+This is the current whole-project map through merged PR 24 at `83711bc` plus the approved V1 backend rollout readiness block. It includes inherited and unchanged systems and is not a deployment or release-readiness claim. The 2026-08-30 read-only inventory below explicitly separates current source from the actual July deployment.
 
 The active approval contract is `docs/CHANGE_SPEC.md`. Completed reasoning is in the creator-platform, takedown-correction, launch-authentication, post-auth correction, final minor closure, and V1 launch-services records under `docs/changes/`. Durable architectural choices now run through decision 025. `docs/IMPLEMENTATION_RATIONALE.md` is the companion coverage ledger and verification record.
 
@@ -122,21 +122,29 @@ The seed pipeline validates explicit chant identity, content shape, review prove
 
 ## CI, dependencies, and native status
 
+`functions/package.json`, its root lock metadata, and `.github/workflows/ci.yml :: functions` now target Node 22. The existing CI job runs the production TypeScript build before the separate test build. Local Node 22.23.2 passed both builds and all 163 Functions tests with unchanged dependency versions and unchanged handlers. Seed and rules-test CI remain Node 20. This block has no new committed head or replacement clean-runner result yet.
+
 `.github/workflows/ci.yml` runs governance, full Flutter tests, full analysis with a deterministic non-secret Firebase fixture, Functions, seed, and Firestore plus Storage emulators. It now also builds an Android debug APK and iOS simulator app from obvious non-secret compile fixtures. Android CI inspects `com.chants.chants`, records the APK digest, and retains the artifact. iOS CI inspects the same bundle ID. The governance job fetches complete history and runs `scripts/check-project-memory.sh --range <base>`, so implementation changes must carry `docs/EXECUTION.md` in the same PR or push range.
 
 The auth client adds Google Sign-In, Facebook Auth, app links, and shared preferences. FlutterFire resolves as one current graph in `pubspec.lock`; iOS resolves 18 direct dependencies and 56 total pods against Firebase iOS 12.18. Google Sign-In 9.2 moves `GTMSessionFetcher` from 5.3.1 to compatible 3.5.0. CocoaPods warns that its Firebase distribution will stop receiving new versions after October 2026, but the repository intentionally remains CocoaPods-owned under the existing native decision. A future dependency-manager migration requires its own compatibility block.
 
 Android declares Internet access, uses the Chants label, owns the approved auth and public HTTPS paths, applies the Google Services and Crashlytics plugins, and refuses debug signing for release, including when an aggregate Gradle task reaches a release task indirectly. Exact PR 18 clean CI built and inspected the debug APK; the local machine still has no Android SDK. iOS Runner carries Sign in with Apple plus auth and public-domain entitlements and now has a release-only FlutterFire symbol-upload phase. The launch-services branch also built and inspected `com.chants.chants` as a local iOS simulator app. Neither compile proves provider, signing, deployed association, device, Crashlytics delivery, or distribution readiness.
 
+The owner completed development-certificate setup on 2026-08-30. A read-only `security find-identity -v -p codesigning` check reports one valid identity after certificate creation and Apple's WWDR G3 import. Device provisioning, signed device execution, and distribution credentials are separate unverified gates (`docs/EXECUTION.md :: Package backend readiness and record owner certificate closure`).
+
 ## Deployment, cost, and recovery
 
 CI verifies and does not deploy. The source names one Firebase project and no staging environment. No public Function, Hosting route, rule, index, Storage rule, or client has been deployed by this work.
 
+Read-only inventory recovered the actual generation-pinned source for all nine live Functions, each from the same July bundle. Both live report handlers blindly increment and use created events; reviewed source reconstructs counts on written events. The old live `mergeChants` lacks the reviewed stop. Production has old Firestore rules, two of sixteen required indexes, no configured media bucket or Storage rules release, and disabled Storage and Scheduler services. Firestore/Eventarc location is `nam5`, independently of `europe-west2` Functions compute. Exact identities, hashes, source lines, and proposed groups are in `docs/changes/2026-08-30-v1-backend-rollout-readiness.md :: Read-only production baseline, 2026-08-30`.
+
 Performance read and upload surfaces have explicit limits: ten-record feed pages, 30-second and 50-MiB uploads, no autoplay or prefetch, one deterministic ranking contribution per account, short playback URLs, and manual approval. The launch-services branch adds one daily 100-row abandoned-draft cleanup page and two 101-row capped stale-job probes every 15 minutes. Creator and chant source fan-out plus exact aggregate reconstruction are not globally bounded and have no measured production budget. Production read, write, signing, storage, moderation, cleanup, and egress measurements do not exist.
 
-The compatible rollout order is Firestore and Storage rules, Functions, Hosting, then client. Before rollout, verify URL-signing IAM, domain and app associations, store destinations, App Check, observed billing and Function alert delivery, staged-media cleanup, moderation staffing, privacy and content policy, and deployed parity. Recovery can pause admission while keeping Songbook and words-only Chant Lab available.
+The proposed order is reviewed source/CI, verified maintenance and recovery controls, additive ready indexes and compatible rules/bucket, named Function groups, separately approved workers/schedules, Hosting, then client. The report cutover cannot overlap the old incrementers. A general admission-pause mechanism and bounded repair caller do not exist in current source; they must be specified, built or configured, and tested under the next amendment. Source archives are not user-data backups, and the weaker predecessor is not an acceptable blanket rollback. Before admission, verify URL-signing IAM, domain and app associations, store destinations, App Check, alert delivery, cleanup, staffing, and final policy.
 
 ## Where I most want your eyes
+
+The next combined Claude review starts at its last reviewed source `cb50d3c` and ends at the eventual packaged readiness head, covering seed PRs 22-24 and this block. Prior optional Living Songbook findings remain listed in the readiness record. Review the live/source distinction, report cutover pause, recovery limits, and destructive-worker holds before authorizing production writes.
 
 1. `functions/src/onboarding.ts`, `requireVerifiedUid`, and both rules implementations for inconsistent email, phone, current-provider, linked-provider, or operator authority.
 2. `lib/app/app.dart`, `MagicLinkGate`, onboarding, and `SignInMethodsScreen` for deletion precedence, stale Firebase user state, ambiguous delivery, cross-account links, collision, or last-method holes.

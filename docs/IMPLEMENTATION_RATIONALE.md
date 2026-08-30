@@ -1,15 +1,16 @@
 # Repository implementation rationale
 
-This document explains the current Chants repository through documentation merge `9c6286a` and the approved V1 launch-services range, including inherited systems and the independently reviewed creator, launch-authentication, Android, post-auth correction, and minor-closure work. It is a reviewer map, not proof of deployment or release readiness.
+This document explains the current Chants repository through PR 24 merge `83711bc` and the approved V1 backend rollout readiness block, including inherited systems, creator/authentication, Living Songbook, and the completed live catalogue. It is a reviewer map, not proof that reviewed application source is deployed or release-ready.
 
 ## Document identity and completeness
 
 - **Current change:** `docs/CHANGE_SPEC.md`
 - **Completed change reasoning:** `docs/changes/2026-08-27-creator-platform-foundation.md`, `docs/changes/2026-08-28-pr17-post-review-takedown-integrity.md`, `docs/changes/2026-08-28-v1-launch-auth-onboarding-android.md`, `docs/changes/2026-08-28-post-auth-independent-review-corrections.md`, `docs/changes/2026-08-29-final-source-freeze-minor-closure.md`, and `docs/changes/2026-08-29-v1-launch-services-configuration.md`
-- **Durable creator, identity, and launch decisions:** 017 through 024
+- **Additional completed reasoning:** the Living Songbook correction, Premier League seed catalogue, live seed safety controls, and backend rollout readiness records under `docs/changes/` dated 2026-08-30
+- **Durable creator, identity, and launch decisions:** 017 through 025
 - **Execution evidence:** `docs/EXECUTION.md`
 - **Interface memory:** `docs/INTERFACE.md`
-- **Known missing evidence:** combined device walk, including live catalogue inspection; remaining provider configuration; association deployment; final policy text; source deployment; observed alert delivery; signing; and release
+- **Known missing evidence:** combined device walk, including live catalogue inspection; remaining provider configuration; association deployment; final policy text; source deployment; observed alert delivery; device provisioning and distribution signing; and release. Development-certificate setup is complete, with one valid local identity verified on 2026-08-30.
 
 ## Repository coverage ledger
 
@@ -205,7 +206,7 @@ The product stores user-created video. Policy, privacy, takedown, retention, mod
 | `app_links` | Initial and resumed HTTPS magic-link delivery | Source paths exist; hosted Apple and Android association is not deployed or claimed |
 | `shared_preferences` | Short-lived device-local pending magic-link identity | One-hour maximum with terminal and malformed-state clearing |
 
-iOS remains on the project-owned CocoaPods path. The auth graph resolves 18 direct dependencies and 56 total pods. Google Sign-In 9.2 uses `GTMSessionFetcher` 3.5.0, which remains inside Firebase Storage's accepted range. Exact PR 18 clean CI built both the iOS simulator bundle and Android debug APK. Android SDK and Java remain unavailable locally, so replacement current-head native and rules evidence belongs to clean CI. CocoaPods reports Firebase Apple SDK pod publication will stop after October 2026; a Swift Package Manager migration needs a separate compatibility decision because the project previously rejected automatic mixed ownership.
+iOS remains on the project-owned CocoaPods path. The auth graph resolves 18 direct dependencies and 56 total pods. Google Sign-In 9.2 uses `GTMSessionFetcher` 3.5.0, which remains inside Firebase Storage's accepted range. Exact PR 18 clean CI built both the iOS simulator bundle and Android debug APK. Android SDK remains unavailable locally. The 2026-08-30 readiness check located Homebrew OpenJDK 26.0.2 outside macOS discovery and passed the local rules suite; clean CI still owns the Java 21 and native runner boundary. CocoaPods reports Firebase Apple SDK pod publication will stop after October 2026; a Swift Package Manager migration needs a separate compatibility decision because the project previously rejected automatic mixed ownership.
 
 ## Performance, scale, and cost
 
@@ -228,6 +229,9 @@ The launch-services block provides bounded staged-object cleanup and the privacy
 
 | Command or probe | Result |
 |---|---|
+| Backend readiness on isolated Node 22.23.2/npm 10.8.2 | PASS: locked Functions install, production build, test build and 163 tests. Manifest/lock/CI runtime agree, all dependency records unchanged, compiled export count 48. Exact-head CI is not run for this uncommitted block |
+| Backend readiness authority and static checks | PASS: 168 local Firestore/Storage tests on Homebrew OpenJDK 26.0.2 with Node 20, rules TypeScript, zero-issue Flutter analysis, native and launch-services checks, and governance regressions. Initial missing Mocha was resolved with unchanged-lock install; no rule or test source changed |
+| Read-only deployed predecessor inventory | PASS: nine generation-pinned archives downloaded and verified against object size/MD5 and common SHA-256; actual compiled report and merge handlers inspected; old rules retrieved; two live indexes compared against all sixteen source entries; Storage/Scheduler service state checked |
 | Focused Flutter auth, onboarding, app-gate, reset, magic-link, provider cancellation, phone-race, stale-session, provider hierarchy, and narrow 1.8x tests | PASS during the launch implementation and retained by the full exact-main suite |
 | Full `flutter test` | PASS, 463 tests locally and in exact-main run `33256843751` at `e8f2591` |
 | `flutter analyze lib test` with the deterministic non-secret fixture | PASS with zero issues locally and in exact-main run `33256843751` |
@@ -253,19 +257,21 @@ The launch-services block provides bounded staged-object cleanup and the privacy
 
 ## Deployment and recovery
 
-No repository artifact in this range is deployed. The approved Auth domains, unenforced iOS App Attest registration, operational policies, private notification channel, and alert-only budget are saved and re-read in their owning consoles. No live Firestore or Storage mutation, seed write, signing, or store action occurred.
+The 20-club seed catalogue is deployed and exact, as recorded above and in PR 24. The feature Functions, rules, Storage, and Hosting source discussed here are not deployed by this work. Approved Auth domains, unenforced iOS App Attest registration, operational policies, the private notification channel, and alert-only budget were saved during the launch-services block. Backend readiness performs no Firebase mutation or store action. Owner-controlled development-certificate setup is separately complete; no signed device build or installation has been verified.
 
-Compatible deployment order is rules, Functions, Hosting, then client. Public URLs should not ship until Hosting, domain, IAM signing, and store routing are verified. Media admission should not open until policy, moderation, cleanup, billing, and alert gates are operational.
+The actual 2026-08-30 baseline is nine Node 20 Functions from July, old Firestore rules, two ready indexes, no expected media bucket or Storage rules release, and disabled Firebase Storage/Scheduler APIs. Generation-pinned source is recoverable but includes blind-increment report triggers, old deletion, and active merge, so it is not a safe blanket rollback. Firestore/Eventarc location is `nam5`; compute remains `europe-west2`. Runtime Node 22 is verified locally only.
 
-Recovery options are additive. Pause performance admission without removing Songbook or words-only creation. Hide or remove approved media to stop new public resolution; terminal removal leaves retryable physical cleanup. Reconcile source flags and exact creator totals from current documents. Revert the client shell without deleting creator data. Account deletion continues through its durable worker.
+`docs/changes/2026-08-30-v1-backend-rollout-readiness.md` owns the named future groups, metadata and hashes, and the unresolved maintenance/forward-recovery contract. No overlap with old report incrementers is approved. Rules alone cannot stop Admin writers, and source has no general maintenance flag or bounded rollout repair wrapper. Those controls must be verified before the exact two-target cutover. Ready indexes, compatible rules/bucket, named Functions, separately held workers/schedules, Hosting, and client need a coherent approved order. Bucket location, IAM/resource limits, retained backlog/replay, retention and operational smoke identities remain explicit decisions, not automatic deployment defaults.
+
+The next consolidated Claude review covers `cb50d3cc966c6a367309c887a8c765891155cf0e` through the final predeployment source head, including PRs 22-24, readiness, and any separately approved cutover-safety implementation. It precedes backend writes; actual deployment and device observations receive a subsequent evidence closure. Existing reviewed hide/remove and durable deletion behavior remains unchanged in source, but has no new live proof.
 
 ## Documentation consistency
 
 | Record | Current meaning |
 |---|---|
-| `docs/CHANGE_SPEC.md` | Approved V1 launch-services source and reversible configuration contract |
+| `docs/CHANGE_SPEC.md` | Approved V1 backend source/read-only readiness contract, not production authorization |
 | Six current change records dated 2026-08-27 through 2026-08-29 | Creator implementation, takedown correction, launch authentication extension, post-auth correction, final minor closure, and V1 launch services |
-| Decisions 017 through 024 | Shell, creator, performance, public, social, safety, source eligibility, verified identity, and staged launch integrity architecture |
+| Decisions 017 through 025 | Shell, creator, performance, public, social, safety, source eligibility, verified identity, staged launch integrity, and Living Songbook architecture |
 | `docs/INTERFACE.md` | Current launch, Stage, creator, conversation, moderation, and inherited interaction contract |
 | `docs/ROADMAP.md` | Feature source and all 20 production clubs are exact; device evidence, remaining provider configuration, policy, deployment, and release remain |
 | `ENGINEERING_OVERVIEW.md` | Reviewer-oriented current code map |

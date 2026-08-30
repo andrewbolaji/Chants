@@ -11,7 +11,7 @@
     "test": "tsc -p tsconfig.test.json && mocha --timeout 10000 lib-test/test/**/*.test.js"
   },
   "engines": {
-    "node": "20"
+    "node": "22"
   },
   "type": "commonjs",
   "main": "lib/index.js",

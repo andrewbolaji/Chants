@@ -12,6 +12,16 @@ This runbook describes the source-backed recovery paths that exist today. Dashbo
 
 ## Health
 
+### Current backend rollout hold
+
+Read-only inventory on 2026-08-30 established that production is still the July backend, not the reviewed V1 source. See `docs/changes/2026-08-30-v1-backend-rollout-readiness.md` for all nine live identities, pinned predecessor generations/hashes, the 48-name proposed sequence, and explicit stop conditions. Node 22 source verification does not change that live state.
+
+Do not use an all-Functions deploy or ordinary update for the two report handlers: the deployed created-only versions blindly increment, while current written handlers rebuild counts. Actual source also proves the old live merge endpoint lacks the reviewed stop. Never invoke it or restore that old bundle as a blanket rollback. A tested pause of client and Admin report writers, exact two-target cutover, and bounded repair are not implemented yet and require a separate production amendment.
+
+Production has only two ready chant indexes, no expected media bucket or Storage rules release, and disabled Storage/Scheduler APIs. Bucket location/provisioning, IAM, retention, resource caps, fourteen index creations, and destructive worker/schedule activation remain owner-approved gates. Firestore and Eventarc are in `nam5`; Functions compute stays `europe-west2`. The data location must not be inferred from the compute region.
+
+The next combined Claude review covers PRs 22-24 and readiness since PR 21 source `cb50d3c`, before backend deployment. After reviewed, exact-head-green source and approved deployment, resume the configured-device catalogue steps below. No additional seed write is needed.
+
 | Signal | Healthy | Degraded | Owner or action |
 |---|---|---|---|
 | Public browse | Current visible chants load; transient cache states are labelled | Permission errors, authoritative absence, or repeated load failure | Confirm deployed rules, indexes, client version, and Firestore availability |
@@ -126,6 +136,34 @@ Crashlytics and general Function-error alerts begin with event detection rather 
 - **Recovery:** A failed or ambiguous write stops the rollout. Run readback-only before deciding whether a retry is safe. Correct allowlisted source content and rerun only the affected club. Never improvise deletion, rename a stable ID, or remove an orphan without a separate exact-target destructive plan.
 - **Escalate when:** The credential names another project, any source-owned field mismatches, an unexpected orphan exists, a stable identity would change, a write result is ambiguous, or recovery would delete data.
 
+### Run the configured-device catalogue check
+
+The production seed is exact. This check verifies the mobile presentation and navigation, not the lyrics again. It is not a store-release sign-off.
+
+Before running:
+
+1. Confirm the backend rollout is approved and verified. On 2026-08-30 production had only nine of the 48 source Functions; `completeOnboarding` was absent. A new-account walkthrough cannot pass against that baseline. Do not bypass onboarding or create profile documents manually.
+2. Connect and unlock the iPhone. Certificate setup was completed by the owner on 2026-08-30: an Apple Development certificate plus Apple's WWDR G3 intermediate now produce one valid code-signing identity. Do not create another certificate or remove the old one. Provisioning and installation still need verification. Keep team `J7V95LBCWR` and bundle `com.chants.chants`; do not switch personal teams, override certificate trust, or remove entitlements to force a run. Any further credential step remains owner-controlled. [Apple signing guidance](https://developer.apple.com/documentation/xcode/sharing-your-teams-signing-certificates).
+3. Confirm the local Dart, iOS, and Android Firebase client configurations all identify `chants-f95b4` and remain ignored. The prepared files are in `chants-v1-seed-live-rollout`; the older checkouts' Dart placeholders must not be reused.
+4. Run from the prepared checkout. If Flutter asks which target to use, select the physical iPhone, not Chrome or macOS. The first build is still a native build; later debug changes can use hot reload without rebuilding from scratch.
+
+```sh
+cd /Users/andrewbolaji/Desktop/projects/chants/chants-v1-seed-live-rollout
+flutter devices
+flutter run --no-pub
+```
+
+Catalogue walkthrough:
+
+1. Sign in yourself with the intended test/owner account. Keep passwords, verification codes, and App Check debug tokens out of the task and repository.
+2. Tap **Clubs** in the bottom navigation and scroll through the full 20-club list. Missing, duplicated, or permanently loading club cards fail the check.
+3. Open Arsenal and Leeds United. Their reviewed Songbook counts are 12 and six chants. Open a chant, read through it, return to its club, then open a player-linked chant through the player route. Check club/player association, lyrics layout, tune/context text where supplied, and trust labels.
+4. Open at least one club from the final rollout group, Nottingham Forest, Sunderland, or Tottenham Hotspur, and open a chant. This samples the end of the widening sequence. It does not claim visual inspection of every one of the 192 chants.
+5. Confirm Songbook and Chant Lab are distinct. Empty community content is not evidence that the canonical seed is missing. Switch bottom tabs and return to **Clubs**; the app must retain usable navigation and avoid a stuck loading state.
+6. Report a pass or the exact screen/action and visible error. Record source head, app build, platform, and observed paths without account identifiers. Do not rerun seed commands to repair a client or backend-deployment error.
+
+The broader authentication, media, moderation, sharing, deletion, and airplane-mode walks remain separate release gates. Initial preparation lacked a valid signing identity and backend parity. The owner has since completed the certificate step; backend parity, device provisioning, and physical-device observations remain open.
+
 ### Saved matchday content is unavailable offline
 
 - **Likely causes:** Snapshot was never saved, UID changed, local file is corrupt or from a future schema, deletion lock is active, or the operating system removed application data.
@@ -143,7 +181,7 @@ Crashlytics and general Function-error alerts begin with event detection rather 
 - **Rules and Functions:** Verify deployed baseline first, then deploy a reviewed compatible prior or forward version. For performance-source eligibility, deploy compatible rules and Functions before the client. CI success does not prove deployed parity.
 - **Schema and data:** Prefer backward-compatible additions and forward recovery. Stable seed identity, account deletion, counters, and safety records each have specific decisions that take precedence over generic rollback.
 - **External side effects:** Native sharing and evidence links leave the app boundary. Chants cannot recall third-party copies, browser history, or recipient data.
-- **Disabled merge:** `mergeChants` remains stopped before parsing or mutation. Do not re-enable it as incident mitigation.
+- **Source-disabled merge:** Reviewed `mergeChants` stops before parsing or mutation. The actual July deployment recovered on 2026-08-30 lacks that guard; do not invoke the live endpoint. Deploying the reviewed stop requires the approved rollout, and restoring the old active merge is not incident recovery.
 
 ## Backup and restore
 
