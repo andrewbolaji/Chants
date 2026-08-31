@@ -8,8 +8,11 @@ import 'package:chants/data/models/chant.dart';
 import 'package:chants/data/models/player.dart';
 import 'package:chants/data/models/team.dart';
 import 'package:chants/data/repositories/chant_repository.dart';
+import 'package:chants/data/repositories/player_repository.dart';
 import 'package:chants/data/services/chant_browse.dart';
+import 'package:chants/data/services/chant_call_ups.dart';
 import 'package:chants/presentation/browse/browse_supporting_notice.dart';
+import 'package:chants/presentation/browse/chant_call_up_card.dart';
 import 'package:chants/presentation/browse/chant_lab_view.dart';
 import 'package:chants/presentation/shared/chant_card.dart';
 import 'package:chants/presentation/shared/empty_state.dart';
@@ -32,12 +35,15 @@ class _TeamScreenState extends ConsumerState<TeamScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
   late final StreamSubscription<ChantBrowseSnapshot> _chantSubscription;
-  late final StreamSubscription<List<Player>> _playerSubscription;
+  late final StreamSubscription<PlayerBrowseSnapshot> _playerSubscription;
   final StableChantOrder _songbookOrder = StableChantOrder();
   ChantBrowseSnapshot? _browseSnapshot;
   Object? _chantError;
-  List<Player>? _players;
+  PlayerBrowseSnapshot? _playerSnapshot;
   Object? _playerError;
+  bool _chantsClosed = false;
+  bool _playersClosed = false;
+  String? _callUpPlayerId;
   bool _showFullSquad = false;
   bool _savingMatchdayCopy = false;
 
@@ -54,27 +60,35 @@ class _TeamScreenState extends ConsumerState<TeamScreen>
             setState(() {
               _browseSnapshot = snapshot;
               _chantError = null;
+              _reconcileCallUpPlayer();
             });
           },
           onError: (Object error, StackTrace stackTrace) {
             if (!mounted) return;
             setState(() => _chantError = error);
           },
+          onDone: () {
+            if (mounted) setState(() => _chantsClosed = true);
+          },
         );
     _playerSubscription = ref
         .read(playerRepositoryProvider)
-        .playersForTeamStream(teamId: widget.team.id)
+        .teamBrowseStream(teamId: widget.team.id)
         .listen(
-          (players) {
+          (snapshot) {
             if (!mounted) return;
             setState(() {
-              _players = List.unmodifiable(players);
+              _playerSnapshot = snapshot;
               _playerError = null;
+              _reconcileCallUpPlayer();
             });
           },
           onError: (Object error, StackTrace stackTrace) {
             if (!mounted) return;
             setState(() => _playerError = error);
+          },
+          onDone: () {
+            if (mounted) setState(() => _playersClosed = true);
           },
         );
   }
@@ -100,6 +114,68 @@ class _TeamScreenState extends ConsumerState<TeamScreen>
     );
   }
 
+  List<Player> get _callUpPlayers {
+    final chants = _browseSnapshot;
+    final squad = _playerSnapshot;
+    if (chants == null ||
+        squad == null ||
+        chants.isFromCache ||
+        squad.isFromCache ||
+        chants.hasPendingWrites ||
+        squad.hasPendingWrites ||
+        _chantError != null ||
+        _playerError != null ||
+        _chantsClosed ||
+        _playersClosed) {
+      return const [];
+    }
+    return chantCallUpPlayers(
+      teamId: widget.team.id,
+      players: squad.players,
+      chants: chants.chants,
+    );
+  }
+
+  void _reconcileCallUpPlayer() {
+    final eligible = _callUpPlayers;
+    if (eligible.isNotEmpty &&
+        !eligible.any((player) => player.id == _callUpPlayerId)) {
+      _callUpPlayerId = eligible.first.id;
+    }
+  }
+
+  Future<void> _writeCallUp(Player player) async {
+    // Recheck the current snapshots even if this callback preceded a rebuild.
+    if (!_callUpPlayers.any((candidate) => candidate.id == player.id)) return;
+    if (ref.read(authStateProvider).valueOrNull == null) {
+      Navigator.pushNamed(context, AppRouter.signIn);
+      return;
+    }
+    final result = await Navigator.pushNamed<Chant>(
+      context,
+      AppRouter.submitChant,
+      arguments: {
+        'teamId': widget.team.id,
+        'sportId': widget.team.sportId,
+        'competitionId': widget.team.competitionId,
+        'playerId': player.id,
+      },
+    );
+    if (!mounted || result == null) return;
+    _tabController.animateTo(1);
+    // The author can change the suggested subject in the existing form.
+    final submittedPlayer = _playerSnapshot?.players
+        .where(
+          (candidate) =>
+              candidate.id == result.playerId &&
+              candidate.teamId == widget.team.id,
+        )
+        .firstOrNull;
+    if (submittedPlayer != null) {
+      _openPlayer(submittedPlayer, openChantLab: true);
+    }
+  }
+
   void _openChant(Chant chant) {
     Navigator.pushNamed(
       context,
@@ -108,7 +184,7 @@ class _TeamScreenState extends ConsumerState<TeamScreen>
     );
   }
 
-  void _openPlayer(Player player) {
+  void _openPlayer(Player player, {bool openChantLab = false}) {
     Navigator.pushNamed(
       context,
       AppRouter.player,
@@ -116,6 +192,7 @@ class _TeamScreenState extends ConsumerState<TeamScreen>
         'player': player,
         'sportId': widget.team.sportId,
         'competitionId': widget.team.competitionId,
+        'openChantLab': openChantLab,
       },
     );
   }
@@ -183,7 +260,31 @@ class _TeamScreenState extends ConsumerState<TeamScreen>
       final songbook = _songbookOrder.reconcile(
         rankBrowseTop(projection.songbook),
       );
-      final players = _players ?? const <Player>[];
+      final players = _playerSnapshot?.players ?? const <Player>[];
+      final callUpPlayers = _callUpPlayers;
+      final callUpPlayer =
+          callUpPlayers
+              .where((player) => player.id == _callUpPlayerId)
+              .firstOrNull ??
+          callUpPlayers.firstOrNull;
+      final callUp = callUpPlayer == null
+          ? null
+          : ChantCallUpCard(
+              playerName: callUpPlayer.name,
+              clubName: widget.team.name,
+              isSignedIn: isSignedIn,
+              onWrite: () => _writeCallUp(callUpPlayer),
+              onNextPlayer: callUpPlayers.length < 2
+                  ? null
+                  : () {
+                      final index = callUpPlayers.indexOf(callUpPlayer);
+                      setState(
+                        () => _callUpPlayerId =
+                            callUpPlayers[(index + 1) % callUpPlayers.length]
+                                .id,
+                      );
+                    },
+            );
       final savedClub = savedSongbook?.clubSnapshots[widget.team.id];
       final canSaveForMatchday =
           user != null &&
@@ -199,9 +300,10 @@ class _TeamScreenState extends ConsumerState<TeamScreen>
         controller: _tabController,
         children: [
           _TeamSongbookView(
+            callUp: callUp,
             chants: songbook,
             players: players,
-            playerLoading: _players == null && _playerError == null,
+            playerLoading: _playerSnapshot == null && _playerError == null,
             playerHasError: _playerError != null,
             isFromCache: browseSnapshot.isFromCache,
             hasRecoverableError: _chantError != null,
@@ -224,6 +326,7 @@ class _TeamScreenState extends ConsumerState<TeamScreen>
             onOpenPlayer: _openPlayer,
           ),
           ChantLabView(
+            callUp: callUp,
             chants: projection.chantLab,
             playerNames: playerNames,
             isFromCache: browseSnapshot.isFromCache,
@@ -272,6 +375,7 @@ class _TeamScreenState extends ConsumerState<TeamScreen>
 }
 
 class _TeamSongbookView extends StatelessWidget {
+  final Widget? callUp;
   final List<Chant> chants;
   final List<Player> players;
   final bool playerLoading;
@@ -290,6 +394,7 @@ class _TeamSongbookView extends StatelessWidget {
   final ValueChanged<Player> onOpenPlayer;
 
   const _TeamSongbookView({
+    this.callUp,
     required this.chants,
     required this.players,
     required this.playerLoading,
@@ -332,6 +437,7 @@ class _TeamSongbookView extends StatelessWidget {
     };
 
     final items = <Widget>[
+      ?callUp,
       const Padding(
         padding: EdgeInsets.fromLTRB(
           Spacing.lg,

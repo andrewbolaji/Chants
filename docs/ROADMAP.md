@@ -21,7 +21,7 @@ The path from code-complete to public launch, with concrete triggers on every ga
 - Visual identity: complete "matchnight, warmed with playful" redesign, tokenized, AA contrast proven.
 
 **Not yet done:**
-- **Immediate prerequisite, updated 2026-08-31:** PR 25 is merged at `72a39b1`; safety head `421463e` passed all eight jobs in run `33346847132`. Claude reviewed the combined PRs 22-26 range through fe0ea92. The active F1-F5 correction block needs its replacement CI and focused closure review. Bring the live backend up to reviewed source only after that review and a separately approved production amendment. The last inventory remains the nine-Function July baseline, old rules, two report event migrations, fourteen missing indexes, no media bucket and disabled Storage/Scheduler services. Containment/drain, precise replacement, repair/readback and bounded retained-job replay precede admission. Catalogue and development-certificate setup are complete; provisioning and device evidence remain.
+- **Immediate prerequisite, updated 2026-08-31:** PR 25 is merged at `72a39b1`. PR 26 correction head `2d362a2` passed all eight jobs in run `33354752226`; Claude independently closed F1-F5 and reviewed the staged Call-Ups addition with no new source blocker. Package Call-Ups with its two low corrections and verify the new exact-head CI before source merge. Production still needs a separately approved amendment. The last inventory remains the nine-Function July baseline, old rules, two report event migrations, fourteen missing indexes, no media bucket and disabled Storage/Scheduler services. Containment/drain, precise replacement, repair/readback and bounded retained-job replay precede admission. Catalogue and development-certificate setup are complete; provisioning and device evidence remain.
 - **Safe preparation in parallel:** `scripts/check-device-readiness.mjs` and the existing private command-center guide now provide local inventory and per-platform walkthrough capture. Focused source/logic evidence is recorded locally; use the preparation PR receipt for exact-head CI. Browser visual proof remains open. No runtime feature or live service changes are included.
 - Complete remaining provider dashboards and credentials, Android association, deployed Apple association, production signing, policy, observed cost and abuse controls, and the combined iOS and Android V1 device walkthrough. Feature source at `e8f2591` compiles and passes identity inspection on both clean runners.
 - Configured-device catalogue inspection for the source-complete and production-exact 20-club catalogue. Transfer-sensitive roster review, named-project identity preflight, guarded Arsenal reconciliation, Leeds canary, six-group widening, and final all-club readback are complete.
@@ -34,7 +34,7 @@ The path from code-complete to public launch, with concrete triggers on every ga
 
 ## Phase 1: Private v1 sign-off
 
-Claude has reviewed the complete PRs 22-26 range, cb50d3c through fe0ea92. Finish the approved F1-F5 correction as one commit on PR 26, verify replacement exact-head CI, then request one focused Claude review of fe0ea92 through that head and affected consumers. No additional app feature is needed before that review. After closure, the next work is a separately approved production amendment, backend rollout and observation, provider/domain/signing gates, and the combined device walk. The guide's visual/browser verification remains open. Prior optional Living Songbook findings stay in the readiness record.
+Claude reviewed PRs 22-26 through fe0ea92, then closed F1-F5 at `2d362a2` and reviewed Call-Ups staged tree `91213af707f4c6dc4bd3d3334b7adaea35a1ea0b`. The only Call-Ups corrections are club-specific wording and realistic live golden fixtures. Finish their authorized packaging and new exact-head CI, then review the source merge boundary. The next launch work is a separately approved production amendment, backend rollout and observation, provider/domain/signing gates, and the combined device walk. No further feature is required to fill waiting time. The guide's visual/browser verification remains open. Prior optional Living Songbook findings stay in the readiness record.
 
 Run on device, confirm font weights render bold and heavy, walk all core flows and states.
 
@@ -117,17 +117,24 @@ The product loop is: idea to performances to sharing to sung live to evidence to
 
 The durable authority is Decision 025. A suggestion never edits canonical wording automatically. Accepted corrections and variations still travel through the reviewed content or seed path.
 
+## Approved V1 addition: Chant Call-Ups
+
+Andrew approved the bounded first slice on 2026-08-30 local time. A single club-page spotlight invites a chant for a currently listed player with no visible chant for that club in Chants, using only the existing complete live club streams. The copy names the club; prior-club songs remain discoverable in player browse. The fan can choose another eligible player locally and open the existing prefilled writing form. Successful creation leads to the submitted player's Chant Lab, or club Chant Lab if the subject changed. Cache, pending writes, failed or closed streams never authorize the absence claim.
+
+This is a creation invitation, not a contest or a claim that no stadium song exists. No automatic winner, prize, paid promotion, exposure guarantee or separate backend. Source implementation, local verification, packaging, independent review and configured-device proof remain separate. See `docs/CHANGE_SPEC.md` and `docs/changes/2026-08-31-v1-chant-call-ups.md`.
+
+Current listed membership is only as accurate as the reviewed catalogue.
+
 ## V1.1 candidate backlog
 
 These ideas are pinned for deliberate V1.1 evaluation. They are not launch promises or hidden V1 scope. Each begins with a small slice and has a trigger for deciding whether it deserves a full build.
 
-### 1. Chant Call-Ups
+### 1. Broader Chant Call-Ups
 
-- **Purpose:** Turn transfer windows and players without chants into a visible creation competition.
-- **Smallest first slice:** A club or player page card that names one active player with no visible chant and opens the existing words-first submission path with club and player prefilled.
-- **Success signal:** meaningful submissions per call-up, shares, repeat creators, and at least one idea later supported by real evidence.
-- **Keep out initially:** prizes, brackets, automatic winners, paid promotion, and a separate contest backend.
-- **Decision trigger:** ship the first call-ups when the V1 creator flow is stable and current player data can be maintained reliably.
+- **Purpose:** Help worthwhile player ideas reach more supporters after the club-page slice proves useful.
+- **Evaluate:** distribution, exposure fairness, repeat creators, meaningful submissions and subsequent sharing or real-world evidence.
+- **Keep out without a separate decision:** prizes, paid placement, automatic winners and a contest backend.
+- **Decision trigger:** reliable catalogue maintenance and actual usage justify going beyond the existing club-page invitation.
 
 ### 2. Matchday Mode
 

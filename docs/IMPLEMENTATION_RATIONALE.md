@@ -111,6 +111,10 @@ Directional blocks suppress Stage cards, public creator access in the app, ordin
 
 ## Critical path: keep the Songbook current
 
+The source-only Chant Call-Ups addition is scoped in `docs/changes/2026-08-31-v1-chant-call-ups.md`. `TeamScreen` reuses one complete team chant and one listed-squad stream, retaining cache and pending-write metadata. Only active, error-free server snapshots may produce a player invitation. Any visible chant for that club covers its player regardless of trust status. Card copy names the club, so an existing prior-club song does not contradict it. The reusable card is separate from the Terrace Proven heading and introduces no persistent entity, ranking or generated content.
+
+The call-up opens the existing typed submission route with player and club prefilled. Only an acknowledged `Chant` result advances to that subject's Chant Lab; cancellation, failure, changed subject and disposed caller are handled without inventing success or a document ID. This is a client presentation and routing addition, not a new server admission path. The scoped rationale identifies Claude's reviewed tree and the two subsequent low corrections. Live release gates still apply.
+
 `submitChantUpdateSuggestion` parses one exact correction, variation, or evidence shape, derives the verified caller, and rereads the private profile, deletion job, and current visible chant. A server-read timestamp becomes the source version. A deterministic hash of user, chant, version, purpose, and correction category prevents duplicate work before any rate write.
 
 The same transaction commits the private request and independent 5-per-hour plus 20-per-day anchored counters. These fields share the private rate-state document for deletion and storage economy, but never share report or feedback counts. A suggestion never increments flags, hides content, or writes safety state.

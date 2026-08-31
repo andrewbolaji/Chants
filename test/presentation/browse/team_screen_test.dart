@@ -26,8 +26,10 @@ class _PlayerRepository extends Mock implements PlayerRepository {
   final controller = StreamController<List<Player>>.broadcast();
 
   @override
-  Stream<List<Player>> playersForTeamStream({required String teamId}) {
-    return controller.stream;
+  Stream<PlayerBrowseSnapshot> teamBrowseStream({required String teamId}) {
+    return controller.stream.map(
+      (players) => PlayerBrowseSnapshot(players: players),
+    );
   }
 }
 
@@ -211,6 +213,11 @@ void main() {
       ChantBrowseSnapshot(chants: [b.copyWith(score: 20), a]),
     );
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('SECOND IDEA'),
+      150,
+      scrollable: find.byType(Scrollable).last,
+    );
     expect(
       tester.getTopLeft(find.text('FIRST IDEA')).dy,
       lessThan(tester.getTopLeft(find.text('SECOND IDEA')).dy),
@@ -305,6 +312,11 @@ void main() {
 
       await tester.tap(find.text('CHANT LAB'));
       await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text('TOP'),
+        150,
+        scrollable: find.byType(Scrollable).last,
+      );
       expect(find.text('TOP'), findsOneWidget);
       expect(find.text('NEW'), findsOneWidget);
       expect(tester.takeException(), isNull);

@@ -21,12 +21,14 @@ class PlayerScreen extends ConsumerStatefulWidget {
   final Player player;
   final String? sportId;
   final String? competitionId;
+  final bool openChantLab;
 
   const PlayerScreen({
     super.key,
     required this.player,
     this.sportId,
     this.competitionId,
+    this.openChantLab = false,
   });
 
   @override
@@ -49,7 +51,11 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(
+      length: 2,
+      vsync: this,
+      initialIndex: widget.openChantLab ? 1 : 0,
+    );
     _chantSubscription = ref
         .read(chantRepositoryProvider)
         .playerBrowseStream(playerId: widget.player.id)
