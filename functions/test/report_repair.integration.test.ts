@@ -6,6 +6,8 @@ import { handleCreatePerformanceDraft, handleCancelPerformanceDraft } from "../s
 import { handleDeletedDraftCleanup } from "../src/deferred_draft_cleanup";
 import { requestAccountDeletion } from "../src/account_deletion";
 import { firebaseOperationalStore, ABANDONED_DRAFT_AGE_MS } from "../src/operations";
+import { repairEvidence } from "./fixtures/cutover";
+import { MAX_PAUSE_EVIDENCE_AGE_MS } from "../src/report_cutover";
 
 const integration = process.env.FIRESTORE_EMULATOR_HOST === "127.0.0.1:8080" ? describe : describe.skip;
 const sha = "a".repeat(40);
@@ -33,8 +35,12 @@ integration("real-emulator report repair and upload lifecycle", function () {
     await admin.firestore().terminate();
   });
   const target = (extra = {}) => ({ flagCount: 9, hidden: false, removed: false, commentCount: 0, ...extra });
-  const plan = (kind: RepairKind = "chants", startAfter?: string) => planReportRepair({ firestore: db, projectId: "chants-f95b4", sourceSha: sha, kind, startAfter });
-  const apply = (value: Awaited<ReturnType<typeof plan>>, firestore = db) => applyReportRepair({ firestore, projectId: "chants-f95b4", sourceSha: sha, plan: value, digest: repairDigest(value), now });
+  const plan = (kind: RepairKind = "chants", startAfter?: string, generation = 4) => planReportRepair({
+    firestore: db, projectId: "chants-f95b4", sourceSha: sha, kind, startAfter, now, cutover: { ...repairEvidence(), generation },
+  });
+  const apply = (value: Awaited<ReturnType<typeof plan>>, firestore = db) => applyReportRepair({
+    firestore, projectId: "chants-f95b4", sourceSha: sha, plan: value, digest: repairDigest(value), now, cutover: repairEvidence(),
+  });
   async function seedRows(collection: string, count: number, data: Record<string, unknown>) {
     for (let offset = 0; offset < count; offset += 400) {
       const batch = db.batch();
@@ -84,6 +90,54 @@ integration("real-emulator report repair and upload lifecycle", function () {
     assert.equal((await db.collection("comments").doc("comment").get()).data()!.flagCount, 3);
   });
 
+  for (const kind of ["chants", "comments"] as const) {
+    it(`repairs mixed and terminal-only ${kind} report history without skipping ordered targets`, async () => {
+      if (kind === "comments") await db.collection("chants").doc("parent").set(target());
+      for (const id of ["a-mixed", "b-terminal", "c-zero"]) {
+        await db.collection(kind).doc(id).set(target(kind === "comments" ? { chantId: "parent" } : {}));
+      }
+      const reports = db.collection(kind === "chants" ? "reports" : "commentReports");
+      const field = kind === "chants" ? "chantId" : "commentId";
+      for (const id of ["a-mixed", "b-terminal"]) {
+        const states = id === "a-mixed" ? ["pending", "reviewed", "dismissed"] : ["reviewed", "dismissed"];
+        for (const status of states) await reports.doc(`${id}-${status}`).set({ [field]: id, status, reason: "PRIVATE_FIXTURE" });
+      }
+      const beforeReports = (await reports.get()).docs.map((doc) => doc.data());
+      const covered: string[] = [];
+      let cursor: string | undefined;
+      for (;;) {
+        const page = await plan(kind, cursor);
+        covered.push(...page.targets.map((row) => row.id));
+        await apply(page); await apply(page);
+        if (page.endOfCollection) break;
+        cursor = page.nextCursor!;
+      }
+      assert.deepEqual(covered, ["a-mixed", "b-terminal", "c-zero"]);
+      assert.equal((await db.collection(kind).doc("a-mixed").get()).data()!.flagCount, 1);
+      for (const id of covered.slice(1)) assert.equal((await db.collection(kind).doc(id).get()).data()!.flagCount, 0);
+      for (const id of covered) assert.equal((await db.collection(kind).doc(id).get()).data()!.hidden, false);
+      if (kind === "comments") assert.equal((await db.collection("chants").doc("parent").get()).data()!.commentCount, 3);
+      assert.deepEqual((await reports.get()).docs.map((doc) => doc.data()), beforeReports);
+      assert.equal((await db.collection("reportRepairProgress").get()).docs.filter((doc) => doc.data().state === "complete").length, 3);
+    });
+
+    it(`rejects unknown ${kind} report states in planning and after a plan without writes`, async () => {
+      if (kind === "comments") await db.collection("chants").doc("parent").set(target());
+      await db.collection(kind).doc("target").set(target(kind === "comments" ? { chantId: "parent" } : {}));
+      const report = db.collection(kind === "chants" ? "reports" : "commentReports").doc("bad");
+      const field = kind === "chants" ? "chantId" : "commentId";
+      const page = await plan(kind);
+      for (const status of ["resolved", "unexpected", null, 1, undefined]) {
+        await report.set({ [field]: "target", ...(status === undefined ? {} : { status }) });
+        await assert.rejects(plan(kind), /Malformed report state/);
+        await assert.rejects(apply(page), /Malformed report state/);
+        assert.equal((await db.collection(kind).doc("target").get()).data()!.flagCount, 9);
+        assert.equal((await db.collection("auditLog").get()).size, 0);
+        assert.equal((await db.collection("reportRepairProgress").get()).size, 0);
+      }
+    });
+  }
+
   it("refuses stale control, changed report state, and missing relationships without repair writes", async () => {
     await db.collection("chants").doc("chant").set(target());
     const value = await plan();
@@ -129,6 +183,63 @@ integration("real-emulator report repair and upload lifecycle", function () {
     assert.equal(job.uploadPath, "performance-staging/fan/event-draft/source");
   });
 
+  it("acknowledges permanent cleanup faults only with durable private quarantine through the exported trigger", async () => {
+    const original = { state: "pending", uploadPath: "performance-staging/original/collision/source" };
+    await db.collection("deferredDraftCleanupJobs").doc("collision").set(original);
+    await db.collection("profiles").doc("fan").set({ activePerformanceUpload: { draftId: "collision" } });
+    for (const draftId of ["invalid", "collision"]) {
+      const event = { params: { draftId }, data: { data: () => ({
+        ownerId: "fan", uploadPath: `performance-staging/${draftId === "invalid" ? "victim" : "fan"}/${draftId}/source`,
+        caption: "DO_NOT_RETAIN",
+      }) } };
+      await onPerformanceDraftDeleted.run(event as never);
+      await onPerformanceDraftDeleted.run(event as never);
+    }
+    const rows = (await db.collection("deferredDraftCleanupJobs").get()).docs.map((doc) => doc.data());
+    const blocked = rows.filter((row) => row.state === "blocked");
+    assert.equal(rows.length, 3); assert.equal(blocked.length, 2);
+    assert.deepEqual(blocked.map((row) => row.reason).sort(), ["invalid-identity", "path-conflict"]);
+    for (const row of blocked) assert.deepEqual(Object.keys(row).sort(),
+      ["createdAt", "draftId", "reason", "schemaVersion", "sourceDigest", "state", "updatedAt"]);
+    assert.deepEqual(blocked.map((row) => row.draftId).sort(), ["collision", "invalid"]);
+    assert(!JSON.stringify(blocked).includes("DO_NOT_RETAIN"));
+    assert.deepEqual((await db.collection("deferredDraftCleanupJobs").doc("collision").get()).data(), original);
+    assert.equal((await db.collection("profiles").doc("fan").get()).data()!.activePerformanceUpload.draftId, "collision");
+  });
+
+  it("binds evidence to live control and stops expired evidence before readback or another target", async () => {
+    await db.collection("chants").doc("a").set(target());
+    await db.collection("chants").doc("b").set(target());
+    let clock = Date.now();
+    const cutover = repairEvidence(clock);
+    const context = { firestore: db, projectId: "chants-f95b4", sourceSha: sha, cutover,
+      now: () => admin.firestore.Timestamp.fromMillis(clock) };
+    await assert.rejects(planReportRepair({ ...context, kind: "chants", cutover: { ...cutover, generation: 5 } }), /not ready/);
+    await assert.rejects(planReportRepair({ ...context, kind: "chants", cutover: { ...cutover, sourceSha: "b".repeat(40) } }), /not ready/);
+    const value = await planReportRepair({ ...context, kind: "chants" });
+    const invoke = (firestore = db) => applyReportRepair({ ...context, firestore, plan: value, digest: repairDigest(value) });
+    await assert.rejects(applyReportRepair({ ...context, plan: value, digest: repairDigest(value),
+      cutover: { ...cutover, generation: 5 } }), /not ready/);
+    assert.equal((await db.collection("auditLog").get()).size, 0);
+    let calls = 0;
+    const delayed = new Proxy(db, { get(object, property) {
+      if (property === "runTransaction") return async (operation: (transaction: admin.firestore.Transaction) => Promise<unknown>) => {
+        const result = await object.runTransaction(operation);
+        if (++calls === 1) clock += MAX_PAUSE_EVIDENCE_AGE_MS + 1;
+        return result;
+      };
+      const result = Reflect.get(object, property); return typeof result === "function" ? result.bind(object) : result;
+    } });
+    await assert.rejects(invoke(delayed), /stale/);
+    assert.equal((await db.collection("reportRepairProgress").get()).docs[0].data().state, "applied");
+    assert.equal((await db.collection("chants").doc("b").get()).data()!.flagCount, 9);
+    await assert.rejects(planReportRepair({ ...context, kind: "chants" }), /stale/);
+    // Refresh observations without changing the reviewed plan or control.
+    context.cutover = repairEvidence(clock);
+    await invoke();
+    assert.equal((await db.collection("reportRepairProgress").get()).docs.filter((doc) => doc.data().state === "complete").length, 2);
+  });
+
   it("refuses altered audit evidence at readback and leaves the checkpoint incomplete", async () => {
     await db.collection("chants").doc("chant").set(target());
     const value = await plan();
@@ -171,9 +282,9 @@ integration("real-emulator report repair and upload lifecycle", function () {
     await db.collection("operationalControls").doc("v1").update({ generation: 5 });
     await assert.rejects(apply(empty), /maintenance generation/);
     await db.collection("chants").doc("chant").set(target());
-    const value = await plan();
+    const value = await plan("chants", undefined, 5);
     await assert.rejects(applyReportRepair({ firestore: db, projectId: "chants-f95b4", sourceSha: sha,
-      plan: value, digest: "b".repeat(64), now }), /digest differs/);
+      plan: value, digest: "b".repeat(64), now, cutover: repairEvidence() }), /digest differs/);
     assert.equal((await db.collection("chants").doc("chant").get()).data()!.flagCount, 9);
     assert.equal((await db.collection("auditLog").get()).size, 0);
   });

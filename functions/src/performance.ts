@@ -1428,20 +1428,6 @@ export async function handleResolvePerformanceDraftPlayback(params: {
   return { url, expiresAtMs };
 }
 
-export async function cleanupDeletedPerformanceDraft(
-  data: Data | undefined,
-  media: PerformanceMediaGateway
-): Promise<boolean> {
-  if (!data || typeof data.uploadPath !== "string") return false;
-  const ownerId = typeof data.ownerId === "string" ? data.ownerId : "";
-  const match = data.uploadPath.match(
-    /^performance-staging\/([A-Za-z0-9_-]+)\/([A-Za-z0-9_-]+)\/source$/
-  );
-  if (!match || match[1] !== ownerId) return false;
-  await media.remove(data.uploadPath);
-  return true;
-}
-
 export async function cleanupRemovedPerformanceMedia(
   data: Data | undefined,
   media: PerformanceMediaGateway,

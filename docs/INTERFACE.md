@@ -38,6 +38,15 @@ This is the current design contract and decision history for Chants. Read the re
 
 ## Decision log
 
+### 2026-08-31T01:58:33Z Keep preparation and device evidence beside their instructions
+
+- **Surface:** Private launch command center, not the shipped Flutter UI. Reuses the staged guide's visual language and nested task cards; removes completed seeding work and the superseded broad deployment recipe.
+- **Decision:** Stage 0 shows passive local inventory, explicit opt-in discovery and test context. Stage 6 records iPhone/Android results and notes at each journey, with a copyable report. Candidate changes mark prior observations stale; editing a note cannot renew a pass. A Record result button makes an intentional retest record possible without changing the chosen result.
+- **Failure/authority:** Found files do not mean valid configuration. Missing context cannot produce a recorded pass/failure; Blocked is available now. Checkboxes and local results never approve backend, media, destructive tests or release. Clipboard failure says select text manually. Storage refusal keeps the page usable and warns that progress may not survive reload. v2 state is left untouched, not silently imported into changed tasks.
+- **Accessibility:** Semantic details, explicit labels, keyboard focus styling, minimum control sizing and responsive inherited layout. Textareas and output use text/value APIs, not injected HTML. Browser storage is local-only; the guide cannot sanitize secrets typed by its owner.
+- **Evidence:** Static HTML target/label contracts and the actual shipped script exercised with a minimal DOM fixture, including context changes, record, copy refusal and reset under denied storage. Native device inventory found one available physical iOS target without printing identifiers. Automated visual/interactive browser proof is blocked by the local-file URL safety policy and remains open; no alternative browser or server was used to bypass it.
+- **Revisit:** After human inspection at desktop and narrow/enlarged-text sizes, or when the approved rollout changes the test sequence. No app navigation, style token or runtime behavior changes.
+
 ### 2026-08-31T00:49:27Z Keep upload admission recovery explicit
 
 - **Status:** Implemented in source; eight production widget cases pass, final full-suite result in the execution log; device proof remains open.

@@ -13,6 +13,59 @@ This is the chronological evidence trail for substantial engineering work. It re
 
 ## Entries
 
+### 2026-08-31T03:24:55Z Correct the combined independent review in one block
+
+- **Status:** Approved source implementation and packaging, in progress.
+- **Boundary:** Clean PR 26 head fe0ea9232ad7d34250dee9e8429f39e3e36c6188. Claude reviewed PRs 22-26 and reported F1-F5. Prior run 33350239642 passed all eight jobs at the base tree; it does not verify these corrections.
+- **Authority:** Andrew accepted all five corrections, one commit, push and replacement exact-head CI, with one Claude review at the end. No merge, production access, credential inspection, deployment, seed write, signing or device operation.
+- **Observed:** Source diagnosis reproduced reviewed/dismissed report rejection and acceptance of ancient/future cutover evidence. The old cleanup helper has no production caller; seed CI omits typecheck. Permanent cleanup identity failures currently throw from the retry-enabled exported path.
+- **Plan:** Apply the active Lane 2 spec, add real-path and emulator regressions, prove known-bad failure, update affected recovery records, inspect/stage one handoff, push PR 26 and verify its exact CI source/tree.
+- **Constraints:** Preserve owner changes and ignored credentials in other worktrees. Browser visual verification remains open following the earlier policy rejection. No additional feature is required before this review; production and device gates remain separate.
+
+| UTC checkpoint | Check/environment | Result |
+|---|---|---|
+| 03:25-03:30 | New tests on uncorrected behavior | Four demo-Firestore report tests fail on valid terminal-state rejection or invalid resolved acceptance. Two live cleanup tests fail on permanent identity/path exceptions. Emulator first needed approved localhost binding; no production access |
+| 03:30-03:35 | Corrected source, Node 22.23.2 and Java 21 | Functions build and 205 unit tests pass; dedicated demo-Firestore suite passes 18 cases in 25 seconds. Includes exported trigger quarantine and expiry between apply/readback |
+| 03:35 | Seed CI gate mutation, Node 20 | Deliberate seed.ts entrypoint type error produces TS2322. Restored source has no seed diff; full typecheck and all 74 tests pass |
+| 03:36-03:39 | Clock gate mutation and restoration | First unreachable-condition probe failed compilation and is not semantic evidence. A compilable accept-stale mutation fails the injected-clock assertion. Restored build and all 205 unit tests pass |
+| 03:39 | Recovery review | Kept a bounded private draft locator for valid IDs, with null plus digest for malformed IDs, so permanent failures remain investigable without retaining raw event/owner/path. No automatic replay or retention policy added |
+
+- **Final local evidence, 03:42:22Z:** Functions build and all 205 unit tests pass after final locator changes; all 18 demo-Firestore cases pass in 24 seconds. All 19 preparation/guide tests, governance regressions, memory structure, native and launch-services contracts pass. Seed entrypoint is restored with no seed, catalogue, rules, Dart, native or lockfile diff. Other worktrees retain exactly their prior owner changes.
+- **Staged boundary, 03:43Z:** Exactly 21 intended files staged; no unstaged or untracked work. Staged memory, index writing-style and diff checks pass. Source/consumer and failure-path inspection found no additional blocking correction; independent Claude review remains a separate gate.
+- **Current state:** Corrections implemented and locally verified. Staged handoff checks, one correction commit/push and replacement exact-head CI follow; their immutable receipt belongs on PR 26 rather than an invented precommit success claim. Scoped record: docs/changes/2026-08-31-post-combined-review-corrections.md.
+
+### 2026-08-31T02:14:26Z Package device preparation for the combined review
+
+- **Status:** Packaging authorized; commit, push and exact-head clean-runner CI pending at this precommit record.
+- **Authority:** Andrew requested one packaged block, push, CI and a combined Claude review of PRs 22-25 plus this preparation work. No merge, production access, credential inspection, deployment, signing or device installation is authorized.
+- **Boundary:** Branch `codex/v1-device-test-preparation`, parent and current remote main `72a39b1738622f196da7fab5b040a2fc76c18c67`. Fifteen intended staged paths, no unstaged or untracked work; no existing preparation PR. PR 25 is confirmed merged. Original owner changes and guide copies in other worktrees remain out of scope.
+- **Plan:** Refresh packaging status only; recheck the staged contract and 19 focused tests; create one cohesive commit; push normally; open a draft PR to main; verify all eight clean-runner jobs and the exact source/tree attribution. Retain the resulting immutable SHA and CI receipt on the PR after they exist, rather than inventing a precommit success claim.
+- **Evidence carried forward:** Known-bad device/staleness mutations fail at the intended boundary and pass after restoration. Local source, static HTML, native/launch-services and governance checks pass. Executable inputs are unchanged during packaging; no repeated costly local runtime builds or production checks.
+- **Review handoff:** Last independently reviewed base `cb50d3cc966c6a367309c887a8c765891155cf0e` through the final preparation commit. Include PRs 22-25, decision 026, readiness/safety/preparation scoped rationales, seed records, repository overview/rationale, runbook and exact-head CI. Source review remains before production cutover.
+- **Open gates:** Browser policy prevented visual/interactive guide verification. Backend containment/drain, trigger replacement, repair/readback, retained-job replay, providers/domains, signing and device observations still require their separate approvals and evidence. Green CI does not close these gates.
+
+### 2026-08-31T01:45:00Z Prepare local device checks and the combined walkthrough
+
+- **Status:** Implemented, source/logic verified and staged for handoff. Visual/browser verification remains blocked and open. Lane 1, requested by Andrew after merging PR 25.
+- **Baseline:** PR 25 merged at `72a39b1738622f196da7fab5b040a2fc76c18c67`. New worktree `chants-device-test-preparation`, branch `codex/v1-device-test-preparation`. Previous safety source `421463e` passed all eight jobs in run `33346847132`; that does not verify this new block. Independent review since `cb50d3c` is still pending despite the merge.
+- **Plan and footprint:** One dependency-free Node local diagnostic plus focused tests; adopt and update the existing launch command center from the preserved `chants-v1-launch-services` staged artifact; add an ordered, locally recorded walkthrough and issue-copy form. Reuse the existing governance CI job for fast tooling checks, not another workflow. Refresh only affected memory and a scoped rationale.
+- **Acceptance:** Default diagnostic reads repository/config presence and tool locations only, never config contents or credentials. Optional device enumeration is time/output bounded and prints sanitized aggregate results, not device identifiers. Missing, inaccessible, malformed, timed-out and unrequested checks stay distinct from success. The guide separates preparation from reviewed backend, media and destructive-test gates, keeps evidence next to each task, and supports keyboard, narrow layouts, truthful copying and unavailable browser storage. Test data only in browser verification; no account identifiers or secrets in notes.
+- **Preserve:** Existing staged command center and execution log, owner changes in `chants-repo`, the complete catalogue, app/Functions/rules behavior, configuration files and credentials. No production calls, signing, builds, installation, deployment, commit, push or merge in this block. Local OS device discovery may start its own service only when explicitly requested; default diagnostics do not invoke SDK tools.
+- **Review:** Extend the same last-reviewed base through the eventual packaged head, including PRs 22-25 and this preparation block. Keep production containment/drain, report repair, retained-job replay and device observations held until separately approved and observed. Do not widen into feature work or deployment to fill waiting time.
+
+| UTC checkpoint | Action/environment | Result |
+|---|---|---|
+| 01:58:33 | Opt-in bounded iOS enumeration, local Mac | One available physical target and eleven simulators; no names/IDs printed or retained in records. Overall inventory exit 1 correctly reflects absent client/package configuration in this fresh checkout. No build, install, signing or Firebase call |
+| 02:06 | Final focused tooling tests and source contracts | 19 Node tests pass; JS syntax, launch-services contract/self-test, native contract and diff checks pass. Minimal DOM fixture exercises actual guide handlers, not a screenshot or real browser |
+| 02:07 | Known-bad mutations, then restoration | Zero-physical-target success and ignored candidate staleness produce four failing tests. Restoring both source lines returns all 19 tests to green |
+| 02:10 | Adopted-guide content and ownership inspection | Removed inherited config-overwrite recipe; made combined-review timing explicit before rollout; original staged guide retains SHA-256 9ba2dc583e42f9bc4b568041b96438ec37be9110919116f761b67e9df91d9a8a. Other worktree/index changes match their initial owner state |
+| 02:10:26 | Staged checks and static HTML nesting | PASS: staged project memory, index writing style, governance regressions, all 19 focused tests, static nesting and cached diff check. Fifteen intended staged paths; no unstaged/untracked work; HEAD remains 72a39b1 |
+
+- **Browser boundary:** Browser skill local-file navigation was rejected by the URL safety policy before render. No alternate browser, local server or indirect method was used to bypass it. Desktop/narrow/enlarged-text appearance, keyboard and real browser clipboard/storage behavior remain unverified; source/fixture evidence is not a visual pass.
+- **Cost/coverage boundary:** No app, Functions, rules, seed, native project, lockfile or Firebase configuration changed, so no repeated Flutter/Functions/rules/seed suite or native build. Prior exact-head CI belongs only to safety source 421463e. New CI is not yet run.
+- **Artifact:** The maintained private guide and adjacent JS live in this preparation worktree. Original staged/untracked guides were preserved, not deleted or silently migrated; v2 browser progress is untouched. Scoped reasoning is in `docs/changes/2026-08-31-v1-device-test-preparation.md`.
+- **Final state and next:** Staged local block, not committed, pushed, independently reviewed or deployed. Separate packaging authorization can produce exact-head CI and one combined Claude review from cb50d3c through that head. Browser visual/interaction verification and approved backend/device work remain open; no extra feature scope was added while waiting.
+
 ### 2026-08-31T01:06:25Z Package deployment safety for exact-head CI
 
 - **Status:** Packaging authorized; commit/push and replacement CI pending at this precommit record.

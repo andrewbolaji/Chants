@@ -3,6 +3,7 @@
 - **Status:** Accepted in source; packaging is separately authorized, production use is not
 - **Date:** 2026-08-31
 - **Approval:** Andrew approved the deployment-safety specification and its two-lookup Storage amendment on 2026-08-30.
+- **Correction approval:** Andrew accepted the combined-review F1-F5 source correction block on 2026-08-30 local time. Its active contract and scoped rationale record the new quarantine and evidence checks; production remains held.
 - **Scope:** The existing 48 Function identities, direct-write rules, repository seed writers, upload permissions, retained cleanup, and bounded report repair.
 
 ## Context
@@ -23,11 +24,15 @@ The grant binds owner, draft, path, bytes, MIME, generation and a 30-minute life
 
 Event-only deleted-draft cleanup first retains the exact path in private `deferredDraftCleanupJobs/{draftId}`. Paused work stays pending. A completed removal attempt is marked attempted, never permanently cleaned: an admitted transfer can finish late. No mode toggle replays historical jobs. The later rollout must inventory retained paths, choose a bounded replay and retention policy, and prove cleanup after the chosen transfer-drain window.
 
+Permanent invalid identity or a conflicting retained path creates an idempotent blocked record in the same private collection under a reserved colon-plus-digest namespace. It preserves a source digest, syntax-validated draft ID (null otherwise), and fixed reason, not the raw event or an executable path, and cannot overwrite a valid job. A prior block prevents later automatic revival. Database failures still reject for retry; successful quarantine returns a fixed aggregate warning through the actual trigger. Recovery requires authorized private source evidence and an exact-target approval. Legitimate cleanup paths retain owner identity even after account deletion; no TTL or complete identifier-erasure claim is made.
+
 Report repair is a local plan/apply tool, not a deployed endpoint. It pins project, source SHA, maintenance generation and reviewed digest. Pages cover parents, including zero-report parents. Chant pages allow 25 targets; comment pages contain one because comments can share an exact parent-count precondition. Reads refuse overflow at 500 reports or 1,000 visible comments. Repair changes only flags, necessary false-to-true hiding, and the parent visible-comment count.
 
 Counter, parent count, deterministic privacy-safe audit and applied checkpoint commit together. A separate transaction verifies source fingerprints, target, parent and audit before marking complete. Lost acknowledgements resume the same identity. Changed state requires investigation or a new reviewed plan, not automatic widening or unhide.
 
 The cutover validator requires evidence for nine pause surfaces and exactly the two written-event replacements in europe-west2 compute and nam5 events. It never changes traffic, deletes Functions, deploys, repairs automatically or opens admission. Evidence references and coverage booleans are operator attestations, not independent proof of live containment or whole-database completion.
+
+Schema-2 evidence requires UTC containment start and completed-drain observation per surface. Observations must follow at least the declared maximum runtime, be no more than 15 minutes old and not future-dated. The source ceiling forces re-observation, not a presumption of live quiescence; all attestations remain mandatory. Repair checks the actual control generation, source and freshness in each transaction and again before writes. Expiry after apply leaves readback incomplete until fresh observations permit resumption. Old evidence must be refreshed, not silently migrated. Pending, reviewed and dismissed report histories are valid; only pending contributes to counters.
 
 ## Alternatives and consequences
 
@@ -37,6 +42,7 @@ The cutover validator requires evidence for nine pause surfaces and exactly the 
 - The 30-minute slot is deliberate friction. Existing selected media stays available in the form, with pause, occupied-slot, expiry and recovery copy. Expiry bounds new permission, not an in-flight transfer.
 - A one-comment page costs more operator steps but avoids one planned correction invalidating another on the same parent. Never advance a cursor past a failed or unread-back target.
 - Retained cleanup paths include owner identity and require restricted retention. Existing cancelled/rejected draft rows also retain paths; this block does not invent an automatic sweep for every terminal state.
+- Blocked evidence intentionally cannot reconstruct an invalid deleted payload. Operator recovery needs separate authoritative incident evidence; absence of that evidence is a stop, not permission to guess a path. A malformed profile grant similarly requires an approved exact compare-and-set recovery, never inferred permission or silent auto-clear.
 - An operator can still bypass the source interlock through old scripts, console writes, old revisions or a generation rollback. Real containment, drain evidence, bounded replay and source review are production gates.
 
 ## Evidence and revisit triggers

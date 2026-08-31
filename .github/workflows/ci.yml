@@ -26,6 +26,8 @@ jobs:
         run: node scripts/test-launch-services-check.mjs
       - name: Test project governance checks
         run: ./scripts/test-project-governance.sh
+      - name: Test local device preparation and walkthrough guide
+        run: node --test scripts/test-device-readiness.mjs scripts/test-launch-guide.mjs
 
   flutter-test:
     runs-on: ubuntu-latest
@@ -139,6 +141,7 @@ jobs:
           cache: npm
           cache-dependency-path: seed/package-lock.json
       - run: npm ci
+      - run: npx tsc --noEmit
       - run: npm test
 
   rules:

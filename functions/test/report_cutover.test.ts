@@ -1,60 +1,81 @@
 import { strict as assert } from "assert";
-import { assertRepairCutover, CutoverEvidence, PAUSE_SURFACES, REPORT_CUTOVER_TARGETS, reportCutoverNextStep } from "../src/report_cutover";
+import { assertRepairCutover, CutoverEvidence, PAUSE_SURFACES, REPORT_CUTOVER_TARGETS, reportCutoverNextStep, MAX_PAUSE_EVIDENCE_AGE_MS } from "../src/report_cutover";
+import { repairEvidence } from "./fixtures/cutover";
 import { parseRepairArguments } from "../src/report_repair_cli";
 import { repairAudit, repairDigest, validateRepairPlan, REPAIR_BOUNDS } from "../src/report_repair";
 import { auditRedactionForDeletedActor } from "../src/account_deletion";
 
 const sha = "a".repeat(40);
+const NOW_MS = Date.parse("2026-08-31T00:01:01Z");
 function evidence(): CutoverEvidence {
-  return {
-    schemaVersion: 1, projectId: "chants-f95b4", sourceSha: sha, generation: 4, mode: "maintenance",
-    surfaces: PAUSE_SURFACES.map((surface) => ({ surface, evidenceRef: `synthetic/${surface}`,
-      observedAt: "2026-08-31T00:00:00Z", maximumRuntimeSeconds: 60, revisionsContained: true,
-      alternatePathsContained: true, inFlightDrained: true, queuedDeliveryAccounted: true })),
-    legacyTargetsIsolated: false, replacements: [], repairCoverage: { chants: false, comments: false },
-    readbackVerified: false, dependenciesVerified: false,
-  };
+  return { ...repairEvidence(NOW_MS), legacyTargetsIsolated: false, replacements: [] };
 }
+const nextStep = (value: CutoverEvidence) => reportCutoverNextStep(value, NOW_MS);
+const assertReady = (value: CutoverEvidence, sourceSha: string, generation: number) =>
+  assertRepairCutover(value, sourceSha, generation, NOW_MS);
 
 describe("exact report cutover rehearsal", () => {
   it("stays closed through either missing replacement, then requires repair, readback and dependencies", () => {
     const state = evidence();
-    assert.equal(reportCutoverNextStep(state), "isolate-old-targets");
-    assert.throws(() => assertRepairCutover(state, sha, 4));
+    assert.equal(nextStep(state), "isolate-old-targets");
+    assert.throws(() => assertReady(state, sha, 4));
     state.legacyTargetsIsolated = true;
     for (const name of REPORT_CUTOVER_TARGETS) {
-      assert.equal(reportCutoverNextStep(state), `replace-${name}`);
-      assert.throws(() => assertRepairCutover(state, sha, 4));
+      assert.equal(nextStep(state), `replace-${name}`);
+      assert.throws(() => assertReady(state, sha, 4));
       state.replacements.push({ name, sourceSha: sha, computeRegion: "europe-west2", eventLocation: "nam5",
         document: name === "onReportCreated" ? "reports/{reportId}" : "commentReports/{reportId}",
         eventType: "google.cloud.firestore.document.v1.written", active: true });
     }
-    assert.equal(reportCutoverNextStep(state), "repair");
-    assertRepairCutover(state, sha, 4);
+    assert.equal(nextStep(state), "repair");
+    assertReady(state, sha, 4);
     const saved = JSON.parse(JSON.stringify(state)) as CutoverEvidence;
     saved.replacements[0].eventType = "google.cloud.firestore.document.v1.created" as never;
-    assert.equal(reportCutoverNextStep(saved), "replace-onReportCreated");
+    assert.equal(nextStep(saved), "replace-onReportCreated");
     state.repairCoverage = { chants: true, comments: true };
-    assert.equal(reportCutoverNextStep(state), "readback");
+    assert.equal(nextStep(state), "readback");
     state.readbackVerified = true;
-    assert.equal(reportCutoverNextStep(state), "verify-dependencies");
+    assert.equal(nextStep(state), "verify-dependencies");
     state.dependenciesVerified = true;
-    assert.equal(reportCutoverNextStep(state), "eligible-for-explicit-release");
+    assert.equal(nextStep(state), "eligible-for-explicit-release");
     assert.equal(state.mode, "maintenance");
-    assert.throws(() => assertRepairCutover(state, "b".repeat(40), 4));
-    assert.throws(() => assertRepairCutover(state, sha, 5));
+    assert.throws(() => assertReady(state, "b".repeat(40), 4));
+    assert.throws(() => assertReady(state, sha, 5));
   });
 
   it("rejects incomplete containment rather than substituting a quiet-log timeout", () => {
     for (const surface of PAUSE_SURFACES) {
       const state = evidence();
       state.surfaces.find((row) => row.surface === surface)!.inFlightDrained = false;
-      assert.throws(() => reportCutoverNextStep(state), /Pause evidence incomplete/);
+      assert.throws(() => nextStep(state), /Pause evidence incomplete/);
     }
     const state = evidence(); state.mode = "core" as never;
-    assert.throws(() => reportCutoverNextStep(state));
+    assert.throws(() => nextStep(state));
     state.mode = "maintenance"; state.surfaces.pop();
-    assert.throws(() => reportCutoverNextStep(state));
+    assert.throws(() => nextStep(state));
+  });
+
+  it("rejects stale, future, undrained and invalid UTC evidence at an injected clock", () => {
+    const fresh = repairEvidence(NOW_MS);
+    assert.equal(reportCutoverNextStep(fresh, NOW_MS), "repair");
+    const observed = Date.parse(fresh.surfaces[0].observedAt);
+    assert.equal(reportCutoverNextStep(fresh, observed + MAX_PAUSE_EVIDENCE_AGE_MS), "repair");
+    assert.throws(() => reportCutoverNextStep(fresh, observed + MAX_PAUSE_EVIDENCE_AGE_MS + 1), /stale/);
+    for (const name of PAUSE_SURFACES) {
+      for (const change of [
+        { observedAt: "2000-01-01T00:00:00Z" }, { observedAt: "2099-01-01T00:00:00Z" },
+        { observedAt: new Date(NOW_MS + 1).toISOString() },
+        { containmentStartedAt: new Date(observed - 59999).toISOString() },
+        { maximumRuntimeSeconds: 61 }, { observedAt: "2026-02-30T00:00:00Z" },
+        { observedAt: "2026-08-31T00:01:00" }, { containmentStartedAt: "invalid" },
+      ]) {
+        const invalid = repairEvidence(NOW_MS);
+        Object.assign(invalid.surfaces.find((row) => row.surface === name)!, change);
+        assert.throws(() => reportCutoverNextStep(invalid, NOW_MS));
+      }
+    }
+    assert.throws(() => reportCutoverNextStep({ ...fresh, schemaVersion: 1 } as never, NOW_MS));
+    assert.throws(() => reportCutoverNextStep(fresh, NaN));
   });
 });
 

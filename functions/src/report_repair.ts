@@ -2,6 +2,7 @@ import * as admin from "firebase-admin";
 import { createHash } from "crypto";
 import { parseOperationalControl } from "./operational_control";
 import { pendingReportCount, reportAutoHide } from "./report_projection";
+import { assertRepairCutover, CutoverEvidence } from "./report_cutover";
 
 export const REPAIR_PROJECT = "chants-f95b4";
 export const REPAIR_BOUNDS = Object.freeze({ parents: 25, reports: 500, visibleComments: 1000 } as const);
@@ -65,11 +66,16 @@ export function validateRepairPlan(value: unknown): asserts value is RepairPlan 
   if (plan.nextCursor !== (plan.targets[plan.targets.length - 1]?.id ?? plan.startAfter) || plan.endOfCollection !== (plan.targets.length < pageSize(plan.kind))) throw new Error("Invalid repair cursor.");
 }
 
+type RepairContext = {
+  firestore: admin.firestore.Firestore; sourceSha: string; cutover: CutoverEvidence;
+  now: () => admin.firestore.Timestamp;
+};
 async function requireMaintenance(
-  db: admin.firestore.Firestore, transaction: admin.firestore.Transaction, generation?: number,
+  params: RepairContext, transaction: admin.firestore.Transaction, generation?: number,
 ): Promise<number> {
-  const control = parseOperationalControl((await transaction.get(db.collection("operationalControls").doc("v1"))).data());
+  const control = parseOperationalControl((await transaction.get(params.firestore.collection("operationalControls").doc("v1"))).data());
   if (!control || control.mode !== "maintenance" || (generation !== undefined && control.generation !== generation)) throw new Error("Repair requires the exact maintenance generation.");
+  assertRepairCutover(params.cutover, params.sourceSha, control.generation, params.now().toMillis());
   return control.generation;
 }
 
@@ -98,7 +104,7 @@ async function readProjection(db: admin.firestore.Firestore, transaction: admin.
     .where(field, "==", id).limit(REPAIR_BOUNDS.reports + 1));
   if (reports.size > REPAIR_BOUNDS.reports) throw new Error("Report read bound exceeded; no partial count applied.");
   const reportRows = reports.docs.map((doc) => ({ id: doc.id, status: doc.data().status }));
-  if (reportRows.some((row) => row.status !== "pending" && row.status !== "resolved")) throw new Error("Malformed report state; manual review required.");
+  if (reportRows.some((row) => !["pending", "reviewed", "dismissed"].includes(row.status))) throw new Error("Malformed report state; manual review required.");
   const flagCount = pendingReportCount(reportRows);
   const autoHide = reportAutoHide(flagCount, data.hidden);
   const parent = kind === "comments" ? db.collection("chants").doc(data.chantId) : null;
@@ -127,12 +133,12 @@ async function readProjection(db: admin.firestore.Firestore, transaction: admin.
   };
 }
 
-export async function planReportRepair(params: {
-  firestore: admin.firestore.Firestore; projectId: string; sourceSha: string; kind: RepairKind; startAfter?: string;
+export async function planReportRepair(params: RepairContext & {
+  projectId: string; kind: RepairKind; startAfter?: string;
 }): Promise<RepairPlan> {
   validateIdentity(params.projectId, params.sourceSha, params.kind);
   if (params.startAfter !== undefined && !cleanId(params.startAfter)) throw new Error("Invalid repair cursor.");
-  const generation = await params.firestore.runTransaction((transaction) => requireMaintenance(params.firestore, transaction));
+  const generation = await params.firestore.runTransaction((transaction) => requireMaintenance(params, transaction));
   let query = params.firestore.collection(params.kind).orderBy(admin.firestore.FieldPath.documentId()).limit(pageSize(params.kind));
   if (params.startAfter) query = query.startAfter(params.startAfter);
   const page = await query.get();
@@ -140,13 +146,14 @@ export async function planReportRepair(params: {
   for (const document of page.docs) {
     if (!cleanId(document.id)) throw new Error("Unsupported parent identity; manual review required.");
     const target = await params.firestore.runTransaction(async (transaction) => {
-      await requireMaintenance(params.firestore, transaction, generation);
+      await requireMaintenance(params, transaction, generation);
       const projection = await readProjection(params.firestore, transaction, params.kind, document.id);
       return { id: document.id, before: projection.fingerprint, after: projection.after,
         reportFingerprint: projection.reportFingerprint, parentFingerprint: projection.parentFingerprint };
     });
     targets.push(target);
   }
+  assertRepairCutover(params.cutover, params.sourceSha, generation, params.now().toMillis());
   return { schemaVersion: 1, projectId: REPAIR_PROJECT, sourceSha: params.sourceSha, generation,
     kind: params.kind, bounds: REPAIR_BOUNDS, startAfter: params.startAfter ?? null,
     nextCursor: targets[targets.length - 1]?.id ?? params.startAfter ?? null, endOfCollection: targets.length < pageSize(params.kind), targets };
@@ -157,16 +164,15 @@ export function repairAudit(plan: RepairPlan, targetId: string) {
     targetId, detail: "Pending report count reconstructed from stored report state." };
 }
 
-export async function applyReportRepair(params: {
-  firestore: admin.firestore.Firestore; projectId: string; sourceSha: string; plan: unknown; digest: string;
-  now: () => admin.firestore.Timestamp;
+export async function applyReportRepair(params: RepairContext & {
+  projectId: string; plan: unknown; digest: string;
 }): Promise<{ completed: number; nextCursor: string | null; endOfCollection: boolean }> {
   validateRepairPlan(params.plan);
   const plan = params.plan;
   validateIdentity(params.projectId, params.sourceSha, plan.kind);
   if (params.sourceSha !== plan.sourceSha || params.projectId !== plan.projectId || params.digest !== repairDigest(plan)) throw new Error("Repair plan identity or reviewed digest differs.");
   if (plan.targets.length === 0) {
-    await params.firestore.runTransaction((transaction) => requireMaintenance(params.firestore, transaction, plan.generation));
+    await params.firestore.runTransaction((transaction) => requireMaintenance(params, transaction, plan.generation));
   }
   let completed = 0;
   for (const target of plan.targets) {
@@ -174,10 +180,11 @@ export async function applyReportRepair(params: {
     const progressRef = params.firestore.collection("reportRepairProgress").doc(key);
     const auditRef = params.firestore.collection("auditLog").doc(`report-repair-${key}`);
     await params.firestore.runTransaction(async (transaction) => {
-      await requireMaintenance(params.firestore, transaction, plan.generation);
+      await requireMaintenance(params, transaction, plan.generation);
       const progress = await transaction.get(progressRef);
       const audit = await transaction.get(auditRef);
       const projection = await readProjection(params.firestore, transaction, plan.kind, target.id);
+      assertRepairCutover(params.cutover, params.sourceSha, plan.generation, params.now().toMillis());
       if (projection.reportFingerprint !== target.reportFingerprint || projection.parentFingerprint !== target.parentFingerprint) throw new Error("Repair source changed; re-plan the remaining page.");
       if (progress.exists) {
         if (progress.data()?.digest !== params.digest || progress.data()?.after !== target.after ||
@@ -195,10 +202,11 @@ export async function applyReportRepair(params: {
     // A separate transaction provides actual readback. Lost acknowledgement at
     // either commit resumes this same identity; audit creation never duplicates.
     await params.firestore.runTransaction(async (transaction) => {
-      await requireMaintenance(params.firestore, transaction, plan.generation);
+      await requireMaintenance(params, transaction, plan.generation);
       const progress = await transaction.get(progressRef);
       const audit = await transaction.get(auditRef);
       const projection = await readProjection(params.firestore, transaction, plan.kind, target.id);
+      assertRepairCutover(params.cutover, params.sourceSha, plan.generation, params.now().toMillis());
       if (!progress.exists || progress.data()?.digest !== params.digest || progress.data()?.after !== target.after ||
           !["applied", "complete"].includes(progress.data()?.state) ||
           !audit.exists || repairDigest({ ...audit.data(), createdAt: null }) !== repairDigest({ ...repairAudit(plan, target.id), createdAt: null }) ||

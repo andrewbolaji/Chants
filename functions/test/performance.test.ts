@@ -1,6 +1,7 @@
 import { beforeEach, describe, it } from "mocha";
 import * as assert from "assert";
 import * as admin from "firebase-admin";
+import { createHash } from "crypto";
 import { handleDeletedDraftCleanup } from "../src/deferred_draft_cleanup";
 import { UPLOAD_GRANT_LIFETIME_MS } from "../src/upload_grant";
 import {
@@ -26,7 +27,6 @@ import {
   parsePerformanceComment,
   performanceMentionHandles,
   parseModeratePerformance,
-  cleanupDeletedPerformanceDraft,
   cleanupRemovedPerformanceMedia,
 } from "../src/performance";
 
@@ -402,6 +402,57 @@ describe("performance admission", () => {
     assert.strictEqual(objectExists, false);
     assert.deepStrictEqual(Object.keys(db.get("deferredDraftCleanupJobs", "draft-1")!).sort(),
       ["createdAt", "draftId", "schemaVersion", "state", "updatedAt", "uploadPath"]);
+  });
+
+  it("durably blocks invalid cleanup identities on the live handler without media or grant changes", async () => {
+    const grant = { draftId: "draft-1" };
+    db.set("profiles", "fan", { activePerformanceUpload: grant });
+    const cases = [
+      { draftId: "draft-1", data: { ...awaitingDraft(), ownerId: "victim" } },
+      { draftId: "invalid/identity", data: awaitingDraft() },
+      { draftId: "wrong-path", data: { ...awaitingDraft(), uploadPath: "performance-staging/fan/different/source" } },
+      { draftId: "bad-owner", data: { ...awaitingDraft(), ownerId: null } },
+    ];
+    for (const input of cases) {
+      let timestamp = NOW;
+      const invoke = () => handleDeletedDraftCleanup({ ...input, firestore: db.firestore, now: () => timestamp, remove: media.remove.bind(media) });
+      assert.strictEqual(await invoke(), "blocked");
+      const sourceDigest = createHash("sha256").update(input.draftId).digest("hex");
+      const key = `blocked:${sourceDigest}`;
+      const record = db.get("deferredDraftCleanupJobs", key)!;
+      assert.deepStrictEqual(record, { schemaVersion: 1, sourceDigest,
+        draftId: input.draftId === "invalid/identity" ? null : input.draftId, state: "blocked",
+        reason: "invalid-identity", createdAt: NOW, updatedAt: NOW });
+      timestamp = admin.firestore.Timestamp.fromMillis(NOW.toMillis() + 1000);
+      assert.strictEqual(await invoke(), "blocked");
+      assert.deepStrictEqual(db.get("deferredDraftCleanupJobs", key), record);
+      assert.strictEqual(db.get("deferredDraftCleanupJobs", input.draftId), undefined);
+    }
+    // A later well-shaped delivery cannot silently clear a prior block.
+    assert.strictEqual(await handleDeletedDraftCleanup({ draftId: "draft-1", data: awaitingDraft(),
+      firestore: db.firestore, now: () => NOW, remove: media.remove.bind(media) }), "blocked");
+    assert.deepStrictEqual(media.removed, []);
+    assert.deepStrictEqual(db.get("profiles", "fan")!.activePerformanceUpload, grant);
+  });
+
+  it("preserves conflicting cleanup work, quarantines once, and retries database failures", async () => {
+    const original = { schemaVersion: 1, uploadPath: "performance-staging/other/draft-1/source", state: "pending" };
+    db.set("deferredDraftCleanupJobs", "draft-1", original);
+    db.set("profiles", "fan", { activePerformanceUpload: { draftId: "draft-1" } });
+    const invoke = (firestore = db.firestore) => handleDeletedDraftCleanup({ draftId: "draft-1",
+      data: awaitingDraft(), firestore, now: () => NOW, remove: media.remove.bind(media) });
+    const unavailable = new Proxy(db.firestore, { get(object, property) {
+      if (property === "runTransaction") return async () => { throw Error("database unavailable"); };
+      return Reflect.get(object, property);
+    } });
+    await assert.rejects(invoke(unavailable), /database unavailable/);
+    assert.strictEqual(await invoke(), "blocked");
+    assert.strictEqual(await invoke(), "blocked");
+    assert.deepStrictEqual(db.get("deferredDraftCleanupJobs", "draft-1"), original);
+    const key = "blocked:" + createHash("sha256").update("draft-1").digest("hex");
+    assert.strictEqual(db.get("deferredDraftCleanupJobs", key)!.reason, "path-conflict");
+    assert.deepStrictEqual(db.get("profiles", "fan")!.activePerformanceUpload, { draftId: "draft-1" });
+    assert.deepStrictEqual(media.removed, []);
   });
 
   it("creates a private allowlisted upload ticket and snapshots chant identity", async () => {
@@ -985,15 +1036,5 @@ describe("performance admission", () => {
       now: () => NOW,
     }), (error: { code?: string }) => error.code === "permission-denied");
 
-    assert.strictEqual(await cleanupDeletedPerformanceDraft(
-      awaitingDraft(), media
-    ), true);
-    assert.deepStrictEqual(media.removed, [
-      "performance-staging/fan/draft-1/source",
-    ]);
-    assert.strictEqual(await cleanupDeletedPerformanceDraft({
-      ownerId: "victim",
-      uploadPath: "performance-staging/fan/draft-1/source",
-    }, media), false);
   });
 });
