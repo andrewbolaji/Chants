@@ -56,4 +56,4 @@ Flutter, native project files, rules, catalogue and dependencies are unchanged. 
 
 Andrew owns the next production amendment: exact legacy containment/drain, timeout values, target replacement, complete repair coverage/readback, retained-job inventory and bounded replay, retention, resource limits and explicit admission transitions. No source test proves those live facts.
 
-One focused Claude closure review follows the finished correction and exact CI. No extra feature is needed before that review. Backend rollout, provider/domain/signing setup, the iOS/Android walkthrough and public-launch evidence remain later gates.
+Closure, 2026-08-31: correction commit `2d362a2709ccdc1dd8b18bedea9d72b432f3556b` passed all eight jobs in run `33354752226`. Claude independently verified that exact head/tree and closed F1-F5 in the [combined closure and Call-Ups review](https://claude.ai/code/artifact/2d4276b6-e5d2-4ab3-aa43-4ca7ae3c19e7). The new Call-Ups tree has separate local and CI evidence; this receipt does not certify its later changes. Backend rollout, provider/domain/signing setup, the iOS/Android walkthrough and public-launch evidence remain later gates.

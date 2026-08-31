@@ -5,7 +5,6 @@ import 'package:chants/app/theme.dart';
 import 'package:chants/data/models/chant.dart';
 import 'package:chants/data/models/comment.dart';
 import 'package:chants/data/models/comment_like.dart';
-import 'package:chants/data/models/player.dart';
 import 'package:chants/data/models/saved_songbook.dart';
 import 'package:chants/data/models/team.dart';
 import 'package:chants/data/models/user_profile.dart';
@@ -50,8 +49,8 @@ class _ChantRepository extends Mock implements ChantRepository {
 
 class _PlayerRepository extends Mock implements PlayerRepository {
   @override
-  Stream<List<Player>> playersForTeamStream({required String teamId}) {
-    return Stream.value(const []);
+  Stream<PlayerBrowseSnapshot> teamBrowseStream({required String teamId}) {
+    return Stream.value(PlayerBrowseSnapshot(players: const []));
   }
 }
 

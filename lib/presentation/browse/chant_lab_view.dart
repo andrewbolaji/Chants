@@ -19,6 +19,7 @@ class ChantLabView extends StatefulWidget {
   final DateTime now;
   final ValueChanged<Chant> onChantTap;
   final VoidCallback? onStartChant;
+  final Widget? callUp;
 
   const ChantLabView({
     super.key,
@@ -32,6 +33,7 @@ class ChantLabView extends StatefulWidget {
     required this.now,
     required this.onChantTap,
     this.onStartChant,
+    this.callUp,
   });
 
   @override
@@ -55,6 +57,7 @@ class _ChantLabViewState extends State<ChantLabView>
         : rankBrowseNew(widget.chants);
 
     final items = <Widget>[
+      ?widget.callUp,
       const Padding(
         padding: EdgeInsets.fromLTRB(
           Spacing.lg,

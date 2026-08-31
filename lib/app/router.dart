@@ -123,6 +123,7 @@ class AppRouter {
             player: args['player'] as Player,
             sportId: args['sportId'] as String?,
             competitionId: args['competitionId'] as String?,
+            openChantLab: args['openChantLab'] as bool? ?? false,
           ),
         );
       case chantDetail:
@@ -136,7 +137,7 @@ class AppRouter {
         );
       case submitChant:
         final args = settings.arguments as Map<String, String?>;
-        return MaterialPageRoute(
+        return MaterialPageRoute<Chant>(
           builder: (_) => SubmitChantScreen(
             teamId: args['teamId']!,
             sportId: args['sportId']!,

@@ -12,6 +12,15 @@ This is durable, evidence-backed project memory. It prevents the same failure or
 
 ## Entries
 
+### 2026-08-31T05:37:26Z Live UI fixtures must preserve stream lifetime
+
+- **Status:** promoted
+- **Scope:** Flutter goldens for screens that distinguish active data from a completed subscription.
+- **Observed:** Stream.value supplied valid club data, then completed. TeamScreen correctly removed Call-Ups, so two main club screenshots passed while omitting an eligible player's invitation.
+- **Evidence/control:** `songbook_chant_lab_golden_test.dart` now asserts the invitation and player before each screenshot. Those assertions failed with the old fixture. Controllers keep both streams open until the screen is disposed, then close during teardown.
+- **Rule:** Match the production stream's lifetime as well as its values and metadata. Assert the important semantic state before generating or accepting a golden; pixels alone can approve the wrong state.
+- **Revisit:** Changes to subscription completion, snapshot authority or fixture lifecycle. The runtime closed-stream guard remains independently tested.
+
 ### 2026-08-31T00:49:27Z Passing rules emulators do not prove cross-service quotas
 
 - **Status:** promoted
@@ -248,6 +257,7 @@ This is durable, evidence-backed project memory. It prevents the same failure or
 - **Evidence:** Draft PR 4 workflow run `32541324140`, draft PR 7 workflow run `32587305522`, draft PR 8 workflow run `32594555589`, draft PR 9 workflow run `32794917851`, and the focused local comparator test.
 - **Learning:** Exact pixels are too strict across renderers, but removing visual checks would hide real regressions. Use a documented, measured tolerance with a known-bad test that proves the boundary still rejects material changes.
 - **Applied control:** `test/helpers/tolerant_golden_file_comparator.dart` keeps a 1.5% default. The measured share-detail test opts into 1.9%, the full-screen browse test into 2.2%, and the Saved Songbook test into 2.3%, while the comparator test proves a small synthetic difference passes and a fully changed image fails.
+- **2026-08-31 follow-up:** Four Call-Ups/main-club images exceeded their existing threshold on Ubuntu Flutter 3.47.2. Run `33362066687` retained the actual and difference PNGs, which showed glyph/curve-edge variation with matching content/layout. Those four tests now select inspected, checksummed Linux references alongside the existing macOS references, without increasing any tolerance. Independent viewport cases and failure-only artifact retention preserve diagnosis; `test/presentation/browse/goldens/linux/README.md` owns provenance.
 - **Revisit when:** A pinned renderer or platform-specific baselines make exact comparison stable, or observed benign drift approaches a test's measured boundary.
 - **Related:** `.github/workflows/ci.yml`
 

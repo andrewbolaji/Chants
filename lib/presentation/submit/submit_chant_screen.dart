@@ -138,7 +138,7 @@ class _SubmitChantScreenState extends ConsumerState<SubmitChantScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Nice one. It is live in Chant Lab.')),
       );
-      Navigator.pop(context);
+      Navigator.pop(context, chant);
     } catch (error) {
       if (!mounted) return;
       final message = error.toString();
