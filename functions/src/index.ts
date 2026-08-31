@@ -506,11 +506,12 @@ export const resolvePerformanceDraftPlayback = onCall(
 export const onPerformanceDraftDeleted = onDocumentDeleted(
   { document: "performanceDrafts/{draftId}", region: "europe-west2", retry: true },
   async (event) => {
-    await handleDeletedDraftCleanup({
+    const disposition = await handleDeletedDraftCleanup({
       draftId: event.params.draftId, data: event.data?.data(), firestore: db,
       remove: (path) => performanceMediaGateway().remove(path),
       now: () => admin.firestore.Timestamp.now(),
     });
+    if (disposition === "blocked") logger.warn("draft-cleanup-blocked", { action: "operator-review-required" });
   }
 );
 

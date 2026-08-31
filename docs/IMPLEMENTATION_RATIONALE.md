@@ -1,6 +1,6 @@
 # Repository implementation rationale
 
-This document explains the current Chants repository through merged PR 25 `72a39b1` and the local device-test preparation block, including inherited systems, creator/authentication, Living Songbook and the completed live catalogue. It is a reviewer map, not proof that source is independently reviewed, deployed or release-ready. Decision 026 and `docs/changes/2026-08-31-v1-deployment-safety-and-report-cutover.md` own the control, upload and repair reasoning. `docs/changes/2026-08-31-v1-device-test-preparation.md` owns the local-only helper and private walkthrough guide; browser visual verification remains open.
+This document explains the current Chants repository through PR 26 preparation at `fe0ea92` and its combined-review corrections, including inherited systems, creator/authentication, Living Songbook and the completed live catalogue. `docs/changes/2026-08-31-post-combined-review-corrections.md` owns F1-F5 closure evidence. It is a reviewer map, not proof that source is independently reviewed, deployed or release-ready. Decision 026 and `docs/changes/2026-08-31-v1-deployment-safety-and-report-cutover.md` own the control, upload and repair reasoning. `docs/changes/2026-08-31-v1-device-test-preparation.md` owns the local-only helper and private walkthrough guide; browser visual verification remains open.
 
 ## Document identity and completeness
 
@@ -244,7 +244,8 @@ The launch-services block provides bounded staged-object cleanup and the privacy
 
 | Command or probe | Result |
 |---|---|
-| Deployment-safety source block | PASS: Node 22.23.2 production build, 202 unit tests, 12 dedicated demo-Firestore transaction cases, 74 seed tests/typecheck, 173 rules/source-budget cases, 493 Flutter tests and zero analyzer issues. Staged checks are recorded in the current execution entry. No current exact-head CI or independent review yet |
+| Combined-review correction | PASS locally: Functions build, 205 unit tests, 18 demo-Firestore transaction cases and 74 seed tests/typecheck. Changed behavior has pre-fix or known-bad evidence. Replacement exact-head CI is recorded on PR 26 after packaging, not presumed here |
+| Reviewed preparation base | Claude reviewed cb50d3c through fe0ea92. Run 33350239642 passed all eight jobs at the fe0ea92 tree, including 493 Flutter, 202 Functions, 12 transactions, 74 seed and 173 rules cases. That run excludes the correction |
 | Prior readiness exact-head CI | PASS: all eight jobs in run `33340779709` at `d7b8b6fe9c421e321ada2790c9410d52f1f81cc8`; excludes the current safety working tree |
 | Backend readiness on isolated Node 22.23.2/npm 10.8.2 | PASS at readiness implementation: locked Functions install, production build, test build and 163 tests. All dependency records unchanged, compiled export count 48. Subsequent exact-head CI at `d7b8b6f` is recorded separately above |
 | Backend readiness authority and static checks | PASS: 168 local Firestore/Storage tests on Homebrew OpenJDK 26.0.2 with Node 20, rules TypeScript, zero-issue Flutter analysis, native and launch-services checks, and governance regressions. Initial missing Mocha was resolved with unchanged-lock install; no rule or test source changed |
@@ -280,13 +281,13 @@ The actual 2026-08-30 baseline is nine Node 20 Functions from July, old Firestor
 
 `docs/changes/2026-08-30-v1-backend-rollout-readiness.md` owns the live baseline and proposed groups. The 2026-08-31 safety record adds source admission, grant authority, deferred cleanup and bounded repair. No overlap with old report incrementers is approved. Rules and new wrappers cannot fence external Admin writers or cancel already admitted work. Production needs verified containment/drain, exact replacements, full page coverage/readback, ready dependencies and explicit reopening. Bucket location, IAM/resource limits, retained backlog/replay, retention and smoke identities remain separate decisions.
 
-The next consolidated Claude review covers `cb50d3cc966c6a367309c887a8c765891155cf0e` through the final exact-head-green safety source, including PRs 22-25 and this block. It precedes backend writes; actual deployment and device observations receive a subsequent evidence closure. Current source changes admission and cleanup retention without a new live proof.
+Claude reviewed cb50d3c through fe0ea92, covering PRs 22-26. The next review is the F1-F5 correction range from fe0ea92 through the replacement exact-head-green PR 26 head. It still precedes backend writes; actual deployment and device observations need subsequent evidence closure.
 
 ## Documentation consistency
 
 | Record | Current meaning |
 |---|---|
-| `docs/CHANGE_SPEC.md` | Approved deployment-safety source contract and Storage amendment, not packaging or production authorization |
+| `docs/CHANGE_SPEC.md` | Approved post-combined-review correction and packaging contract, not production or merge authorization |
 | Six current change records dated 2026-08-27 through 2026-08-29 | Creator implementation, takedown correction, launch authentication extension, post-auth correction, final minor closure, and V1 launch services |
 | Decisions 017 through 026 | Shell, creator, performance, public, social, safety, source eligibility, verified identity, staged launch integrity, Living Songbook and operational admission |
 | `docs/INTERFACE.md` | Current launch, Stage, creator, conversation, moderation, and inherited interaction contract |
@@ -298,9 +299,9 @@ The next consolidated Claude review covers `cb50d3cc966c6a367309c887a8c765891155
 | Item | Consequence | Revisit trigger |
 |---|---|---|
 | Control generation has no source writer | Admin must increase generation on every transition; readers cannot enforce historical monotonicity | Every production control change |
-| Deferred cleanup has no automatic historical replay | Pending or attempted paths survive, but a mode toggle is not cleanup or proof against late admitted bytes | Before workers/public media open; inventory, bounded replay, drain and retention plan |
+| Deferred cleanup has no automatic historical replay or TTL | Pending/attempted paths retain owner identifiers after deletion; permanent faults retain a minimal blocked record with a validated draft locator but no executable path. A mode toggle is not cleanup or complete erasure | Before workers/public media open; private inventory, exact recovery, bounded replay, drain and retention plan |
 | Cancelled/rejected drafts retain paths | Existing best-effort cancellation and daily awaiting/cleanup scanner do not cover every terminal state | Before public media, choose explicit bounded cleanup |
-| Repair evidence is operator-attested | Validator does not prove live containment, observation freshness or exhaustive page coverage | Separate Lane 3 production approval |
+| Repair evidence is operator-attested | Schema-2 timestamp age, drain interval and live generation are checked; the truth of observations and exhaustive coverage remain unproved | Separate Lane 3 production approval |
 | Manual media review | Queue can stall | Before public beta and when response time crosses the chosen target |
 | Following query cap | More than 30 followed creators are not represented in one V1 page query | When real accounts cross the cap |
 | Signed URL residual | Hide is not instantaneous for an already issued public two-minute or in-app ten-minute URL | When risk requires stronger revocation |

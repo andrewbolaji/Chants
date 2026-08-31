@@ -3,7 +3,7 @@ import { execFileSync } from "child_process";
 import { readFileSync, writeFileSync, lstatSync, realpathSync } from "fs";
 import { dirname, isAbsolute, resolve, sep } from "path";
 import { applyReportRepair, planReportRepair, REPAIR_PROJECT, repairDigest, RepairKind, validateRepairPlan } from "./report_repair";
-import { assertRepairCutover, CutoverEvidence } from "./report_cutover";
+import { reportCutoverNextStep, CutoverEvidence } from "./report_cutover";
 
 export function parseRepairArguments(args: string[]) {
   const values: Record<string, string> = {};
@@ -50,7 +50,10 @@ async function main(args: string[]): Promise<void> {
   // These are operator-reviewed attestations, not a claim that this CLI can
   // independently prove live revision, traffic, IAM, or in-flight containment.
   const evidence = readPrivateJson(values["--cutover"]) as CutoverEvidence;
-  assertRepairCutover(evidence, sourceSha, evidence.generation);
+  const next = reportCutoverNextStep(evidence);
+  if (evidence.sourceSha !== sourceSha || next === "isolate-old-targets" || next.startsWith("replace-")) {
+    throw new Error("Report cutover is not ready for repair.");
+  }
   let plan: unknown;
   if (mode === "apply") {
     plan = readPrivateJson(planPath); validateRepairPlan(plan);
@@ -61,15 +64,15 @@ async function main(args: string[]): Promise<void> {
   }) }, "report-repair");
   try {
     const firestore = app.firestore();
+    const now = () => admin.firestore.Timestamp.now();
     if (mode === "plan") {
       const result = await planReportRepair({ firestore, projectId: REPAIR_PROJECT, sourceSha,
-        kind: values["--kind"] as RepairKind, startAfter: values["--after"] });
-      if (result.generation !== evidence.generation) throw new Error("Containment generation changed.");
+        kind: values["--kind"] as RepairKind, startAfter: values["--after"], cutover: evidence, now });
       writeFileSync(planPath, JSON.stringify(result, null, 2) + "\n", { flag: "wx", mode: 0o600 });
       console.log(JSON.stringify({ mode, targets: result.targets.length, digest: repairDigest(result), endOfCollection: result.endOfCollection }));
     } else {
       const result = await applyReportRepair({ firestore, projectId: REPAIR_PROJECT, sourceSha, plan,
-        digest: values["--digest"], now: () => admin.firestore.Timestamp.now() });
+        digest: values["--digest"], cutover: evidence, now });
       console.log(JSON.stringify({ mode, completed: result.completed, endOfCollection: result.endOfCollection }));
     }
   } finally { await app.delete(); }

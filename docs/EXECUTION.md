@@ -13,6 +13,27 @@ This is the chronological evidence trail for substantial engineering work. It re
 
 ## Entries
 
+### 2026-08-31T03:24:55Z Correct the combined independent review in one block
+
+- **Status:** Approved source implementation and packaging, in progress.
+- **Boundary:** Clean PR 26 head fe0ea9232ad7d34250dee9e8429f39e3e36c6188. Claude reviewed PRs 22-26 and reported F1-F5. Prior run 33350239642 passed all eight jobs at the base tree; it does not verify these corrections.
+- **Authority:** Andrew accepted all five corrections, one commit, push and replacement exact-head CI, with one Claude review at the end. No merge, production access, credential inspection, deployment, seed write, signing or device operation.
+- **Observed:** Source diagnosis reproduced reviewed/dismissed report rejection and acceptance of ancient/future cutover evidence. The old cleanup helper has no production caller; seed CI omits typecheck. Permanent cleanup identity failures currently throw from the retry-enabled exported path.
+- **Plan:** Apply the active Lane 2 spec, add real-path and emulator regressions, prove known-bad failure, update affected recovery records, inspect/stage one handoff, push PR 26 and verify its exact CI source/tree.
+- **Constraints:** Preserve owner changes and ignored credentials in other worktrees. Browser visual verification remains open following the earlier policy rejection. No additional feature is required before this review; production and device gates remain separate.
+
+| UTC checkpoint | Check/environment | Result |
+|---|---|---|
+| 03:25-03:30 | New tests on uncorrected behavior | Four demo-Firestore report tests fail on valid terminal-state rejection or invalid resolved acceptance. Two live cleanup tests fail on permanent identity/path exceptions. Emulator first needed approved localhost binding; no production access |
+| 03:30-03:35 | Corrected source, Node 22.23.2 and Java 21 | Functions build and 205 unit tests pass; dedicated demo-Firestore suite passes 18 cases in 25 seconds. Includes exported trigger quarantine and expiry between apply/readback |
+| 03:35 | Seed CI gate mutation, Node 20 | Deliberate seed.ts entrypoint type error produces TS2322. Restored source has no seed diff; full typecheck and all 74 tests pass |
+| 03:36-03:39 | Clock gate mutation and restoration | First unreachable-condition probe failed compilation and is not semantic evidence. A compilable accept-stale mutation fails the injected-clock assertion. Restored build and all 205 unit tests pass |
+| 03:39 | Recovery review | Kept a bounded private draft locator for valid IDs, with null plus digest for malformed IDs, so permanent failures remain investigable without retaining raw event/owner/path. No automatic replay or retention policy added |
+
+- **Final local evidence, 03:42:22Z:** Functions build and all 205 unit tests pass after final locator changes; all 18 demo-Firestore cases pass in 24 seconds. All 19 preparation/guide tests, governance regressions, memory structure, native and launch-services contracts pass. Seed entrypoint is restored with no seed, catalogue, rules, Dart, native or lockfile diff. Other worktrees retain exactly their prior owner changes.
+- **Staged boundary, 03:43Z:** Exactly 21 intended files staged; no unstaged or untracked work. Staged memory, index writing-style and diff checks pass. Source/consumer and failure-path inspection found no additional blocking correction; independent Claude review remains a separate gate.
+- **Current state:** Corrections implemented and locally verified. Staged handoff checks, one correction commit/push and replacement exact-head CI follow; their immutable receipt belongs on PR 26 rather than an invented precommit success claim. Scoped record: docs/changes/2026-08-31-post-combined-review-corrections.md.
+
 ### 2026-08-31T02:14:26Z Package device preparation for the combined review
 
 - **Status:** Packaging authorized; commit, push and exact-head clean-runner CI pending at this precommit record.

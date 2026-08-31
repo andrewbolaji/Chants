@@ -20,7 +20,7 @@ Do not use an all-Functions deploy or ordinary update for the two report handler
 
 Production has only two ready chant indexes, no expected media bucket or Storage rules release, and disabled Storage/Scheduler APIs. Bucket location/provisioning, IAM, retention, resource caps, fourteen index creations, and destructive worker/schedule activation remain owner-approved gates. Firestore and Eventarc are in `nam5`; Functions compute stays `europe-west2`. The data location must not be inferred from the compute region.
 
-The next combined Claude review covers PRs 22-25 and current deployment-safety source since PR 21 `cb50d3cc966c6a367309c887a8c765891155cf0e`. Packaging and exact-head CI are authorized; consult PR 25 for the immutable head/run result. After reviewed source and approved deployment, resume the configured-device catalogue steps below. No additional seed write is needed.
+Claude reviewed PRs 22-26 through `fe0ea9232ad7d34250dee9e8429f39e3e36c6188`. The active correction spec closes F1-F5 in one PR 26 correction; the next review is that correction range and its affected consumers. Consult PR 26 for the exact replacement head/run receipt. Production approval and configured-device inspection remain separate; no additional seed write is needed.
 
 ### Source operational control, not yet deployed
 
@@ -43,6 +43,14 @@ One upload slot per account lasts 30 minutes. The form retains selected media an
 
 The deleted-draft event retains `deferredDraftCleanupJobs/{draftId}` before acknowledgement. Pending means no successful attempt recorded. Attempted means exact-path removal returned, not permanent absence of later bytes. Mode changes do not replay these or existing account/media deletion jobs. Paused-worker logs are aggregate and omit private identifiers.
 
+Permanent invalid identity or path conflict instead records `deferredDraftCleanupJobs/blocked:<sha256(draftId)>`. The fixed warning is `draft-cleanup-blocked`; inspect the private collection under separately authorized operator access. The blocked row keeps only sourceDigest, a syntax-validated draftId (null for an invalid ID), reason, schema/state and first timestamps, not a raw event, owner or executable path. An existing valid job stays untouched. Duplicate events acknowledge the same block; database failure still retries. Do not treat blocked as cleaned, delete its evidence, or replay it as a path.
+
+To investigate a block, use its private draftId locator and match its digest against authorized draft/grant/job evidence. If draftId is null, obtain the original identity from separately retained authoritative incident evidence; the digest alone is not reversible. There is deliberately no raw deleted snapshot in quarantine. If that identity or path ownership cannot be proved from retained authoritative evidence, keep media admission closed for the affected recovery and escalate; never derive a deletion path from a hash or caption. A later well-shaped event cannot silently revive the source. Resolving the block requires a separate exact-target recovery approval, current grant comparison, transfer drain and readback. No automatic repair/clear command is shipped.
+
+Legitimate pending/attempted jobs retain the owner UID inside uploadPath, including after account deletion. No TTL exists. Account-deletion completion therefore does not mean every identifier-bearing operational path is erased. Retention must balance privacy with cleanup of late admitted uploads; deleting these records on an arbitrary timer would lose cleanup authority. The production retention/replay decision is still open.
+
+If a supporter receives `upload-needs-recovery`, inspect the private profile's activePerformanceUpload, current deletion/ban state, draft and retained cleanup evidence under explicit authorization. Preserve the observed generation and exact identity; never mint or backfill a grant from a draft. A malformed grant has no trustworthy expiry, so waiting 30 minutes is not a guaranteed fix. Prove no newer valid slot is being replaced and contain/drain any prior transfer before proposing an exact compare-and-set revocation. Only a separately approved operator correction may clear the bad slot; the normal callable may then issue a fresh grant under current authority. If those facts cannot be proved, remain closed and escalate.
+
 Before workers open, approve read-only inventory, bounded exact replay targets, transfer drain, observation and retention. Include cancelled/rejected draft rows: existing best-effort cancellation and the daily awaiting/cleanup scanner do not sweep every terminal state. Do not discard retained paths or claim final cleanup without approved readback.
 
 ### Report cutover and repair procedure
@@ -50,9 +58,9 @@ Before workers open, approve read-only inventory, bounded exact replay targets, 
 This is source guidance for a future separately approved production operation. Do not run the commands now.
 
 1. Obtain exact-head-green source, the combined Claude review and a Lane 3 production amendment. Rebuild Functions from that clean reviewed checkout. The CLI verifies source HEAD/cleanliness, not provenance of an arbitrarily modified ignored build directory.
-2. Prove each pause surface: client rules, onModerationAction, deleteAccount, mergeChants, report intake, destructive workers, repository Admin, external Admin and legacy report events. Record exact revisions, alternate invocation containment, maximum runtimes, observation references, in-flight drain and queued-delivery disposition.
+2. Prove each pause surface: client rules, onModerationAction, deleteAccount, mergeChants, report intake, destructive workers, repository Admin, external Admin and legacy report events. Record exact revisions, alternate invocation containment, maximum runtimes from deployed settings, containment start, observation references, in-flight drain and queued-delivery disposition.
 3. Keep maintenance at the approved generation. Isolate old targets, then replace only onReportCreated and onCommentReportCreated with reviewed written handlers, europe-west2 compute, nam5 events and original document paths. If either replacement is missing, stay closed and recover forward. No overlapping incrementers or blind rollback.
-4. Prepare private owner-only regular JSON cutover evidence using `functions/src/report_cutover.ts`. References must resolve to real observations. The validator checks attestations, not live IAM/traffic, freshness or whole-database coverage. Plans belong directly in ignored `.private-report-repair/`; inputs must be nonsymlink regular files, owner-only and at most 1 MiB.
+4. Prepare private owner-only regular schema-2 JSON cutover evidence using `functions/src/report_cutover.ts`. Each surface requires UTC containmentStartedAt and observedAt. The observation must be at least maximumRuntimeSeconds after containment began, not future-dated, and no more than 15 minutes old. This is a conservative re-observation ceiling, not a verified cloud timeout or proof of drain. All four containment/drain/queue attestations remain required. Refresh evidence from actual observations, never merely edit its timestamp to pass. Old schema-1 evidence is rejected. Every repair transaction binds source and evidence generation to the actual maintenance control; apply also binds the reviewed plan. The validator cannot inspect live IAM/traffic or prove whole-database coverage. Plans belong directly in ignored `.private-report-repair/`; inputs must be nonsymlink regular files, owner-only and at most 1 MiB.
 5. Plan one page, starting each collection from the beginning. Even plan-only requires both replacement and containment attestations. Replace every quoted placeholder after authorization:
 
 ```bash
@@ -65,7 +73,7 @@ node functions/lib/report_repair_cli.js plan \
   --kind chants
 ```
 
-6. Privately review scope, before/after hashes and exact digest. Pages contain at most 25 chants or one comment; zero-report parents must be covered. Overflow beyond 500 reports or 1,000 visible comments stops the target. Never increase bounds or skip a failure automatically.
+6. Privately review scope, before/after hashes and exact digest. Pages contain at most 25 chants or one comment; zero-report parents must be covered. Pending, reviewed and dismissed are valid report states, but only pending counts. Unknown, missing or resolved states stop the page for investigation. Overflow beyond 500 reports or 1,000 visible comments stops the target. Never increase bounds or skip a failure automatically.
 7. Apply only that reviewed digest. There is no automatic all-pages apply:
 
 ```bash
@@ -78,7 +86,7 @@ node functions/lib/report_repair_cli.js apply \
   --digest "REPLACE_WITH_REVIEWED_64_CHARACTER_DIGEST"
 ```
 
-8. Complete means counter, necessary parent count, deterministic audit and readback all succeeded. After ambiguous acknowledgement, retain the same page/digest and inspect its checkpoint. Changed generation, source, parent or audit stops further work. Never roll generation back to make a stale plan pass; investigate applied/incomplete work and obtain a new reviewed plan if needed.
+8. Complete means counter, necessary parent count, deterministic audit and readback all succeeded. After ambiguous acknowledgement, retain the same page/digest and inspect its checkpoint. Changed generation, source, parent or audit, or expired evidence, stops further work. If evidence expires after apply but before readback, the checkpoint remains applied, not complete. Refresh actual observations before resuming the same compatible plan; never roll generation back to make a stale plan pass. Investigate applied/incomplete work and obtain a new reviewed plan if needed.
 9. After every page target completes, plan the next page using its exact `--after` cursor and a new private filename. Repeat with `--kind comments`. A full-size page requires another explicit page, including an empty terminal page, to prove the end. Preserve the complete start-to-end page chain for both collections. One successful page cannot establish whole-collection coverage.
 10. Independently verify both target inventories, full repair/readback, source-trigger convergence, dependencies, retained-job replay and the approved observation window. Only a separate generation-increasing transition can reopen admission. Historical false hides remain human moderation; repair never unhides.
 
