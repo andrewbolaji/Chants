@@ -13,6 +13,59 @@ This is the chronological evidence trail for substantial engineering work. It re
 
 ## Entries
 
+### 2026-08-31T05:49:31Z Diagnose clean-runner golden differences
+
+- **Packaged boundary:** Commit `ee51faacfc4a2311d011393303c282c83024db6c`, tree `6487aeab63f52d728f4ab560f686af2dda7fed3a`, pushed as draft PR 27 above PR 26. Run `33361604474` has that exact head; synthetic checkout `8ab95bd08bdfaa45b2aa0f5de7547b56826d444a` has the identical tree.
+- **Failure:** Linux Flutter 3.47.2 reports 506 passing tests and two failing golden cases: normal Call-Up 2.25%, main Songbook 2.83%, main Chant Lab 2.74%. All interaction cases passed. The normal Call-Up failure stopped the same test before its enlarged-text image, so that image has no runner evidence yet. Local Flutter 3.44.8 remains green. These percentages alone do not prove benign rendering drift.
+- **Diagnostics:** Downloaded and sanitized the failed job log. The current workflow discards failed PNGs. An installed Docker client has no running daemon; no new local VM was started.
+- **Bounded plan:** Retain only synthetic failure PNGs with the already-used upload action and seven-day retention. Separate the two viewport cases so both run independently. Keep all tolerances, runtime behavior and dependencies unchanged; inspect runner outputs before choosing the smallest correction. Preserve one feature commit by amending only this owned branch and using an exact expected-head push lease. Final replacement CI must run against the final amended head.
+- **Local checkpoint, 05:51:42Z:** All 13 focused cases pass after splitting the two viewport renders. Workflow YAML parses. The upload step is failure-only, has no new credentials or permissions, retains PNGs only, and cannot turn the failed test job green. No new runtime code or baseline changed.
+- **Runner evidence, 05:56:47Z:** Diagnostic head `3ef81c9` in run `33362066687` passed 506 cases and failed three independently runnable golden cases. Failure-image upload succeeded as artifact `9747065673`; downloaded under `/private/tmp/chants-call-ups-linux-evidence-33362066687`. The enlarged image also differs, 2.93%. Inspected all four actual images and four difference views: glyph/curve edges differ, with the same content, geometry, labels and controls. No tolerance increase is needed.
+- **Correction:** Retain the four byte-exact Linux test images as platform-specific references with a checksummed provenance README; keep all macOS references. Choose the matching test-host folder in the two existing tests. Cancel obsolete diagnostic native work before final replacement, retaining the failed evidence and source identity. One final amended commit will carry the complete feature and CI correction.
+- **Final local checkpoint, 05:59:48Z:** Full Flutter suite passes 509 cases in 69 seconds; the count increases only because the two viewport checks now run independently. Log: `/private/tmp/chants-call-ups-final-flutter-test.log`. Analysis is clean. Staged memory/writing and whitespace checks pass; the two changed test files are formatter-clean. Linux reference hashes match the downloaded artifact exactly. The diagnostic checkout tree `7037e725b51c630276a66812ac302b7600bead39` matches source `3ef81c9`. Final amendment/push and its new CI are pending at this checkpoint; the immutable final receipt belongs on PR 27.
+
+### 2026-08-31T05:33:12Z Close Call-Ups review and package the approved feature
+
+- **Status:** Corrections implemented, locally verified and staged for the authorized single commit. Commit, push and new CI are pending at this precommit snapshot; the resulting immutable receipt belongs on the PR.
+- **Authority:** Andrew approved both low corrections, one commit, push and exact-head clean-runner CI. No merge, deployment, live data, credential, signing or device action.
+- **Baseline:** HEAD `2d362a2709ccdc1dd8b18bedea9d72b432f3556b`, reviewed staged tree `91213af707f4c6dc4bd3d3334b7adaea35a1ea0b`, 24 staged paths, no unstaged or untracked files. PR 26 is still open at that head; remote main remains `72a39b1`. No Call-Ups PR exists.
+- **Independent review:** Claude closed F1-F5 and found no new source blocker. Two lows are accepted: global-sounding absence copy over a club-scoped query, and closed mock streams hiding the invitation in the two main club goldens. Metadata notifications are expected; the secondary gold action remains consistent with existing tokens.
+- **Plan and acceptance:** Keep eligibility and runtime stream guards unchanged. Name the club in the card, prove the old copy fails an exact-text check, replace the two golden streams with lifetime-managed live fixtures, prove the old fixtures fail the card-presence assertion, inspect four regenerated images, run full Flutter/analysis and staged governance, then commit once and push a draft stacked PR for CI. Record immutable SHA/run results on the PR after they exist.
+- **Framework:** Current local engineering, delivery and CI standards read. Existing interface, cache, label and cross-platform golden contracts apply; no framework migration or unrelated cleanup.
+
+| UTC checkpoint | Check/environment | Result |
+|---|---|---|
+| 2026-08-31T05:37:26Z | Focused pre-fix Flutter run | Ten passed, two failed at the exact-copy and missing-invitation assertions. Runtime eligibility and closed-stream checks still passed |
+| 2026-08-31T05:37:26Z | Corrections and golden regeneration | Five touched Dart files formatter-clean. Both fixture streams remain open until disposal. Twelve focused tests pass after regeneration; no tolerance or runtime guard change |
+| 2026-08-31T05:39:00Z | Four rendered images inspected | Main club Songbook/Lab, normal Call-Up and 320-pixel 1.8x text inspected. Updated body wraps and actions remain reachable. Normal SHA-256 `290aa259016434c2cc8064739e9b1e746d265b295c76c458a088e38b08f2fd1e`; enlarged `554d8aa0f72220f827b9e47fbbdbdb476b5289b5d4a68712b072d13d4e5020fb`; main Songbook `7cb46ad1ce99d4b19edf8d08bdd8409bdcd42572769b1954be11ac5265f15830`; main Lab `8ef13f51cec4dee0ee9d4be285c31001c8e168f5b0b3c3327fdc23c3250a6662` |
+| 2026-08-31T05:42:21Z | Replacement local verification | `flutter test --no-pub --reporter expanded`: 508 pass in 120 seconds, log `/private/tmp/chants-call-ups-correction-flutter-test.log`. `flutter analyze --no-pub lib test`: no issues. All 15 staged Dart files formatter-clean |
+| 2026-08-31T05:42:21Z | Final diff and staged checks | Memory, writing, governance, native and launch-services checks pass; all 19 preparation/guide regressions pass. Twenty-eight intended staged paths, no unstaged/untracked project files; runtime review delta is only club-name propagation/copy plus an eligibility comment. No backend, rules, seed, native, dependency or CI configuration diff |
+
+- **Review attribution:** Claude's independent report covers the prior staged tree and PR 26 F1-F5 closure. This correction's red/green checks and visual inspection are local follow-up evidence, not a second Claude review. Source/state receipts and exact CI remain separate from merge, deployed health and device proof.
+- **Packaging route:** One commit above `2d362a2`, normal push, draft PR based on `codex/v1-device-test-preparation`. PR 26 remains unmerged. Its CI cannot stand in for the new feature; verify the new run's head SHA and checkout tree before reporting green.
+
+### 2026-08-31T04:25:38Z Build the bounded Chant Call-Ups journey
+
+- **Status:** Implemented, locally verified and staged for one combined Claude review with PR 26 corrections. No commit, push, new PR, merge, production change or device execution.
+- **Boundary:** New worktree `chants-v1-chant-call-ups`, branch `codex/v1-chant-call-ups`, based on PR 26 correction head `2d362a2709ccdc1dd8b18bedea9d72b432f3556b`. PR 26 remains unchanged and unmerged. Its replacement run `33354752226` passed all eight jobs with the head tree verified.
+- **Authority:** Andrew accepted the recommended Call-Ups slice and asked for one combined Claude review when credits return. No new commit, push, merge, production access, seed edit, signing or device operation is authorized by this request.
+- **Baseline:** Player Chant Lab already has a first-idea prompt; club browse owns a complete chant stream and a squad stream. Squad metadata is currently discarded. Creation already checks duplicates and recovers stale prefilled players. No new submission or contest backend is needed.
+- **Plan:** Approved active spec, current-data eligibility and reusable card, exact creation/completion integration, focused and full Flutter verification, render inspection and one staged review handoff. Matchday Mode stays deferred.
+- **Framework:** Read the current local engineering and delivery standards, project profile, interface contract and relevant cache, label, lifecycle, form and golden learnings. Preserve unrelated owner worktrees and the private guide's unresolved browser gate.
+
+| UTC checkpoint | Check/environment | Result |
+|---|---|---|
+| 2026-08-31T04:25:38Z | Local worktree and approved contract | Isolated from PR 26; no owner files or credentials copied |
+| 2026-08-31T04:39:40Z | Actual AppRouter/form integration and narrow layout | Tests reproduced an untyped route-result exception and long-to-short card visibility loss; both corrected before handoff |
+| 2026-08-31T04:46:32Z | Focused Flutter results inspected | 16 passing across Call-Ups, existing club behavior and metadata adapters; additional real disposed-caller regression passed separately |
+| 2026-08-31T04:46:32Z | Local tooling and visual check | Installed locked Flutter dependencies offline; shared SDK cache needed elevated tool execution. No lockfile change. Added only the ignored example client configuration for analysis. Inspected normal and enlarged-text rendered cards. Corrected test-only stream teardown, offscreen tap and viewport/semantics lifecycle issues |
+| 2026-08-31T04:48:39Z | Pre-feature substitution and full regression | Base TeamScreen compiled but failed the live invitation test at its missing target. Automatic restoration completed. Full Flutter suite then passed 508 tests; two test-only braces were added after formatter exposed analyzer hints |
+| 2026-08-31T04:50:15Z | Artifact and scope inspection | Both new goldens inspected. SHA-256 normal: `8fece12b0a78121d5466491f37e1532f5eed107a1fb2b3bc3b0c8cb7fffcd12c`; enlarged: `7fc9f1ac14132385b88fbb39972b6fa6de352b8b64c0505eaa80e886d249100f`. No Functions, rules, seed, native, lockfile, CI or production changes |
+| 2026-08-31T04:53:44Z | Final source and handoff verification | Final full Flutter suite: 508 passed in 55 seconds. Analysis: no issues. All 15 touched Dart files formatter-clean. Staged memory, writing, governance regressions and whitespace checks passed. Twenty-four intended paths staged, no unstaged or untracked project files. Ignored example configuration remains excluded |
+
+- **Review target:** `fe0ea9232ad7d34250dee9e8429f39e3e36c6188` through committed `2d362a2`, plus this staged Call-Ups tree. The external `Chants_Combined_PR26_CallUps_Review.md` handoff records the immutable staged tree after final documentation checks. Prior PRs 22-26 were already reviewed through fe0ea92; review this closure and addition, with affected earlier code as context.
+- **Remaining gates:** Independent Claude review, separately authorized packaging/push/clean-runner CI for the new feature, configured-device walkthrough and existing production launch approvals. The base PR 26 CI run does not certify this new staged tree. No additional feature was started to fill the remaining waiting period.
+
 ### 2026-08-31T03:24:55Z Correct the combined independent review in one block
 
 - **Status:** Approved source implementation and packaging, in progress.

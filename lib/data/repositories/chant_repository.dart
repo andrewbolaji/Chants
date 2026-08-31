@@ -31,6 +31,7 @@ class ChantRepository {
           (snap) => ChantBrowseSnapshot(
             chants: rankChants(snap.docs.map(Chant.fromFirestore).toList()),
             isFromCache: snap.metadata.isFromCache,
+            hasPendingWrites: snap.metadata.hasPendingWrites,
           ),
         );
   }
@@ -73,6 +74,7 @@ class ChantRepository {
           (snap) => ChantBrowseSnapshot(
             chants: rankChants(snap.docs.map(Chant.fromFirestore).toList()),
             isFromCache: snap.metadata.isFromCache,
+            hasPendingWrites: snap.metadata.hasPendingWrites,
           ),
         );
   }
@@ -158,9 +160,11 @@ class LiveChantSnapshot {
 class ChantBrowseSnapshot {
   final List<Chant> chants;
   final bool isFromCache;
+  final bool hasPendingWrites;
 
   ChantBrowseSnapshot({
     required Iterable<Chant> chants,
     this.isFromCache = false,
+    this.hasPendingWrites = false,
   }) : chants = List.unmodifiable(chants);
 }
