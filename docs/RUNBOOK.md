@@ -14,17 +14,19 @@ This runbook describes the source-backed recovery paths that exist today. Dashbo
 
 ### Current backend rollout hold
 
-Read-only inventory on 2026-08-30 established that production is still the July backend, not the reviewed V1 source. See `docs/changes/2026-08-30-v1-backend-rollout-readiness.md` for all nine live identities, pinned predecessor generations/hashes, the 48-name proposed sequence, and explicit stop conditions. Node 22 source verification does not change that live state.
+Read-only inventory on 2026-08-30 established that production is still the July backend, not the reviewed V1 source. The 2026-08-31 07:37 UTC recheck confirmed the same nine identities, source generations and old rules. See `docs/changes/2026-08-30-v1-backend-rollout-readiness.md` for pinned predecessor hashes and `docs/changes/2026-08-31-v1-production-rollout-planning.md` for the latest bounded observations. The proposed sequence is now in `docs/CHANGE_SPEC.md`; it is not permission to execute. Node 22 source verification does not change live state.
 
 Do not use an all-Functions deploy or ordinary update for the two report handlers: the deployed created-only versions blindly increment, while current written handlers rebuild counts. The old live merge endpoint lacks the reviewed stop. Never invoke it or restore that bundle as blanket rollback. Admission, bounded repair and a cutover evidence validator now exist in source under decision 026; actual containment, drain, replacement and repair still require a separate production amendment.
 
 Production has only two ready chant indexes, no expected media bucket or Storage rules release, and disabled Storage/Scheduler APIs. Bucket location/provisioning, IAM, retention, resource caps, fourteen index creations, and destructive worker/schedule activation remain owner-approved gates. Firestore and Eventarc are in `nam5`; Functions compute stays `europe-west2`. The data location must not be inferred from the compute region.
 
-Claude reviewed PRs 22-26 through `fe0ea9232ad7d34250dee9e8429f39e3e36c6188`. The active correction spec closes F1-F5 in one PR 26 correction; the next review is that correction range and its affected consumers. Consult PR 26 for the exact replacement head/run receipt. Production approval and configured-device inspection remain separate; no additional seed write is needed.
+The recheck found zero historical performances, drafts and all three deletion/cleanup job collections; the control document was absent. One profile is not an Auth-user or private-cohort inventory. Firestore PITR and delete protection are off. Artifact Registry now has a one-day DELETE/ANY cleanup policy, unlike the prior no-policy observation; its origin was not established. No settings were changed. Re-observe all facts before an approved live operation.
+
+Claude independently closed PR 26 F1-F5 and reviewed the earlier staged Call-Ups tree. Source and later corrections merged through PR 28 at `42f20dc675a1de4fe85956783774a4cdc67f3a01`; exact-main run `33368497566` passed all eight jobs. The next proposed review covers bounded deployment-preparation code and the exact operational manifest. Production approval and configured-device inspection remain separate; no additional seed write is needed.
 
 ### Source operational control, not yet deployed
 
-The exact private `operationalControls/v1` schema is version 1, positive safe-integer generation, mode maintenance/core/media, and Boolean destructiveWorkersEnabled. No client may read or write it. Source contains readers, not a production control editor.
+The exact private `operationalControls/v1` schema is version 1, positive safe-integer generation, mode maintenance/core/media, and Boolean destructiveWorkersEnabled. No client may read or write it. Source now contains a local read/plan/apply command, not a deployed control endpoint or permission to change production.
 
 | State | New protected work | Existing work |
 |---|---|---|
@@ -36,6 +38,47 @@ The exact private `operationalControls/v1` schema is version 1, positive safe-in
 Increase generation on every approved mode or flag transition, including close and reopen. Never reuse or roll back an earlier generation: it could revive an unexpired upload grant. Readers cannot prove Admin edit history. Media with workers false is invalid and closes admission.
 
 A control read admits an invocation; it does not cancel work already inside its handler. New uploads check control/profile, but admitted transfers and signed URLs may finish. Rules do not fence console writes, old revisions or arbitrary Admin scripts. Quiet logs or a fixed sleep do not prove drain.
+
+### Future operational-control command
+
+Do not run against production until the exact live release is approved. The preparation implementation and unresolved private IAM/recovery checklist are in `docs/changes/2026-08-31-v1-production-rollout-preparation.md`.
+
+Use the final reviewed, completely clean checkout and rebuild locked Functions output with Node 22. The CLI checks HEAD and Git cleanliness, not the provenance of an arbitrarily edited ignored build directory. Record build identity separately. Reuse the ignored `.private-report-repair/` directory for owner-only control plans; do not put credentials or plans in Git. The credential must be an explicitly approved, isolated service-account JSON file for `chants-f95b4`. Firebase CLI login is not that credential. No credential is created by this tool.
+
+Read is the default; spelling it out makes intent clear:
+
+```sh
+node functions/lib/operational_control_cli.js read \
+  --project chants-f95b4 \
+  --source-sha "REPLACE_WITH_REVIEWED_40_CHARACTER_SHA" \
+  --credential "REPLACE_WITH_ABSOLUTE_PRIVATE_CREDENTIAL_PATH"
+```
+
+Plan the initial closed state only if the control is still absent. For subsequent transitions, replace mode/workers only with the separately approved values; the command derives the expected data/version and next generation from the real document.
+
+```sh
+node functions/lib/operational_control_cli.js plan \
+  --project chants-f95b4 \
+  --source-sha "REPLACE_WITH_REVIEWED_40_CHARACTER_SHA" \
+  --credential "REPLACE_WITH_ABSOLUTE_PRIVATE_CREDENTIAL_PATH" \
+  --plan "REPLACE_WITH_ABSOLUTE_PRIVATE_REPORT_REPAIR_CONTROL_PLAN_PATH" \
+  --mode maintenance --workers false
+```
+
+Planning reads only the control and exclusively creates a local 0600 plan file. It never replaces an existing plan. Review its exact target and expected state/version plus the live admission prerequisites. A digest is not a substitute for that approval.
+
+```sh
+node functions/lib/operational_control_cli.js apply \
+  --project chants-f95b4 \
+  --source-sha "REPLACE_WITH_THE_SAME_REVIEWED_SHA" \
+  --credential "REPLACE_WITH_ABSOLUTE_PRIVATE_CREDENTIAL_PATH" \
+  --plan "REPLACE_WITH_THE_SAME_ABSOLUTE_PRIVATE_CONTROL_PLAN_PATH" \
+  --digest "REPLACE_WITH_APPROVED_64_CHARACTER_DIGEST"
+```
+
+Apply creates or changes only `operationalControls/v1`, in one exact-state/version transaction with at most three SDK transaction attempts. It requires separate readback and reports `target-observed`. This proves the current four-field target, not that this invocation authored it. A duplicate or lost-response retry cannot advance a second generation. A different current state/version, malformed control or failed readback stops. Inspect the same plan and current state before deciding to retry; never generate a new transition merely because acknowledgement was lost.
+
+The CLI rejects emulator redirection; emulator tests call the same transaction functions against a fixed demo database instead. It is not an IAM fence, operator approval system, historical audit, malformed-state repair tool or retained-job executor. A later out-of-band deletion/restoration can violate generation history. Keep that boundary restricted and preserve private execution receipts outside the exact-schema document.
 
 ### Upload and retained cleanup recovery
 

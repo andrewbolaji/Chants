@@ -16,7 +16,7 @@ The old Storage upload path also used three distinct Firestore documents. Fireba
 
 Use one private `operationalControls/v1` document: exact schema version 1, positive safe-integer generation, mode maintenance/core/media, and a destructive-worker flag. Missing, malformed or unreadable means closed. Media requires worker readiness. The 48-name `ENDPOINT_ADMISSION` table is checked against compiled endpoints. Nineteen permitted Firestore write expressions check the control first. Existing reads and per-account authority remain.
 
-This is admission control, not cancellation or an Admin-wide lock. Already admitted operations, URLs and uploads may finish. Aggregate/source reconcilers and monitoring remain active so safety state can converge. The merge runtime stop remains unconditional. Every approved mode or flag transition must increase generation; readers validate its shape, not historical monotonicity. No control writer or IAM fence is included.
+This is admission control, not cancellation or an Admin-wide lock. Already admitted operations, URLs and uploads may finish. Aggregate/source reconcilers and monitoring remain active so safety state can converge. The merge runtime stop remains unconditional. Every approved mode or flag transition must increase generation; readers validate its shape, not historical monotonicity. The original safety block included no control writer or IAM fence; the source-only preparation extension below adds the narrow writer.
 
 Co-locate one authoritative `activePerformanceUpload` grant with the owner's private profile. Grant issue reads current account and deletion-job state and commits the draft, budget and grant together. Legacy profiles get explicit `deletionPending: false` only after that transaction confirms no deletion job. No permission is inferred from a legacy draft. Storage now reads control plus profile only.
 
@@ -46,6 +46,12 @@ Schema-2 evidence requires UTC containment start and completed-drain observation
 - An operator can still bypass the source interlock through old scripts, console writes, old revisions or a generation rollback. Real containment, drain evidence, bounded replay and source review are production gates.
 
 ## Evidence and revisit triggers
+
+### Source-preparation extension, 2026-08-31
+
+Andrew separately approved the local production rollout preparation spec. `operational_control_cli.ts` reuses this exact schema, project identity and private-file/source checks. Read is default; plan captures canonical expected data and Firestore update time; explicit digest-approved apply compares both in a transaction, advances exactly once and requires separate target readback. Initial creation must be closed. A duplicate or lost response can report the target observed without attributing its author, never another generation. Unknown fields, no-op transitions, unsafe creation, overflow, stale data/version or unreadable state stop. The plan is local in the existing ignored directory, not another collection or deployed endpoint.
+
+This buys deterministic operator transitions without a control service, audit schema change or automatic rollout. It assumes trusted local files and approved isolated credentials; a digest does not authenticate the human or prove live readiness. External writes/deletion/restoration can still violate generation history. Compiled runtime settings also pin the dedicated account and resource limits, but neither creates IAM grants nor guarantees global serialization or spend. New CLI/manifest and real transaction cases are recorded in `docs/changes/2026-08-31-v1-production-rollout-preparation.md`. Production, private cohort, containment/recovery and retained-work activation remain separate approvals.
 
 `functions/test/operational_gate.test.ts` exercises real wrappers and a deliberately bypassed gate. `test_rules/storage_budget.test.ts` detects a third lookup in a helper, independently of emulator acceptance. Rules tests cover closed/open direct writes and upload bindings. Real-emulator repair tests cover transaction conflicts, lost acknowledgement, altered audit, stale generation, overflow, cursor bounds and retained cleanup. Exact counts and final verification are in the scoped rationale and execution log.
 

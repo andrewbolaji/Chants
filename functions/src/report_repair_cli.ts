@@ -24,18 +24,23 @@ export function parseRepairArguments(args: string[]) {
   return { mode, values };
 }
 
-function readPrivateJson(path: string): unknown {
+export function readPrivateJson(path: string): unknown {
   const stat = lstatSync(path);
   if (!stat.isFile() || stat.isSymbolicLink() || (stat.mode & 0o077) !== 0 || stat.size > 1024 * 1024) throw new Error("Expected an owner-only regular JSON file, at most 1 MiB.");
   return JSON.parse(readFileSync(path, "utf8"));
+}
+
+export function requireReviewedSource(root: string, sourceSha: string,
+  paths = ["functions/src", "firestore.rules", "storage.rules"]): void {
+  if (execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim() !== sourceSha ||
+      execFileSync("git", ["status", "--porcelain", "--", ...paths], { cwd: root, encoding: "utf8" }).trim()) throw new Error("Operation needs the clean reviewed source checkout.");
 }
 
 async function main(args: string[]): Promise<void> {
   const { mode, values } = parseRepairArguments(args);
   const root = resolve(__dirname, "../..");
   const sourceSha = values["--source-sha"];
-  if (execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim() !== sourceSha ||
-      execFileSync("git", ["status", "--porcelain", "--", "functions/src", "firestore.rules", "storage.rules"], { cwd: root, encoding: "utf8" }).trim()) throw new Error("Repair needs the clean reviewed source checkout.");
+  requireReviewedSource(root, sourceSha);
   const privateRoot = resolve(root, ".private-report-repair");
   const planPath = values["--plan"];
   if (dirname(planPath) !== privateRoot || realpathSync(dirname(planPath)) !== privateRoot ||

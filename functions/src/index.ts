@@ -1,4 +1,6 @@
 import * as admin from "firebase-admin";
+import { setGlobalOptions } from "firebase-functions/v2/options";
+import { V1_RUNTIME, SERIAL_WORKER_RUNTIME, MEDIA_VALIDATION_RUNTIME, MONITOR_RUNTIME } from "./runtime_options";
 import { pendingReportCount, reportAutoHide } from "./report_projection";
 import { operationEnabled, requireOperationEnabled } from "./operational_gate";
 import { handleDeletedDraftCleanup } from "./deferred_draft_cleanup";
@@ -78,6 +80,7 @@ import {
   operationalBacklogLog,
 } from "./operations";
 
+setGlobalOptions(V1_RUNTIME);
 admin.initializeApp();
 const db = admin.firestore();
 
@@ -91,6 +94,7 @@ const AUTO_HIDE_THRESHOLD = 3;
 
 export const cleanupAbandonedPerformanceDraftsJob = onSchedule(
   {
+    ...SERIAL_WORKER_RUNTIME,
     schedule: "every day 03:00",
     timeZone: "UTC",
     region: "europe-west2",
@@ -137,6 +141,7 @@ export const cleanupAbandonedPerformanceDraftsJob = onSchedule(
 
 export const monitorOperationalBacklogsJob = onSchedule(
   {
+    ...MONITOR_RUNTIME,
     schedule: "every 15 minutes",
     timeZone: "UTC",
     region: "europe-west2",
@@ -359,7 +364,7 @@ export const createPerformanceDraft = onCall(
 );
 
 export const submitPerformanceDraft = onCall(
-  { region: "europe-west2", timeoutSeconds: 60 },
+  { region: "europe-west2", ...MEDIA_VALIDATION_RUNTIME },
   async (request) => {
     const uid = requireVerifiedUid(request.auth);
     await requireOperationEnabled("submitPerformanceDraft", db);
@@ -389,7 +394,7 @@ export const cancelPerformanceDraft = onCall(
 );
 
 export const moderatePerformance = onCall(
-  { region: "europe-west2", timeoutSeconds: 60 },
+  { region: "europe-west2", ...MEDIA_VALIDATION_RUNTIME },
   async (request) => {
     const actorUid = requireVerifiedUid(request.auth);
     await requireOperationEnabled("moderatePerformance", db);
@@ -504,7 +509,7 @@ export const resolvePerformanceDraftPlayback = onCall(
 );
 
 export const onPerformanceDraftDeleted = onDocumentDeleted(
-  { document: "performanceDrafts/{draftId}", region: "europe-west2", retry: true },
+  { document: "performanceDrafts/{draftId}", region: "europe-west2", retry: true, ...SERIAL_WORKER_RUNTIME },
   async (event) => {
     const disposition = await handleDeletedDraftCleanup({
       draftId: event.params.draftId, data: event.data?.data(), firestore: db,
@@ -609,6 +614,7 @@ export const onProfileAuthorityWrittenForPerformances = onDocumentWritten(
 
 export const onPerformanceMediaDeletionJobWritten = onDocumentWritten(
   {
+    ...SERIAL_WORKER_RUNTIME,
     document: "performanceMediaDeletionJobs/{performanceId}",
     region: "europe-west2",
     retry: true,
@@ -1166,6 +1172,7 @@ export const deleteAccount = onCall(
 
 export const onAccountDeletionJobWritten = onDocumentWritten(
   {
+    ...SERIAL_WORKER_RUNTIME,
     document: "accountDeletionJobs/{uid}",
     region: "europe-west2",
     retry: true,
