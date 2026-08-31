@@ -100,8 +100,8 @@ export async function applyControl(firestore: admin.firestore.Firestore, sourceS
   try {
     await firestore.runTransaction(async (transaction) => {
       const current = fromSnapshot(await transaction.get(ref));
-      // A duplicate may observe its exact target, but cannot attribute the write
-      // to this plan without a separate receipt. Never advance again.
+      // Observing an existing target proves neither authorship nor write access.
+      // A read-capable duplicate needs no mutation. Never advance again.
       if (same(current.control, plan.target)) return;
       if (!same(current, plan.expected)) throw new StaleControlPlan("Control changed; stop and review a fresh plan.");
       if (current.control === null) transaction.create(ref, plan.target);
@@ -109,8 +109,9 @@ export async function applyControl(firestore: admin.firestore.Firestore, sourceS
     }, { maxAttempts: 3 });
   } catch (error) {
     if (error instanceof StaleControlPlan) throw error;
-    // A transport error may follow a commit. Only the separate read below can
-    // establish current target state. No compensating write or automatic retry.
+    // A transport error may follow a commit. Readback alone establishes state,
+    // not write capability; its validation/read error can replace this cause.
+    // Keep raw SDK errors private. No compensating write or automatic retry.
   }
   const observed = await readControl(firestore);
   if (!same(observed.control, plan.target)) throw Error("Control write unconfirmed; inspect state before retrying.");
