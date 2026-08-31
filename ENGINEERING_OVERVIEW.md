@@ -1,6 +1,8 @@
 # Chants engineering overview
 
-This is the current whole-project map through merged PR 24, PR 25 readiness at `d7b8b6f`, and the approved deployment-safety working tree. It includes inherited and unchanged systems and is not a deployment or release-readiness claim. The 2026-08-30 read-only inventory below explicitly separates current source from the actual July deployment. Current block evidence is in `docs/changes/2026-08-31-v1-deployment-safety-and-report-cutover.md`.
+This is the current whole-project map through merged PR 25 `72a39b1` and the local device-test preparation block. It includes inherited and unchanged systems and is not an independent-review, deployment or release-readiness claim. Safety source `421463e` passed all eight jobs in run `33346847132`; that run does not cover the new preparation changes. The 2026-08-30 inventory below separates source from the July deployment. Current reasoning is in the two 2026-08-31 safety and device-preparation records under `docs/changes/`.
+
+The local helper inspects only config-file presence and tool locations by default; optional SDK discovery emits bounded aggregate device states, not identifiers (`scripts/check-device-readiness.mjs :: collectReadiness`). The private command center keeps instructions beside per-platform observations, marks changed-candidate results stale and handles storage/copy failures (`docs/launch-command-center.js :: recordObservation`, `observedStatus`, `copyText`). Neither authorizes production testing. Source/logic verification is complete as recorded in the scoped rationale; visual/browser verification remains unperformed after the browser safety policy rejected the local-file URL.
 
 The active approval contract is `docs/CHANGE_SPEC.md`. Completed reasoning is in `docs/changes/`; durable architectural choices now run through decision 026. `docs/IMPLEMENTATION_RATIONALE.md` is the companion coverage ledger and verification record.
 

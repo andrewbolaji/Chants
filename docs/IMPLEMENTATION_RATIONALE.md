@@ -1,6 +1,6 @@
 # Repository implementation rationale
 
-This document explains the current Chants repository through PR 25 readiness `d7b8b6f` and the approved deployment-safety working tree, including inherited systems, creator/authentication, Living Songbook and the completed live catalogue. It is a reviewer map, not proof that application source is deployed or release-ready. Decision 026 and `docs/changes/2026-08-31-v1-deployment-safety-and-report-cutover.md` own the current control, upload and repair reasoning.
+This document explains the current Chants repository through merged PR 25 `72a39b1` and the local device-test preparation block, including inherited systems, creator/authentication, Living Songbook and the completed live catalogue. It is a reviewer map, not proof that source is independently reviewed, deployed or release-ready. Decision 026 and `docs/changes/2026-08-31-v1-deployment-safety-and-report-cutover.md` own the control, upload and repair reasoning. `docs/changes/2026-08-31-v1-device-test-preparation.md` owns the local-only helper and private walkthrough guide; browser visual verification remains open.
 
 ## Document identity and completeness
 
@@ -27,7 +27,8 @@ This document explains the current Chants repository through PR 25 readiness `d7
 | `firestore.indexes.json` | Yes | Stage, profile, notification, moderation, and deletion query indexes |
 | `firebase.json`, `hosting/` | Yes | Functions, Hosting rewrites, public fallback assets, Firestore and Storage emulator config |
 | `seed/`, `seed_data/` | Yes | Stable IDs, review metadata, dated roster source, 20-club currentness and owner overrides, validation, runtime projection, named-project preflight, writer-free readback, exact guarded player retirement, Admin writes, and counter reconciliation |
-| `.github/`, `scripts/` | Yes | Clean-runner jobs, memory contract, writing, native contract, and governance regressions |
+| `.github/`, `scripts/` | Yes | Clean-runner jobs, memory/writing/native contracts, passive device inventory and opt-in sanitized discovery; focused preparation/guide tests join the existing governance job |
+| Private launch command center | Source/logic inspected; browser visual gate open | Gated local preparation, contextual per-platform observations, stale-result marking and local-only report capture. No server authority or production executor |
 | `test/`, `functions/test/`, `test_rules/` | Yes | Unit, widget, golden, handler, overlap, authority, and lifecycle evidence |
 | Android and iOS projects | Yes in source | Auth plugins, permissions, deep links, entitlements, deployment target, CocoaPods lock, fail-closed release signing, compile fixtures, and remaining SDK or provider gates |
 | Operational admission and repair | Yes in current block | Exact endpoint classification, direct-write control, profile upload grant, deferred cleanup, private plan/apply and evidence validator; no production executor |

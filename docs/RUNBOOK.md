@@ -200,6 +200,27 @@ Crashlytics and general Function-error alerts begin with event detection rather 
 
 ### Run the configured-device catalogue check
 
+#### Local preparation before the live gates
+
+The maintained private guide is `docs/CHANTS_LAUNCH_COMMAND_CENTER.html` with adjacent `docs/launch-command-center.js`. Keep the pair together. Its stage 0 contains local setup commands; stage 6 contains ordered iPhone/Android observations and a copyable report. Do not serve this private guide from public Hosting.
+
+From the checkout containing the helper:
+
+```sh
+node scripts/check-device-readiness.mjs --platform ios
+node scripts/check-device-readiness.mjs --platform android
+# Optional local discovery, no build/install/Firebase calls:
+node scripts/check-device-readiness.mjs --platform ios --devices --json
+```
+
+The default checks file presence/readability and executable locations without reading config contents or invoking SDK tools. `--devices` opts into bounded local discovery, which may start OS/ADB services; only counts and states are emitted. Exit 0 means no inventory issue, 1 means missing/unknown/attention, and 2 means invalid usage. None grants live-test or release authority. Config identity, tool compatibility, provisioning and signing remain unverified. The helper resolves its own checkout, not Terminal's current directory.
+
+The fresh `chants-device-test-preparation` worktree has no copied Firebase configuration or Flutter package setup. The configured files remain in `chants-v1-seed-live-rollout`. Arrange explicit client-configuration/dependency setup before running the new checkout; do not overwrite existing files with examples or access the Admin credential for a device check. Use `flutter devices` and then one explicitly selected target only after the backend and test gates below. Keep the debug session for hot reload; do not archive repeatedly for layout edits.
+
+The guide's result record is self-reported, not release approval. Fill candidate source, backend record and per-platform build references. Context changes make old results stale; notes do not renew a pass. Use Record result after observing/retesting and inspect the copied report for secrets. Browser storage may be unavailable; the page says so. Visual/browser verification of this new guide is pending because Browser Use rejected the local-file URL; source/logic tests are not a substitute.
+
+#### Configured-device catalogue journey
+
 The production seed is exact. This check verifies the mobile presentation and navigation, not the lyrics again. It is not a store-release sign-off.
 
 Before running:

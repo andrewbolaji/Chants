@@ -33,6 +33,8 @@ flutter run
 ./scripts/check-writing-style.sh
 node scripts/check-launch-services.mjs
 node scripts/test-launch-services-check.mjs
+node scripts/check-device-readiness.mjs --platform ios  # passive local inventory, no config reads
+node --test scripts/test-device-readiness.mjs scripts/test-launch-guide.mjs
 
 # After staging an implementation handoff.
 ./scripts/check-project-memory.sh --staged
