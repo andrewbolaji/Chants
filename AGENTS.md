@@ -15,13 +15,14 @@ Read `docs/PROJECT_PROFILE.md` before changing code. Search relevant active entr
 flutter pub get
 flutter test                              # models, services, widgets. Needs no Firebase config.
 
-# Backend suites (Node 20), each self-contained. Verified green here:
-cd functions && npm install && npm test   # Cloud Functions, 146 tests
-cd seed && npm install && npm test        # seed validation and rollout controls, 71 tests
+# Backend suites, each self-contained. Use the package's runtime:
+cd functions && npm ci && npm run build && npm test  # Node 22, 202 unit tests; 12 emulator-only cases skip here
+cd seed && npm install && npm test        # Node 20, seed and rollout controls, 74 tests
 
 # Firestore rules tests need Java plus firebase-tools:
 npm --prefix test_rules install
-firebase emulators:exec --only firestore,storage --project chants-f95b4 "cd test_rules && npm test"  # 165 assertions
+firebase emulators:exec --only firestore,storage --project chants-f95b4 "cd test_rules && npm test"  # 173 tests
+firebase emulators:exec --only firestore --project demo-chants-repair "cd functions && npx mocha --timeout 60000 lib-test/test/report_repair.integration.test.js"  # 12 transaction cases, after Functions test compilation
 
 # To run the actual app you need your own Firebase project:
 cp lib/firebase_options.dart.example lib/firebase_options.dart   # then add real keys
@@ -50,6 +51,7 @@ node scripts/test-launch-services-check.mjs
 - `lib/firebase_options.dart` and the platform Google services files are gitignored by the current setup. They contain Firebase client configuration, not Admin credentials. `flutter test` runs without them, but analyze and run commands that import `lib/main.dart` need a local config. Copy the `.example` and use your own Firebase project.
 - Riverpod providers are hand-written in `lib/app/providers.dart`. There are no annotated providers or generated `.g.dart` files in `lib/`; do not run `build_runner` unless a later approved change introduces code generation deliberately.
 - Counters (score, commentCount, likeCount, flagCount) are owned by Cloud Functions. Never write them from the client; the rules reject it.
+- New protected work requires private `operationalControls/v1`. Missing control is closed. Never create or change it in production without the separate rollout approval. Upload permission is the authoritative private profile grant, not a legacy draft. Read decision 026 and the runbook before changing endpoint classification, draft/account lifecycle, repair, or cleanup.
 - Firestore queries must carry the hidden and removed visibility filters or the rules reject the whole query.
 - Seed content is externally sourced and verified by hand. The pipeline transforms supplied data in place; it never generates or rewrites lyrics or squads. This is the highest-priority standing rule.
 
@@ -70,7 +72,7 @@ node scripts/test-launch-services-check.mjs
 - After `.codex/hooks.json` or a referenced hook script changes, review and trust the new repo-local hook definition through Codex's `/hooks` screen before expecting it to run.
 - Treat persistent schema changes, moderation or authorization changes, external media links, migrations, and cross-service contracts as Lane 2 work. Complete and approve the written change spec before implementation.
 - Project memory must never contain prompts, chain-of-thought, secrets, credentials, personal data, or raw production payloads.
-- CI runs the project-memory structure mode. After staging a handoff, run `./scripts/check-project-memory.sh --staged` manually so implementation changes require a staged `docs/EXECUTION.md` update. A confirmed Lane 0 mechanical change may use `PROJECT_MEMORY_LANE=0`. The writing check scans tracked prose from the Git index, so run it after staging the intended diff.
+- CI runs project-memory checks across the PR or push range with `--range`. After staging a handoff, run `./scripts/check-project-memory.sh --staged` manually so implementation changes require a staged `docs/EXECUTION.md` update. A confirmed Lane 0 mechanical change may use `PROJECT_MEMORY_LANE=0`. The writing check scans tracked prose from the Git index, so run it after staging the intended diff.
 
 ## Definition of done
 

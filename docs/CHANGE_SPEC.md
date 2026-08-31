@@ -1,128 +1,137 @@
-# Change spec: V1 Premier League live seed rollout
+# Change spec: V1 deployment safety and report cutover controls
 
-**Status:** Production catalogue exact; configured-device inspection remains
-**Updated:** 2026-08-30
-**Risk lane:** Lane 2 production data writes with a Lane 3 hold point before the first write
-**Base:** `1a509c80d88bfd92370f3974cd9f2f50c307f519`, merged PR 22
-**Approval:** Andrew approved `V1 Premier League live seed rollout spec` on 2026-08-30, approved the exact Arsenal amendment with owner overrides for Fábio Vieira, Reiss Nelson, and Marli Salmon, then approved `exact Arsenal live reconciliation spec`. After PR 23 merged and its exact-head CI passed, Andrew released the bounded Arsenal production hold point with `23 merged. can continue`, then approved `Leeds United production canary` and `six-group Premier League production widening sequence`.
+**Status:** Approved for source implementation, including the Storage authorization amendment. Production use remains unauthorized.
+**Updated:** 2026-08-31
+**Implementation state:** Implemented and locally verified. Packaging and exact-head CI were authorized on 2026-08-31 UTC; their result is recorded in PR 25 after this precommit snapshot. Independent review and all production actions remain gates.
+**Risk lane:** Lane 2 source controls and emulator rehearsal; actual cutover requires a separate Lane 3 approval
+**Base:** `d7b8b6fe9c421e321ada2790c9410d52f1f81cc8`, draft PR 25
+**Approval:** Andrew confirmed `yes` on 2026-08-30 after the explicit clarification naming this deployment-safety and report-cutover spec, not the prior readiness spec.
+**Prior contract:** The approved readiness spec is preserved at this base. Its inventory and conditional 48-Function sequence remain in `docs/changes/2026-08-30-v1-backend-rollout-readiness.md`.
 
-## Outcome
+## Outcome and authority
 
-- **Problem:** The reviewed 20-club catalogue is merged, but only Arsenal is known to exist in production. Current production identity, exact runtime projection, and post-write readback are not yet proved. The first complete roster-currentness check also found real Arsenal transfer changes plus three cases where the official feed lagged or did not represent the owner's reviewed squad decision. The repository had no readback-only CLI mode, so a successful write command was not sufficient evidence that production matched the source.
-- **Desired behavior:** Refresh only Arsenal's reviewed squad membership while preserving canonical display names and every retained player ID, keep explicit owner membership overrides visible in the currentness gate, prove all planned chant IDs are safe against project `chants-f95b4`, compare the exact runtime projection through a readback-only path that cannot call a writer, write one low-footprint club, verify source-owned runtime fields and orphans, then widen only after the canary is clean.
-- **Non-goals:** No lyric, tune, context, chant source, non-Arsenal club roster, app, Functions, rules, index, authentication, deployment, provider, signing, store, release, automatic orphan deletion, historic-player model, or public evidence change. No credential enters source, logs, prompts, or project memory.
-- **Review boundary:** Seed CLI planning and verification, focused seed tests, the active execution record, this contract, one scoped completion record, and the named Firebase project. Catalogue wording and all unrelated source remain unchanged.
+The app is built, but production still runs the old nine-Function backend. Two old report handlers blindly increment counts; current source reconstructs them. Prepare a verified pause, bounded counter repair, and server-side admission controls so partial rollout cannot admit work without its dependencies.
 
-## Current evidence and source of truth
+Original approval authorizes source implementation, synthetic local/emulator verification and records. Andrew separately authorized one commit, push and exact-head CI on 2026-08-31 UTC. No deployment, production control write, IAM/service change, bucket creation, trigger deletion, account/media deletion, historical-job replay, seed write, provider enablement, device installation, merge or release is authorized.
 
-1. PR 22 merged the reviewed catalogue at `7c95cb60894180724dcfe071a4f4f55a80ca4beb`; exact-head run `33319138653` passed all eight jobs.
-2. The official Fantasy Premier League bootstrap feed refreshed on 2026-08-30 reports the approved 20 clubs and 623 raw player rows. After 17 reviewed display aliases and three explicit owner membership overrides, the reviewed source contains 622 squad rows across those clubs.
-3. Arsenal source adds Bruno Guimarães, Christos Tzolis, Ezri Konsa, and Illan Meslier. It removes Christian Norgaard, Leandro Trossard, and Tommy Setford. Fábio Vieira and Reiss Nelson are not added because the owner confirmed they have left or are leaving. Marli Salmon remains as an owner-confirmed young Arsenal player even though the official feed omits him.
-4. None of the three removed Arsenal players owns a player-linked chant in the reviewed source. Trossard therefore loses no existing content; a future hero or historic chant can use the established club-linked historic-subject path. Retained players keep their existing canonical display names and document IDs.
-5. `seed_data/clubs/` is the content source of truth. Live Firestore is the source of truth for collision, ownership, and orphan state. The readback comparison must project source through `buildSeededChantData` rather than maintain a second runtime schema.
-6. The named-project Arsenal preflight reports all 12 chant targets safe. The all-club preflight reports all 192 targets safe. Both completed without writes.
-7. The production baseline contains the foundation plus Arsenal only. Across the reviewed target it reports 19 missing teams, 598 missing players, 180 missing chants, four missing Arsenal players, 12 Arsenal chants differing only on `origin`, and three departed Arsenal player documents. The three departed documents have zero chant references. No other mismatch or orphan was found.
-8. PR 23 merged the rollout controls at `fa4290505256ab23bf36051e6bc3c943940741e7`. Exact-head CI run `33325900749` passed all eight jobs at reviewed source commit `b3f50990d165f575e460ab58b2a356996c3d5f29`.
-9. The bounded Arsenal production sequence completed against `chants-f95b4`. The normal upsert created the four approved players and reconciled all 12 chants. The guarded transaction then removed only the three approved zero-reference departures. Final readback reports one matching team, 28 matching players, 12 matching chants, and zero missing, mismatching, or orphan rows.
-10. The post-Arsenal Leeds preflight reported all six chant identities safe with no write. The approved canary then created one team, 27 players, and six chants. Immediate readback reports every row matching with zero missing, mismatch, or orphan.
-11. The post-canary all-club preflight reported all 192 chant identities safe with no write. The six approved groups then completed with exact same-group readback after every write.
-12. Final all-club preflight keeps all 192 chant identities safe. Final readback reports 20 matching teams, 622 matching players, 192 matching chants, and zero missing, mismatching, or orphan rows.
-
-## Acceptance criteria and invariants
-
-1. Arsenal source applies exactly the four additions and three removals named above, retains Marli Salmon, and excludes Fábio Vieira and Reiss Nelson. No other club file or chant changes.
-2. A pure roster-currentness check accepts the refreshed feed only when all 20 reviewed club memberships match after explicit display aliases and named owner membership overrides. An unreviewed added, removed, moved, or renamed player fails with a club-scoped difference.
-3. `--preflight-only` remains read-only and first passes for Arsenal, then for all 20 club files against project `chants-f95b4`.
-4. A new `--readback-only` mode performs no sport, competition, team, player, or chant write. It validates exact allowlisted runtime content, expected document IDs, ownership, team linkage, and reported orphans.
-5. Seed and readback modes remain mutually exclusive. Unknown or conflicting flags fail before Firebase work.
-6. The service credential is an ignored local file, targets only `chants-f95b4`, and is never printed or retained in project memory.
-7. Leeds United is the canary because its 27 players plus six chants tie for the smallest new-club document footprint and it has no dependency on a roster alias.
-8. The canary write starts only after clean all-club preflight evidence and an explicit production-write hold-point release.
-9. Canary readback must report exact expected runtime fields, no identity mismatch, and no unexpected orphan before widening.
-10. Remaining clubs are written only from the reviewed source. Each club receives an immediate readback before the next bounded group continues.
-11. Orphans are reported and stop widening. They are never deleted automatically.
-12. Any approved departed-player removal must re-read the exact document identity and require zero current chant references in the same bounded operation. A changed document or new reference fails without deletion.
-
-Invariants:
-
-- Seeded chant IDs and existing Arsenal IDs remain unchanged.
-- A non-system chant can never be overwritten by the seed.
-- Existing counters, moderation fields, timestamps not owned by the seed projection, and engagement documents remain untouched.
-- Offline catalogue provenance never enters unsupported Firestore fields.
-- A failed, timed-out, partial, or ambiguous operation stops the rollout. It is never reported as successful based only on process exit.
-- No cleanup or rollback deletion is implied by this plan.
+No product expansion, dependency update, new permanent public repair endpoint, catalogue/lyric change, or Function rename. Preserve the 48 final identities, compute region, event paths/location, current account authority, and unconditional merge stop.
 
 ## Design
 
-- **Approach:** Extend the existing CLI plan with a readback-only branch and a pure current-roster comparison. Reuse existing validation, stable-ID resolution, and runtime projection. Keep network acquisition and credentials outside the repository.
-- **Interfaces/contracts:** `seed.ts --preflight-only [club.json...]` stays unchanged. `seed.ts --readback-only [club.json...]` reads and compares only. Normal positional club arguments retain their existing write behavior. `seed.ts --retire-approved-arsenal-players` is an exact no-positional-argument writer for the three reviewed departures and cannot be combined with another mode.
-- **Data/migrations:** No schema migration. The source-only Arsenal membership refresh changes three removed and four added player documents in the expected set. Normal seed behavior creates or content-updates through the current allowlist but does not delete departed players. A separate exact allowlisted retirement action fails unless each target still has the expected Arsenal identity and zero chant references. Display aliases preserve reviewed canonical player IDs, and explicit owner membership overrides prevent a lagging feed from undoing settled membership decisions.
-- **Alternatives rejected:** A one-off shell readback would duplicate runtime schema and be difficult to review. Updating public player names to raw FPL field order would create unstable IDs and worse names without a real transfer. Bulk-writing all 19 clubs before a canary would unnecessarily increase blast radius.
+### Approved amendment: Storage lookup budget
 
-## Failure and abuse analysis
+**Approved by Andrew on 2026-08-30.** The pre-build integration check invalidated the original upload portion before runtime edits began.
 
-| Condition | Expected behavior | Evidence |
-|---|---|---|
-| Duplicate or retry | Seed remains idempotent for reviewed identities; readback returns the same result | Existing transaction tests plus canary rerun and readback |
-| Timeout or ambiguous exit | Stop. Run readback-only before deciding whether any retry is needed | Fault-path unit test and operator evidence |
-| Concurrent target creation | Transaction-time chant ownership and team checks reject unsafe overwrite | Existing chant identity tests and live readback |
-| Wrong Firebase project | Abort before queries or writes without printing credential material | Project-ID gate and focused test |
-| Roster member added, removed, or moved | Fail currentness check and update the reviewed source or a named owner override through a new approved content change | Known-bad roster fixture |
-| Exact expected target differs after write | Stop widening and preserve the production row for diagnosis | Readback mismatch test and canary gate |
-| Orphan is reported | Stop widening; prepare a separate reconciliation decision | Readback and existing orphan reporting |
-| Departed player gains a chant reference or changes identity | Refuse deletion and preserve the document | Exact retirement guard and focused regression |
-| Credential missing or rejected | Stop before Firebase access; do not substitute another project or credential | CLI failure and execution record |
+- Firebase documents a maximum of two distinct Firestore document lookups per Storage request. The current `accountIsActive` and `ownsUploadTicket` path in `storage.rules` reads `profiles/{uid}`, `accountDeletionJobs/{uid}`, and `performanceDrafts/{draftId}`. Adding `operationalControls/v1` would require four. Repeated access caching does not combine distinct documents. [Official Storage limits](https://firebase.google.com/docs/rules/rules-behavior#security_rules_limits_1), [cross-service quota explanation](https://firebase.blog/posts/2022/09/announcing-cross-service-security-rules/).
+- The five existing Storage tests pass locally on the unchanged rules, including the successful first-upload case. That is Boolean/behavioral emulator evidence, not proof of the documented production lookup budget. No production upload was attempted; the production impact is inferred from source and the official limit.
+- Simply removing current account checks weakens authority. Mirroring an open global mode asynchronously into tickets does not provide the required immediate check for a newly initiated upload. Adding a separate upload gateway would change the client transfer protocol and expand the endpoint contract.
 
-## Performance and cost
+Recommended bounded amendment, preserving direct Firebase uploads and all 48 Function identities:
 
-- **Workload:** 20 clubs, 623 raw official-feed rows, 622 reviewed squad rows after aliases and owner membership overrides, and 192 chants. The canary covers one team, 27 players, and six chants.
-- **Budget:** Sequential club processing, bounded document reads and writes, no collection-wide cross-club scan, and no automatic retry loop. Expected Firebase cost is negligible at this pre-launch volume, but no zero-cost claim is made.
-- **Measurement:** Record per-club planned, existing, matching, mismatching, and orphan counts without storing raw production documents.
+1. Put one server-owned, versioned `activePerformanceUpload` grant on the existing private account profile. Store only exact ticket bindings: draft identity, owner/path, allowed bytes and MIME, issued/expiry time, and operational-control generation. It is authoritative upload permission, not an asynchronously copied account-status flag. Keep the full content draft in `performanceDrafts`.
+2. Mint the grant atomically with a newly created draft after current account, deletion-job, creator, chant, limit, and global-control checks. Permit one outstanding upload per account, including across devices. An unexpired existing grant causes an actionable rejection rather than silently replacing another upload. Existing uploaded or pending-review videos do not occupy the slot.
+3. Storage upload authorization reads exactly the global control and the owner's private profile. It checks fresh ban, age, policy, explicit deletion state, grant bindings/expiry/generation, metadata, maximum size, type, and first creation. Missing or malformed fields deny. There is no third draft or deletion-job lookup on that path.
+4. Clear the matching grant in the same transaction as submit, cancel, or any transition out of upload eligibility. Deletion acceptance already writes `deletionPending` with its job; extend it to revoke the grant atomically. A ban is immediately observed through the same profile. A stale cleanup must never revoke a newer draft's grant. Inspect every draft mutation/deletion writer and record coverage before claiming this invariant.
+5. Keep deletion-job checks in the server grant issuer and subsequent submit/approval boundaries. Existing jobs or malformed account state cannot obtain a grant. Do not backfill permission from old drafts; legacy tickets without the new grant remain closed and require a fresh authorized attempt. Owner and operator read permissions are not broadened.
+6. Grants last 30 minutes from server issuance, comfortably below the existing 24-hour abandoned-draft cutoff. This bounds permission and slot occupancy, not transfer duration. The existing cancel/retry path remains available; a concurrent request receives the outstanding draft identity so it can be cancelled deliberately. Expiry/revocation prevents a newly authorized request; it does not cancel an already admitted transfer. Retain the original in-flight-work and deferred-cleanup requirements, and test late completion rather than promising instant revocation.
+7. Add an explicit two-document rule dependency check with a known-bad third-document mutation, plus emulator and transactional tests for grant issue, concurrency, tampering, ban/deletion, expiry, close/reopen generation changes, cancellation, submission, and stale cleanup. A green emulator suite alone is insufficient budget evidence. Real Storage smoke testing remains a separately authorized rollout gate.
 
-## Rollout and recovery
+Expected additional footprint: a bounded private-profile field and grant helper, draft/account-deletion/cleanup transactions, Storage rules, focused tests, and any necessary existing upload-screen error handling. No new collection, service, dependency, permanent endpoint, or general multi-upload manager. No lyrics/catalogue changes and no production actions. The original source block resumes under this approved amendment.
 
-1. Apply and locally verify only the approved four-addition, three-removal Arsenal squad refresh and the three named owner membership overrides. Complete.
-2. Verify the ignored credential identifies `chants-f95b4` without printing secret fields. Complete.
-3. Run the refreshed roster-currentness check and require zero membership differences across all 20 clubs. Complete.
-4. Run Arsenal read-only identity preflight. Complete, 12 safe targets.
-5. Run all-club read-only identity preflight. Complete, 192 safe targets.
-6. Run all-club readback-only to establish the pre-write baseline and expected absence or existing-state counts. Complete; the exact result is recorded above.
-7. Build the approved exact Arsenal reconciliation amendment and require exact-head clean-runner verification. Complete: PR 23 merged and all eight jobs passed at `b3f5099`.
-8. Stop again for the explicit production-write hold point. Complete: Andrew released the bounded Arsenal step after PR 23 merged; the normal upsert completed and post-upsert readback found only the three approved zero-reference departures.
-9. Remove only the three named departed Arsenal player documents after exact identity and zero-reference checks, then require exact Arsenal readback. Complete: the guarded transaction deleted exactly three rows, and final readback is exact with zero orphans.
-10. Write Leeds United only and run immediate Leeds readback and orphan checks. Complete: one team, 27 players, and six chants match exactly with zero orphan.
-11. If both bounded steps are exact, widen through approved club groups with immediate readback. Complete: all six groups passed preflight, write, and exact same-group readback without mismatch, orphan, timeout, or ambiguity.
-12. After all clubs, run all-club preflight and readback again, then inspect the app on a real configured device before calling the live seed complete. Data verification is complete; configured-device inspection remains.
+### One private operational control
 
-Executed deterministic widening sequence:
+Introduce one versioned, server-owned document at `operationalControls/v1`, with client reads and writes denied. This is an operational interlock, not a general remote feature-flag platform.
 
-1. Aston Villa, Bournemouth, Brentford.
-2. Brighton and Hove Albion, Chelsea, Coventry City.
-3. Crystal Palace, Everton, Fulham.
-4. Hull City, Ipswich Town, Liverpool.
-5. Manchester City, Manchester United, Newcastle United.
-6. Nottingham Forest, Sunderland, Tottenham Hotspur.
+- Allowlisted fields: `schemaVersion: 1`, monotonic integer `generation`, `mode: maintenance | core | media`, and `destructiveWorkersEnabled: boolean`. Missing, malformed, unsupported, or unreadable control means closed. Media mode requires workers enabled. No cached-open fallback across invocations.
+- Maintenance denies client Firestore mutations, including operator writes, and mutation callables before their handlers. Preserve existing read permissions without widening them.
+- Core enables existing nonmedia journeys only. Media admission, approval, playback-session creation, interactions, and public performance resolution stay closed. Media mode enables those paths only under their existing authority and limits.
+- Storage upload creation reads the same control in addition to every ticket, owner, byte, and MIME check. An old ticket cannot start a new upload after closure. This is not cancellation of an in-flight upload or revocation of an issued signed URL.
+- Account-deletion requests require worker readiness. Account/media deletion workers and abandoned-draft cleanup require both nonmaintenance mode and explicit worker enablement. Maintenance overrides that flag. Preserve jobs and source documents; never mark unprocessed work complete.
+- Read-only monitoring may run independently. Existing aggregate and source-eligibility reconcilers may run during maintenance to drain and restore safety. Classify them explicitly instead of dropping all events.
+- Opening a mode never re-enables `mergeChants`.
 
-Each group wrote only its three named files, then ran readback on those same three files. Every group completed exactly. The largest group had 144 expected team, player, and chant documents, keeping every step bounded while avoiding 18 separate approval cycles.
+Read control only when handling an operation, never during module import or Firebase deployment discovery. For event-only cleanup such as `onPerformanceDraftDeleted`, a paused success return would lose the only cleanup instruction. Persist a deterministic private deferred-cleanup record before acknowledging, or refuse that activation until an explicitly reviewed durable path exists. Do not assume retry alone preserves work indefinitely. Test pause/resume for this case separately from workers that already have job documents.
 
-Recovery is forward-only by default. Correct reviewed content and rerun the affected club when an allowlisted content field is wrong. If a created document must be removed or an identity must change, prepare a separate exact-target destructive plan. Do not improvise deletion or broad rollback. Andrew owns every write and destructive hold point.
+Maintain an exact classification table and a test over all 48 compiled endpoints, including anonymous HTTP, job, and scheduler wrappers. New or unclassified endpoints fail the contract. Preserve authentication errors and private-authority checks. An authenticated paused callable returns a stable `unavailable` maintenance reason without disclosing internal configuration.
+
+Gate every permitted direct-write expression: sports, competitions, teams, players, allowed profile updates, chants, votes, comments, comment likes, and blocks. Include separate operator and delete branches. Existing deny-only collections stay denied. Test Firestore/Storage document-access budgets, not only Boolean helpers.
+
+### Pause, containment, and drain
+
+A control read does not cancel an already-running handler. Rules do not constrain Admin SDK writers. Do not advertise the interlock as an instantaneous global lock.
+
+Build a testable cutover state machine and surface ledger for client writes, `onModerationAction`, `deleteAccount`, `mergeChants`, report intake, deletion workers, and repository Admin/seed writers. Repository writers must refuse mutation during the cutover while preserving read-only preflight. Source cannot fence an unmodified script or console session: external Admin writers require a separately approved containment decision.
+
+The later rollout must first install and verify gated existing mutation callables, preserve the merge stop, close client writes, and keep new workers/intake unactivated. Before baseline/repair, account for old revisions, traffic and alternate invocation paths, in-flight requests, queued delivery, and external writers. Record exact runtime timeouts and required observation for each surface. Neither a fixed sleep nor quiet logs alone proves the pause.
+
+Google documents that traffic changes are not instantaneous and in-flight requests continue. That requires live verification; a unit test cannot prove live quiescence. [Cloud Run traffic transitions](https://docs.cloud.google.com/run/docs/rollouts-rollbacks-traffic-migration).
+
+If complete containment and drain cannot be proved, stop before deletion. A compatibility alias, overlapping old incrementers, or broad credential revocation requires an amended approved design.
+
+### Bounded report-counter repair
+
+Create a local operator tool with an injected Firestore adapter and credential-free tests. Default to plan-only; no new deployed callable or automatic real connection in tests.
+
+1. Require explicit project `chants-f95b4`; reject mismatches, unknown options, and unresolved identity before constructing a writer. Apply needs its own explicit mode and exact reviewed plan digest.
+2. Plans identify source SHA, schema, control generation, target scope, bounds, expected state, and cursor. Keep private plans ignored and owner-readable. Logs and durable records contain aggregates, not reporter identity or text.
+3. Page chants and comments by document ID, at most 25 parents per invocation. Include parents with zero reports. Scanning only existing reports misses inflated counters that must become zero. Missing parents or malformed relationships are findings, not permission to invent/delete documents.
+   Implementation stays within this ceiling: 25 chants or one comment per page. Comments may share a parent counter, so a one-comment page preserves exact reviewed parent preconditions without allowing earlier writes in the same page to invalidate later targets.
+4. Recompute pending-report totals in parent-serialized transactions, reusing the existing ground-truth definition. Limit per-parent reads to 500 plus one overflow sentinel. On overflow, refuse the target; never truncate and publish a partial total.
+5. Each apply transaction checks maintenance, expected control generation, and relevant source/target preconditions. Reopening, stale plans, changed relationships, or exceeded bounds stop further work. These checks supplement the verified drain of previously admitted Admin work.
+6. Write only `flagCount`, necessary false-to-true `hidden` at the existing threshold, and required parent `commentCount`. Never unhide, restore, remove, edit lyrics, change trust/evidence, or rewrite reports. Historical false hides remain a human moderation decision.
+7. Reconstruct parent counts from visible comments with a 1,000-row cap plus one sentinel. Refuse an oversized dependent repair before changing its state. Retry must also repair the parent after a partially completed comment step.
+8. Use deterministic privacy-safe audit identity and resumable progress. A committed write with lost acknowledgement must not duplicate its audit. Mark a target complete only after counter, necessary parent count, audit, and readback succeed.
+9. One explicit page per invocation; no automatic whole-database apply loop or promotion of plan into apply. Test any new repair audit action against deletion-retention/privacy allowlists. Preserve existing live-trigger semantics outside the operator path.
+
+### Exact replacement and forward recovery
+
+Only `onReportCreated` and `onCommentReportCreated` change from created to written events under their same final names. Compute stays `europe-west2`; database/events stay `nam5`. Firebase requires an explicit event-type migration, not an ordinary update. [Firebase Function lifecycle](https://firebase.google.com/docs/functions/manage-functions).
+
+Rehearse: verified pause, old targets isolated, first replacement, second replacement, bounded repair, readback, explicit admission release. Use synthetic deployment metadata plus real emulator counter behavior. The source tool must not execute cloud deletion/deployment commands. Exact commands and live prerequisites belong to the later production amendment.
+
+An interrupted replacement leaves admission closed and identifies the incomplete target. Recover forward to the reviewed written handler, never to old blind increments or weak rules. Current duplicate, delayed, and reordered events must converge with repair. Reopening requires both trigger inventories, complete repair coverage/readback, and dependencies, not only successful CLI exit.
+
+Paused historical jobs require a bounded replay decision before workers open. Installing a trigger or toggling the control does not replay old documents. This block proves retained evidence is not lost; it does not build or run bulk account/media deletion replay.
+
+## Acceptance criteria and invariants
+
+1. Missing/invalid/unreadable controls reject protected work with no handler, upload, or destructive side effect. Open-mode tests preserve current authority and behavior.
+2. All 48 endpoint wrappers and every permitted direct-write branch are classified and tested. An omitted branch or new unclassified endpoint fails.
+3. Raw client/operator writes cannot bypass maintenance; old upload tickets cannot start uploads; client fields cannot select mode/generation.
+4. Paused workers preserve pending evidence and do not delete accounts, media, or jobs. Reopening is not assumed to replay work.
+5. The pause ledger distinguishes current source, legacy revisions, in-flight work, and external Admin writers. Missing containment blocks cutover.
+6. Repair defaults to no writes, checks exact project/plan, covers zero-child parents, obeys bounds, and refuses stale or oversized targets.
+7. Counter, parent count, audit, and progress retries are exercised at meaningful failure/acknowledgement boundaries. No automatic unhide or content mutation.
+8. Failure after either replacement cannot reopen intake, broaden the two-target allowlist, or select the legacy bundle as rollback.
+9. Known-bad mutations prove the new gates and regressions fail. Helper tests alone are insufficient evidence for exported wrappers or rules.
+10. Production build, complete Functions/rules suites, affected seed tests, Flutter regression/analysis, governance, and exact-head CI pass after authorized packaging.
+11. Overview, rationale, runbook, execution, and a completed scoped record separate implemented source, local rehearsal, independent review, and deployed observation.
+12. One combined Claude review spans last-reviewed `cb50d3cc966c6a367309c887a8c765891155cf0e` through this block's final exact-CI head. Required findings and the separate production amendment must close before deployment.
+
+## Failure and cost boundaries
+
+| Condition | Required response |
+|---|---|
+| Closed/stale/unavailable control | Reject new protected work; preserve jobs; no cached-open fallback |
+| Previously admitted or unknown Admin writer remains possible | No cutover/repair; resolve containment and drain |
+| Plan or control generation changes | Abort the next write; retain resumable evidence |
+| Query overflows or data is malformed | Stop affected page; no estimated count or automatic wider scan |
+| Write commits but acknowledgement/audit/progress fails | Retry the same deterministic operation before marking complete |
+| Current events duplicate or overlap repair | Parent-serialized reconstruction converges; preserve moderation |
+| Worker paused with retained work | Keep work; aggregate blocked status; no false completion or silent endless retries |
+| Live metadata differs from baseline | Stop and amend exact targets |
+
+Uncached control reads add latency and billable work; rule lookups may also be billable. Measure synthetic/emulator per-request reads and access budgets without claiming production performance. Repair caps bound a page, not every future workload. Larger bounds need evidence and approval. USD 25 remains an alert-only budget.
 
 ## Verification plan
 
-| Claim | Check | Expected evidence |
-|---|---|---|
-| Roster membership is current | Pure comparison against refreshed official bootstrap JSON | 20 clubs, 622 reviewed players from 623 raw rows, zero unreviewed membership differences after 17 display aliases and three owner overrides |
-| Read-only modes cannot write | Focused seed plan tests with writer spies | No writer call in preflight or readback modes |
-| Readback uses production projection | Focused runtime comparison tests | Exact match and distinct mismatch cases for every allowlisted field |
-| Seed source remains valid | `npm test` and `npx tsc --noEmit` in `seed/` | Passing suite and typecheck |
-| Governance remains linked | Project memory, writing style, governance, and diff checks | Passing staged boundary |
-| Production identity is safe | Named-project Arsenal and all-club preflight | Zero conflicts before any write |
-| Canary is correct | Leeds write followed by readback-only | Exact target counts and zero unexpected orphan |
-| Full rollout is correct | Final all-club readback plus device inspection | Exact source projection and visible expected clubs and chants |
+Use existing locked installs and suites. Add Functions tests for control parsing, compiled-wrapper coverage, side-effect short circuits, plan/apply, retries, and cutover state transitions. Add emulator cases for closed/open controls, operator branches, old tickets, zero-child parents, bounded repair, overlapping events, and interrupted resume. Add seed mutation-refusal tests while preserving read-only preflight. No production data or real accounts/media as fixtures.
 
-## Open decisions and hold points
+## Separate production decisions
 
-1. All 20 production clubs are complete and exact. No retry, rollback, or recovery action is pending.
-2. The validated credential is present only at the ignored local path and must not be pasted, printed, or committed.
-3. The configured-device catalogue inspection remains before the live seed rollout is called complete at the product boundary.
-4. Any later seed write, deletion, identity migration, or unexpected existing data requires a new plan or exact rerun authorization.
+- Source approval does not resolve any of the following external choices or permit their execution.
+- Exact containment of legacy revisions and external Admin writers, any narrow IAM/traffic changes, and live drain evidence.
+- Maintenance timing, maximum window, abort owner, and recovery so account deletion is not left unavailable indefinitely.
+- Named deploy/removal commands, durable artifact retention, resource limits, runtime/build identities, bucket location/permissions, fourteen additive indexes, compatible rules, URL signing, and schedules.
+- Retained-job inventory and any replay, dedicated smoke identities/media, observation window, and approved transitions reopening core/media.
+- Provider/domain/policy, App Check, real-device, store, and public-release sign-off. Development-certificate setup is already complete.

@@ -9,6 +9,8 @@ import 'package:chants/data/models/performance_draft.dart';
 import 'package:chants/data/repositories/performance_draft_repository.dart';
 import 'package:chants/data/services/performance_media_selection.dart';
 import 'package:chants/presentation/shared/chant_provenance_label.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -143,6 +145,33 @@ class _PerformChantScreenState extends ConsumerState<PerformChantScreen> {
         _pendingReview = true;
         _progress = 1;
       });
+    } on FirebaseFunctionsException catch (error) {
+      if (!mounted) return;
+      final details = error.details;
+      final reason = details is Map ? details['reason'] : null;
+      setState(() {
+        _error = switch (reason) {
+          'maintenance' =>
+            'Uploads are temporarily paused. Your selected video is still here. Try again later.',
+          'upload-in-progress' =>
+            'Another upload is in progress on this account. Finish or cancel it on that device, or try again after 30 minutes.',
+          'upload-expired' =>
+            'Upload permission expired. Cancel this upload, then choose your video again. Nothing was published.',
+          'upload-needs-recovery' =>
+            'Your upload permission needs attention. Keep your video and use Send feedback in You to contact us.',
+          _ =>
+            error.code == 'resource-exhausted'
+                ? 'You have reached today\'s upload limit. Try again tomorrow.'
+                : 'Review submission could not finish. Your video stays private. Try again or cancel this upload.',
+        };
+      });
+    } on FirebaseException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _error = error.code == 'unauthorized'
+            ? 'This upload is no longer authorized. Cancel it and try a new upload when uploads are available.'
+            : 'The upload did not finish. Check your connection and try again.';
+      });
     } catch (_) {
       if (!mounted) return;
       setState(() {
@@ -254,7 +283,7 @@ class _PerformChantScreenState extends ConsumerState<PerformChantScreen> {
             else
               _SelectedMediaCard(
                 media: _media!,
-                enabled: !_sending,
+                enabled: !_sending && _ticket == null,
                 onReplace: () => _pick(false),
               ),
             if (_sending) ...[

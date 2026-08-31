@@ -1,15 +1,16 @@
 # Repository implementation rationale
 
-This document explains the current Chants repository through documentation merge `9c6286a` and the approved V1 launch-services range, including inherited systems and the independently reviewed creator, launch-authentication, Android, post-auth correction, and minor-closure work. It is a reviewer map, not proof of deployment or release readiness.
+This document explains the current Chants repository through PR 25 readiness `d7b8b6f` and the approved deployment-safety working tree, including inherited systems, creator/authentication, Living Songbook and the completed live catalogue. It is a reviewer map, not proof that application source is deployed or release-ready. Decision 026 and `docs/changes/2026-08-31-v1-deployment-safety-and-report-cutover.md` own the current control, upload and repair reasoning.
 
 ## Document identity and completeness
 
 - **Current change:** `docs/CHANGE_SPEC.md`
 - **Completed change reasoning:** `docs/changes/2026-08-27-creator-platform-foundation.md`, `docs/changes/2026-08-28-pr17-post-review-takedown-integrity.md`, `docs/changes/2026-08-28-v1-launch-auth-onboarding-android.md`, `docs/changes/2026-08-28-post-auth-independent-review-corrections.md`, `docs/changes/2026-08-29-final-source-freeze-minor-closure.md`, and `docs/changes/2026-08-29-v1-launch-services-configuration.md`
-- **Durable creator, identity, and launch decisions:** 017 through 024
+- **Additional completed reasoning:** the Living Songbook correction, Premier League seed catalogue, live seed safety controls, and backend rollout readiness records under `docs/changes/` dated 2026-08-30
+- **Durable creator, identity, launch and operational decisions:** 017 through 026
 - **Execution evidence:** `docs/EXECUTION.md`
 - **Interface memory:** `docs/INTERFACE.md`
-- **Known missing evidence:** combined device walk, including live catalogue inspection; remaining provider configuration; association deployment; final policy text; source deployment; observed alert delivery; signing; and release
+- **Known missing evidence:** combined device walk, including live catalogue inspection; remaining provider configuration; association deployment; final policy text; source deployment; observed alert delivery; device provisioning and distribution signing; and release. Development-certificate setup is complete, with one valid local identity verified on 2026-08-30.
 
 ## Repository coverage ledger
 
@@ -29,6 +30,7 @@ This document explains the current Chants repository through documentation merge
 | `.github/`, `scripts/` | Yes | Clean-runner jobs, memory contract, writing, native contract, and governance regressions |
 | `test/`, `functions/test/`, `test_rules/` | Yes | Unit, widget, golden, handler, overlap, authority, and lifecycle evidence |
 | Android and iOS projects | Yes in source | Auth plugins, permissions, deep links, entitlements, deployment target, CocoaPods lock, fail-closed release signing, compile fixtures, and remaining SDK or provider gates |
+| Operational admission and repair | Yes in current block | Exact endpoint classification, direct-write control, profile upload grant, deferred cleanup, private plan/apply and evidence validator; no production executor |
 
 Generated build outputs and installed dependency trees are excluded except when a tool result depends on them.
 
@@ -61,6 +63,8 @@ Firebase Auth owns the UID, credential, verification, and linked-provider state.
 Public profile content uses exact-ID `creatorProfiles` gets; private authority is never copied into that schema. Firestore rules and public HTTP handlers separately recheck current private account activity, so a ban or deletion closes public access without exposing role, ban, policy, age, deletion, report, or email fields. Public creator collection listing is operator-only because V1 has no creator-directory query and a list rule cannot safely prove private account authority for every possible result.
 
 ## Critical path: record or choose, upload, and approve
+
+The current block adds one authoritative 30-minute profile upload grant, issued atomically with the draft after current control/account/deletion checks. Storage reads control plus profile only, within the documented two-document limit. Current generation, owner, path, expiry, size, MIME and metadata must agree. Existing drafts without a grant cannot upload. Submit, cancel, moderation, ban, deletion acceptance and cleanup revoke only matching permission; late old cleanup cannot erase a newer slot. The upload UI retains selection and gives written pause/occupied/expired/support recovery.
 
 `lib/presentation/browse/chant_detail_screen.dart` opens `PerformChantScreen` for a current visible chant. A creator profile is required. The media service invokes camera recording or the device library. The client rejects unsupported extension, duration over 30 seconds, and size over 50 MiB before upload.
 
@@ -139,6 +143,9 @@ The phase set now removes creator handle and profile, drafts and staging referen
 | `performanceDrafts` | Owner and operator | Server callables |
 | `performances` | Approved visible public projection; operator restricted inspection | Server admission and moderation |
 | Staged media | Exact owner draft only | UID-scoped Storage rule |
+| Operational control and repair checkpoints | No client reads or writes | Approved operator process; no general control writer in source |
+| Active upload grant | Private profile, never public creator data | Draft and account lifecycle transactions; two-lookup Storage authorization |
+| Deferred draft cleanup | No client reads or writes | Deleted event retains exact path before acknowledgement; explicit later replay |
 | Published media | No direct client read | Server copy and signed delivery |
 | `performanceMediaDeletionJobs` | No client read or write | Terminal moderation transaction and retry-enabled cleanup trigger |
 | Performance interactions | Actor or recipient where needed; aggregates public only | Server callables and triggers |
@@ -176,8 +183,12 @@ The phase set now removes creator handle and profile, drafts and staging referen
 | Hidden public media stops new resolution while remaining operator-reviewable | Page and media current checks plus narrow operator preview | Public-share, playback, and moderation tests |
 | Terminal performance removal schedules exact retryable Storage cleanup | Deterministic server-only job and path-validating worker | Functions cleanup and moderation tests |
 | Creator performance totals converge from live rows | Parent-serialized exact reconstruction | Source overlap and repair tests |
-| New persistent data joins deletion | Added bounded phases and finalization | Failure-injection and app-gate tests |
+| Creator/social user data joins deletion | Added bounded phases and finalization; operational cleanup evidence is separately retained | Failure-injection and app-gate tests; decision 026 retention hold |
 | CI enforces project memory for the review range | `--range` workflow and regression harness | Governance tests |
+| New protected work fails closed during maintenance | Uncached wrapper control and 19 direct-write expressions | Actual wrappers, mutation detection and open/closed emulator tests |
+| Storage upload uses only two distinct Firestore documents | Profile grant plus global control | Source call-graph budget test including known-bad third lookup, separately from emulator behavior |
+| Paused event-only cleanup retains its instruction | Deterministic deferred job before acknowledgement | Actual exported trigger and failure/late-transfer tests |
+| Counter repair is bounded, explicit and resumable | Plan digest, maintenance generation, overflow sentinels, atomic audit/checkpoint and readback | Twelve real-emulator cases including conflicts, stale state and post-commit failures |
 
 ## Security and privacy
 
@@ -193,6 +204,8 @@ The product stores user-created video. Policy, privacy, takedown, retention, mod
 
 ## Dependencies and native platforms
 
+The safety block adds no dependency or lockfile changes. Its existing rules CI job moves to Node 22 so the dedicated Firestore rehearsal imports the same Functions runtime as production source. Local integration uses Node 22.23.2 and Java 21; the broader rule suite remains separately evidenced. Existing native projects are unchanged and were not rebuilt for this local source step.
+
 | Dependency | Purpose | Current boundary |
 |---|---|---|
 | `firebase_storage` | Staged upload and media transfer | FlutterFire graph, Storage rules, server signed delivery |
@@ -205,13 +218,15 @@ The product stores user-created video. Policy, privacy, takedown, retention, mod
 | `app_links` | Initial and resumed HTTPS magic-link delivery | Source paths exist; hosted Apple and Android association is not deployed or claimed |
 | `shared_preferences` | Short-lived device-local pending magic-link identity | One-hour maximum with terminal and malformed-state clearing |
 
-iOS remains on the project-owned CocoaPods path. The auth graph resolves 18 direct dependencies and 56 total pods. Google Sign-In 9.2 uses `GTMSessionFetcher` 3.5.0, which remains inside Firebase Storage's accepted range. Exact PR 18 clean CI built both the iOS simulator bundle and Android debug APK. Android SDK and Java remain unavailable locally, so replacement current-head native and rules evidence belongs to clean CI. CocoaPods reports Firebase Apple SDK pod publication will stop after October 2026; a Swift Package Manager migration needs a separate compatibility decision because the project previously rejected automatic mixed ownership.
+iOS remains on the project-owned CocoaPods path. The auth graph resolves 18 direct dependencies and 56 total pods. Google Sign-In 9.2 uses `GTMSessionFetcher` 3.5.0, which remains inside Firebase Storage's accepted range. Exact PR 18 clean CI built both the iOS simulator bundle and Android debug APK. Android SDK remains unavailable locally. The 2026-08-30 readiness check located Homebrew OpenJDK 26.0.2 outside macOS discovery and passed the local rules suite; clean CI still owns the Java 21 and native runner boundary. CocoaPods reports Firebase Apple SDK pod publication will stop after October 2026; a Swift Package Manager migration needs a separate compatibility decision because the project previously rejected automatic mixed ownership.
 
 ## Performance, scale, and cost
 
 - Feed pages are limited to ten records.
 - Following V1 is limited to 30 followed creator IDs.
 - Upload is limited to one 30-second, 50-MiB object per draft.
+- One unexpired upload grant per account lasts 30 minutes. Control reads are uncached and add billed work; issue/submit also read control inside their transactions.
+- Operator report repair pages are capped at 25 chants or one comment, with 500-report and 1,000-visible-comment overflow sentinels. Plan/apply/readback and transaction retries repeat bounded reads.
 - Abandoned staging cleanup reads and attempts at most 100 exact-path drafts per daily run.
 - Retained deletion monitoring reads at most 101 rows per collection every 15 minutes and logs aggregate counts only.
 - Video does not autoplay, prefetch, or retry indefinitely.
@@ -228,6 +243,11 @@ The launch-services block provides bounded staged-object cleanup and the privacy
 
 | Command or probe | Result |
 |---|---|
+| Deployment-safety source block | PASS: Node 22.23.2 production build, 202 unit tests, 12 dedicated demo-Firestore transaction cases, 74 seed tests/typecheck, 173 rules/source-budget cases, 493 Flutter tests and zero analyzer issues. Staged checks are recorded in the current execution entry. No current exact-head CI or independent review yet |
+| Prior readiness exact-head CI | PASS: all eight jobs in run `33340779709` at `d7b8b6fe9c421e321ada2790c9410d52f1f81cc8`; excludes the current safety working tree |
+| Backend readiness on isolated Node 22.23.2/npm 10.8.2 | PASS at readiness implementation: locked Functions install, production build, test build and 163 tests. All dependency records unchanged, compiled export count 48. Subsequent exact-head CI at `d7b8b6f` is recorded separately above |
+| Backend readiness authority and static checks | PASS: 168 local Firestore/Storage tests on Homebrew OpenJDK 26.0.2 with Node 20, rules TypeScript, zero-issue Flutter analysis, native and launch-services checks, and governance regressions. Initial missing Mocha was resolved with unchanged-lock install; no rule or test source changed |
+| Read-only deployed predecessor inventory | PASS: nine generation-pinned archives downloaded and verified against object size/MD5 and common SHA-256; actual compiled report and merge handlers inspected; old rules retrieved; two live indexes compared against all sixteen source entries; Storage/Scheduler service state checked |
 | Focused Flutter auth, onboarding, app-gate, reset, magic-link, provider cancellation, phone-race, stale-session, provider hierarchy, and narrow 1.8x tests | PASS during the launch implementation and retained by the full exact-main suite |
 | Full `flutter test` | PASS, 463 tests locally and in exact-main run `33256843751` at `e8f2591` |
 | `flutter analyze lib test` with the deterministic non-secret fixture | PASS with zero issues locally and in exact-main run `33256843751` |
@@ -253,19 +273,21 @@ The launch-services block provides bounded staged-object cleanup and the privacy
 
 ## Deployment and recovery
 
-No repository artifact in this range is deployed. The approved Auth domains, unenforced iOS App Attest registration, operational policies, private notification channel, and alert-only budget are saved and re-read in their owning consoles. No live Firestore or Storage mutation, seed write, signing, or store action occurred.
+The 20-club seed catalogue is deployed and exact, as recorded above and in PR 24. The feature Functions, rules, Storage, and Hosting source discussed here are not deployed by this work. Approved Auth domains, unenforced iOS App Attest registration, operational policies, the private notification channel, and alert-only budget were saved during the launch-services block. Backend readiness performs no Firebase mutation or store action. Owner-controlled development-certificate setup is separately complete; no signed device build or installation has been verified.
 
-Compatible deployment order is rules, Functions, Hosting, then client. Public URLs should not ship until Hosting, domain, IAM signing, and store routing are verified. Media admission should not open until policy, moderation, cleanup, billing, and alert gates are operational.
+The actual 2026-08-30 baseline is nine Node 20 Functions from July, old Firestore rules, two ready indexes, no expected media bucket or Storage rules release, and disabled Firebase Storage/Scheduler APIs. Generation-pinned source is recoverable but includes blind-increment report triggers, old deletion, and active merge, so it is not a safe blanket rollback. Firestore/Eventarc location is `nam5`; compute remains `europe-west2`. Runtime Node 22 is verified in source/CI, not deployed.
 
-Recovery options are additive. Pause performance admission without removing Songbook or words-only creation. Hide or remove approved media to stop new public resolution; terminal removal leaves retryable physical cleanup. Reconcile source flags and exact creator totals from current documents. Revert the client shell without deleting creator data. Account deletion continues through its durable worker.
+`docs/changes/2026-08-30-v1-backend-rollout-readiness.md` owns the live baseline and proposed groups. The 2026-08-31 safety record adds source admission, grant authority, deferred cleanup and bounded repair. No overlap with old report incrementers is approved. Rules and new wrappers cannot fence external Admin writers or cancel already admitted work. Production needs verified containment/drain, exact replacements, full page coverage/readback, ready dependencies and explicit reopening. Bucket location, IAM/resource limits, retained backlog/replay, retention and smoke identities remain separate decisions.
+
+The next consolidated Claude review covers `cb50d3cc966c6a367309c887a8c765891155cf0e` through the final exact-head-green safety source, including PRs 22-25 and this block. It precedes backend writes; actual deployment and device observations receive a subsequent evidence closure. Current source changes admission and cleanup retention without a new live proof.
 
 ## Documentation consistency
 
 | Record | Current meaning |
 |---|---|
-| `docs/CHANGE_SPEC.md` | Approved V1 launch-services source and reversible configuration contract |
+| `docs/CHANGE_SPEC.md` | Approved deployment-safety source contract and Storage amendment, not packaging or production authorization |
 | Six current change records dated 2026-08-27 through 2026-08-29 | Creator implementation, takedown correction, launch authentication extension, post-auth correction, final minor closure, and V1 launch services |
-| Decisions 017 through 024 | Shell, creator, performance, public, social, safety, source eligibility, verified identity, and staged launch integrity architecture |
+| Decisions 017 through 026 | Shell, creator, performance, public, social, safety, source eligibility, verified identity, staged launch integrity, Living Songbook and operational admission |
 | `docs/INTERFACE.md` | Current launch, Stage, creator, conversation, moderation, and inherited interaction contract |
 | `docs/ROADMAP.md` | Feature source and all 20 production clubs are exact; device evidence, remaining provider configuration, policy, deployment, and release remain |
 | `ENGINEERING_OVERVIEW.md` | Reviewer-oriented current code map |
@@ -274,6 +296,10 @@ Recovery options are additive. Pause performance admission without removing Song
 
 | Item | Consequence | Revisit trigger |
 |---|---|---|
+| Control generation has no source writer | Admin must increase generation on every transition; readers cannot enforce historical monotonicity | Every production control change |
+| Deferred cleanup has no automatic historical replay | Pending or attempted paths survive, but a mode toggle is not cleanup or proof against late admitted bytes | Before workers/public media open; inventory, bounded replay, drain and retention plan |
+| Cancelled/rejected drafts retain paths | Existing best-effort cancellation and daily awaiting/cleanup scanner do not cover every terminal state | Before public media, choose explicit bounded cleanup |
+| Repair evidence is operator-attested | Validator does not prove live containment, observation freshness or exhaustive page coverage | Separate Lane 3 production approval |
 | Manual media review | Queue can stall | Before public beta and when response time crosses the chosen target |
 | Following query cap | More than 30 followed creators are not represented in one V1 page query | When real accounts cross the cap |
 | Signed URL residual | Hide is not instantaneous for an already issued public two-minute or in-app ten-minute URL | When risk requires stronger revocation |

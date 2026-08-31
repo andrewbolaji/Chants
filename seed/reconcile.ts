@@ -9,59 +9,65 @@
  */
 import * as admin from "firebase-admin";
 import { resolve } from "path";
+import { readFileSync } from "fs";
+import { assertServiceAccountProject } from "./seed_credential";
+import { runSeedTransaction } from "./operational_control";
 
 const serviceAccountPath = resolve(__dirname, "serviceAccountKey.json");
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccountPath),
-});
-const db = admin.firestore();
+let db: admin.firestore.Firestore;
+function initializeFirestore(): void {
+  assertServiceAccountProject(JSON.parse(readFileSync(serviceAccountPath, "utf8")), "chants-f95b4");
+  admin.initializeApp({ credential: admin.credential.cert(serviceAccountPath), projectId: "chants-f95b4" });
+  db = admin.firestore();
+}
 
-export async function reconcileChant(chantId: string): Promise<{
+export async function reconcileChant(chantId: string, firestore: admin.firestore.Firestore = db): Promise<{
   before: { upvotes: number; downvotes: number; score: number };
   after: { upvotes: number; downvotes: number; score: number };
   changed: boolean;
 }> {
-  const votesSnap = await db
-    .collection("votes")
-    .where("chantId", "==", chantId)
-    .get();
+  return runSeedTransaction(firestore, async (transaction) => {
+    const votesSnap = await transaction.get(firestore.collection("votes").where("chantId", "==", chantId));
 
-  let upvotes = 0;
-  let downvotes = 0;
-  for (const doc of votesSnap.docs) {
-    const val = doc.data().value;
-    if (val === 1) upvotes++;
-    else if (val === -1) downvotes++;
-  }
-  const score = upvotes - downvotes;
+    let upvotes = 0;
+    let downvotes = 0;
+    for (const doc of votesSnap.docs) {
+      const val = doc.data().value;
+      if (val === 1) upvotes++;
+      else if (val === -1) downvotes++;
+    }
+    const score = upvotes - downvotes;
 
-  const chantRef = db.collection("chants").doc(chantId);
-  const chantSnap = await chantRef.get();
-  if (!chantSnap.exists) {
-    throw new Error(`Chant ${chantId} not found.`);
-  }
+    const chantRef = firestore.collection("chants").doc(chantId);
+    const chantSnap = await transaction.get(chantRef);
+    if (!chantSnap.exists) {
+      throw new Error(`Chant ${chantId} not found.`);
+    }
 
-  const data = chantSnap.data()!;
-  const before = {
-    upvotes: data.upvotes || 0,
-    downvotes: data.downvotes || 0,
-    score: data.score || 0,
-  };
-  const after = { upvotes, downvotes, score };
-  const changed =
-    before.upvotes !== after.upvotes ||
-    before.downvotes !== after.downvotes ||
-    before.score !== after.score;
+    const data = chantSnap.data()!;
+    const before = {
+      upvotes: data.upvotes || 0,
+      downvotes: data.downvotes || 0,
+      score: data.score || 0,
+    };
+    const after = { upvotes, downvotes, score };
+    const changed =
+      before.upvotes !== after.upvotes ||
+      before.downvotes !== after.downvotes ||
+      before.score !== after.score;
 
-  if (changed) {
-    await chantRef.update({ upvotes, downvotes, score });
-  }
+    if (changed) {
+      transaction.update(chantRef, { upvotes, downvotes, score });
+    }
 
-  return { before, after, changed };
+    return { before, after, changed };
+  });
 }
 
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
+  if (args.length > 1 || args.some((arg) => !/^[A-Za-z0-9_-]{1,200}$/.test(arg))) throw new Error("Expected zero or one chant ID.");
+  initializeFirestore();
 
   if (args.length > 0) {
     // Reconcile one chant

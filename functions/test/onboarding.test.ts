@@ -154,6 +154,7 @@ describe("complete onboarding", () => {
       displayName: "North Bank Leo",
       role: "user",
       banned: false,
+      deletionPending: false,
       ageConfirmed17Plus: true,
       acceptedPolicyVersion: "v1",
       acceptedPolicyAt: NOW,

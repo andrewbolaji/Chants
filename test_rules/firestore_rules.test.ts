@@ -34,6 +34,14 @@ before(async () => {
   });
 });
 
+beforeEach(async () => {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    await setDoc(doc(context.firestore(), "operationalControls", "v1"), {
+      schemaVersion: 1, generation: 1, mode: "media", destructiveWorkersEnabled: true,
+    });
+  });
+});
+
 afterEach(async () => {
   await testEnv.clearFirestore();
 });
@@ -441,6 +449,59 @@ async function seedComment(
     });
   });
 }
+
+describe("operational maintenance", () => {
+  it("denies every permitted write branch and preserves existing reads", async () => {
+    await seedOperator("op"); await seedUserProfile("fan"); await seedUserProfile("other");
+    await seedTeam(); await seedVisibleChant("chant", "fan", { origin: "originalIdea", evidence: null }); await seedComment("comment", "chant", "fan");
+    const user = verifiedContext("fan").firestore();
+    const operator = verifiedContext("op").firestore();
+    const operations: Array<() => Promise<unknown>> = [];
+    for (const collectionName of ["sports", "competitions", "teams", "players"]) {
+      const target = doc(operator, collectionName, "gate");
+      operations.push(() => setDoc(target, { name: "Test" }),
+        () => updateDoc(target, { name: "Updated" }), () => deleteDoc(target));
+    }
+    operations.push(
+      () => updateDoc(doc(user, "profiles", "fan"), { displayName: "Changed", updatedAt: Timestamp.now() }),
+      () => setDoc(doc(user, "chants", "new"), validNewChantData("fan")),
+      () => updateDoc(doc(user, "chants", "chant"), { title: "Changed", updatedAt: Timestamp.now() }),
+      () => updateDoc(doc(operator, "chants", "new"), { hidden: true }),
+      () => setDoc(doc(user, "votes", "fan_chant"), { chantId: "chant", userId: "fan", value: 1, createdAt: Timestamp.now() }),
+      () => updateDoc(doc(user, "votes", "fan_chant"), { value: -1 }),
+      () => deleteDoc(doc(user, "votes", "fan_chant")),
+      () => setDoc(doc(user, "comments", "new"), { chantId: "chant", userId: "fan", displayName: "Changed", body: "Test", parentCommentId: null, createdAt: Timestamp.now(), likeCount: 0, flagCount: 0, hidden: false, removed: false }),
+      () => updateDoc(doc(user, "comments", "new"), { removed: true }),
+      () => updateDoc(doc(operator, "comments", "new"), { hidden: true }),
+      () => setDoc(doc(user, "commentLikes", "fan_comment"), { commentId: "comment", userId: "fan", value: 1, createdAt: Timestamp.now() }),
+      () => updateDoc(doc(user, "commentLikes", "fan_comment"), { value: 1 }),
+      () => deleteDoc(doc(user, "commentLikes", "fan_comment")),
+      () => setDoc(doc(user, "blocks", "fan_other"), { blockerId: "fan", blockedUserId: "other", blockedDisplayName: "Other", createdAt: Timestamp.now() }),
+      () => deleteDoc(doc(user, "blocks", "fan_other")),
+    );
+    for (const operation of operations) {
+    for (const control of [null, { schemaVersion: 1, generation: 1, mode: "maintenance", destructiveWorkersEnabled: true },
+      { schemaVersion: 1, generation: 1, mode: "core", destructiveWorkersEnabled: false, forged: true }]) {
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        const target = doc(context.firestore(), "operationalControls", "v1");
+        if (control === null) await deleteDoc(target); else await setDoc(target, control);
+      });
+      await assertFails(operation());
+      await assertSucceeds(getDoc(doc(user, "chants", "chant")));
+      await assertSucceeds(getDoc(doc(user, "profiles", "fan")));
+    }
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), "operationalControls", "v1"), { schemaVersion: 1, generation: 2, mode: "core", destructiveWorkersEnabled: false });
+    });
+    await assertSucceeds(operation());
+    }
+    for (const collectionName of ["operationalControls", "deferredDraftCleanupJobs", "reportRepairProgress"]) {
+      await assertFails(getDoc(doc(operator, collectionName, "v1")));
+      await assertFails(setDoc(doc(operator, collectionName, "v1"), { mode: "media" }));
+    }
+    await assertFails(updateDoc(doc(user, "profiles", "fan"), { activePerformanceUpload: {} }));
+  }).timeout(60000);
+});
 
 // ===================== SPORTS =====================
 

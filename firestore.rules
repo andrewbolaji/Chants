@@ -1,6 +1,19 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function coreWritesEnabled() {
+      let control = get(/databases/$(database)/documents/operationalControls/v1).data;
+      return control.keys().hasOnly(['schemaVersion', 'generation', 'mode', 'destructiveWorkersEnabled'])
+        && control.keys().hasAll(['schemaVersion', 'generation', 'mode', 'destructiveWorkersEnabled'])
+        && control.schemaVersion == 1
+        && control.generation is int && control.generation >= 1 && control.generation <= 9007199254740991
+        && control.destructiveWorkersEnabled is bool
+        && (control.mode == 'core' || (control.mode == 'media' && control.destructiveWorkersEnabled));
+    }
+    match /operationalControls/{id} { allow read, write: if false; }
+    match /deferredDraftCleanupJobs/{id} { allow read, write: if false; }
+    match /reportRepairProgress/{id} { allow read, write: if false; }
+
 
     function isAuth() {
       return request.auth != null;
@@ -394,25 +407,25 @@ service cloud.firestore {
     // sports: public read, operator write
     match /sports/{sportId} {
       allow read: if true;
-      allow write: if isOperator();
+      allow write: if coreWritesEnabled() && isOperator();
     }
 
     // competitions: public read, operator write
     match /competitions/{compId} {
       allow read: if true;
-      allow write: if isOperator();
+      allow write: if coreWritesEnabled() && isOperator();
     }
 
     // teams: public read, operator write
     match /teams/{teamId} {
       allow read: if true;
-      allow write: if isOperator();
+      allow write: if coreWritesEnabled() && isOperator();
     }
 
     // players: public read, operator write
     match /players/{playerId} {
       allow read: if true;
-      allow write: if isOperator();
+      allow write: if coreWritesEnabled() && isOperator();
     }
 
     // profiles: private to the owner and operators. Initial creation and policy
@@ -422,7 +435,7 @@ service cloud.firestore {
       allow get: if isAuth() && (request.auth.uid == userId || isOperator());
       allow list: if isOperator();
       allow create: if false;
-      allow update: if hasVerifiedContact() && request.auth.uid == userId
+      allow update: if coreWritesEnabled() && hasVerifiedContact() && request.auth.uid == userId
         && !exists(/databases/$(database)/documents/accountDeletionJobs/$(request.auth.uid))
         && (!('deletionPending' in resource.data)
             || resource.data.deletionPending == false)
@@ -556,7 +569,7 @@ service cloud.firestore {
     // chants: public read (visible only), auth create (not banned, server-side length limits), restricted update
     match /chants/{chantId} {
       allow read: if isVisible(resource) || isOperator();
-      allow create: if isAuth()
+      allow create: if coreWritesEnabled() && isAuth()
         && isNotBanned()
         && hasAcceptedPolicy()
         && request.resource.data.createdBy == request.auth.uid
@@ -572,7 +585,7 @@ service cloud.firestore {
         && validUserChantSchema(request.resource.data);
       // Authors can edit an explicit content allowlist only while community.
       // Origin and evidence are immutable from the direct client path.
-      allow update: if isAuth()
+      allow update: if coreWritesEnabled() && isAuth()
         && isNotBanned()
         && resource.data.createdBy == request.auth.uid
         && resource.data.status == 'community'
@@ -585,7 +598,7 @@ service cloud.firestore {
         && validUserChantSchema(request.resource.data);
       // Operators retain moderation control but cannot mutate ownership or
       // leave a newly promoted or evidence-stripped user chant canonical.
-      allow update: if isOperator()
+      allow update: if coreWritesEnabled() && isOperator()
         && request.resource.data.createdBy == resource.data.createdBy
         && request.resource.data.createdAt == resource.data.createdAt
         && !request.resource.data.diff(resource.data).affectedKeys()
@@ -605,7 +618,7 @@ service cloud.firestore {
           || isOperator());
       allow list: if isAuth()
         && (resource.data.userId == request.auth.uid || isOperator());
-      allow create: if isAuth()
+      allow create: if coreWritesEnabled() && isAuth()
         && isNotBanned()
         && request.resource.data.keys().hasOnly(
             ['chantId', 'userId', 'value', 'createdAt'])
@@ -618,14 +631,14 @@ service cloud.firestore {
         && (request.resource.data.value == 1 || request.resource.data.value == -1)
         && validRecentClientTimestamp(request.resource.data.createdAt)
         && isVisibleChant(request.resource.data.chantId);
-      allow update: if isAuth()
+      allow update: if coreWritesEnabled() && isAuth()
         && isNotBanned()
         && resource.data.userId == request.auth.uid
         && (request.resource.data.value == 1 || request.resource.data.value == -1)
         && isVisibleChant(resource.data.chantId)
         && request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['value']);
-      allow delete: if hasVerifiedContact()
+      allow delete: if coreWritesEnabled() && hasVerifiedContact()
         && resource.data.userId == request.auth.uid;
     }
 
@@ -646,7 +659,7 @@ service cloud.firestore {
     // author can soft-delete own (set removed: true), operator can update anything
     match /comments/{commentId} {
       allow read: if isVisible(resource) || isOperator();
-      allow create: if isAuth()
+      allow create: if coreWritesEnabled() && isAuth()
         && isNotBanned()
         && hasAcceptedPolicy()
         && request.resource.data.keys().hasOnly([
@@ -679,12 +692,12 @@ service cloud.firestore {
         && isVisibleChant(request.resource.data.chantId)
         && validReplyParent(request.resource.data);
       // Author can only soft-delete (set removed: true on their own comment)
-      allow update: if hasVerifiedContact()
+      allow update: if coreWritesEnabled() && hasVerifiedContact()
         && resource.data.userId == request.auth.uid
         && request.resource.data.removed == true
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['removed']);
       // Operator can update anything (moderation: hide, unhide, remove, reset flagCount)
-      allow update: if isOperator();
+      allow update: if coreWritesEnabled() && isOperator();
     }
 
     // commentLikes: private to the owner/operator, one per user per visible comment
@@ -697,7 +710,7 @@ service cloud.firestore {
           || isOperator());
       allow list: if isAuth()
         && (resource.data.userId == request.auth.uid || isOperator());
-      allow create: if isAuth()
+      allow create: if coreWritesEnabled() && isAuth()
         && isNotBanned()
         && request.resource.data.keys().hasOnly(
             ['commentId', 'userId', 'value', 'createdAt'])
@@ -713,7 +726,7 @@ service cloud.firestore {
         && noBlockBetween(
             request.auth.uid,
             get(/databases/$(database)/documents/comments/$(request.resource.data.commentId)).data.userId);
-      allow update: if isAuth()
+      allow update: if coreWritesEnabled() && isAuth()
         && isNotBanned()
         && resource.data.userId == request.auth.uid
         && request.resource.data.value == 1
@@ -723,7 +736,7 @@ service cloud.firestore {
             get(/databases/$(database)/documents/comments/$(resource.data.commentId)).data.userId)
         && request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['value']);
-      allow delete: if hasVerifiedContact()
+      allow delete: if coreWritesEnabled() && hasVerifiedContact()
         && resource.data.userId == request.auth.uid;
     }
 
@@ -744,7 +757,7 @@ service cloud.firestore {
     // prevents duplicates; updates are unnecessary because unblock is delete.
     match /blocks/{blockId} {
       allow read: if isAuth() && resource.data.blockerId == request.auth.uid;
-      allow create: if isAuth()
+      allow create: if coreWritesEnabled() && isAuth()
         && isNotBanned()
         && request.resource.data.keys().hasOnly(
             ['blockerId', 'blockedUserId', 'blockedDisplayName', 'createdAt'])
@@ -757,7 +770,7 @@ service cloud.firestore {
         && request.resource.data.createdAt is timestamp
         && blockId == request.auth.uid + '_' + request.resource.data.blockedUserId
         && isActiveProfile(request.resource.data.blockedUserId);
-      allow delete: if hasVerifiedContact()
+      allow delete: if coreWritesEnabled() && hasVerifiedContact()
         && resource.data.blockerId == request.auth.uid;
       allow update: if false;
     }

@@ -55,6 +55,7 @@ ui-debug.log
 functions/lib/
 functions/lib-test/
 functions/node_modules/
+.private-report-repair/
 
 # Rules test build output and deps
 test_rules/lib/

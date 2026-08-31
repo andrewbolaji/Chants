@@ -44,6 +44,14 @@ before(async () => {
   });
 });
 
+beforeEach(async () => {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    await context.firestore().collection("operationalControls").doc("v1").set({
+      schemaVersion: 1, generation: 1, mode: "media", destructiveWorkersEnabled: true,
+    });
+  });
+});
+
 afterEach(async () => {
   await Promise.all([testEnv.clearFirestore(), testEnv.clearStorage()]);
 });
@@ -59,7 +67,13 @@ async function seedUploadTicket(
 ) {
   await testEnv.withSecurityRulesDisabled(async (context) => {
     const db = context.firestore();
+    const issuedAt = Timestamp.now();
     await db.collection("profiles").doc(uid).set({
+      activePerformanceUpload: {
+        schemaVersion: 1, ownerId: uid, draftId, uploadPath: `performance-staging/${uid}/${draftId}/source`,
+        sizeBytes: 3, contentType: "video/mp4", generation: 1, issuedAt,
+        expiresAt: Timestamp.fromMillis(issuedAt.toMillis() + 30 * 60 * 1000),
+      },
       displayName: "Uploader",
       role: "user",
       banned: options.banned ?? false,
@@ -113,6 +127,53 @@ function upload(
 }
 
 describe("performance media storage", () => {
+  it("closes old grants on maintenance, malformed control, and a later generation", async () => {
+    await seedUploadTicket("fan", "draft-gate");
+    const reference = verifiedContext("fan").storage(BUCKET).ref("performance-staging/fan/draft-gate/source");
+    const attempt = () => upload(reference, new Uint8Array([1, 2, 3]), uploadMetadata("fan", "draft-gate"));
+    for (const control of [null,
+      { schemaVersion: 1, generation: 1, mode: "maintenance", destructiveWorkersEnabled: true },
+      { schemaVersion: 1, generation: 1, mode: "core", destructiveWorkersEnabled: true },
+      { schemaVersion: 1, generation: 1, mode: "media", destructiveWorkersEnabled: false },
+      { schemaVersion: 2, generation: 1, mode: "media", destructiveWorkersEnabled: true },
+      { schemaVersion: 1, generation: 2, mode: "media", destructiveWorkersEnabled: true },
+    ]) {
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        const doc = context.firestore().collection("operationalControls").doc("v1");
+        if (control === null) await doc.delete(); else await doc.set(control);
+      });
+      await assertFails(attempt());
+    }
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context.firestore().collection("operationalControls").doc("v1").set({
+        schemaVersion: 1, generation: 1, mode: "media", destructiveWorkersEnabled: true,
+      });
+    });
+    await assertSucceeds(attempt());
+  });
+
+  it("uses current account authority and rejects missing, expired, future, or revoked grants", async () => {
+    await seedUploadTicket("fan", "draft-grant");
+    const reference = verifiedContext("fan").storage(BUCKET).ref("performance-staging/fan/draft-grant/source");
+    const attempt = () => upload(reference, new Uint8Array([1, 2, 3]), uploadMetadata("fan", "draft-grant"));
+    for (const change of [
+      { banned: true }, { deletionPending: true }, { ageConfirmed17Plus: false },
+      { acceptedPolicyVersion: "old" }, { activePerformanceUpload: null },
+      { "activePerformanceUpload.ownerId": "other" }, { "activePerformanceUpload.draftId": "other" },
+      { "activePerformanceUpload.extra": true }, { "activePerformanceUpload.sizeBytes": 2 },
+      { "activePerformanceUpload.issuedAt": Timestamp.fromMillis(0), "activePerformanceUpload.expiresAt": Timestamp.fromMillis(1800000) },
+      { "activePerformanceUpload.issuedAt": Timestamp.fromMillis(Date.now() + 3600000), "activePerformanceUpload.expiresAt": Timestamp.fromMillis(Date.now() + 5400000) },
+    ]) {
+      await seedUploadTicket("fan", "draft-grant");
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        await context.firestore().collection("profiles").doc("fan").update(change);
+      });
+      await assertFails(attempt());
+    }
+    await seedUploadTicket("fan", "draft-grant");
+    await assertSucceeds(attempt());
+  });
+
   it("accepts only the owner ticket's exact first upload", async () => {
     await seedUploadTicket("fan", "draft-1");
     const owner = verifiedContext("fan").storage(BUCKET);

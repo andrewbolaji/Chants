@@ -12,6 +12,78 @@ This runbook describes the source-backed recovery paths that exist today. Dashbo
 
 ## Health
 
+### Current backend rollout hold
+
+Read-only inventory on 2026-08-30 established that production is still the July backend, not the reviewed V1 source. See `docs/changes/2026-08-30-v1-backend-rollout-readiness.md` for all nine live identities, pinned predecessor generations/hashes, the 48-name proposed sequence, and explicit stop conditions. Node 22 source verification does not change that live state.
+
+Do not use an all-Functions deploy or ordinary update for the two report handlers: the deployed created-only versions blindly increment, while current written handlers rebuild counts. The old live merge endpoint lacks the reviewed stop. Never invoke it or restore that bundle as blanket rollback. Admission, bounded repair and a cutover evidence validator now exist in source under decision 026; actual containment, drain, replacement and repair still require a separate production amendment.
+
+Production has only two ready chant indexes, no expected media bucket or Storage rules release, and disabled Storage/Scheduler APIs. Bucket location/provisioning, IAM, retention, resource caps, fourteen index creations, and destructive worker/schedule activation remain owner-approved gates. Firestore and Eventarc are in `nam5`; Functions compute stays `europe-west2`. The data location must not be inferred from the compute region.
+
+The next combined Claude review covers PRs 22-25 and current deployment-safety source since PR 21 `cb50d3cc966c6a367309c887a8c765891155cf0e`. Packaging and exact-head CI are authorized; consult PR 25 for the immutable head/run result. After reviewed source and approved deployment, resume the configured-device catalogue steps below. No additional seed write is needed.
+
+### Source operational control, not yet deployed
+
+The exact private `operationalControls/v1` schema is version 1, positive safe-integer generation, mode maintenance/core/media, and Boolean destructiveWorkersEnabled. No client may read or write it. Source contains readers, not a production control editor.
+
+| State | New protected work | Existing work |
+|---|---|---|
+| Missing, malformed, unreadable or maintenance | Client/operator mutations and protected callable/HTTP paths denied | Reconcilers and monitoring may drain; workers preserve evidence |
+| Core, workers false | Nonmedia journeys only; no new account deletion or media | No destructive workers |
+| Core, workers true | Nonmedia journeys and accepted account deletion | Workers only after reviewed backlog/replay readiness |
+| Media, workers true | Media paths may also pass existing authority checks | Normal moderation and cleanup authority remain |
+
+Increase generation on every approved mode or flag transition, including close and reopen. Never reuse or roll back an earlier generation: it could revive an unexpired upload grant. Readers cannot prove Admin edit history. Media with workers false is invalid and closes admission.
+
+A control read admits an invocation; it does not cancel work already inside its handler. New uploads check control/profile, but admitted transfers and signed URLs may finish. Rules do not fence console writes, old revisions or arbitrary Admin scripts. Quiet logs or a fixed sleep do not prove drain.
+
+### Upload and retained cleanup recovery
+
+One upload slot per account lasts 30 minutes. The form retains selected media and explains waiting for service, finishing/cancelling another upload, cancelling an expired draft, or using Send feedback in You. Never hand-author a grant or backfill it from a legacy draft. Cancellation can also wait during maintenance, so choose and communicate a bounded maintenance window.
+
+The deleted-draft event retains `deferredDraftCleanupJobs/{draftId}` before acknowledgement. Pending means no successful attempt recorded. Attempted means exact-path removal returned, not permanent absence of later bytes. Mode changes do not replay these or existing account/media deletion jobs. Paused-worker logs are aggregate and omit private identifiers.
+
+Before workers open, approve read-only inventory, bounded exact replay targets, transfer drain, observation and retention. Include cancelled/rejected draft rows: existing best-effort cancellation and the daily awaiting/cleanup scanner do not sweep every terminal state. Do not discard retained paths or claim final cleanup without approved readback.
+
+### Report cutover and repair procedure
+
+This is source guidance for a future separately approved production operation. Do not run the commands now.
+
+1. Obtain exact-head-green source, the combined Claude review and a Lane 3 production amendment. Rebuild Functions from that clean reviewed checkout. The CLI verifies source HEAD/cleanliness, not provenance of an arbitrarily modified ignored build directory.
+2. Prove each pause surface: client rules, onModerationAction, deleteAccount, mergeChants, report intake, destructive workers, repository Admin, external Admin and legacy report events. Record exact revisions, alternate invocation containment, maximum runtimes, observation references, in-flight drain and queued-delivery disposition.
+3. Keep maintenance at the approved generation. Isolate old targets, then replace only onReportCreated and onCommentReportCreated with reviewed written handlers, europe-west2 compute, nam5 events and original document paths. If either replacement is missing, stay closed and recover forward. No overlapping incrementers or blind rollback.
+4. Prepare private owner-only regular JSON cutover evidence using `functions/src/report_cutover.ts`. References must resolve to real observations. The validator checks attestations, not live IAM/traffic, freshness or whole-database coverage. Plans belong directly in ignored `.private-report-repair/`; inputs must be nonsymlink regular files, owner-only and at most 1 MiB.
+5. Plan one page, starting each collection from the beginning. Even plan-only requires both replacement and containment attestations. Replace every quoted placeholder after authorization:
+
+```bash
+node functions/lib/report_repair_cli.js plan \
+  --project chants-f95b4 \
+  --source-sha "REPLACE_WITH_REVIEWED_40_CHARACTER_SHA" \
+  --credential "REPLACE_WITH_ABSOLUTE_OWNER_ONLY_CREDENTIAL_PATH" \
+  --cutover "REPLACE_WITH_ABSOLUTE_OWNER_ONLY_EVIDENCE_PATH" \
+  --plan "REPLACE_WITH_ABSOLUTE_PRIVATE_REPORT_REPAIR_PAGE_PATH" \
+  --kind chants
+```
+
+6. Privately review scope, before/after hashes and exact digest. Pages contain at most 25 chants or one comment; zero-report parents must be covered. Overflow beyond 500 reports or 1,000 visible comments stops the target. Never increase bounds or skip a failure automatically.
+7. Apply only that reviewed digest. There is no automatic all-pages apply:
+
+```bash
+node functions/lib/report_repair_cli.js apply \
+  --project chants-f95b4 \
+  --source-sha "REPLACE_WITH_REVIEWED_40_CHARACTER_SHA" \
+  --credential "REPLACE_WITH_ABSOLUTE_OWNER_ONLY_CREDENTIAL_PATH" \
+  --cutover "REPLACE_WITH_ABSOLUTE_OWNER_ONLY_EVIDENCE_PATH" \
+  --plan "REPLACE_WITH_THE_SAME_ABSOLUTE_PRIVATE_PAGE_PATH" \
+  --digest "REPLACE_WITH_REVIEWED_64_CHARACTER_DIGEST"
+```
+
+8. Complete means counter, necessary parent count, deterministic audit and readback all succeeded. After ambiguous acknowledgement, retain the same page/digest and inspect its checkpoint. Changed generation, source, parent or audit stops further work. Never roll generation back to make a stale plan pass; investigate applied/incomplete work and obtain a new reviewed plan if needed.
+9. After every page target completes, plan the next page using its exact `--after` cursor and a new private filename. Repeat with `--kind comments`. A full-size page requires another explicit page, including an empty terminal page, to prove the end. Preserve the complete start-to-end page chain for both collections. One successful page cannot establish whole-collection coverage.
+10. Independently verify both target inventories, full repair/readback, source-trigger convergence, dependencies, retained-job replay and the approved observation window. Only a separate generation-increasing transition can reopen admission. Historical false hides remain human moderation; repair never unhides.
+
+Plans and checkpoints contain private target IDs. Never paste them, raw reports, credentials or production payloads into Git or review artifacts. Record aggregates and evidence references only.
+
 | Signal | Healthy | Degraded | Owner or action |
 |---|---|---|---|
 | Public browse | Current visible chants load; transient cache states are labelled | Permission errors, authoritative absence, or repeated load failure | Confirm deployed rules, indexes, client version, and Firestore availability |
@@ -126,6 +198,34 @@ Crashlytics and general Function-error alerts begin with event detection rather 
 - **Recovery:** A failed or ambiguous write stops the rollout. Run readback-only before deciding whether a retry is safe. Correct allowlisted source content and rerun only the affected club. Never improvise deletion, rename a stable ID, or remove an orphan without a separate exact-target destructive plan.
 - **Escalate when:** The credential names another project, any source-owned field mismatches, an unexpected orphan exists, a stable identity would change, a write result is ambiguous, or recovery would delete data.
 
+### Run the configured-device catalogue check
+
+The production seed is exact. This check verifies the mobile presentation and navigation, not the lyrics again. It is not a store-release sign-off.
+
+Before running:
+
+1. Confirm the backend rollout is approved and verified. On 2026-08-30 production had only nine of the 48 source Functions; `completeOnboarding` was absent. A new-account walkthrough cannot pass against that baseline. Do not bypass onboarding or create profile documents manually.
+2. Connect and unlock the iPhone. Certificate setup was completed by the owner on 2026-08-30: an Apple Development certificate plus Apple's WWDR G3 intermediate now produce one valid code-signing identity. Do not create another certificate or remove the old one. Provisioning and installation still need verification. Keep team `J7V95LBCWR` and bundle `com.chants.chants`; do not switch personal teams, override certificate trust, or remove entitlements to force a run. Any further credential step remains owner-controlled. [Apple signing guidance](https://developer.apple.com/documentation/xcode/sharing-your-teams-signing-certificates).
+3. Confirm the local Dart, iOS, and Android Firebase client configurations all identify `chants-f95b4` and remain ignored. The prepared files are in `chants-v1-seed-live-rollout`; the older checkouts' Dart placeholders must not be reused.
+4. Run from the prepared checkout. If Flutter asks which target to use, select the physical iPhone, not Chrome or macOS. The first build is still a native build; later debug changes can use hot reload without rebuilding from scratch.
+
+```sh
+cd /Users/andrewbolaji/Desktop/projects/chants/chants-v1-seed-live-rollout
+flutter devices
+flutter run --no-pub
+```
+
+Catalogue walkthrough:
+
+1. Sign in yourself with the intended test/owner account. Keep passwords, verification codes, and App Check debug tokens out of the task and repository.
+2. Tap **Clubs** in the bottom navigation and scroll through the full 20-club list. Missing, duplicated, or permanently loading club cards fail the check.
+3. Open Arsenal and Leeds United. Their reviewed Songbook counts are 12 and six chants. Open a chant, read through it, return to its club, then open a player-linked chant through the player route. Check club/player association, lyrics layout, tune/context text where supplied, and trust labels.
+4. Open at least one club from the final rollout group, Nottingham Forest, Sunderland, or Tottenham Hotspur, and open a chant. This samples the end of the widening sequence. It does not claim visual inspection of every one of the 192 chants.
+5. Confirm Songbook and Chant Lab are distinct. Empty community content is not evidence that the canonical seed is missing. Switch bottom tabs and return to **Clubs**; the app must retain usable navigation and avoid a stuck loading state.
+6. Report a pass or the exact screen/action and visible error. Record source head, app build, platform, and observed paths without account identifiers. Do not rerun seed commands to repair a client or backend-deployment error.
+
+The broader authentication, media, moderation, sharing, deletion, and airplane-mode walks remain separate release gates. Initial preparation lacked a valid signing identity and backend parity. The owner has since completed the certificate step; backend parity, device provisioning, and physical-device observations remain open.
+
 ### Saved matchday content is unavailable offline
 
 - **Likely causes:** Snapshot was never saved, UID changed, local file is corrupt or from a future schema, deletion lock is active, or the operating system removed application data.
@@ -143,7 +243,7 @@ Crashlytics and general Function-error alerts begin with event detection rather 
 - **Rules and Functions:** Verify deployed baseline first, then deploy a reviewed compatible prior or forward version. For performance-source eligibility, deploy compatible rules and Functions before the client. CI success does not prove deployed parity.
 - **Schema and data:** Prefer backward-compatible additions and forward recovery. Stable seed identity, account deletion, counters, and safety records each have specific decisions that take precedence over generic rollback.
 - **External side effects:** Native sharing and evidence links leave the app boundary. Chants cannot recall third-party copies, browser history, or recipient data.
-- **Disabled merge:** `mergeChants` remains stopped before parsing or mutation. Do not re-enable it as incident mitigation.
+- **Source-disabled merge:** Reviewed `mergeChants` stops before parsing or mutation. The actual July deployment recovered on 2026-08-30 lacks that guard; do not invoke the live endpoint. Deploying the reviewed stop requires the approved rollout, and restoring the old active merge is not incident recovery.
 
 ## Backup and restore
 

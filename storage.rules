@@ -43,30 +43,41 @@ service firebase.storage {
         && accountIsActive(request.auth.uid);
     }
 
+    // Two unique Firestore reads total on the upload path. Account state and
+    // the authoritative single upload grant deliberately share one document.
     function ownsUploadTicket(uid, draftId) {
-      let draft = firestore.get(
-        /databases/(default)/documents/performanceDrafts/$(draftId)
-      );
-      return firestore.exists(
-          /databases/(default)/documents/performanceDrafts/$(draftId)
-        )
-        && draft.data.schemaVersion == 1
-        && draft.data.ownerId == uid
-        && draft.data.state == 'awaiting_upload'
-        && draft.data.uploadPath ==
-          'performance-staging/' + uid + '/' + draftId + '/source'
-        && draft.data.claimedSizeBytes == request.resource.size
-        && draft.data.claimedContentType == request.resource.contentType;
+      let control = firestore.get(/databases/(default)/documents/operationalControls/v1).data;
+      let profile = firestore.get(/databases/(default)/documents/profiles/$(uid)).data;
+      let grant = profile.activePerformanceUpload;
+      return control.keys().hasOnly(['schemaVersion', 'generation', 'mode', 'destructiveWorkersEnabled'])
+        && control.keys().hasAll(['schemaVersion', 'generation', 'mode', 'destructiveWorkersEnabled'])
+        && control.schemaVersion == 1
+        && control.generation is int && control.generation >= 1 && control.generation <= 9007199254740991
+        && control.mode == 'media' && control.destructiveWorkersEnabled == true
+        && profile.banned == false && profile.ageConfirmed17Plus == true
+        && profile.acceptedPolicyVersion == 'v1' && profile.deletionPending == false
+        && grant is map
+        && grant.keys().hasOnly(['schemaVersion', 'draftId', 'ownerId', 'uploadPath',
+          'sizeBytes', 'contentType', 'generation', 'issuedAt', 'expiresAt'])
+        && grant.keys().hasAll(['schemaVersion', 'draftId', 'ownerId', 'uploadPath',
+          'sizeBytes', 'contentType', 'generation', 'issuedAt', 'expiresAt'])
+        && grant.schemaVersion == 1 && grant.draftId == draftId && grant.ownerId == uid
+        && grant.generation == control.generation
+        && grant.issuedAt is timestamp && grant.expiresAt is timestamp
+        && grant.issuedAt <= request.time && grant.expiresAt > request.time
+        && grant.expiresAt == grant.issuedAt + duration.value(30, 'm')
+        && grant.uploadPath == 'performance-staging/' + uid + '/' + draftId + '/source'
+        && grant.sizeBytes is int && grant.sizeBytes == request.resource.size
+        && grant.contentType == request.resource.contentType;
     }
 
     // A callable creates a single-use ticket before the client uploads. The
     // path, byte count, MIME type, owner, and custom metadata must all agree
-    // with that server-owned draft. Direct replacement and deletion are off.
+    // with that server-owned account grant. Direct replacement and deletion are off.
     match /performance-staging/{uid}/{draftId}/source {
       allow create: if isSignedIn()
         && hasVerifiedContact()
         && request.auth.uid == uid
-        && accountIsActive(uid)
         && resource == null
         && request.resource.size > 0
         && request.resource.size <= 50 * 1024 * 1024

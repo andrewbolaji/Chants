@@ -290,8 +290,8 @@ export async function requestAccountDeletion({
     const jobSnap = await transaction.get(jobRef);
     const profileSnap = await transaction.get(profileRef);
 
-    if (profileSnap.exists && profileSnap.data()?.deletionPending !== true) {
-      transaction.update(profileRef, { deletionPending: true });
+    if (profileSnap.exists && (profileSnap.data()?.deletionPending !== true || profileSnap.data()?.activePerformanceUpload != null)) {
+      transaction.update(profileRef, { deletionPending: true, activePerformanceUpload: null });
     }
 
     if (jobSnap.exists) return;
