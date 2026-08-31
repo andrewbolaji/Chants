@@ -14,17 +14,21 @@ This runbook describes the source-backed recovery paths that exist today. Dashbo
 
 ### Current backend rollout hold
 
-Read-only inventory on 2026-08-30 established that production is still the July backend, not the reviewed V1 source. See `docs/changes/2026-08-30-v1-backend-rollout-readiness.md` for all nine live identities, pinned predecessor generations/hashes, the 48-name proposed sequence, and explicit stop conditions. Node 22 source verification does not change that live state.
+Read-only inventory on 2026-08-30 established that production is still the July backend, not the reviewed V1 source. The 2026-08-31 07:37 UTC recheck confirmed the same nine identities, source generations and old rules. See `docs/changes/2026-08-30-v1-backend-rollout-readiness.md` for pinned predecessor hashes and `docs/changes/2026-08-31-v1-production-rollout-planning.md` for the latest bounded observations. The proposed sequence is now in `docs/CHANGE_SPEC.md`; it is not permission to execute. Node 22 source verification does not change live state.
 
 Do not use an all-Functions deploy or ordinary update for the two report handlers: the deployed created-only versions blindly increment, while current written handlers rebuild counts. The old live merge endpoint lacks the reviewed stop. Never invoke it or restore that bundle as blanket rollback. Admission, bounded repair and a cutover evidence validator now exist in source under decision 026; actual containment, drain, replacement and repair still require a separate production amendment.
 
 Production has only two ready chant indexes, no expected media bucket or Storage rules release, and disabled Storage/Scheduler APIs. Bucket location/provisioning, IAM, retention, resource caps, fourteen index creations, and destructive worker/schedule activation remain owner-approved gates. Firestore and Eventarc are in `nam5`; Functions compute stays `europe-west2`. The data location must not be inferred from the compute region.
 
-Claude reviewed PRs 22-26 through `fe0ea9232ad7d34250dee9e8429f39e3e36c6188`. The active correction spec closes F1-F5 in one PR 26 correction; the next review is that correction range and its affected consumers. Consult PR 26 for the exact replacement head/run receipt. Production approval and configured-device inspection remain separate; no additional seed write is needed.
+The recheck found zero historical performances, drafts and all three deletion/cleanup job collections; the control document was absent. One profile is not an Auth-user or private-cohort inventory. Firestore PITR and delete protection are off. Artifact Registry now has a one-day DELETE/ANY cleanup policy, unlike the prior no-policy observation; its origin was not established. No settings were changed. Re-observe all facts before an approved live operation.
+
+Claude independently closed PR 26 F1-F5 and reviewed the earlier staged Call-Ups tree. Source and later corrections merged through PR 28 at `42f20dc675a1de4fe85956783774a4cdc67f3a01`; exact-main run `33368497566` passed all eight jobs. Preparation on PR 29 at `5280c3a` passed eight-job run `33401110327` and Claude's independent review found no code/merge blocker. The approved follow-up documents the five observations without changing runtime behavior; its own exact-head CI remains a separate receipt. Production approval and configured-device inspection remain separate; no additional seed write is needed.
+
+Before deploying the dedicated runtime identity, verify the exact deployer's effective `iam.serviceAccounts.actAs` on `chants-v1-runtime@chants-f95b4.iam.gserviceaccount.com`. Record the reviewed account-scoped grant and permission evidence privately; `roles/iam.serviceAccountUser` is one way to supply that permission. Do not substitute project-wide Editor/Token Creator or assume the runtime's own data permissions authorize the deployer. Missing or unverified access is a pre-deploy stop. Grant creation and permission probes still require the separate live approval. [Google deployment guidance](https://docs.cloud.google.com/functions/docs/troubleshooting#user_missing_permissions_on_runtime_service_account_while_deploying_a_function).
 
 ### Source operational control, not yet deployed
 
-The exact private `operationalControls/v1` schema is version 1, positive safe-integer generation, mode maintenance/core/media, and Boolean destructiveWorkersEnabled. No client may read or write it. Source contains readers, not a production control editor.
+The exact private `operationalControls/v1` schema is version 1, positive safe-integer generation, mode maintenance/core/media, and Boolean destructiveWorkersEnabled. No client may read or write it. Source now contains a local read/plan/apply command, not a deployed control endpoint or permission to change production.
 
 | State | New protected work | Existing work |
 |---|---|---|
@@ -36,6 +40,47 @@ The exact private `operationalControls/v1` schema is version 1, positive safe-in
 Increase generation on every approved mode or flag transition, including close and reopen. Never reuse or roll back an earlier generation: it could revive an unexpired upload grant. Readers cannot prove Admin edit history. Media with workers false is invalid and closes admission.
 
 A control read admits an invocation; it does not cancel work already inside its handler. New uploads check control/profile, but admitted transfers and signed URLs may finish. Rules do not fence console writes, old revisions or arbitrary Admin scripts. Quiet logs or a fixed sleep do not prove drain.
+
+### Future operational-control command
+
+Do not run against production until the exact live release is approved. The preparation implementation and unresolved private IAM/recovery checklist are in `docs/changes/2026-08-31-v1-production-rollout-preparation.md`.
+
+Use the final reviewed, completely clean checkout and rebuild locked Functions output with Node 22. The CLI checks HEAD and Git cleanliness, not the provenance of an arbitrarily edited ignored build directory. Record build identity separately. Reuse the ignored `.private-report-repair/` directory for owner-only control plans; do not put credentials or plans in Git. The credential must be an explicitly approved, isolated service-account JSON file for `chants-f95b4`. Firebase CLI login is not that credential. No credential is created by this tool.
+
+Read is the default; spelling it out makes intent clear:
+
+```sh
+node functions/lib/operational_control_cli.js read \
+  --project chants-f95b4 \
+  --source-sha "REPLACE_WITH_REVIEWED_40_CHARACTER_SHA" \
+  --credential "REPLACE_WITH_ABSOLUTE_PRIVATE_CREDENTIAL_PATH"
+```
+
+Plan the initial closed state only if the control is still absent. For subsequent transitions, replace mode/workers only with the separately approved values; the command derives the expected data/version and next generation from the real document.
+
+```sh
+node functions/lib/operational_control_cli.js plan \
+  --project chants-f95b4 \
+  --source-sha "REPLACE_WITH_REVIEWED_40_CHARACTER_SHA" \
+  --credential "REPLACE_WITH_ABSOLUTE_PRIVATE_CREDENTIAL_PATH" \
+  --plan "REPLACE_WITH_ABSOLUTE_PRIVATE_REPORT_REPAIR_CONTROL_PLAN_PATH" \
+  --mode maintenance --workers false
+```
+
+Planning reads only the control and exclusively creates a local 0600 plan file. It never replaces an existing plan. Review its exact target and expected state/version plus the live admission prerequisites. A digest is not a substitute for that approval.
+
+```sh
+node functions/lib/operational_control_cli.js apply \
+  --project chants-f95b4 \
+  --source-sha "REPLACE_WITH_THE_SAME_REVIEWED_SHA" \
+  --credential "REPLACE_WITH_ABSOLUTE_PRIVATE_CREDENTIAL_PATH" \
+  --plan "REPLACE_WITH_THE_SAME_ABSOLUTE_PRIVATE_CONTROL_PLAN_PATH" \
+  --digest "REPLACE_WITH_APPROVED_64_CHARACTER_DIGEST"
+```
+
+Apply creates or changes only `operationalControls/v1`, in one exact-state/version transaction with at most three SDK transaction attempts, including the initial attempt (at most two retries). It requires separate readback and reports `target-observed`. This proves the current four-field target, not authorship or write permission: an already-matching target can be observed without a mutation. Non-stale transaction errors are resolved only through readback, whose validation/read error can replace the original cause; the CLI keeps raw SDK errors private. A duplicate or lost-response retry cannot advance a second generation. A different current state/version, malformed control or failed readback stops. Inspect the same plan and current state before deciding to retry; never generate a new transition merely because acknowledgement was lost.
+
+The CLI rejects emulator redirection; emulator tests call the same transaction functions against a fixed demo database instead. It is not an IAM fence, operator approval system, historical audit, malformed-state repair tool or retained-job executor. A later out-of-band deletion/restoration can violate generation history. Keep that boundary restricted and preserve private execution receipts outside the exact-schema document.
 
 ### Upload and retained cleanup recovery
 
@@ -52,6 +97,27 @@ Legitimate pending/attempted jobs retain the owner UID inside uploadPath, includ
 If a supporter receives `upload-needs-recovery`, inspect the private profile's activePerformanceUpload, current deletion/ban state, draft and retained cleanup evidence under explicit authorization. Preserve the observed generation and exact identity; never mint or backfill a grant from a draft. A malformed grant has no trustworthy expiry, so waiting 30 minutes is not a guaranteed fix. Prove no newer valid slot is being replaced and contain/drain any prior transfer before proposing an exact compare-and-set revocation. Only a separately approved operator correction may clear the bad slot; the normal callable may then issue a fresh grant under current authority. If those facts cannot be proved, remain closed and escalate.
 
 Before workers open, approve read-only inventory, bounded exact replay targets, transfer drain, observation and retention. Include cancelled/rejected draft rows: existing best-effort cancellation and the daily awaiting/cleanup scanner do not sweep every terminal state. Do not discard retained paths or claim final cleanup without approved readback.
+
+### Manual deferred-cleanup and delivery gate
+
+**Owner: Andrew. Future live approval required.** The 15-minute monitor checks only `accountDeletionJobs` and `performanceMediaDeletionJobs`. It does not inspect `deferredDraftCleanupJobs` or prove deleted-draft event delivery. A failure before the retained-row transaction commits leaves no row for any job counter to find. Conversely, old `attempted` rows intentionally remain; treating every aged row as unfinished would create false alarms. This correction does not add an automated monitor or replay worker.
+
+Before E1 deployment, assign this manual control and confirm access to its required evidence. Before enabling workers/media, every 15 minutes during the attended private canary, and at the final observation including the next daily cleanup:
+
+1. Record current control generation, deployed revision and actual retry/delivery configuration. Inspect delivery failures, retry/backlog or oldest-message evidence where exposed, and worker errors. Firebase documents a 24-hour retry window for new second-generation retry-enabled functions; verify the deployed policy and history rather than treating that number as an observed guarantee. Quiet logs alone do not prove delivery. [Firebase retry semantics](https://firebase.google.com/docs/functions/retries).
+2. For each approved synthetic deletion/cancellation, retain its expected draft identity and exact path privately before the action. Reconcile this ledger with pending/attempted/blocked rows, current drafts/grants and actual staging objects. A zero job count is not completion when an expected event has no durable receipt. For wider inventory, reconcile authorized staging-object and draft/job metadata as well, not just the canary ledger; do not copy owner paths or raw rows into Git.
+3. Verify removal against actual object state after the approved transfer-drain checks. Distinguish live absence, recoverable soft-deleted bytes and retained attempt evidence. Never infer a path from a hash, automatically replay a job, erase retained evidence or delete an object merely because it looks orphaned.
+4. Missing authoritative evidence, undelivered expected work, unexplained objects, pending/blocked work or unresolved later writes stops widening. Escalate to Andrew and use the separately approved closure/recovery procedure; this checklist grants no mutation authority. A retained attempted row is not itself a failure if its current outcome and ongoing retention are accounted for.
+
+The manual route is a bounded private-canary control, not a claim of scalable public monitoring. Before public media, Andrew must approve and demonstrate an ongoing owner/cadence appropriate to the measured workload, or approve a separate monitoring/reconciliation implementation. Until then public media stays on HOLD. An additional stale-row counter alone cannot close the never-created-row gap.
+
+### Concurrent-submission and capacity gate
+
+**Future private probe, not executed by source approval.** `submitPerformanceDraft` currently shares the configured maxInstances 1/concurrency 1 validation profile. Do not treat that setting as a durable application queue, a strict global lock across revisions, or measured public capacity. The per-account upload slot is a separate constraint.
+
+Before public media, approve test identities/content, a bounded launch workload and latency/error/cost budgets. Use at least two disposable, normally onboarded accounts with independent valid upload slots, never the preserved owner or manually authored grants. First measure an isolated submission; then start at least two submissions together using representative permitted media, covering cold and warm behavior. Record callable response/latency, client progress and recoverable error state, server duration/throttling/timeouts, draft/grant consistency and eventual cleanup. Do not retry indefinitely or call a two-request probe a public-scale benchmark; also test the explicitly approved launch burst/rate.
+
+Andrew must record whether the existing cap meets those budgets. Any exceeded budget, stranded UI/draft, inconsistent outcome or missing evidence holds public media. A resource change requires its own approval, exact-source verification and repeated probe; no automatic increase or hard-spend guarantee is implied. Public workload and budgets remain unresolved until that release packet is approved.
 
 ### Report cutover and repair procedure
 

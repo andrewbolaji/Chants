@@ -8,6 +8,7 @@ import { requestAccountDeletion } from "../src/account_deletion";
 import { firebaseOperationalStore, ABANDONED_DRAFT_AGE_MS } from "../src/operations";
 import { repairEvidence } from "./fixtures/cutover";
 import { MAX_PAUSE_EVIDENCE_AGE_MS } from "../src/report_cutover";
+import { applyControl, controlPlanDigest, planControl, readControl } from "../src/operational_control_cli";
 
 const integration = process.env.FIRESTORE_EMULATOR_HOST === "127.0.0.1:8080" ? describe : describe.skip;
 const sha = "a".repeat(40);
@@ -48,6 +49,93 @@ integration("real-emulator report repair and upload lifecycle", function () {
       await batch.commit();
     }
   }
+
+  it("creates closed control, plans without mutation, advances close/reopen, and never advances a duplicate", async () => {
+    const ref = db.doc("operationalControls/v1"); await ref.delete();
+    await assert.rejects(planControl(db, sha, { mode: "core", destructiveWorkersEnabled: false }), /Initial control/);
+    const initial = await planControl(db, sha, { mode: "maintenance", destructiveWorkersEnabled: false });
+    assert.equal((await ref.get()).exists, false);
+    const apply = (value: typeof initial) => applyControl(db, sha, value, controlPlanDigest(value));
+    assert.equal((await apply(initial)).result, "target-observed");
+    const version = (await ref.get()).updateTime;
+    await apply(initial); assert.deepEqual((await ref.get()).updateTime, version);
+    for (const desired of [{ mode: "core" as const, destructiveWorkersEnabled: false },
+      { mode: "core" as const, destructiveWorkersEnabled: true }, { mode: "media" as const, destructiveWorkersEnabled: true },
+      { mode: "maintenance" as const, destructiveWorkersEnabled: false }, { mode: "core" as const, destructiveWorkersEnabled: false }]) {
+      const value = await planControl(db, sha, desired);
+      assert.equal((await ref.get()).data()!.generation, value.target.generation - 1);
+      await apply(value);
+      assert.deepEqual((await ref.get()).data(), value.target);
+    }
+    assert.equal((await readControl(db)).control!.generation, 6);
+    assert.deepEqual((await db.listCollections()).map(c => c.id), ["operationalControls"]);
+  });
+
+  it("serializes competing transitions and rejects a stale plan after out-of-band change and restoration", async () => {
+    const left = await planControl(db, sha, { mode: "core", destructiveWorkersEnabled: false });
+    const right = await planControl(db, sha, { mode: "core", destructiveWorkersEnabled: true });
+    const results = await Promise.allSettled([left, right].map(value => applyControl(db, sha, value, controlPlanDigest(value))));
+    assert.equal(results.filter(r => r.status === "fulfilled").length, 1);
+    assert.equal(results.filter(r => r.status === "rejected").length, 1);
+    assert.equal((await readControl(db)).control!.generation, 5);
+    const stale = await planControl(db, sha, { mode: "maintenance", destructiveWorkersEnabled: false });
+    // Identical no-op sets may preserve updateTime. Change and restore real data
+    // to reproduce an ABA rewrite with the same four-field value.
+    await db.doc("operationalControls/v1").update({ syntheticInterveningChange: true });
+    await db.doc("operationalControls/v1").set(stale.expected.control!);
+    assert.notDeepEqual((await readControl(db)).updateTime, stale.expected.updateTime);
+    await assert.rejects(applyControl(db, sha, stale, controlPlanDigest(stale)), /Control changed/);
+  });
+
+  it("resolves a lost commit acknowledgement by exact readback, never a second generation", async () => {
+    const value = await planControl(db, sha, { mode: "core", destructiveWorkersEnabled: false });
+    let writes = 0;
+    const ambiguous = new Proxy(db, { get(object, property) {
+      if (property === "runTransaction") return async (operation: (transaction: admin.firestore.Transaction) => Promise<unknown>) => {
+        await object.runTransaction(operation); writes++; throw Error("Synthetic lost commit acknowledgement");
+      };
+      const result = Reflect.get(object, property); return typeof result === "function" ? result.bind(object) : result;
+    } });
+    assert.equal((await applyControl(ambiguous, sha, value, controlPlanDigest(value))).result, "target-observed");
+    const observed = await readControl(db);
+    await applyControl(db, sha, value, controlPlanDigest(value));
+    assert.deepEqual(await readControl(db), observed); assert.equal(writes, 1);
+  });
+
+  it("rejects wrong source/digest and malformed existing controls without erasing unknown fields", async () => {
+    const value = await planControl(db, sha, { mode: "core", destructiveWorkersEnabled: false });
+    const unchanged = await readControl(db);
+    await assert.rejects(applyControl(db, "b".repeat(40), value, controlPlanDigest(value)), /Reviewed/);
+    await assert.rejects(applyControl(db, sha, value, "0".repeat(64)), /Reviewed/);
+    await assert.rejects(applyControl(db, sha, { ...value, projectId: "other" }, controlPlanDigest(value)), /identity/);
+    assert.deepEqual(await readControl(db), unchanged);
+    const ref = db.doc("operationalControls/v1");
+    await ref.update({ unexpected: "preserve for investigation" });
+    await assert.rejects(planControl(db, sha, { mode: "core", destructiveWorkersEnabled: false }), /Invalid operational/);
+    await assert.rejects(applyControl(db, sha, value, controlPlanDigest(value)), /Invalid operational/);
+    assert.equal((await ref.get()).data()!.unexpected, "preserve for investigation");
+  });
+
+  it("does not claim success when a write fails before commit or when separate readback fails", async () => {
+    const value = await planControl(db, sha, { mode: "core", destructiveWorkersEnabled: false });
+    const unavailable = new Proxy(db, { get(object, property) {
+      if (property === "runTransaction") return async () => { throw Error("Synthetic pre-commit failure"); };
+      const result = Reflect.get(object, property); return typeof result === "function" ? result.bind(object) : result;
+    } });
+    await assert.rejects(applyControl(unavailable, sha, value, controlPlanDigest(value)), /unconfirmed/);
+    assert.deepEqual((await readControl(db)).control, value.expected.control);
+    const noReadback = new Proxy(db, { get(object, property) {
+      if (property === "doc") return (path: string) => {
+        const ref = object.doc(path);
+        ref.get = async () => { throw Error("Synthetic separate readback failure"); };
+        return ref;
+      };
+      const result = Reflect.get(object, property); return typeof result === "function" ? result.bind(object) : result;
+    } });
+    await assert.rejects(applyControl(noReadback, sha, value, controlPlanDigest(value)), /readback failure/);
+    assert.deepEqual((await readControl(db)).control, value.target);
+    assert.equal((await applyControl(db, sha, value, controlPlanDigest(value))).control.generation, 5);
+  });
 
   it("plans without writes, covers zero-report targets, never unhides, and resumes a lost commit acknowledgement", async () => {
     await db.collection("chants").doc("chant").set(target({ hidden: true, lyrics: "Unchanged fixture" }));

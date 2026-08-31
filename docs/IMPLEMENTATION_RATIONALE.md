@@ -32,6 +32,7 @@ This document explains the current Chants repository through PR 26 preparation a
 | `test/`, `functions/test/`, `test_rules/` | Yes | Unit, widget, golden, handler, overlap, authority, and lifecycle evidence |
 | Android and iOS projects | Yes in source | Auth plugins, permissions, deep links, entitlements, deployment target, CocoaPods lock, fail-closed release signing, compile fixtures, and remaining SDK or provider gates |
 | Operational admission and repair | Yes in current block | Exact endpoint classification, direct-write control, profile upload grant, deferred cleanup, private plan/apply and evidence validator; no production executor |
+| Runtime and local control preparation | Yes in bounded 2026-08-31 extension | Explicit 48-endpoint resource/runtime contract and local exact-state/version CAS command; no IAM/deployment/replay executor |
 
 Generated build outputs and installed dependency trees are excluded except when a tool result depends on them.
 
@@ -148,7 +149,7 @@ The phase set now removes creator handle and profile, drafts and staging referen
 | `performanceDrafts` | Owner and operator | Server callables |
 | `performances` | Approved visible public projection; operator restricted inspection | Server admission and moderation |
 | Staged media | Exact owner draft only | UID-scoped Storage rule |
-| Operational control and repair checkpoints | No client reads or writes | Approved operator process; no general control writer in source |
+| Operational control and repair checkpoints | No client reads or writes | Separate local control and repair plan/apply commands; each still requires approved isolated operator access |
 | Active upload grant | Private profile, never public creator data | Draft and account lifecycle transactions; two-lookup Storage authorization |
 | Deferred draft cleanup | No client reads or writes | Deleted event retains exact path before acknowledgement; explicit later replay |
 | Published media | No direct client read | Server copy and signed delivery |
@@ -283,15 +284,17 @@ The 20-club seed catalogue is deployed and exact, as recorded above and in PR 24
 
 The actual 2026-08-30 baseline is nine Node 20 Functions from July, old Firestore rules, two ready indexes, no expected media bucket or Storage rules release, and disabled Firebase Storage/Scheduler APIs. Generation-pinned source is recoverable but includes blind-increment report triggers, old deletion, and active merge, so it is not a safe blanket rollback. Firestore/Eventarc location is `nam5`; compute remains `europe-west2`. Runtime Node 22 is verified in source/CI, not deployed.
 
-`docs/changes/2026-08-30-v1-backend-rollout-readiness.md` owns the live baseline and proposed groups. The 2026-08-31 safety record adds source admission, grant authority, deferred cleanup and bounded repair. No overlap with old report incrementers is approved. Rules and new wrappers cannot fence external Admin writers or cancel already admitted work. Production needs verified containment/drain, exact replacements, full page coverage/readback, ready dependencies and explicit reopening. Bucket location, IAM/resource limits, retained backlog/replay, retention and smoke identities remain separate decisions.
+`docs/changes/2026-08-30-v1-backend-rollout-readiness.md` owns the predecessor baseline. The 2026-08-31 safety record adds source admission, grant authority, deferred cleanup and bounded repair. No overlap with old report incrementers is approved. Rules and new wrappers cannot fence external Admin writers or cancel already admitted work. Production needs verified containment/drain, exact replacements, full page coverage/readback, ready dependencies and explicit reopening. Bucket location, IAM/resource limits, retained backlog/replay, retention and smoke identities remain separate decisions.
 
-Claude reviewed cb50d3c through fe0ea92, covering PRs 22-26. The next review is the F1-F5 correction range from fe0ea92 through the replacement exact-head-green PR 26 head. It still precedes backend writes; actual deployment and device observations need subsequent evidence closure.
+**Dated status correction, 2026-08-31:** Claude subsequently closed PR 26 F1-F5 and reviewed the earlier staged Call-Ups addition. Source and later corrections are merged through PR 28 at `42f20dc675a1de4fe85956783774a4cdc67f3a01`, with eight-job exact-main run `33368497566` green. This is not a new whole-project review or device/deployment claim. The 07:37 UTC read-only recheck confirmed the same old backend, no control and zero historical media/deletion backlog; Artifact Registry now has a one-day cleanup policy of unestablished origin, and PITR/delete protection remain off. The scoped planning record `docs/changes/2026-08-31-v1-production-rollout-planning.md` owns that evidence.
+
+The subsequently approved source preparation is implemented but uncommitted in `docs/changes/2026-08-31-v1-production-rollout-preparation.md`. All 48 compiled endpoints now pin runtime identity/resources; seven use narrower serial resource caps. The local control CLI reuses private-file/source checks and writes only the existing four-field document through exact-data/update-time CAS, with separate readback and no duplicate generation. Local build, 214 unit tests and 23 demo transactions pass. Live IAM/containment, recovery and private-cohort predicates remain unresolved holds. No cloud setting, deployment, review or new clean-runner result is claimed for this extension.
 
 ## Documentation consistency
 
 | Record | Current meaning |
 |---|---|
-| `docs/CHANGE_SPEC.md` | Approved post-combined-review correction and packaging contract, not production or merge authorization |
+| `docs/CHANGE_SPEC.md` | Approved source-preparation contract; later production rollout remains proposed and requires exact live approval |
 | Six current change records dated 2026-08-27 through 2026-08-29 | Creator implementation, takedown correction, launch authentication extension, post-auth correction, final minor closure, and V1 launch services |
 | Decisions 017 through 026 | Shell, creator, performance, public, social, safety, source eligibility, verified identity, staged launch integrity, Living Songbook and operational admission |
 | `docs/INTERFACE.md` | Current launch, Stage, creator, conversation, moderation, and inherited interaction contract |
@@ -302,7 +305,7 @@ Claude reviewed cb50d3c through fe0ea92, covering PRs 22-26. The next review is 
 
 | Item | Consequence | Revisit trigger |
 |---|---|---|
-| Control generation has no source writer | Admin must increase generation on every transition; readers cannot enforce historical monotonicity | Every production control change |
+| Out-of-band Admin writes can bypass control generation history | New local CLI uses exact-state/version CAS and separate readback, but cannot prove history after external deletion/restoration | Every production control change |
 | Deferred cleanup has no automatic historical replay or TTL | Pending/attempted paths retain owner identifiers after deletion; permanent faults retain a minimal blocked record with a validated draft locator but no executable path. A mode toggle is not cleanup or complete erasure | Before workers/public media open; private inventory, exact recovery, bounded replay, drain and retention plan |
 | Cancelled/rejected drafts retain paths | Existing best-effort cancellation and daily awaiting/cleanup scanner do not cover every terminal state | Before public media, choose explicit bounded cleanup |
 | Repair evidence is operator-attested | Schema-2 timestamp age, drain interval and live generation are checked; the truth of observations and exhaustive coverage remain unproved | Separate Lane 3 production approval |
