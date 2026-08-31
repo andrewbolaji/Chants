@@ -92,6 +92,7 @@ export async function handleCompleteOnboarding(params: {
       displayName: input.displayName,
       role: "user",
       banned: false,
+      deletionPending: false,
       ageConfirmed17Plus: true,
       acceptedPolicyVersion: params.policyVersion,
       acceptedPolicyAt: timestamp,

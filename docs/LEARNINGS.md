@@ -12,6 +12,17 @@ This is durable, evidence-backed project memory. It prevents the same failure or
 
 ## Entries
 
+### 2026-08-31T00:49:27Z Passing rules emulators do not prove cross-service quotas
+
+- **Status:** promoted
+- **Scope:** Storage authorization that reads Firestore
+- **Observed:** All five old Storage tests passed even though upload authorization needed three distinct Firestore documents. Firebase documents a two-document Storage limit; adding a global control would have required four.
+- **Evidence:** The unchanged-rule rehearsal is recorded at 2026-08-30T23:47:50Z. Current `test_rules/storage_budget.test.ts` counts two calls through the upload helper graph and detects a deliberately inserted third lookup. The full behavioral suite separately verifies authority.
+- **Rule:** Treat emulator acceptance and documented service budgets as separate evidence. Count the real dependency graph before adding cross-service authorization. Do not weaken account checks merely to fit a quota.
+- **Applied control:** Decision 026 co-locates an authoritative expiring upload grant with private profile authority, reducing uploads to profile plus control. Issuance and revocation are transactional; no asynchronous open-flag mirror is trusted.
+- **Revisit:** Any new lookup, rule helper, grant writer, emulator or documented quota change. Real deployed Storage smoke remains required after separate authorization.
+- **Primary sources:** [Firebase rule access limits](https://firebase.google.com/docs/rules/rules-behavior#security_rules_limits_1), [cross-service quota explanation](https://firebase.blog/posts/2022/09/announcing-cross-service-security-rules/).
+
 ### 2026-08-29T21:00:00Z Accuracy intake needs version authority and a separate safety meaning
 
 - **Observation:** A chant-specific correction can look like generic feedback or a report, but those inherited paths either lose source context or carry hiding and abuse consequences. The same proposed correction can also become wrong while an operator reviews it if the chant changes, and the source can disappear before the private request is closed.

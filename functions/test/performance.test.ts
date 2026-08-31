@@ -1,11 +1,14 @@
 import { beforeEach, describe, it } from "mocha";
 import * as assert from "assert";
 import * as admin from "firebase-admin";
+import { handleDeletedDraftCleanup } from "../src/deferred_draft_cleanup";
+import { UPLOAD_GRANT_LIFETIME_MS } from "../src/upload_grant";
 import {
   MAX_PERFORMANCE_BYTES,
   PerformanceMediaGateway,
   StagedMediaMetadata,
   handleCreatePerformanceDraft,
+  handleCancelPerformanceDraft,
   handleModeratePerformance,
   handleResolvePerformanceDraftPlayback,
   handleResolvePerformancePlayback,
@@ -103,7 +106,9 @@ class FirestoreHarness {
     return {
       doc: (id: string) => {
         const ref = this.reference(name, id);
-        return { ...ref, get: async () => this.snapshot(ref) };
+        return { ...ref, get: async () => this.snapshot(ref),
+          update: async (data: Data) => this.apply({ kind: "update", ref, data }),
+        };
       },
       where: (field: string, operator: string, value: unknown) =>
         this.query(name).where(field, operator, value),
@@ -244,6 +249,7 @@ function approvedPerformance(overrides: Data = {}): Data {
 }
 
 function seedAuthority(db: FirestoreHarness): void {
+  db.set("operationalControls", "v1", { schemaVersion: 1, generation: 1, mode: "media", destructiveWorkersEnabled: true });
   db.set("profiles", "fan", activeAccount());
   db.set("creatorProfiles", "fan", visibleCreator());
   db.set("profiles", "other", activeAccount());
@@ -324,6 +330,80 @@ describe("performance admission", () => {
     }
   });
 
+  it("owns one slot, frees it on cancel, and never clears a newer grant", async () => {
+    const create = (id: string) => handleCreatePerformanceDraft({
+      uid: "fan", data: { chantId: "chant-1", caption: "", contentType: "video/mp4", sizeBytes: 3, durationMs: 1 },
+      firestore: db.firestore, now: () => NOW, newId: () => id,
+    });
+    const cancel = (id: string) => handleCancelPerformanceDraft({ uid: "fan", data: { draftId: id }, firestore: db.firestore, media, now: () => NOW });
+    await create("draft-1");
+    await assert.rejects(create("draft-2"), (error: { details?: { reason: string } }) => error.details?.reason === "upload-in-progress");
+    assert.strictEqual(db.get("performanceDrafts", "draft-2"), undefined);
+    await cancel("draft-1");
+    assert.strictEqual(db.get("profiles", "fan")?.activePerformanceUpload, null);
+    await create("draft-2"); await cancel("draft-1");
+    assert.strictEqual((db.get("profiles", "fan")?.activePerformanceUpload as Data).draftId, "draft-2");
+  });
+
+  it("refuses late or old-generation submission, and can replace an expired grant", async () => {
+    const create = (id: string, now = NOW) => handleCreatePerformanceDraft({
+      uid: "fan", data: { chantId: "chant-1", caption: "", contentType: "video/mp4", sizeBytes: 3, durationMs: 1 },
+      firestore: db.firestore, now: () => now, newId: () => id,
+    });
+    await create("draft-1");
+    const later = admin.firestore.Timestamp.fromMillis(NOW.toMillis() + UPLOAD_GRANT_LIFETIME_MS);
+    const submit = (now = NOW) => handleSubmitPerformanceDraft({ uid: "fan", data: { draftId: "draft-1" }, firestore: db.firestore, media, now: () => now });
+    await assert.rejects(submit(later), (error: { details?: { reason: string } }) => error.details?.reason === "upload-expired");
+    db.set("operationalControls", "v1", { schemaVersion: 1, generation: 2, mode: "media", destructiveWorkersEnabled: true });
+    await assert.rejects(submit(), (error: { details?: { reason: string } }) => error.details?.reason === "upload-expired");
+    await create("draft-2", later);
+    assert.strictEqual((db.get("profiles", "fan")?.activePerformanceUpload as Data).draftId, "draft-2");
+    assert.strictEqual(db.get("performanceDrafts", "draft-1")?.state, "awaiting_upload");
+    assert.strictEqual(db.get("performances", "draft-1"), undefined);
+  });
+
+  it("refuses grant issuance while paused without spending budget or creating a draft", async () => {
+    db.set("operationalControls", "v1", { schemaVersion: 1, generation: 2, mode: "maintenance", destructiveWorkersEnabled: true });
+    await assert.rejects(handleCreatePerformanceDraft({
+      uid: "fan", data: { chantId: "chant-1", caption: "", contentType: "video/mp4", sizeBytes: 3, durationMs: 1 },
+      firestore: db.firestore, now: () => NOW, newId: () => "draft-1",
+    }), (error: { code: string }) => error.code === "unavailable");
+    assert.strictEqual(db.get("performanceDrafts", "draft-1"), undefined);
+    assert.strictEqual(db.get("performanceUploadLimits", "fan_2026-08-28"), undefined);
+  });
+
+  it("retains event-only cleanup while paused, after failure, and after a late upload", async () => {
+    db.set("operationalControls", "v1", { schemaVersion: 1, generation: 1, mode: "maintenance", destructiveWorkersEnabled: true });
+    let attempts = 0; let fail = true; let objectExists = true;
+    const invoke = () => handleDeletedDraftCleanup({
+      draftId: "draft-1", data: awaitingDraft(), firestore: db.firestore, now: () => NOW,
+      remove: async (path) => {
+        assert.strictEqual(path, "performance-staging/fan/draft-1/source");
+        attempts++; if (fail) throw Error("storage unavailable");
+        objectExists = false;
+      },
+    });
+    await invoke();
+    assert.strictEqual(attempts, 0);
+    assert.strictEqual(objectExists, true);
+    assert.strictEqual(db.get("deferredDraftCleanupJobs", "draft-1")?.state, "pending");
+    db.set("operationalControls", "v1", { schemaVersion: 1, generation: 2, mode: "core", destructiveWorkersEnabled: true });
+    // A control update alone does not replay the retained instruction.
+    assert.strictEqual(attempts, 0);
+    await assert.rejects(invoke());
+    assert.strictEqual(db.get("deferredDraftCleanupJobs", "draft-1")?.state, "pending");
+    fail = false; await invoke();
+    assert.strictEqual(objectExists, false);
+    assert.strictEqual(db.get("deferredDraftCleanupJobs", "draft-1")?.state, "attempted");
+    // Retained exact-path evidence permits another explicit cleanup if an
+    // already admitted transfer finishes after the first deletion attempt.
+    objectExists = true;
+    await invoke(); assert.strictEqual(attempts, 3);
+    assert.strictEqual(objectExists, false);
+    assert.deepStrictEqual(Object.keys(db.get("deferredDraftCleanupJobs", "draft-1")!).sort(),
+      ["createdAt", "draftId", "schemaVersion", "state", "updatedAt", "uploadPath"]);
+  });
+
   it("creates a private allowlisted upload ticket and snapshots chant identity", async () => {
     const result = await handleCreatePerformanceDraft({
       uid: "fan",
@@ -362,7 +442,9 @@ describe("performance admission", () => {
       newId: () => id,
     });
     await request("draft-1");
+    await handleCancelPerformanceDraft({ uid: "fan", data: { draftId: "draft-1" }, firestore: db.firestore, media, now: () => NOW });
     await request("draft-2");
+    await handleCancelPerformanceDraft({ uid: "fan", data: { draftId: "draft-2" }, firestore: db.firestore, media, now: () => NOW });
     await assert.rejects(request("draft-3"),
       (error: { code?: string }) => error.code === "resource-exhausted");
 
@@ -372,7 +454,10 @@ describe("performance admission", () => {
   });
 
   it("inspects storage, submits once, and reconciles a repeated response", async () => {
-    db.set("performanceDrafts", "draft-1", awaitingDraft());
+    await handleCreatePerformanceDraft({
+      uid: "fan", data: { chantId: "chant-1", caption: "", contentType: "video/mp4", sizeBytes: 3, durationMs: 1 },
+      firestore: db.firestore, now: () => NOW, newId: () => "draft-1",
+    });
     const request = {
       uid: "fan",
       data: { draftId: "draft-1" },

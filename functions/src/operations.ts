@@ -1,4 +1,5 @@
 import * as admin from "firebase-admin";
+import { clearMatchingUploadGrant } from "./upload_grant";
 
 type Data = Record<string, unknown>;
 
@@ -219,6 +220,8 @@ export function firebaseOperationalStore(
         if (!validCleanupDraft(document)) return null;
         const createdAt = document.data.createdAt as admin.firestore.Timestamp;
         if (createdAt.toMillis() > createdAtOrBeforeMs) return null;
+        const profile = await transaction.get(firestore.collection("profiles").doc(document.data.ownerId as string));
+        clearMatchingUploadGrant(transaction, profile, id);
         transaction.update(reference, {
           state: "cleanup_pending",
           updatedAt: admin.firestore.Timestamp.fromMillis(updatedAtMs),
@@ -242,6 +245,8 @@ export function firebaseOperationalStore(
         if (!validCleanupDraft(document) || document.data.state !== "cleanup_pending") {
           return false;
         }
+        const profile = await transaction.get(firestore.collection("profiles").doc(document.data.ownerId as string));
+        clearMatchingUploadGrant(transaction, profile, id);
         transaction.delete(reference);
         return true;
       });

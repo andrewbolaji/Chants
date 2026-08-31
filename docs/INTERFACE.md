@@ -38,6 +38,15 @@ This is the current design contract and decision history for Chants. Read the re
 
 ## Decision log
 
+### 2026-08-31T00:49:27Z Keep upload admission recovery explicit
+
+- **Status:** Implemented in source; eight production widget cases pass, final full-suite result in the execution log; device proof remains open.
+- **Problem:** Operational pause, a second device's active upload, expired permission and malformed permission need different next actions.
+- **Decision:** Keep selected media and caption after rejection. Explain pause and retry, finish/cancel the other upload or wait 30 minutes, cancel an expired draft then select again, or use Send feedback in You for permission recovery. Disable replacement while this form owns a draft so selecting another file cannot silently abandon its grant.
+- **Boundary:** Cancellation still needs server acknowledgement. The app does not claim to cancel an already admitted transfer merely because global admission closed. Nothing becomes public until submission and manual approval.
+- **Validation:** Actual upload form, preserved selection, expired cancellation, and 390 by 844 at 1.8x text with reachable controls. Test scrolling targets the outer form gutter rather than the nested caption scrollable. No navigation, typography or visual redesign.
+- **Revisit:** Cross-device simultaneous uploads, durable transfer restoration, or a separately approved upload manager.
+
 ### 2026-08-29T21:00:00Z Make the Songbook correctable without weakening truth
 
 - **Status:** approved and implemented in source; full verification pending

@@ -1,4 +1,5 @@
 import * as admin from "firebase-admin";
+import { runSeedTransaction } from "./operational_control";
 import { readFileSync, readdirSync, existsSync } from "fs";
 import { resolve, basename } from "path";
 import { slugify, compositeSlug } from "./slugify";
@@ -126,7 +127,7 @@ async function preflightClub(filePath: string): Promise<void> {
 async function retireApprovedArsenalPlayers(): Promise<void> {
   const result = await executeApprovedArsenalPlayerRetirements(
     async (operation) =>
-      db.runTransaction(async (transaction) =>
+      runSeedTransaction(db, async (transaction) =>
         operation({
           readPlayer: async (id) => {
             const snapshot = await transaction.get(
@@ -443,21 +444,23 @@ async function upsert(
   fullData: Record<string, unknown>,
   contentFields: string[]
 ): Promise<"created" | "updated"> {
-  const snap = await ref.get();
-  if (!snap.exists) {
-    await ref.set(fullData);
-    return "created";
-  }
-  // Fix A: only update content fields, never touch counters, flags, timestamps
-  const update: Record<string, unknown> = {};
-  for (const field of contentFields) {
-    if (field in fullData) {
-      update[field] = fullData[field];
+  return runSeedTransaction(db, async (transaction) => {
+    const snap = await transaction.get(ref);
+    if (!snap.exists) {
+      transaction.set(ref, fullData);
+      return "created";
     }
-  }
-  update["updatedAt"] = admin.firestore.FieldValue.serverTimestamp();
-  await ref.update(update);
-  return "updated";
+    // Fix A: only update content fields, never touch counters, flags, timestamps
+    const update: Record<string, unknown> = {};
+    for (const field of contentFields) {
+      if (field in fullData) {
+        update[field] = fullData[field];
+      }
+    }
+    update["updatedAt"] = admin.firestore.FieldValue.serverTimestamp();
+    transaction.update(ref, update);
+    return "updated";
+  });
 }
 
 // --- Seed Sport ---
@@ -563,7 +566,7 @@ async function seedClub(
     const chantRef = db.collection("chants").doc(chantId);
     const chantResult = await upsertSeededChantInTransaction({
       runTransaction: (operation) =>
-        db.runTransaction(async (transaction) =>
+        runSeedTransaction(db, async (transaction) =>
           operation({
             get: (reference) => transaction.get(reference),
             create: (reference, data) => {

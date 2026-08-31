@@ -1,4 +1,7 @@
 import * as admin from "firebase-admin";
+import { pendingReportCount, reportAutoHide } from "./report_projection";
+import { operationEnabled, requireOperationEnabled } from "./operational_gate";
+import { handleDeletedDraftCleanup } from "./deferred_draft_cleanup";
 import {
   onDocumentCreated,
   onDocumentDeleted,
@@ -48,7 +51,6 @@ import {
   handleCreatePerformanceComment,
   handleDeletePerformanceComment,
   handleSubmitPerformanceDraft,
-  cleanupDeletedPerformanceDraft,
   cleanupRemovedPerformanceMedia,
   recomputePerformanceLikeCounts,
   recomputePerformanceViewCounts,
@@ -95,6 +97,7 @@ export const cleanupAbandonedPerformanceDraftsJob = onSchedule(
     retryCount: 3,
   },
   async () => {
+    if (!await operationEnabled("cleanupAbandonedPerformanceDraftsJob", db)) return;
     const result = await cleanupAbandonedPerformanceDraftsBatch({
       store: firebaseOperationalStore(db),
       media: performanceMediaGateway(),
@@ -161,6 +164,8 @@ export const submitReport = onCall(
   { region: "europe-west2" },
   async (request) => {
     const uid = requireVerifiedUid(request.auth);
+    await requireOperationEnabled("submitReport", db,
+      request.data?.targetType === "performance" || request.data?.targetType === "performanceComment");
     return handleSubmitReport({
       uid,
       data: request.data,
@@ -174,6 +179,7 @@ export const submitFeedback = onCall(
   { region: "europe-west2" },
   async (request) => {
     const uid = requireVerifiedUid(request.auth);
+    await requireOperationEnabled("submitFeedback", db);
     return handleSubmitFeedback({
       uid,
       data: request.data,
@@ -187,6 +193,7 @@ export const submitChantUpdateSuggestion = onCall(
   { region: "europe-west2" },
   async (request) => {
     const uid = requireVerifiedUid(request.auth);
+    await requireOperationEnabled("submitChantUpdateSuggestion", db);
     return handleSubmitChantUpdateSuggestion({
       uid,
       data: request.data,
@@ -200,6 +207,7 @@ export const moderateChantUpdateSuggestion = onCall(
   { region: "europe-west2" },
   async (request) => {
     const actorUid = requireVerifiedUid(request.auth);
+    await requireOperationEnabled("moderateChantUpdateSuggestion", db);
     return handleModerateChantUpdateSuggestion({
       actorUid,
       data: request.data,
@@ -214,6 +222,7 @@ export const updateCreatorProfile = onCall(
   { region: "europe-west2" },
   async (request) => {
     const uid = requireVerifiedUid(request.auth);
+    await requireOperationEnabled("updateCreatorProfile", db);
     return handleUpdateCreatorProfile({
       uid,
       data: request.data,
@@ -227,6 +236,7 @@ export const setCreatorFollow = onCall(
   { region: "europe-west2" },
   async (request) => {
     const uid = requireVerifiedUid(request.auth);
+    await requireOperationEnabled("setCreatorFollow", db);
     return handleSetCreatorFollow({
       uid,
       data: request.data,
@@ -240,6 +250,7 @@ export const markCreatorNotificationRead = onCall(
   { region: "europe-west2" },
   async (request) => {
     const uid = requireVerifiedUid(request.auth);
+    await requireOperationEnabled("markCreatorNotificationRead", db);
     return handleMarkCreatorNotificationRead({
       uid,
       data: request.data,
@@ -253,6 +264,7 @@ export const moderatePublishedPerformance = onCall(
   { region: "europe-west2" },
   async (request) => {
     const actorUid = requireVerifiedUid(request.auth);
+    await requireOperationEnabled("moderatePublishedPerformance", db);
     return handlePublishedPerformanceModeration({
       actorUid,
       data: request.data,
@@ -266,6 +278,7 @@ export const moderatePublishedPerformance = onCall(
 export const resolvePublicShareDestination = onCall(
   { region: "europe-west2" },
   async (request) => {
+    await requireOperationEnabled("resolvePublicShareDestination", db, request.data?.targetType === "performance");
     return handleResolvePublicShareDestination({
       data: request.data,
       firestore: db,
@@ -276,6 +289,10 @@ export const resolvePublicShareDestination = onCall(
 export const publicSharePage = onRequest(
   { region: "europe-west2" },
   async (request, response) => {
+    if (!await operationEnabled("publicSharePage", db, request.path.split("/").filter(Boolean)[0] === "performances")) {
+      response.status(503).set("Cache-Control", "no-store").type("text").send("Chants is temporarily paused.");
+      return;
+    }
     const page = await resolvePublicPage({ path: request.path, firestore: db });
     response
       .status(page.status)
@@ -296,6 +313,10 @@ export const publicSharePage = onRequest(
 export const publicPerformanceMedia = onRequest(
   { region: "europe-west2" },
   async (request, response) => {
+    if (!await operationEnabled("publicPerformanceMedia", db)) {
+      response.status(503).set("Cache-Control", "no-store").type("text").send("Chants is temporarily paused.");
+      return;
+    }
     const performanceId = performanceIdFromPublicMediaPath(request.path);
     try {
       const destination = await handleResolvePublicPerformanceMedia({
@@ -326,6 +347,7 @@ export const createPerformanceDraft = onCall(
   { region: "europe-west2" },
   async (request) => {
     const uid = requireVerifiedUid(request.auth);
+    await requireOperationEnabled("createPerformanceDraft", db);
     return handleCreatePerformanceDraft({
       uid,
       data: request.data,
@@ -340,6 +362,7 @@ export const submitPerformanceDraft = onCall(
   { region: "europe-west2", timeoutSeconds: 60 },
   async (request) => {
     const uid = requireVerifiedUid(request.auth);
+    await requireOperationEnabled("submitPerformanceDraft", db);
     return handleSubmitPerformanceDraft({
       uid,
       data: request.data,
@@ -354,6 +377,7 @@ export const cancelPerformanceDraft = onCall(
   { region: "europe-west2" },
   async (request) => {
     const uid = requireVerifiedUid(request.auth);
+    await requireOperationEnabled("cancelPerformanceDraft", db);
     return handleCancelPerformanceDraft({
       uid,
       data: request.data,
@@ -368,6 +392,7 @@ export const moderatePerformance = onCall(
   { region: "europe-west2", timeoutSeconds: 60 },
   async (request) => {
     const actorUid = requireVerifiedUid(request.auth);
+    await requireOperationEnabled("moderatePerformance", db);
     return handleModeratePerformance({
       actorUid,
       data: request.data,
@@ -382,6 +407,7 @@ export const resolvePerformancePlayback = onCall(
   { region: "europe-west2" },
   async (request) => {
     const actorUid = requireVerifiedUid(request.auth);
+    await requireOperationEnabled("resolvePerformancePlayback", db);
     return handleResolvePerformancePlayback({
       actorUid,
       data: request.data,
@@ -396,6 +422,7 @@ export const setPerformanceLike = onCall(
   { region: "europe-west2" },
   async (request) => {
     const uid = requireVerifiedUid(request.auth);
+    await requireOperationEnabled("setPerformanceLike", db);
     return handleSetPerformanceLike({
       uid,
       data: request.data,
@@ -409,6 +436,7 @@ export const recordPerformanceShare = onCall(
   { region: "europe-west2" },
   async (request) => {
     const uid = requireVerifiedUid(request.auth);
+    await requireOperationEnabled("recordPerformanceShare", db);
     return handleRecordPerformanceShare({
       uid,
       data: request.data,
@@ -422,6 +450,7 @@ export const recordQualifiedPerformanceView = onCall(
   { region: "europe-west2" },
   async (request) => {
     const uid = requireVerifiedUid(request.auth);
+    await requireOperationEnabled("recordQualifiedPerformanceView", db);
     return handleRecordQualifiedPerformanceView({
       uid,
       data: request.data,
@@ -435,6 +464,7 @@ export const createPerformanceComment = onCall(
   { region: "europe-west2" },
   async (request) => {
     const uid = requireVerifiedUid(request.auth);
+    await requireOperationEnabled("createPerformanceComment", db);
     return handleCreatePerformanceComment({
       uid,
       data: request.data,
@@ -448,6 +478,7 @@ export const deletePerformanceComment = onCall(
   { region: "europe-west2" },
   async (request) => {
     const uid = requireVerifiedUid(request.auth);
+    await requireOperationEnabled("deletePerformanceComment", db);
     return handleDeletePerformanceComment({
       uid,
       data: request.data,
@@ -461,6 +492,7 @@ export const resolvePerformanceDraftPlayback = onCall(
   { region: "europe-west2" },
   async (request) => {
     const actorUid = requireVerifiedUid(request.auth);
+    await requireOperationEnabled("resolvePerformanceDraftPlayback", db);
     return handleResolvePerformanceDraftPlayback({
       actorUid,
       data: request.data,
@@ -472,12 +504,13 @@ export const resolvePerformanceDraftPlayback = onCall(
 );
 
 export const onPerformanceDraftDeleted = onDocumentDeleted(
-  { document: "performanceDrafts/{draftId}", region: "europe-west2" },
+  { document: "performanceDrafts/{draftId}", region: "europe-west2", retry: true },
   async (event) => {
-    await cleanupDeletedPerformanceDraft(
-      event.data?.data(),
-      performanceMediaGateway()
-    );
+    await handleDeletedDraftCleanup({
+      draftId: event.params.draftId, data: event.data?.data(), firestore: db,
+      remove: (path) => performanceMediaGateway().remove(path),
+      now: () => admin.firestore.Timestamp.now(),
+    });
   }
 );
 
@@ -582,6 +615,7 @@ export const onPerformanceMediaDeletionJobWritten = onDocumentWritten(
   async (event) => {
     const snapshot = event.data?.after;
     if (!snapshot?.exists) return;
+    if (!await operationEnabled("onPerformanceMediaDeletionJobWritten", db)) return;
     const cleaned = await cleanupRemovedPerformanceMedia(
       snapshot.data(),
       performanceMediaGateway(),
@@ -631,17 +665,13 @@ async function recomputeReportCount(
     // that shared write forces a retry and a fresh query before commit.
     const reportsSnap = await transaction.get(reportsQuery);
     const targetSnap = await transaction.get(targetRef);
-    let flagCount = 0;
-    for (const report of reportsSnap.docs) {
-      if (report.data().status === "pending") flagCount++;
-    }
+    const flagCount = pendingReportCount(reportsSnap.docs.map((report) => report.data()));
 
     if (!targetSnap.exists) {
       return { flagCount, autoHidden: false, targetExists: false };
     }
 
-    const autoHidden =
-      flagCount >= AUTO_HIDE_THRESHOLD && targetSnap.data()?.hidden === false;
+    const autoHidden = reportAutoHide(flagCount, targetSnap.data()?.hidden);
     transaction.update(targetRef, {
       flagCount,
       ...(autoHidden ? { hidden: true } : {}),
@@ -722,7 +752,7 @@ type UserBanAction = "ban" | "unban";
 
 type UserProfileDocument = {
   get: () => Promise<{ exists: boolean }>;
-  update: (data: { banned: boolean }) => Promise<unknown>;
+  update: (data: { banned: boolean; activePerformanceUpload?: null }) => Promise<unknown>;
 };
 
 type CreatorProfileDocument = {
@@ -756,7 +786,7 @@ export async function handleUserBanAction(params: {
   }
 
   const banned = params.action === "ban";
-  await params.profileDocument.update({ banned });
+  await params.profileDocument.update({ banned, ...(banned ? { activePerformanceUpload: null } : {}) });
   const creatorProfile = await params.creatorProfileDocument.get();
   const creatorCanReturn = creatorProfile.exists &&
     creatorProfile.data()?.removed !== true;
@@ -821,6 +851,7 @@ export const onModerationAction = onCall(
   async (request) => {
     // Derive actor from auth context (hardening: never trust client-supplied UID)
     const actorUid = requireVerifiedUid(request.auth);
+    await requireOperationEnabled("onModerationAction", db);
 
     // Verify operator role via Admin SDK
     const actorProfile = await db.collection("profiles").doc(actorUid).get();
@@ -1122,6 +1153,7 @@ export const deleteAccount = onCall(
     if (!request.auth) {
       throw new HttpsError("unauthenticated", "Sign in required.");
     }
+    await requireOperationEnabled("deleteAccount", db);
     return requestAccountDeletion({
       uid: request.auth.uid,
       data: request.data,
@@ -1139,6 +1171,7 @@ export const onAccountDeletionJobWritten = onDocumentWritten(
   },
   async (event) => {
     if (!event.data?.after.exists) return;
+    if (!await operationEnabled("onAccountDeletionJobWritten", db)) return;
     await processAccountDeletionStep({
       uid: event.params.uid,
       firestore: db,
@@ -1182,6 +1215,7 @@ export const acceptPolicy = onCall(
   { region: "europe-west2" },
   async (request) => {
     const uid = requireVerifiedUid(request.auth);
+    await requireOperationEnabled("acceptPolicy", db);
 
     const result = await handleAcceptPolicy(uid, db);
     if (!result.accepted) {
@@ -1204,6 +1238,7 @@ export const completeOnboarding = onCall(
   { region: "europe-west2" },
   async (request) => {
     const uid = requireVerifiedUid(request.auth);
+    await requireOperationEnabled("completeOnboarding", db);
     return handleCompleteOnboarding({
       uid,
       data: request.data,

@@ -86,7 +86,8 @@ describe("handleUserBanAction", () => {
       targetId: "user-1",
       profileDocument: {
         get: async () => ({ exists: true }),
-        update: async () => {
+        update: async (data) => {
+          assert.deepStrictEqual(data, { banned: true, activePerformanceUpload: null });
           order.push("private-ban");
         },
       },

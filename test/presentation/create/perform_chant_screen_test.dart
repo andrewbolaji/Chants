@@ -7,6 +7,7 @@ import 'package:chants/data/repositories/performance_draft_repository.dart';
 import 'package:chants/data/services/performance_media_selection.dart';
 import 'package:chants/presentation/create/perform_chant_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -98,6 +99,8 @@ Widget _wrap({
 
 PerformanceDraftRepository _repository({
   required List<(String, Map<String, Object>)> calls,
+  Object? creationFailure,
+  Object? submissionFailure,
   void Function(PerformanceDraftTicket, SelectedPerformanceMedia, String)?
   onUpload,
 }) {
@@ -105,10 +108,14 @@ PerformanceDraftRepository _repository({
     invoker: (callable, payload) async {
       calls.add((callable, payload));
       if (callable == 'createPerformanceDraft') {
+        if (creationFailure != null) throw creationFailure;
         return {
           'draftId': 'draft-1',
           'uploadPath': 'performance-staging/fan/draft-1/source',
         };
+      }
+      if (callable == 'submitPerformanceDraft' && submissionFailure != null) {
+        throw submissionFailure;
       }
       return const {};
     },
@@ -126,6 +133,137 @@ PerformanceDraftRepository _repository({
 }
 
 void main() {
+  for (final reason in [
+    'maintenance',
+    'upload-in-progress',
+    'upload-expired',
+    'upload-needs-recovery',
+  ]) {
+    testWidgets(
+      'upload permission recovery explains $reason without losing selection',
+      (tester) async {
+        final selector = _Selector()
+          ..selected = const SelectedPerformanceMedia(
+            filePath: '/tmp/take.mp4',
+            fileName: 'take.mp4',
+            contentType: 'video/mp4',
+            sizeBytes: 1024,
+            durationMs: 12500,
+          );
+        final failure = FirebaseFunctionsException(
+          code: reason == 'maintenance' ? 'unavailable' : 'failed-precondition',
+          message: 'Synthetic upload permission response.',
+          details: {'reason': reason},
+        );
+        final calls = <(String, Map<String, Object>)>[];
+        await tester.pumpWidget(
+          _wrap(
+            selector: selector,
+            creator: _creator(),
+            repository: _repository(
+              calls: calls,
+              creationFailure: reason == 'upload-expired' ? null : failure,
+              submissionFailure: reason == 'upload-expired' ? failure : null,
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('CHOOSE A VIDEO'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('SEND FOR REVIEW'));
+        await tester.pumpAndSettle();
+        expect(find.text('take.mp4'), findsOneWidget);
+        expect(find.text('IN THE REVIEW QUEUE'), findsNothing);
+        expect(
+          find.textContaining(switch (reason) {
+            'maintenance' => 'temporarily paused',
+            'upload-in-progress' => 'Another upload is in progress',
+            'upload-needs-recovery' => 'Your upload permission needs attention',
+            _ => 'Upload permission expired',
+          }),
+          findsOneWidget,
+        );
+        if (reason == 'upload-expired') {
+          await tester.scrollUntilVisible(
+            find.text('CANCEL UPLOAD'),
+            160,
+            scrollable: find
+                .descendant(
+                  of: find.byType(ListView),
+                  matching: find.byType(Scrollable),
+                )
+                .first,
+          );
+          await tester.tap(find.text('CANCEL UPLOAD'));
+          await tester.pumpAndSettle();
+          expect(calls.last.$1, 'cancelPerformanceDraft');
+          expect(find.text('UPLOAD CANCELLED'), findsOneWidget);
+        }
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
+  testWidgets('paused upload stays readable at narrow enlarged text', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    tester.platformDispatcher.textScaleFactorTestValue = 1.8;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+      tester.platformDispatcher.clearTextScaleFactorTestValue();
+    });
+    final selector = _Selector()
+      ..selected = const SelectedPerformanceMedia(
+        filePath: '/tmp/take.mp4',
+        fileName: 'take.mp4',
+        contentType: 'video/mp4',
+        sizeBytes: 1024,
+        durationMs: 12500,
+      );
+    await tester.pumpWidget(
+      _wrap(
+        selector: selector,
+        creator: _creator(),
+        repository: _repository(
+          calls: [],
+          creationFailure: FirebaseFunctionsException(
+            code: 'unavailable',
+            message: 'Synthetic pause.',
+            details: {'reason': 'maintenance'},
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    Future<void> tapVisible(String label) async {
+      final target = find.text(label).hitTestable();
+      for (
+        var attempt = 0;
+        target.evaluate().isEmpty && attempt < 20;
+        attempt++
+      ) {
+        // Drag the ListView gutter, not the caption field's nested scrollable.
+        await tester.dragFrom(const Offset(12, 720), const Offset(0, -140));
+        await tester.pumpAndSettle();
+      }
+      expect(target, findsOneWidget);
+      await tester.tap(target);
+      await tester.pumpAndSettle();
+    }
+
+    await tapVisible('CHOOSE A VIDEO');
+    await tapVisible('SEND FOR REVIEW');
+    expect(
+      find.textContaining('Uploads are temporarily paused'),
+      findsOneWidget,
+    );
+    expect(find.text('IN THE REVIEW QUEUE'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('library selection uploads once and ends in private review', (
     tester,
   ) async {

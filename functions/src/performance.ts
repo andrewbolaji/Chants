@@ -1,5 +1,7 @@
 import * as admin from "firebase-admin";
 import { HttpsError } from "firebase-functions/v2/https";
+import { transactionControl } from "./operational_gate";
+import { clearMatchingUploadGrant, parseUploadGrant, requireFreeUploadSlot, UPLOAD_GRANT_LIFETIME_MS } from "./upload_grant";
 import {
   currentChantSourceVisible,
   currentCreatorSourceVisible,
@@ -453,6 +455,7 @@ export async function handleCreatePerformanceDraft(params: {
     .doc(`${params.uid}_${utcDay(timestamp)}`);
 
   await params.firestore.runTransaction(async (transaction) => {
+    const control = await transactionControl(params.firestore, transaction, "media");
     const [profileSnapshot, deletionSnapshot, creatorSnapshot, chantSnapshot, limitSnapshot] =
       await Promise.all([
         transaction.get(profileRef),
@@ -465,6 +468,10 @@ export async function handleCreatePerformanceDraft(params: {
     const creator = creatorSnapshot.data();
     const chant = chantSnapshot.data();
     requireActiveAccount(account, deletionSnapshot.exists);
+    if (account!.deletionPending !== undefined && account!.deletionPending !== false) {
+      throw new HttpsError("failed-precondition", "Account state needs attention.");
+    }
+    requireFreeUploadSlot(account!, timestamp.toMillis());
     requireVisibleCreator(creator);
     requireVisibleChant(chant);
 
@@ -499,6 +506,17 @@ export async function handleCreatePerformanceDraft(params: {
       }
     }
 
+    transaction.update(profileRef, {
+      // Legacy onboarding omitted the false marker. Establish it only after
+      // reading the deletion job in this same grant-issuance transaction.
+      deletionPending: false,
+      activePerformanceUpload: {
+        schemaVersion: 1, draftId, ownerId: params.uid, uploadPath,
+        sizeBytes: input.sizeBytes, contentType: input.contentType,
+        generation: control.generation, issuedAt: timestamp,
+        expiresAt: admin.firestore.Timestamp.fromMillis(timestamp.toMillis() + UPLOAD_GRANT_LIFETIME_MS),
+      },
+    });
     transaction.create(draftRef, {
       schemaVersion: PERFORMANCE_SCHEMA_VERSION,
       ownerId: params.uid,
@@ -585,6 +603,7 @@ export async function handleSubmitPerformanceDraft(params: {
   const timestamp = params.now();
 
   await params.firestore.runTransaction(async (transaction) => {
+    const control = await transactionControl(params.firestore, transaction, "media");
     const [draftSnapshot, profileSnapshot, deletionSnapshot, creatorSnapshot, chantSnapshot] =
       await Promise.all([
         transaction.get(draftRef),
@@ -607,8 +626,14 @@ export async function handleSubmitPerformanceDraft(params: {
       throw new HttpsError("failed-precondition", "This draft changed during upload.");
     }
     requireActiveAccount(profileSnapshot.data(), deletionSnapshot.exists);
+    const grant = parseUploadGrant(profileSnapshot.data()?.activePerformanceUpload);
+    if (!grant || grant.draftId !== draftId || grant.ownerId !== params.uid ||
+        grant.generation !== control.generation || grant.expiresAt.toMillis() <= timestamp.toMillis()) {
+      throw new HttpsError("failed-precondition", "Upload permission expired. Cancel this draft and upload again.", { reason: "upload-expired" });
+    }
     requireVisibleCreator(creatorSnapshot.data());
     requireVisibleChant(chantSnapshot.data());
+    clearMatchingUploadGrant(transaction, profileSnapshot, draftId);
     transaction.update(draftRef, {
       state: "pending_review",
       sourceGeneration: metadata.generation,
@@ -634,17 +659,20 @@ export async function handleCancelPerformanceDraft(params: {
   let uploadPath: string | undefined;
   await params.firestore.runTransaction(async (transaction) => {
     const snapshot = await transaction.get(draftRef);
+    const profile = await transaction.get(params.firestore.collection("profiles").doc(params.uid));
     const draft = snapshot.data();
     if (!draft || draft.ownerId !== params.uid) {
       throw new HttpsError("not-found", "Performance draft not found.");
     }
-    if (draft.state === "approved" || draft.state === "cancelled") {
-      if (draft.state === "approved") {
-        throw new HttpsError("failed-precondition", "A live performance cannot be cancelled.");
-      }
+    if (draft.state === "cancelled") {
+      clearMatchingUploadGrant(transaction, profile, draftId);
       return;
     }
+    if (draft.state === "approved") {
+      throw new HttpsError("failed-precondition", "A live performance cannot be cancelled.");
+    }
     uploadPath = typeof draft.uploadPath === "string" ? draft.uploadPath : undefined;
+    clearMatchingUploadGrant(transaction, profile, draftId);
     transaction.update(draftRef, {
       state: "cancelled",
       updatedAt: timestamp,
@@ -696,6 +724,8 @@ export async function handleModeratePerformance(params: {
       if (!draft || draft.state !== "pending_review") {
         throw new HttpsError("failed-precondition", "This draft changed during review.");
       }
+      const owner = await transaction.get(params.firestore.collection("profiles").doc(draft.ownerId as string));
+      clearMatchingUploadGrant(transaction, owner, input.draftId);
       transaction.update(draftRef, {
         state: "rejected",
         moderationReason: input.reason,
@@ -766,6 +796,7 @@ export async function handleModeratePerformance(params: {
       approvedAt: timestamp,
       updatedAt: timestamp,
     });
+    clearMatchingUploadGrant(transaction, accountSnapshot, input.draftId);
     transaction.update(draftRef, {
       state: "approved",
       moderationReason: null,
