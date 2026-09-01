@@ -56,7 +56,7 @@ describe("handleAcceptPolicy", () => {
     assert.strictEqual(updateCalls.length, 1);
     const write = updateCalls[0];
     assert.strictEqual(write.path, "profiles/user1");
-    assert.strictEqual(write.data.acceptedPolicyVersion, "v1");
+    assert.strictEqual(write.data.acceptedPolicyVersion, "v2");
     assert.ok(write.data.acceptedPolicyAt, "acceptedPolicyAt must be set");
   });
 

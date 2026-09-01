@@ -324,12 +324,41 @@ void main() {
           wrap(
             authStream: Stream.value(fakeUser as User?),
             makeProfileStream: () =>
-                Stream.value(_makeProfile(acceptedPolicyVersion: 'v0-old')),
+                Stream.value(_makeProfile(acceptedPolicyVersion: 'v1')),
           ),
         );
         await tester.pumpAndSettle();
 
         expect(find.byType(PolicyAcceptanceGateScreen), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'stale-policy gate permits deletion and sign-out without acceptance',
+      (tester) async {
+        final authRepository = _FakeAuthRepository();
+        final deletionService = _FakeAccountDeletionService();
+        await tester.pumpWidget(
+          wrap(
+            authStream: Stream.value(fakeUser as User?),
+            makeProfileStream: () =>
+                Stream.value(_makeProfile(acceptedPolicyVersion: 'v1')),
+            authRepository: authRepository,
+            accountDeletionService: deletionService,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('DELETE ACCOUNT'));
+        await tester.pumpAndSettle();
+        expect(find.text('Delete your account?'), findsOneWidget);
+        await tester.tap(find.text('DELETE MY ACCOUNT'));
+        await tester.pumpAndSettle();
+        expect(deletionService.calls, 1);
+
+        await tester.tap(find.text('SIGN OUT'));
+        await tester.pump();
+        expect(authRepository.signOutCalls, 1);
       },
     );
 
@@ -624,7 +653,7 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(
-          find.textContaining('Cleanup may continue briefly'),
+          find.textContaining('Media cleanup can continue'),
           findsOneWidget,
         );
         expect(find.textContaining('This cannot be undone'), findsOneWidget);

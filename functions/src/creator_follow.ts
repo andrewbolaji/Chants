@@ -1,5 +1,6 @@
 import * as admin from "firebase-admin";
 import { HttpsError } from "firebase-functions/v2/https";
+import { CURRENT_POLICY_VERSION } from "./policy";
 
 const SOCIAL_SCHEMA_VERSION = 1;
 
@@ -44,7 +45,7 @@ function requireActiveAccount(
     !account ||
     account.banned !== false ||
     account.ageConfirmed17Plus !== true ||
-    account.acceptedPolicyVersion !== "v1"
+    account.acceptedPolicyVersion !== CURRENT_POLICY_VERSION
   ) {
     throw new HttpsError("permission-denied", "This account cannot follow creators.");
   }

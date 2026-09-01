@@ -105,7 +105,7 @@ export async function handleCompleteOnboarding(params: {
       action: "accept-policy",
       targetType: "user",
       targetId: params.uid,
-      detail: `Accepted content policy version ${params.policyVersion}.`,
+      detail: `Accepted Terms and Community Rules version ${params.policyVersion}.`,
       createdAt: timestamp,
     });
     created = true;

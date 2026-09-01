@@ -14,15 +14,15 @@ This runbook describes the source-backed recovery paths that exist today. Dashbo
 
 ### Current backend rollout hold
 
-Read-only inventory on 2026-08-30 established that production is still the July backend, not the reviewed V1 source. The 2026-08-31 07:37 UTC recheck confirmed the same nine identities, source generations and old rules. See `docs/changes/2026-08-30-v1-backend-rollout-readiness.md` for pinned predecessor hashes and `docs/changes/2026-08-31-v1-production-rollout-planning.md` for the latest bounded observations. The proposed sequence is now in `docs/CHANGE_SPEC.md`; it is not permission to execute. Node 22 source verification does not change live state.
+Read-only inventory on 2026-08-30 established that production is still the July backend, not the reviewed V1 source. The 2026-09-01 refresh confirmed the same nine Node 20 identities and old rules, then added current callable-ingress, IAM, Auth, recovery and Storage evidence. See `docs/changes/2026-08-30-v1-backend-rollout-readiness.md` for pinned predecessor hashes, `docs/changes/2026-08-31-v1-production-rollout-planning.md` for the bounded plan and `docs/EXECUTION.md` for the sanitized refresh. The proposed sequence is in `docs/CHANGE_SPEC.md`; it is not permission to execute. Node 22 source verification does not change live state.
 
 Do not use an all-Functions deploy or ordinary update for the two report handlers: the deployed created-only versions blindly increment, while current written handlers rebuild counts. The old live merge endpoint lacks the reviewed stop. Never invoke it or restore that bundle as blanket rollback. Admission, bounded repair and a cutover evidence validator now exist in source under decision 026; actual containment, drain, replacement and repair still require a separate production amendment.
 
-Production has only two ready chant indexes, no expected media bucket or Storage rules release, and disabled Storage/Scheduler APIs. Bucket location/provisioning, IAM, retention, resource caps, fourteen index creations, and destructive worker/schedule activation remain owner-approved gates. Firestore and Eventarc are in `nam5`; Functions compute stays `europe-west2`. The data location must not be inferred from the compute region.
+Production has only two ready chant indexes and no expected media bucket or Storage rules release. Cloud Storage API is enabled, but Scheduler is disabled. Bucket location/provisioning, IAM, retention, resource caps, fourteen index creations, and destructive worker/schedule activation remain owner-approved gates. Firestore and Eventarc are in `nam5`; Functions compute stays `europe-west2`. The data location must not be inferred from the compute region.
 
-The recheck found zero historical performances, drafts and all three deletion/cleanup job collections; the control document was absent. One profile is not an Auth-user or private-cohort inventory. Firestore PITR and delete protection are off. Artifact Registry now has a one-day DELETE/ANY cleanup policy, unlike the prior no-policy observation; its origin was not established. No settings were changed. Re-observe all facts before an approved live operation.
+The refresh found zero historical performances, drafts and all three deletion/cleanup job collections; the control document was absent. Auth has one enabled password account, while email signup remains enabled and no Auth blocking function enforces a cohort. Firestore PITR and delete protection are off. Artifact Registry has a one-day DELETE/ANY cleanup policy. The device also reached the then-current placeholder policy copy, and merged source deletion did not match the intended launch promise. The approved local V1 policy and deletion closure now addresses those source defects, but it remains unreviewed, unmerged, unpublished, and undeployed. No settings were changed. Re-observe all facts before an approved live operation.
 
-Claude independently closed PR 26 F1-F5 and reviewed the earlier staged Call-Ups tree. Source and later corrections merged through PR 28 at `42f20dc675a1de4fe85956783774a4cdc67f3a01`; exact-main run `33368497566` passed all eight jobs. Preparation on PR 29 at `5280c3a` passed eight-job run `33401110327` and Claude's independent review found no code/merge blocker. The approved follow-up documents the five observations without changing runtime behavior; its own exact-head CI remains a separate receipt. Production approval and configured-device inspection remain separate; no additional seed write is needed.
+Claude independently closed PR 26 F1-F5 and reviewed the earlier staged Call-Ups tree. Preparation on PR 29 at `5280c3a` passed eight-job CI and Claude review without a code/merge blocker. Its five documentation/comment corrections passed replacement run `33408526284` at `a4c5c4b`. PR 29 then merged at `c3a071cfea70f68cd4d8f76d26561843d7478c31` with the identical candidate tree. Production approval and configured-device inspection remain separate; no additional seed write is needed.
 
 Before deploying the dedicated runtime identity, verify the exact deployer's effective `iam.serviceAccounts.actAs` on `chants-v1-runtime@chants-f95b4.iam.gserviceaccount.com`. Record the reviewed account-scoped grant and permission evidence privately; `roles/iam.serviceAccountUser` is one way to supply that permission. Do not substitute project-wide Editor/Token Creator or assume the runtime's own data permissions authorize the deployer. Missing or unverified access is a pre-deploy stop. Grant creation and permission probes still require the separate live approval. [Google deployment guidance](https://docs.cloud.google.com/functions/docs/troubleshooting#user_missing_permissions_on_runtime_service_account_while_deploying_a_function).
 
@@ -92,11 +92,60 @@ Permanent invalid identity or path conflict instead records `deferredDraftCleanu
 
 To investigate a block, use its private draftId locator and match its digest against authorized draft/grant/job evidence. If draftId is null, obtain the original identity from separately retained authoritative incident evidence; the digest alone is not reversible. There is deliberately no raw deleted snapshot in quarantine. If that identity or path ownership cannot be proved from retained authoritative evidence, keep media admission closed for the affected recovery and escalate; never derive a deletion path from a hash or caption. A later well-shaped event cannot silently revive the source. Resolving the block requires a separate exact-target recovery approval, current grant comparison, transfer drain and readback. No automatic repair/clear command is shipped.
 
-Legitimate pending/attempted jobs retain the owner UID inside uploadPath, including after account deletion. No TTL exists. Account-deletion completion therefore does not mean every identifier-bearing operational path is erased. Retention must balance privacy with cleanup of late admitted uploads; deleting these records on an arbitrary timer would lose cleanup authority. The production retention/replay decision is still open.
+Legitimate pending/attempted jobs retain the owner UID inside uploadPath, including after account deletion. Account deletion now creates or links exact-path cleanup evidence with `accountDeletionOwnerId` in the same bounded step that removes each draft. No TTL exists. Account-job disappearance therefore does not mean every identifier-bearing operational path is erased. The approved target is to retain unresolved evidence until cleanup is verified, review it at least monthly, and remove it within 30 days after verified terminal closure. Deleting these records on an arbitrary timer would lose cleanup authority.
 
 If a supporter receives `upload-needs-recovery`, inspect the private profile's activePerformanceUpload, current deletion/ban state, draft and retained cleanup evidence under explicit authorization. Preserve the observed generation and exact identity; never mint or backfill a grant from a draft. A malformed grant has no trustworthy expiry, so waiting 30 minutes is not a guaranteed fix. Prove no newer valid slot is being replaced and contain/drain any prior transfer before proposing an exact compare-and-set revocation. Only a separately approved operator correction may clear the bad slot; the normal callable may then issue a fresh grant under current authority. If those facts cannot be proved, remain closed and escalate.
 
 Before workers open, approve read-only inventory, bounded exact replay targets, transfer drain, observation and retention. Include cancelled/rejected draft rows: existing best-effort cancellation and the daily awaiting/cleanup scanner do not sweep every terminal state. Do not discard retained paths or claim final cleanup without approved readback.
+
+### Verified external account deletion and retention
+
+**Source-only procedure. Do not run against production without exact-head review and separate live approval.** The public `/delete-account` page sends requests to `support@chantsfc.com`; it does not expose an unauthenticated deletion API. The private command dispatches only a recently verified request into the same durable `accountDeletionJobs/{uid}` workflow used in the app.
+
+1. Assign a non-identifying case reference such as `CH-YYYYMMDD-NNN`. Keep the request, contact address, target UID, and verification evidence in the approved private support system, not Git, logs, screenshots, or command output.
+2. Prefer the in-app Delete account action when the requester can sign in. For an external request, locate the candidate account through authorized Firebase Auth access. A From address, public handle, display name, or knowledge of content is not proof of control.
+3. Verify control through a fresh challenge sent only to the contact already stored on the Auth account, or through an equivalent current provider reauthentication that has been separately rehearsed. Never request a password, Firebase email link, SMS sign-in code, recovery code, or identity document merely for convenience. Stop if identities conflict or the account cannot be resolved safely.
+4. After completing the separate account-control challenge, record its canonical UTC completion time. `verificationCompletedAt` is an operator attestation: the source command checks its format and 24-hour freshness but cannot perform or independently prove the challenge. It also rejects a missing or disabled operator, operator self-targeting, changed source, a plan outside the ignored private directory, and a target with neither Auth nor an existing resumable deletion job.
+5. From the exact reviewed, clean checkout, build locked Functions output and create one owner-only plan. Replace every quoted value privately:
+
+```sh
+npm --prefix functions run build
+node functions/lib/account_deletion_dispatch_cli.js plan \
+  --project chants-f95b4 \
+  --source-sha "REPLACE_WITH_REVIEWED_40_CHARACTER_SHA" \
+  --credential "REPLACE_WITH_ABSOLUTE_OWNER_ONLY_CREDENTIAL_PATH" \
+  --plan "REPLACE_WITH_REPO/.private-report-repair/account-deletion-CASE.json" \
+  --operator-uid "REPLACE_WITH_OPERATOR_FIREBASE_UID" \
+  --target-uid "REPLACE_WITH_VERIFIED_TARGET_FIREBASE_UID" \
+  --case "CH-YYYYMMDD-NNN" \
+  --verification-method "current-email-challenge" \
+  --verified-at "REPLACE_WITH_CANONICAL_UTC_TIME"
+```
+
+6. Privately compare the plan with the support case and exact source, then apply only its printed digest. Apply derives the target and operator from the reviewed plan and refuses identity overrides:
+
+```sh
+node functions/lib/account_deletion_dispatch_cli.js apply \
+  --project chants-f95b4 \
+  --source-sha "REPLACE_WITH_THE_SAME_REVIEWED_SHA" \
+  --credential "REPLACE_WITH_THE_SAME_ABSOLUTE_CREDENTIAL_PATH" \
+  --plan "REPLACE_WITH_THE_SAME_ABSOLUTE_PLAN_PATH" \
+  --digest "REPLACE_WITH_REVIEWED_64_CHARACTER_DIGEST"
+```
+
+7. `deletionAccepted: true` means the durable job exists. It is not completion. If acknowledgement is ambiguous, inspect the same case audit and job before retrying the same reviewed plan. A transaction failure leaves the phase unchanged and retryable, but retry-enabled delivery is finite and no scheduler automatically re-kicks an exhausted or missed event. Use the stale-job signal and private phase age to detect a stall, diagnose the exact failure, then trigger only the reviewed worker recovery. Never delete Auth alone, clear `deletionPending`, or create a second cleanup path.
+8. Before confirming completion, verify Auth is absent, public creator identity and handle reservation are absent, the profile and durable account job are absent, authored chants and comments satisfy the tombstone contract, owned performances are unavailable, upload limits and private activity are absent, and every `performanceMediaDeletionJobs.ownerId` or `deferredDraftCleanupJobs.accountDeletionOwnerId` row has reached reviewed exact-object closure. Structural comment and reply rows remain as non-identifying tombstones. Target-side safety or moderation records created by another person may retain the deleted account ID under Decision 016 until their own retention rule removes or genuinely de-identifies it. An attempted staging cleanup is not terminal absence if a late admitted upload remains possible.
+9. Acknowledge ordinary requests within two business days and target verified completion within 30 calendar days. If a permitted delay is necessary, explain it without exposing private system detail. Do not promise 24/7 support.
+
+Retention is currently an operator process, not an automatic destructive scheduler:
+
+- Review the support mailbox monthly. Delete ordinary closed support and deletion correspondence after 90 days unless a separately documented safety or legal record is required.
+- Review closed reports, appeals, and moderation evidence at least monthly. Target deletion or genuine de-identification within 12 months. A hold needs a reason, restricted access, owner, review date, and release condition.
+- Review routine Cloud logs, expired upload limits, and playback/session records against a 30-day target. Do not claim provider expiry until configuration and readback are recorded.
+- Review unresolved cleanup evidence at least monthly. Do not delete pending, blocked, merely attempted, or uncorrelated evidence by age alone. After exact terminal closure, remove the evidence within 30 days using a separately reviewed exact-target path.
+- Record review date, aggregate counts, oldest age band, action, exception owner, and next review outside Git without user content, addresses, UIDs, paths, or credentials.
+
+The public targets remain a release hold until this procedure is independently reviewed, rehearsed without production user data, and assigned to an operating calendar.
 
 ### Manual deferred-cleanup and delivery gate
 
@@ -224,7 +273,7 @@ Crashlytics and general Function-error alerts begin with event detection rather 
 
 - **Likely causes:** A bounded page failed, Auth deletion failed transiently, a delayed writer appeared, or the worker reached its retry limit.
 - **Diagnosis:** Inspect the private job phase, cursor, retry metadata, and minimal error classification through authorized operator access. Confirm the pending profile remains authoritative.
-- **Mitigation:** Correct the failing compatible boundary and retrigger the idempotent worker. Do not delete the job, clear the pending marker, or restore local data to guess at acknowledgement.
+- **Mitigation:** Correct the failing compatible boundary and retrigger the idempotent worker. Retry-enabled event delivery is finite and there is no periodic account-job re-kick, so an exhausted or missed event requires explicit operator recovery after the stale signal or phase-age check. Do not delete the job, clear the pending marker, or restore local data to guess at acknowledgement.
 - **Recovery verification:** The worker advances through all phases, private data is removed, retained contributions and allowed audit history satisfy the anonymization contract, Auth deletion tolerates already-missing users, counters converge, and the final job and profile disappear atomically.
 - **Escalate when:** Progress requires changing retained-data policy, audit allowlists, or the durable job schema.
 
@@ -276,7 +325,7 @@ Crashlytics and general Function-error alerts begin with event detection rather 
 
 #### Local preparation before the live gates
 
-The maintained private guide is `docs/CHANTS_LAUNCH_COMMAND_CENTER.html` with adjacent `docs/launch-command-center.js`. Keep the pair together. Its stage 0 contains local setup commands; stage 6 contains ordered iPhone/Android observations and a copyable report. Do not serve this private guide from public Hosting.
+The maintained private guide is `docs/CHANTS_LAUNCH_COMMAND_CENTER.html` with adjacent `docs/launch-command-center.js`. Keep the pair together. Section 1 contains local setup; sections 4 and 5 contain ordered iPhone/Android observations and one copyable report. The condensed v4 checklist retains older browser data separately rather than reusing checks for regrouped tasks. Do not serve this private guide from public Hosting.
 
 From the checkout containing the helper:
 
@@ -289,7 +338,7 @@ node scripts/check-device-readiness.mjs --platform ios --devices --json
 
 The default checks file presence/readability and executable locations without reading config contents or invoking SDK tools. `--devices` opts into bounded local discovery, which may start OS/ADB services; only counts and states are emitted. Exit 0 means no inventory issue, 1 means missing/unknown/attention, and 2 means invalid usage. None grants live-test or release authority. Config identity, tool compatibility, provisioning and signing remain unverified. The helper resolves its own checkout, not Terminal's current directory.
 
-The fresh `chants-device-test-preparation` worktree has no copied Firebase configuration or Flutter package setup. The configured files remain in `chants-v1-seed-live-rollout`. Arrange explicit client-configuration/dependency setup before running the new checkout; do not overwrite existing files with examples or access the Admin credential for a device check. Use `flutter devices` and then one explicitly selected target only after the backend and test gates below. Keep the debug session for hot reload; do not archive repeatedly for layout edits.
+The guide is maintained in `chants-v1-production-rollout-plan` on the post-merge guide branch. That is a documentation location, not proof of configured client readiness. Prior prepared client files are recorded in `chants-v1-seed-live-rollout`. Arrange controlled client-configuration/dependency setup in a current reviewed run checkout; do not run an old branch merely because it contains configuration, overwrite real files with examples, or access the Admin credential for a device check. Use `flutter devices` and one explicitly selected target only after the backend and test gates below. Keep the debug session for hot reload; do not archive repeatedly for layout edits.
 
 The guide's result record is self-reported, not release approval. Fill candidate source, backend record and per-platform build references. Context changes make old results stale; notes do not renew a pass. Use Record result after observing/retesting and inspect the copied report for secrets. Browser storage may be unavailable; the page says so. Visual/browser verification of this new guide is pending because Browser Use rejected the local-file URL; source/logic tests are not a substitute.
 
@@ -305,7 +354,7 @@ Before running:
 4. Run from the prepared checkout. If Flutter asks which target to use, select the physical iPhone, not Chrome or macOS. The first build is still a native build; later debug changes can use hot reload without rebuilding from scratch.
 
 ```sh
-cd /Users/andrewbolaji/Desktop/projects/chants/chants-v1-seed-live-rollout
+# From the current reviewed and configured run checkout chosen above:
 flutter devices
 flutter run --no-pub
 ```

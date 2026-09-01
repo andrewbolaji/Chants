@@ -79,7 +79,7 @@ async function seedUploadTicket(
       banned: options.banned ?? false,
       deletionPending: options.deletionPending ?? false,
       ageConfirmed17Plus: true,
-      acceptedPolicyVersion: "v1",
+      acceptedPolicyVersion: "v2",
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
     });
@@ -102,7 +102,7 @@ async function seedOperator(uid: string) {
       banned: false,
       deletionPending: false,
       ageConfirmed17Plus: true,
-      acceptedPolicyVersion: "v1",
+      acceptedPolicyVersion: "v2",
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
     });
@@ -158,7 +158,7 @@ describe("performance media storage", () => {
     const attempt = () => upload(reference, new Uint8Array([1, 2, 3]), uploadMetadata("fan", "draft-grant"));
     for (const change of [
       { banned: true }, { deletionPending: true }, { ageConfirmed17Plus: false },
-      { acceptedPolicyVersion: "old" }, { activePerformanceUpload: null },
+      { acceptedPolicyVersion: "v1" }, { activePerformanceUpload: null },
       { "activePerformanceUpload.ownerId": "other" }, { "activePerformanceUpload.draftId": "other" },
       { "activePerformanceUpload.extra": true }, { "activePerformanceUpload.sizeBytes": 2 },
       { "activePerformanceUpload.issuedAt": Timestamp.fromMillis(0), "activePerformanceUpload.expiresAt": Timestamp.fromMillis(1800000) },

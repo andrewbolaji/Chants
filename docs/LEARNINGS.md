@@ -12,6 +12,54 @@ This is durable, evidence-backed project memory. It prevents the same failure or
 
 ## Entries
 
+### 2026-09-01T07:20:00Z Declared routes do not prove entry-state reachability
+
+- **Status:** promoted
+- **Scope:** Signed-out and stale-policy access to help, support, account deletion, and sign out.
+- **Observed:** The router and six policy screens existed, but the real signed-out welcome linked only four destinations. The stale-policy gate displayed policy links while withholding the actual deletion and sign-out actions. Direct screen tests therefore overstated user access.
+- **Evidence:** A production-widget journey now starts on the signed-out welcome, opens the policy hub, and reaches all six destinations. A real `ChantApp` gate test starts with a stale `v1` profile, opens the shared deletion action, proves the server request is called, then signs out without accepting. A 320 by 568, 1.8x test exposed and corrected a fixed-footer overflow in the same gate.
+- **Rule:** Test critical access from the user state that needs it. Route declarations, direct screen construction, and text presence are not evidence that a signed-out or blocked user can reach or complete an action.
+- **Applied control:** The signed-out welcome has one Help and Policies entry, the stale gate reuses the real deletion action and sign-out repository, and the whole gate is one scrollable surface.
+- **Revisit:** Any auth-shell redesign, policy-version migration, deletion-action move, new launch document, or change to blocked-account recovery.
+
+### 2026-09-01T02:33:30Z Policy-version migrations must cover every authority surface
+
+- **Status:** promoted
+- **Scope:** Versioned Terms and Community Rules across app, callable, Firestore, and Storage authorization.
+- **Observed:** Dart, the acceptance callable, Firestore, and fixtures moved to `v2`, but Storage and five Functions feature handlers still required placeholder `v1`. The first full Java-backed run passed 167 assertions and denied six legitimate Storage cases; source inspection found the same drift in feature handlers.
+- **Evidence:** The initial full rules run failed all six positive Storage paths. After correction, the full 173-case Firestore/Storage suite, 229 Functions tests, and policy conformance test pass.
+- **Rule:** A versioned acceptance change is an authorization migration, not a copy edit. Inventory and verify every reader of the version, including server helpers, cross-service rules, fixtures, and signed-out gates.
+- **Applied control:** Functions use `functions/src/policy.ts` as shared authority. Firestore and Storage duplicate `v2` explicitly, while `scripts/test-launch-policy.mjs` pins both rule files and rejects stale feature-handler comparisons.
+- **Revisit:** Any policy version change, new authenticated service, new rule language, or new server helper that checks account admission.
+
+### 2026-09-01T02:00:30Z Deterministic cleanup IDs still require payload validation
+
+- **Status:** promoted
+- **Scope:** Account deletion that reuses cross-service media-cleanup work.
+- **Observed:** The deletion worker used a deterministic performance ID for cleanup, but an unconditional set could overwrite an existing server-owned row whose stored media path did not match that identity.
+- **Evidence:** A focused regression seeds the exact job ID with a conflicting path. The corrected worker stops before performance redaction or cleanup mutation, while a separate exact-row case preserves the original request time and adds the deletion correlation. Another regression advances the deletion phase after the page query and proves neither a performance nor a draft is changed by the stale worker.
+- **Rule:** A deterministic document ID prevents duplicate rows, not conflicting payloads. Read and validate every retained target field and the current lifecycle authority inside the write transaction before reusing or updating cross-service cleanup authority.
+- **Applied control:** Published-performance and draft deletion now recheck phase, owner, exact Storage path, and existing cleanup identity in the same transaction that changes the job and source row.
+- **Revisit:** Any new durable cleanup queue, retry key, migration that adopts existing jobs, or worker that can create the same deterministic ID from another lifecycle.
+
+### 2026-09-01T01:12:01Z Authentication status checks must not emit credentials
+
+- **Status:** promoted
+- **Scope:** Firebase CLI authentication verification during production read-only inventory.
+- **Observed:** The JSON form of a login-status command emitted active OAuth credential material into local tool output even though the intended question was only whether a session existed.
+- **Evidence/control:** The session was immediately logged out to revoke it, then reauthenticated through the normal browser flow. No token, account or raw response is stored in project memory. No production request occurred before containment.
+- **Rule:** Never use a credential-bearing login-status response as an authentication probe. Prove access with a narrow, non-token-bearing read against the explicitly named project and return only the minimum sanitized field. If credential material is exposed, revoke first, then resume.
+- **Revisit:** Firebase CLI changes, a new release workstation, any authentication failure or any tool output that unexpectedly contains credential fields.
+
+### 2026-09-01T00:44:49Z Existing ignored client configuration must prove its environment
+
+- **Status:** promoted
+- **Scope:** Physical Firebase client builds prepared from one of several local Git worktrees.
+- **Observed:** A readable ignored iOS configuration from the launch-services worktree matched the Chants bundle but belonged to the deliberate CI fixture project. The signed app installed, then Firebase Installations aborted before Flutter's first frame because the fixture API key was intentionally invalid.
+- **Evidence/control:** Native device logs named the Firebase options failure. A bounded check of existing local candidates compared project identity, bundle identity and API-key format without printing keys. Replacing both ignored generated client files with the matching `chants-f95b4` pair removed the native abort; the debug app reached the policy gate and the release app built, installed and launched.
+- **Rule:** File presence and bundle agreement do not prove environment authority. Before a configured device build, validate the ignored Dart and native client files as one environment-specific pair against the intended project and bundle. Never infer production identity from a worktree name or reuse an obvious CI fixture.
+- **Revisit:** Any Firebase project change, app registration refresh, regenerated client file, new platform target or additional local environment.
+
 ### 2026-08-31T05:37:26Z Live UI fixtures must preserve stream lifetime
 
 - **Status:** promoted

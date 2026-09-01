@@ -1,5 +1,6 @@
 import * as admin from "firebase-admin";
 import { HttpsError } from "firebase-functions/v2/https";
+import { CURRENT_POLICY_VERSION } from "./policy";
 
 const HANDLE_PATTERN = /^[a-z0-9_]{3,24}$/;
 
@@ -82,7 +83,7 @@ export async function handleUpdateCreatorProfile(params: {
     if (
       account.banned !== false ||
       account.ageConfirmed17Plus !== true ||
-      account.acceptedPolicyVersion !== "v1"
+      account.acceptedPolicyVersion !== CURRENT_POLICY_VERSION
     ) {
       throw new HttpsError(
         "permission-denied",

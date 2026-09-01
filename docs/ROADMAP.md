@@ -4,7 +4,7 @@ The path from code-complete to public launch, with concrete triggers on every ga
 
 ---
 
-## Status (as of August 2026)
+## Status (as of 1 September 2026)
 
 **Built and verified by automated checks:**
 
@@ -24,8 +24,8 @@ The path from code-complete to public launch, with concrete triggers on every ga
 
 **Not yet done:**
 
-- **Immediate prerequisite, updated 2026-08-31:** Source is merged through PR 28. Preparation on PR 29 at `5280c3a` has explicit runtime identity/resources, an exact-state/version control command, eight-job green CI and Claude's independent review with no code/merge blocker. Andrew approved one documentation/comment correction commit covering all five observations, followed by replacement exact-head CI; PR 29 remains unmerged at this checkpoint. Manual deferred-cleanup observation, concurrent-submission capacity proof and exact deployer actAs join the private IAM/recovery/cohort gates before later rollout approvals. No additional product feature or live action is authorized.
-- **Live rollout hold:** The 07:37 UTC read-only inventory still has nine July Functions, old rules, two created-to-written report migrations, fourteen missing indexes, no media bucket and disabled Storage/Scheduler. There is no control document or historical media/deletion backlog. Effective old-writer containment, recovery proof, exact replacements, complete repair/readback and real private-test admission remain required. Fresh nonzero jobs need an exact recovery plan, not speculative replay. Catalogue and development-certificate setup are complete; provisioning and device evidence remain.
+- **Next, updated 2026-09-01:** PR 29 is merged at `c3a071cfea70f68cd4d8f76d26561843d7478c31`, with the same tree as correction `a4c5c4b` and its eight-job green replacement run `33408526284`. The refreshed production preflight and physical iPhone release-mode launch are recorded. The bounded V1 launch policy and deletion source closure received one independent review, and its approved correction is implemented and locally verified. It still needs packaging, exact-head CI with 174 rules and 24 real transactions, one corrected-range review, and merge before a fresh Lane 3 rollout packet. The maintained owner checklist is `docs/CHANTS_LAUNCH_COMMAND_CENTER.html`.
+- **Live rollout hold:** The 1 September read-only inventory still has nine July Node 20 Functions, old rules, two created-to-written report migrations, fourteen missing indexes, no operational control, no Firebase app-media bucket and disabled Scheduler. PITR/delete protection and deny policy are absent. Effective old-writer/key containment, recovery proof, exact replacements, complete repair/readback and real private-test admission remain required. Current local source replaces the placeholder policy contract and strengthens deletion, but its correction is not exact-head reviewed or merged, and none of it is published or deployed. Fresh nonzero jobs need an exact recovery plan, not speculative replay.
 - **Safe preparation in parallel:** `scripts/check-device-readiness.mjs` and the existing private command-center guide now provide local inventory and per-platform walkthrough capture. Focused source/logic evidence is recorded locally; use the preparation PR receipt for exact-head CI. Browser visual proof remains open. No runtime feature or live service changes are included.
 - Complete remaining provider dashboards and credentials, Android association, deployed Apple association, production signing, policy, observed cost and abuse controls, and the combined iOS and Android V1 device walkthrough. Feature source at `e8f2591` compiles and passes identity inspection on both clean runners.
 - Configured-device catalogue inspection for the source-complete and production-exact 20-club catalogue. Transfer-sensitive roster review, named-project identity preflight, guarded Arsenal reconciliation, Leeds canary, six-group widening, and final all-club readback are complete.
@@ -38,7 +38,7 @@ The path from code-complete to public launch, with concrete triggers on every ga
 
 ## Phase 1: Private v1 sign-off
 
-Claude reviewed PRs 22-26 through fe0ea92, then closed F1-F5 at `2d362a2` and reviewed Call-Ups staged tree `91213af707f4c6dc4bd3d3334b7adaea35a1ea0b`. Club-specific wording, live golden fixtures and runner-derived platform references are merged through PR 28 with exact-main CI green; this does not claim independent re-review of those later fixtures. Claude subsequently reviewed PR 29 preparation through `5280c3a` with no code/merge blocker. Next: package the approved documentation/comment closure and pass its own exact-head CI, then seek merge and later explicit backend rollout approvals. Core proof precedes media activation; provider/domain/signing gates and the combined device walk precede release. The guide's visual/browser verification remains open. Prior optional Living Songbook findings stay in the readiness record.
+Claude reviewed PRs 22-26 through fe0ea92, then closed F1-F5 at `2d362a2` and reviewed Call-Ups staged tree `91213af707f4c6dc4bd3d3334b7adaea35a1ea0b`. Later club copy and platform fixtures merged through PR 28; no independent re-review of those fixtures is implied. Claude reviewed PR 29 preparation through `5280c3a` with no code/merge blocker. Its documentation/comment closure is exact-head green and merged as recorded above. Core proof now precedes private media activation; provider/domain/signing, operations and configured-device evidence precede release. Prior optional Living Songbook findings remain in the readiness record.
 
 Run on device, confirm font weights render bold and heavy, walk all core flows and states.
 
@@ -91,18 +91,28 @@ The complete reviewed V1 source stack is merged at `e8f2591`. Exact-main run `33
 
 ## Phase 4: Public launch prep
 
-- Apple Developer and Google Play accounts, store listings and data-safety declarations, app icon and branding, 17+ age rating.
-- Host the privacy policy and a light terms of service on Firebase Hosting, stamp the effective date.
-- Flip App Check from soft to full enforcement after one to two weeks of clean telemetry.
+- Apple Developer and Google Play accounts, store listings and data-safety declarations, app icon and branding. Keep the existing 17+ in-app minimum distinct from each store's questionnaire-derived rating.
+- Package and run exact-head review of the corrected [launch policy pack](LAUNCH_POLICY_PACK.md), then close its remaining legal, support-mailbox delivery, child-safety, retention-operation, store-disclosure, and deployment holds. The approved virtual business correspondence address, actual signed-out access to six public routes, matching in-app documents, `v2` Terms and Community Rules acceptance, no-login deletion instructions, and strengthened deletion source exist but are not published. The age rule remains 17+.
+- Prove real-device App Check traffic and obtain separate enforcement-target and rollback approval; elapsed time alone does not authorize enforcement.
 
 **Trigger to launch:** All of the above complete and Phase 3 signed off.
+
+### Automated media-cleanup monitoring
+
+- **Status/owner:** Planned at Andrew's request on 2026-08-31; Codex scopes and implements after separate Lane 2 approval, Andrew owns operational response. Not built, deployed or assigned a PR number.
+- **Placement:** Scope after the first private media/cleanup canary supplies actual delivery and late-upload evidence, before public media widening. It is launch operations work, not a V1.1 user-feature promise. If the manual checks cannot support even the canary safely, bring the scope forward.
+- **Outcome:** Reduce Andrew's recurring manual checks without hiding missed events or unprocessed media. The existing monitor covers account and published-media deletion jobs only; deferred pending/attempted/blocked rows and never-persisted events need different evidence.
+- **Smallest defensible scope:** Reuse existing telemetry where it works; define a bounded, privacy-safe reconciliation of delivery failures, cleanup state and exact object/draft/grant evidence, including cases with no job row. Name complete scan coverage, pagination/freshness, read/latency/cost budgets, alert owner, deduplication and response. Exhausted or incomplete coverage must say unknown, not healthy. Preserve late-transfer and soft-delete distinctions; retained attempted rows alone must not generate false stale-work alarms.
+- **Proof before replacing manual checks:** Inject a missed/pre-persistence event, stuck/blocked work, late object arrival, permission/read failure and scan-budget exhaustion; show actionable detection and no false alarm on legitimately retained evidence. Verify real alert delivery during the approved canary.
+- **Out of scope:** Automatic object deletion, historical replay, TTL/retention changes, broad bucket scans without a budget, a new monitoring platform or spending increase. Any necessary expansion gets its own approval.
+- **Until then:** The runbook's attended delivery/object checks stay active. Public media needs implemented and observed automation or an explicitly accepted, demonstrated sustainable manual owner/cadence. Planning this block does not satisfy that gate.
 
 ---
 
 ## Cross-cutting risks (unchanged, tracked with triggers)
 
 ### Moderation and content safety (existential, addressed from v1)
-Shipped in source: content policy stub, server-authoritative report and feedback admission, atomic report and feedback budgets, remove, ban, unban, fail-safe auto-hide, and audit log. Open: Andrew writes the real content policy text. Trigger for the fuller moderation console: accepted submission volume outgrows basic remove-and-ban.
+Shipped in source: versioned Terms and Community Rules acceptance, real signed-out policy/help navigation, stale-gate support/deletion/sign-out, complete child-safety directions, an approved virtual business correspondence address, server-authoritative report and feedback admission, atomic report and feedback budgets, remove, ban, unban, fail-safe auto-hide, audit log, authored-content deletion, exact performance-media cleanup, and private verified external deletion dispatch. Open: corrected-range review, configuration and publication evidence, plus the policy pack's legal, child-safety operations, support delivery, retention-operation, store, and deployment holds. Trigger for the fuller moderation console: accepted submission volume outgrows basic remove-and-ban.
 
 ### Music and IP licensing (active design constraint)
 Lyrics plus tune-name text remains the core, and optional evidence links still open on allowlisted external platforms. The approved performance block hosts short user-created video or audio captured with the video, not licensed master recordings or an extracted platform stream. Upload terms, takedown handling, privacy, moderation, storage cleanup, and cost controls are release gates. Beat-synced karaoke and licensed backing tracks remain deferred until a separately approved rights and operations model exists.
@@ -268,7 +278,7 @@ The implementation boundary and remaining verification gate live in `docs/CHANGE
 - **DONE IN SOURCE** Every new chant carries an era, review date, owner-verification marker, and source URL. Historic people remain club-linked rather than entering current squads. Current player chants must match the dated roster snapshot. The seed projection publishes `origin: alreadySung` but excludes offline review metadata.
   - Source verification: complete as of 2026-08-30.
   - Live status: all 20 clubs are exact in production. Configured-device catalogue inspection remains.
-- **TODO** Write the real content policy to replace the placeholder in content_policy_screen.dart. Required for app store review since submission is live. Andrew owns the wording.
+- **DONE IN SOURCE, NOT PUBLISHED** Replace the placeholder with versioned Terms and Community Rules, complete urgent child-safety directions, and separate Privacy. Exact-head review, compatible deployment, and device acceptance remain.
 
 ### Polish and ship
 
@@ -278,7 +288,7 @@ The implementation boundary and remaining verification gate live in `docs/CHANGE
 
 ### Legal, store, and launch mechanics
 
-- **TODO** Host a privacy policy and terms of service, link both in-app.
+- **DONE IN SOURCE, NOT DEPLOYED** Privacy, Terms, Community, Rights, Delete account, and Support exist in Hosting source and are reachable from the signed-out app welcome. Publication and signed-out production readback remain.
 - **TODO** Apple Developer account ($99) and Google Play Developer account ($25).
 - **TODO** Wire final app icon; set 17+ age rating.
 - **TODO** Store listings, screenshots, and data-safety / app-privacy forms.
@@ -334,6 +344,6 @@ The implementation boundary and remaining verification gate live in `docs/CHANGE
 - Age check at sign up. DONE. Date of birth entered at sign up, age computed locally, sign up blocked under 17. The date of birth itself is never stored, only the pass or fail result. Google age-screening requirement. The 17+ store rating is still the main lever, this is the in-app backup. Merged and CI-enforced.
 - Report a user. DONE. Reporting now covers a user account, not just a chant or comment. Google user-content requirement. All three report types share one server-authoritative atomic budget in the current stack. Known gap: a user who only submits chants and never comments cannot be reported through this UI, since no screen currently shows a chant's author.
 - User blocking. DONE in source and automated checks. Directional block records hide comment interactions in the client, rules deny reply and like interaction in either direction, and users can review and undo their blocks.
-- Content policy text. Not done. The real policy wording still needs writing and wiring into content_policy_screen.dart to replace the current placeholder. Required before store submission regardless of the feature gates above.
+- Content policy text. DONE IN SOURCE, NOT PUBLISHED. The versioned Terms and Community Rules replace the placeholder, Privacy stays separate, and urgent child-safety directions exist in app and web source. Corrected-range review, deployment, and device proof remain.
 
-Priority note: the real content policy text and live-device enforcement walk remain before a clean pre-v1 compliance pass.
+Priority note: exact-head policy review, publication, and the live-device enforcement walk remain before a clean pre-v1 compliance pass.

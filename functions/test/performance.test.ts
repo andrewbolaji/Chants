@@ -203,7 +203,7 @@ function activeAccount(overrides: Data = {}): Data {
     role: "user",
     banned: false,
     ageConfirmed17Plus: true,
-    acceptedPolicyVersion: "v1",
+    acceptedPolicyVersion: "v2",
     deletionPending: false,
     createdAt: NOW,
     ...overrides,
@@ -402,6 +402,37 @@ describe("performance admission", () => {
     assert.strictEqual(objectExists, false);
     assert.deepStrictEqual(Object.keys(db.get("deferredDraftCleanupJobs", "draft-1")!).sort(),
       ["createdAt", "draftId", "schemaVersion", "state", "updatedAt", "uploadPath"]);
+  });
+
+  it("links retained staging cleanup to an account deletion in progress", async () => {
+    db.set("accountDeletionJobs", "fan", {
+      schemaVersion: 2,
+      phase: "delete-performance-drafts",
+      requestedAt: NOW,
+      updatedAt: NOW,
+    });
+    db.set("operationalControls", "v1", {
+      schemaVersion: 1,
+      generation: 1,
+      mode: "maintenance",
+      destructiveWorkersEnabled: true,
+    });
+
+    const result = await handleDeletedDraftCleanup({
+      draftId: "draft-1",
+      data: awaitingDraft(),
+      firestore: db.firestore,
+      now: () => NOW,
+      remove: media.remove.bind(media),
+    });
+
+    assert.strictEqual(result, "deferred");
+    assert.strictEqual(
+      db.get("deferredDraftCleanupJobs", "draft-1")
+        ?.accountDeletionOwnerId,
+      "fan"
+    );
+    assert.deepStrictEqual(media.removed, []);
   });
 
   it("durably blocks invalid cleanup identities on the live handler without media or grant changes", async () => {

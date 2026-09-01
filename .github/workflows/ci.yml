@@ -27,7 +27,7 @@ jobs:
       - name: Test project governance checks
         run: ./scripts/test-project-governance.sh
       - name: Test local device preparation and walkthrough guide
-        run: node --test scripts/test-device-readiness.mjs scripts/test-launch-guide.mjs
+        run: node --test scripts/test-device-readiness.mjs scripts/test-launch-guide.mjs scripts/test-launch-policy.mjs
 
   flutter-test:
     runs-on: ubuntu-latest

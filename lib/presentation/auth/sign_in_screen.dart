@@ -167,10 +167,35 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                 ),
               ],
             ),
-            TextButton(
-              onPressed: () =>
-                  Navigator.pushNamed(context, AppRouter.contentPolicy),
-              child: const Text('CONTENT POLICY'),
+            Wrap(
+              alignment: WrapAlignment.center,
+              children: [
+                TextButton(
+                  onPressed: () =>
+                      Navigator.pushNamed(context, AppRouter.privacy),
+                  child: const Text('PRIVACY'),
+                ),
+                TextButton(
+                  onPressed: () =>
+                      Navigator.pushNamed(context, AppRouter.terms),
+                  child: const Text('TERMS'),
+                ),
+                TextButton(
+                  onPressed: () =>
+                      Navigator.pushNamed(context, AppRouter.community),
+                  child: const Text('COMMUNITY'),
+                ),
+                TextButton(
+                  onPressed: () =>
+                      Navigator.pushNamed(context, AppRouter.support),
+                  child: const Text('SUPPORT'),
+                ),
+                TextButton(
+                  onPressed: () =>
+                      Navigator.pushNamed(context, AppRouter.policyHub),
+                  child: const Text('HELP & POLICIES'),
+                ),
+              ],
             ),
           ],
         ),

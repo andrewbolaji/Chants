@@ -116,7 +116,7 @@ function seedActiveUser(
     banned: false,
     deletionPending: false,
     ageConfirmed17Plus: true,
-    acceptedPolicyVersion: "v1",
+    acceptedPolicyVersion: "v2",
   });
 }
 
@@ -327,7 +327,7 @@ describe("Living Songbook submission", () => {
         banned: false,
         deletionPending: false,
         ageConfirmed17Plus: true,
-        acceptedPolicyVersion: "v1",
+        acceptedPolicyVersion: "v2",
         ...profileOverride,
       });
       seedChant(harness);

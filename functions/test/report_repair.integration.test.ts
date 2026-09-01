@@ -4,7 +4,11 @@ import { applyReportRepair, planReportRepair, repairDigest, RepairKind } from ".
 import { handleChantReportWritten, handleCommentReportWritten, onPerformanceDraftDeleted } from "../src/index";
 import { handleCreatePerformanceDraft, handleCancelPerformanceDraft } from "../src/performance";
 import { handleDeletedDraftCleanup } from "../src/deferred_draft_cleanup";
-import { requestAccountDeletion } from "../src/account_deletion";
+import {
+  ACCOUNT_DELETION_SCHEMA_VERSION,
+  processAccountDeletionStep,
+  requestAccountDeletion,
+} from "../src/account_deletion";
 import { firebaseOperationalStore, ABANDONED_DRAFT_AGE_MS } from "../src/operations";
 import { repairEvidence } from "./fixtures/cutover";
 import { MAX_PAUSE_EVIDENCE_AGE_MS } from "../src/report_cutover";
@@ -399,7 +403,7 @@ integration("real-emulator report repair and upload lifecycle", function () {
 
   it("serializes real concurrent grant creation, deletion revocation, and stale draft cleanup", async () => {
     await db.collection("operationalControls").doc("v1").set({ schemaVersion: 1, generation: 4, mode: "media", destructiveWorkersEnabled: true });
-    await db.collection("profiles").doc("fan").set({ banned: false, ageConfirmed17Plus: true, acceptedPolicyVersion: "v1", createdAt: now() });
+    await db.collection("profiles").doc("fan").set({ banned: false, ageConfirmed17Plus: true, acceptedPolicyVersion: "v2", createdAt: now() });
     await db.collection("creatorProfiles").doc("fan").set({ hidden: false, removed: false, handle: "fan", displayName: "Fan" });
     await db.collection("chants").doc("chant").set(target({ teamId: "club", title: "Chant", status: "community" }));
     await db.collection("teams").doc("club").set({ name: "Club" });
@@ -415,6 +419,87 @@ integration("real-emulator report repair and upload lifecycle", function () {
     await requestAccountDeletion({ uid: "fan", data: {}, firestore: db, now });
     const profile = (await db.collection("profiles").doc("fan").get()).data()!;
     assert.equal(profile.activePerformanceUpload, null); assert.equal(profile.deletionPending, true);
+  });
+
+  it("executes maximum performance and draft deletion pages in real transactions", async () => {
+    const uid = "deleting-fan";
+    const timestamp = now();
+    const batch = db.batch();
+    batch.set(db.doc(`accountDeletionJobs/${uid}`), {
+      schemaVersion: ACCOUNT_DELETION_SCHEMA_VERSION,
+      phase: "anonymize-performances",
+      requestedAt: timestamp,
+      updatedAt: timestamp,
+    });
+    for (let index = 0; index < 200; index += 1) {
+      const id = `performance-${index.toString().padStart(3, "0")}`;
+      batch.set(db.doc(`performances/${id}`), {
+        creatorId: uid,
+        creatorHandle: "fan",
+        creatorDisplayName: "Fan",
+        caption: "Authored caption",
+        mediaPath: `performance-media/${id}/source`,
+        hidden: false,
+        removed: false,
+        sourceCreatorVisible: true,
+      });
+      const draftId = `draft-${index.toString().padStart(3, "0")}`;
+      batch.set(db.doc(`performanceDrafts/${draftId}`), {
+        schemaVersion: 1,
+        ownerId: uid,
+        state: "awaiting_upload",
+        uploadPath: `performance-staging/${uid}/${draftId}/source`,
+      });
+    }
+    await batch.commit();
+    const auth = {
+      updateUser: async () => undefined,
+      deleteUser: async () => undefined,
+    };
+
+    const performancePage = await processAccountDeletionStep({
+      uid,
+      firestore: db,
+      auth,
+      now,
+    });
+    assert.ok(performancePage);
+    assert.equal(performancePage.processed, 200);
+    assert.equal(
+      (await db.collection("performanceMediaDeletionJobs").get()).size,
+      200
+    );
+    assert.equal(
+      (await db.doc("performances/performance-000").get()).data()!.creatorId,
+      "deleted-user"
+    );
+
+    const advance = await processAccountDeletionStep({
+      uid,
+      firestore: db,
+      auth,
+      now,
+    });
+    assert.ok(advance);
+    assert.equal(advance.advanced, true);
+    const draftPage = await processAccountDeletionStep({
+      uid,
+      firestore: db,
+      auth,
+      now,
+    });
+    assert.ok(draftPage);
+    assert.equal(draftPage.processed, 200);
+    assert.equal((await db.collection("performanceDrafts").get()).size, 0);
+    assert.equal(
+      (await db.collection("deferredDraftCleanupJobs").get()).size,
+      200
+    );
+    assert.equal(
+      (await db.doc("deferredDraftCleanupJobs/draft-000").get()).data()!
+        .accountDeletionOwnerId,
+      uid
+    );
   });
 
   it("revokes only the matching grant when abandoned cleanup claims a draft", async () => {

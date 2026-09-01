@@ -9,6 +9,7 @@ import {
   auditRedactionForDeletedActor,
   processAccountDeletionStep,
   requestAccountDeletion,
+  requestVerifiedAccountDeletion,
 } from "../src/account_deletion";
 
 type Data = Record<string, unknown>;
@@ -197,7 +198,7 @@ function makeClock() {
 
 function job(phase: AccountDeletionPhase, timestamp = BASE_TIME): Data {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     phase,
     requestedAt: timestamp,
     updatedAt: timestamp,
@@ -229,6 +230,7 @@ describe("account deletion recovery", () => {
       "accept-chant-evidence",
       "resolve-chant-update",
       "decline-chant-update",
+      "request-account-deletion",
     ]) {
       assert.deepStrictEqual(
         auditRedactionForDeletedActor({
@@ -258,6 +260,7 @@ describe("account deletion recovery", () => {
       "phase", "requestedAt", "schemaVersion", "updatedAt",
     ]);
     assert.strictEqual(db.get("accountDeletionJobs", "fan")!.phase, "disable-auth");
+    assert.strictEqual(db.get("accountDeletionJobs", "fan")!.schemaVersion, 2);
     assert.strictEqual(db.get("profiles", "fan")!.deletionPending, true);
   });
 
@@ -327,7 +330,7 @@ describe("account deletion recovery", () => {
     assert.strictEqual(db.get("accountDeletionJobs", "fan")!.phase, "delete-chant-reports");
   });
 
-  it("anonymizes retained comments without changing relationships", async () => {
+  it("removes authored comment text without changing relationships", async () => {
     db.set("accountDeletionJobs", "fan", job("anonymize-comments"));
     db.set("comments", "reply", {
       userId: "fan",
@@ -344,7 +347,7 @@ describe("account deletion recovery", () => {
       displayName: "Deleted user",
       chantId: "chant",
       parentCommentId: "parent",
-      body: "Keep me",
+      body: "Comment deleted",
     });
   });
 
@@ -373,7 +376,7 @@ describe("account deletion recovery", () => {
     );
   });
 
-  it("removes private performance activity and anonymizes retained content", async () => {
+  it("removes private performance activity and authored content", async () => {
     for (const [phase, collection, ownerField] of [
       ["delete-performance-likes", "performanceLikes", "userId"],
       ["delete-performance-views", "performanceViews", "userId"],
@@ -404,16 +407,21 @@ describe("account deletion recovery", () => {
       creatorDisplayName: "North Bank Leo",
       performanceId: "live",
       body: "Retained comment",
+      mentionedHandles: ["someone"],
     });
     await processAccountDeletionStep({
       uid: "fan", firestore: db.firestore, auth, now,
     });
-    assert.deepStrictEqual(db.get("performanceComments", "comment"), {
+    const deletedComment = db.get("performanceComments", "comment")!;
+    assert.ok(deletedComment.updatedAt instanceof admin.firestore.Timestamp);
+    delete deletedComment.updatedAt;
+    assert.deepStrictEqual(deletedComment, {
       userId: "deleted-user",
       creatorHandle: "deleted",
       creatorDisplayName: "Deleted creator",
       performanceId: "live",
-      body: "Retained comment",
+      body: "Comment deleted",
+      mentionedHandles: [],
     });
 
     db.set("accountDeletionJobs", "fan", job("anonymize-performances"));
@@ -422,14 +430,54 @@ describe("account deletion recovery", () => {
       creatorHandle: "northbankleo",
       creatorDisplayName: "North Bank Leo",
       caption: "Retained performance",
+      mediaPath: "performance-media/live/source",
+      hidden: false,
+      removed: false,
+      sourceCreatorVisible: true,
     });
     await processAccountDeletionStep({ uid: "fan", firestore: db.firestore, auth, now });
-    assert.deepStrictEqual(db.get("performances", "live"), {
+    const deletedPerformance = db.get("performances", "live")!;
+    assert.ok(
+      deletedPerformance.updatedAt instanceof admin.firestore.Timestamp
+    );
+    delete deletedPerformance.updatedAt;
+    assert.deepStrictEqual(deletedPerformance, {
       creatorId: "deleted-user",
       creatorHandle: "deleted",
       creatorDisplayName: "Deleted creator",
-      caption: "Retained performance",
+      caption: "",
+      mediaPath: "performance-media/live/source",
+      hidden: true,
+      removed: true,
+      sourceCreatorVisible: false,
     });
+    const mediaJob = db.get("performanceMediaDeletionJobs", "live")!;
+    assert.ok(mediaJob.requestedAt instanceof admin.firestore.Timestamp);
+    assert.strictEqual(mediaJob.updatedAt, mediaJob.requestedAt);
+    delete mediaJob.requestedAt;
+    delete mediaJob.updatedAt;
+    assert.deepStrictEqual(mediaJob, {
+      performanceId: "live",
+      mediaPath: "performance-media/live/source",
+      ownerId: "fan",
+    });
+
+    db.set(
+      "accountDeletionJobs",
+      "fan",
+      job("delete-performance-upload-limits")
+    );
+    db.set("performanceUploadLimits", "fan_2026-08-25", {
+      ownerId: "fan",
+      count: 1,
+    });
+    await processAccountDeletionStep({
+      uid: "fan", firestore: db.firestore, auth, now,
+    });
+    assert.strictEqual(
+      db.get("performanceUploadLimits", "fan_2026-08-25"),
+      undefined
+    );
 
     db.set("accountDeletionJobs", "fan", job("delete-performance-drafts"));
     db.set("performanceDrafts", "draft", {
@@ -438,6 +486,39 @@ describe("account deletion recovery", () => {
     });
     await processAccountDeletionStep({ uid: "fan", firestore: db.firestore, auth, now });
     assert.strictEqual(db.get("performanceDrafts", "draft"), undefined);
+    const cleanup = db.get("deferredDraftCleanupJobs", "draft")!;
+    assert.strictEqual(cleanup.accountDeletionOwnerId, "fan");
+    assert.strictEqual(
+      cleanup.uploadPath,
+      "performance-staging/fan/draft/source"
+    );
+    assert.strictEqual(cleanup.state, "pending");
+  });
+
+  it("fails before deleting an owned draft with a conflicting cleanup path", async () => {
+    db.set("accountDeletionJobs", "fan", job("delete-performance-drafts"));
+    const draft = {
+      ownerId: "fan",
+      uploadPath: "performance-staging/fan/draft/source",
+    };
+    db.set("performanceDrafts", "draft", draft);
+    db.set("deferredDraftCleanupJobs", "draft", {
+      draftId: "draft",
+      uploadPath: "performance-staging/another/draft/source",
+      state: "pending",
+    });
+
+    await assert.rejects(
+      processAccountDeletionStep({
+        uid: "fan", firestore: db.firestore, auth, now,
+      }),
+      /Conflicting performance draft cleanup identity/
+    );
+    assert.deepStrictEqual(db.get("performanceDrafts", "draft"), draft);
+    assert.strictEqual(
+      db.get("accountDeletionJobs", "fan")!.phase,
+      "delete-performance-drafts"
+    );
   });
 
   it("removes both sides of follows and creator notification privacy", async () => {
@@ -484,6 +565,7 @@ describe("account deletion recovery", () => {
       "delete-performance-reports",
       "delete-performance-comment-reports",
       "anonymize-performance-comments",
+      "delete-performance-upload-limits",
       "anonymize-performances",
       "delete-performance-drafts",
       "anonymize-audit-by",
@@ -512,6 +594,363 @@ describe("account deletion recovery", () => {
 
     assert.strictEqual(result?.advanced, false);
     assert.strictEqual(db.get("accountDeletionJobs", "fan")!.phase, "anonymize-chants");
+  });
+
+  it("does not mutate media after a nonempty page loses phase authority", async () => {
+    const cases = [
+      {
+        phase: "anonymize-performances" as const,
+        collection: "performances",
+        id: "performance-1",
+        data: {
+          creatorId: "fan",
+          caption: "Keep me",
+          mediaPath: "performance-media/performance-1/source",
+        },
+        cleanupCollection: "performanceMediaDeletionJobs",
+      },
+      {
+        phase: "delete-performance-drafts" as const,
+        collection: "performanceDrafts",
+        id: "draft-1",
+        data: {
+          ownerId: "fan",
+          uploadPath: "performance-staging/fan/draft-1/source",
+        },
+        cleanupCollection: "deferredDraftCleanupJobs",
+      },
+    ];
+
+    for (const scenario of cases) {
+      db.set("accountDeletionJobs", "fan", job(scenario.phase));
+      db.set(scenario.collection, scenario.id, scenario.data);
+      db.afterNextQuery = () => {
+        db.set("accountDeletionJobs", "fan", job("anonymize-audit-by"));
+      };
+
+      const result = await processAccountDeletionStep({
+        uid: "fan", firestore: db.firestore, auth, now,
+      });
+
+      assert.strictEqual(result?.processed, 0);
+      assert.deepStrictEqual(
+        db.get(scenario.collection, scenario.id),
+        scenario.data
+      );
+      assert.strictEqual(
+        db.get(scenario.cleanupCollection, scenario.id),
+        undefined
+      );
+      assert.strictEqual(
+        db.get("accountDeletionJobs", "fan")!.phase,
+        "anonymize-audit-by"
+      );
+    }
+  });
+
+  it("replays privacy cleanup before resuming a legacy schema-one job", async () => {
+    db.set("accountDeletionJobs", "fan", {
+      ...job("finalize"),
+      schemaVersion: 1,
+    });
+    db.set("chants", "supporter", {
+      createdBy: "fan",
+      title: "Still personal",
+      lyrics: "Still personal",
+    });
+
+    const result = await processAccountDeletionStep({
+      uid: "fan", firestore: db.firestore, auth, now,
+    });
+
+    assert.strictEqual(result?.phase, "anonymize-chants");
+    assert.strictEqual(
+      db.get("accountDeletionJobs", "fan")!.schemaVersion,
+      2
+    );
+    assert.strictEqual(
+      db.get("accountDeletionJobs", "fan")!.phase,
+      "anonymize-chants"
+    );
+    assert.strictEqual(db.get("chants", "supporter")!.lyrics, "");
+  });
+
+  it("removes a supporter chant body and never touches a system chant", async () => {
+    db.set("accountDeletionJobs", "fan", job("anonymize-chants"));
+    db.set("chants", "supporter", {
+      createdBy: "fan",
+      title: "Personal title",
+      lyrics: "Personal lyrics",
+      tuneName: "Personal tune",
+      contextNotes: "Personal context",
+      coverImageUrl: "https://example.com/cover",
+      mediaUrl: "https://example.com/media",
+      mediaType: "crowdClip",
+      evidence: { provider: "youtube", url: "https://example.com/evidence" },
+      variations: [{ label: "Personal", lyric: "Personal variation" }],
+      hidden: false,
+      removed: false,
+    });
+    const system = {
+      createdBy: "system",
+      title: "Terrace catalogue",
+      lyrics: "Verified lyrics",
+      hidden: false,
+      removed: false,
+    };
+    db.set("chants", "system", system);
+
+    await processAccountDeletionStep({
+      uid: "fan", firestore: db.firestore, auth, now,
+    });
+
+    assert.deepStrictEqual(db.get("chants", "supporter"), {
+      createdBy: "deleted-user",
+      title: "",
+      lyrics: "",
+      tuneName: "",
+      contextNotes: null,
+      coverImageUrl: null,
+      mediaUrl: null,
+      mediaType: "none",
+      evidence: null,
+      variations: [],
+      hidden: true,
+      removed: true,
+      updatedAt: BASE_TIME,
+    });
+    assert.deepStrictEqual(db.get("chants", "system"), system);
+  });
+
+  it("fails before redacting an owned performance with an invalid media path", async () => {
+    db.set("accountDeletionJobs", "fan", job("anonymize-performances"));
+    const performance = {
+      creatorId: "fan",
+      creatorHandle: "fan",
+      creatorDisplayName: "Fan",
+      caption: "Keep until cleanup identity is safe",
+      mediaPath: "performance-media/another/source",
+      hidden: false,
+      removed: false,
+    };
+    db.set("performances", "performance-1", performance);
+
+    await assert.rejects(
+      processAccountDeletionStep({
+        uid: "fan", firestore: db.firestore, auth, now,
+      }),
+      /Invalid owned performance media path/
+    );
+    assert.deepStrictEqual(db.get("performances", "performance-1"), performance);
+    assert.strictEqual(
+      db.get("performanceMediaDeletionJobs", "performance-1"),
+      undefined
+    );
+    assert.strictEqual(
+      db.get("accountDeletionJobs", "fan")!.phase,
+      "anonymize-performances"
+    );
+  });
+
+  it("fails before redaction when an existing media cleanup row conflicts", async () => {
+    db.set("accountDeletionJobs", "fan", job("anonymize-performances"));
+    const performance = {
+      creatorId: "fan",
+      creatorHandle: "fan",
+      creatorDisplayName: "Fan",
+      caption: "Keep until cleanup identity is safe",
+      mediaPath: "performance-media/performance-1/source",
+      hidden: false,
+      removed: false,
+    };
+    const conflictingJob = {
+      performanceId: "performance-1",
+      mediaPath: "performance-media/another/source",
+      requestedAt: BASE_TIME,
+      updatedAt: BASE_TIME,
+    };
+    db.set("performances", "performance-1", performance);
+    db.set(
+      "performanceMediaDeletionJobs",
+      "performance-1",
+      conflictingJob
+    );
+
+    await assert.rejects(
+      processAccountDeletionStep({
+        uid: "fan", firestore: db.firestore, auth, now,
+      }),
+      /Conflicting performance media cleanup identity/
+    );
+    assert.deepStrictEqual(db.get("performances", "performance-1"), performance);
+    assert.deepStrictEqual(
+      db.get("performanceMediaDeletionJobs", "performance-1"),
+      conflictingJob
+    );
+    assert.strictEqual(
+      db.get("accountDeletionJobs", "fan")!.phase,
+      "anonymize-performances"
+    );
+  });
+
+  it("reuses an exact existing media cleanup row without resetting its age", async () => {
+    db.set("accountDeletionJobs", "fan", job("anonymize-performances"));
+    db.set("performances", "performance-1", {
+      creatorId: "fan",
+      creatorHandle: "fan",
+      creatorDisplayName: "Fan",
+      caption: "Delete me",
+      mediaPath: "performance-media/performance-1/source",
+      hidden: false,
+      removed: false,
+    });
+    const originalRequest = admin.firestore.Timestamp.fromMillis(1234);
+    db.set("performanceMediaDeletionJobs", "performance-1", {
+      performanceId: "performance-1",
+      mediaPath: "performance-media/performance-1/source",
+      requestedAt: originalRequest,
+      updatedAt: originalRequest,
+    });
+
+    await processAccountDeletionStep({
+      uid: "fan", firestore: db.firestore, auth, now,
+    });
+
+    const cleanup = db.get("performanceMediaDeletionJobs", "performance-1")!;
+    assert.strictEqual(cleanup.ownerId, "fan");
+    assert.strictEqual(cleanup.requestedAt, originalRequest);
+    assert.strictEqual(
+      (cleanup.updatedAt as admin.firestore.Timestamp).toMillis(),
+      BASE_TIME.toMillis()
+    );
+    assert.strictEqual(db.get("performances", "performance-1")!.removed, true);
+  });
+
+  it("dispatches a recently verified external request only through an active operator", async () => {
+    db.set("profiles", "operator", {
+      role: "operator",
+      banned: false,
+      deletionPending: false,
+    });
+    db.set("profiles", "fan", {
+      banned: false,
+      deletionPending: false,
+    });
+    const dispatch = {
+      actorUid: "operator",
+      targetUid: "fan",
+      caseReference: "CH-20260831-001",
+      verificationMethod: "current-email-challenge" as const,
+      verificationCompletedAt: BASE_TIME,
+      targetAuthExists: true,
+    };
+
+    await requestVerifiedAccountDeletion({
+      dispatch,
+      firestore: db.firestore,
+      now,
+    });
+    await requestVerifiedAccountDeletion({
+      dispatch,
+      firestore: db.firestore,
+      now,
+    });
+
+    assert.strictEqual(db.get("profiles", "fan")!.deletionPending, true);
+    assert.strictEqual(db.get("accountDeletionJobs", "fan")!.schemaVersion, 2);
+    assert.strictEqual(db.size("auditLog"), 1);
+    assert.deepStrictEqual(
+      db.get("auditLog", "external-delete-CH-20260831-001"),
+      {
+        actorId: "operator",
+        action: "request-account-deletion",
+        targetType: "user",
+        targetId: "fan",
+        detail:
+          "Verified external deletion request dispatched. Case CH-20260831-001; method current-email-challenge.",
+        createdAt: BASE_TIME,
+      }
+    );
+  });
+
+  it("rejects stale verification and inactive operator dispatch without a job", async () => {
+    db.set("profiles", "operator", {
+      role: "operator",
+      banned: true,
+      deletionPending: false,
+    });
+    const base = {
+      actorUid: "operator",
+      targetUid: "fan",
+      caseReference: "CH-20260831-002",
+      verificationMethod: "provider-reauth" as const,
+      targetAuthExists: true,
+    };
+    await assert.rejects(
+      requestVerifiedAccountDeletion({
+        dispatch: { ...base, verificationCompletedAt: BASE_TIME },
+        firestore: db.firestore,
+        now,
+      }),
+      (error: { code?: string }) => error.code === "permission-denied"
+    );
+    assert.strictEqual(db.get("accountDeletionJobs", "fan"), undefined);
+
+    db.set("profiles", "operator", {
+      role: "operator",
+      banned: false,
+      deletionPending: false,
+    });
+    await assert.rejects(
+      requestVerifiedAccountDeletion({
+        dispatch: {
+          ...base,
+          verificationCompletedAt: admin.firestore.Timestamp.fromMillis(
+            BASE_TIME.toMillis() - 25 * 60 * 60 * 1000
+          ),
+        },
+        firestore: db.firestore,
+        now,
+      }),
+      (error: { code?: string }) => error.code === "failed-precondition"
+    );
+    assert.strictEqual(db.get("accountDeletionJobs", "fan"), undefined);
+  });
+
+  it("permits missing Auth only when the exact deletion job already exists", async () => {
+    db.set("profiles", "operator", {
+      role: "operator",
+      banned: false,
+      deletionPending: false,
+    });
+    const dispatch = {
+      actorUid: "operator",
+      targetUid: "fan",
+      caseReference: "CH-20260831-003",
+      verificationMethod: "provider-reauth" as const,
+      verificationCompletedAt: BASE_TIME,
+      targetAuthExists: false,
+    };
+
+    await assert.rejects(
+      requestVerifiedAccountDeletion({
+        dispatch,
+        firestore: db.firestore,
+        now,
+      }),
+      (error: { code?: string }) => error.code === "not-found"
+    );
+
+    db.set("accountDeletionJobs", "fan", job("delete-feedback"));
+    await requestVerifiedAccountDeletion({
+      dispatch,
+      firestore: db.firestore,
+      now,
+    });
+    assert.strictEqual(
+      db.get("accountDeletionJobs", "fan")!.phase,
+      "delete-feedback"
+    );
   });
 
   it("retains the job and data when a page batch fails", async () => {

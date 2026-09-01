@@ -39,6 +39,32 @@ This is the current design contract and decision history for Chants. Read the re
 
 ## Decision log
 
+### 2026-09-01T01:51:45Z Separate accepted rules from readable privacy and support
+
+- **Surface and user problem:** The first device launch showed placeholder policy text, and signed-out users could not reach the complete help, rights, privacy, or deletion instructions. One generic acceptance action also risked implying that reading Privacy was blanket consent.
+- **Decision:** New onboarding explicitly accepts Terms and Community Rules. Returning stale accounts read the Community Rules inline with the accepted version and effective date, can reach all six documents and support, can run the real account-deletion action or sign out without accepting, and can choose `AGREE AND CONTINUE`. Privacy is named as a separate notice. The actual signed-out welcome and signed-in account settings reach one six-destination policy hub: Privacy, Terms, Community, Rights, Delete account, and Support. The public deletion instructions offer in-app and email routes without implying email receipt equals completion.
+- **Why:** The interface now matches the actual legal and product actions: agreement, notice, help, safety, rights, and deletion are related but not interchangeable. Support language gives a real target without pretending Andrew provides continuous coverage.
+- **Alternatives considered:** Keep one Content Policy page, which hides important jobs; put Privacy in the accepted checkbox, which overstates consent; require login for deletion/help, which strands locked-out users; publish a generic web form, which would imply an identity-verification system that does not exist.
+- **Required states:** Fresh onboarding, stale-policy gate, acceptance pending, acceptance failure, stale-user support, deletion and sign-out without acceptance, signed-out document access, long policy copy, no-login deletion request, ordinary support, exact urgent child-safety directions, and offline/unavailable Hosting.
+- **Accessibility/responsive impact:** Every destination has a written label and a normal navigation target. Policy documents are scrollable. The hub and signed-out welcome remain usable at 320 pixels and 1.8x text. Agreement and Privacy separation are expressed in text, not styling alone.
+- **Implementation evidence:** Policy-gate, onboarding, actual signed-out navigation, policy-document, app-gate, Functions, Hosting contract, exact stale-`v1`, and narrow enlarged-text tests. Exact external mailbox delivery and physical-device reading remain launch gates.
+- **Revisit when:** Legal review changes copy, translated policy names no longer fit, users cannot distinguish the accepted contract from Privacy, support volume needs an in-app case history, or a verified public deletion status route exists.
+- **Related:** `docs/decisions/027-launch-policy-and-deletion-closure.md`, `docs/LAUNCH_POLICY_PACK.md`
+
+### 2026-09-01T01:12:01Z Put the actual source hold before backend rollout
+
+- **Surface/decision:** Private command center only. After the configured iPhone reached the placeholder policy and the read-only production refresh completed, task 2.1 now names the bounded policy/deletion source closure instead of asking Andrew to repeat the inspection prompt. No Flutter screen or public page changes.
+- **Truth and authority:** The copy distinguishes development-signed physical launch from distribution signing. It says the backend should not deploy yet because policy acceptance and deletion promises are not source-coherent. The one-line approval authorizes only a future Lane 2 source block; it explicitly excludes cloud, publication, age and store changes.
+- **State/accessibility:** Existing v4 progress, nearby disclosure, copy failure, semantic labels and 44-pixel controls remain unchanged. The completion label now records that Andrew reviewed and authorized or deferred the source decision, not that a live rollout plan passed.
+- **Evidence/revisit:** Read-only production and Auth aggregates plus the physical release-client observation are recorded in `docs/EXECUTION.md` and `docs/CHANGE_SPEC.md`. Revisit after the source closure merges and a new exact Lane 3 packet replaces the hold.
+
+### 2026-08-31T16:09:47Z Put final launch actions beside their instructions
+
+- **Surface/decision:** Private command center only. Six ordered sections and 19 owner-labelled tasks replace the longer pre-review guide in place. Owner setup comes first; technical cutover remains Codex-owned. Every task expands its own instructions, copy text and completion control. Seven candidate-bound device journeys retain nearby result capture in an additional disclosure. No Flutter UI changes.
+- **State:** v4 local storage leaves older v2/v3 data untouched, preventing a prior check from certifying a regrouped task. Existing source/backend/platform staleness, explicit retest, plain-text reporting and storage/clipboard failure behavior remain. Expand all includes nested instructions and results, excluding filtered tasks.
+- **Accessibility:** Native details and labels, 44-pixel controls, visible focus, wrapping code, a mobile single-column layout and reduced-motion handling. Source/logic tests cover structure and behavior. Visual/browser verification remains unproved: the Browser skill's URL policy blocked the localhost preview; no alternate browser or rendering workaround was used.
+- **Evidence/revisit:** Scoped rationale and execution entry record verification. Revisit on an actual layout/interaction failure or a changed launch dependency. The same guide is maintained; it is not a new public website or release authorization.
+
 ### 2026-08-31T05:37:26Z Match the invitation to the club query
 
 - **Correction:** The card now names its club, for example, No chant for them at Arsenal in Chants yet. The underlying eligibility remains team-scoped; finding a prior-club chant in player browse does not contradict this invitation.

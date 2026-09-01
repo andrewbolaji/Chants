@@ -13,6 +13,7 @@ import 'package:chants/presentation/browse/competition_screen.dart';
 import 'package:chants/presentation/browse/player_screen.dart';
 import 'package:chants/presentation/browse/team_screen.dart';
 import 'package:chants/presentation/content_policy/content_policy_screen.dart';
+import 'package:chants/presentation/content_policy/policy_documents_screen.dart';
 import 'package:chants/presentation/home/home_screen.dart';
 import 'package:chants/presentation/moderation/moderation_screen.dart';
 import 'package:chants/presentation/feedback/feedback_screen.dart';
@@ -64,6 +65,13 @@ class AppRouter {
   static const String phoneAuth = '/sign-in/phone';
   static const String home = '/';
   static const String contentPolicy = '/content-policy';
+  static const String policyHub = '/policies';
+  static const String privacy = '/privacy';
+  static const String terms = '/terms';
+  static const String community = '/community';
+  static const String rights = '/rights';
+  static const String deleteAccountHelp = '/delete-account';
+  static const String support = '/support';
   static const String competition = '/competition';
   static const String team = '/team';
   static const String player = '/player';
@@ -104,7 +112,20 @@ class AppRouter {
           builder: (_) => PhoneAuthScreen(linkToCurrentUser: linkToCurrentUser),
         );
       case contentPolicy:
+      case community:
         return MaterialPageRoute(builder: (_) => const ContentPolicyScreen());
+      case policyHub:
+        return MaterialPageRoute(builder: (_) => const PolicyHubScreen());
+      case privacy:
+        return MaterialPageRoute(builder: (_) => privacyDocument);
+      case terms:
+        return MaterialPageRoute(builder: (_) => termsDocument);
+      case rights:
+        return MaterialPageRoute(builder: (_) => rightsDocument);
+      case deleteAccountHelp:
+        return MaterialPageRoute(builder: (_) => deletionDocument);
+      case support:
+        return MaterialPageRoute(builder: (_) => supportDocument);
       case competition:
         final args = settings.arguments as Map<String, String>;
         return MaterialPageRoute(

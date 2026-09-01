@@ -62,7 +62,7 @@ async function seedOperator(uid: string) {
       banned: false,
       ageConfirmed17Plus: true,
       userReportCount: 0,
-      acceptedPolicyVersion: "v1",
+      acceptedPolicyVersion: "v2",
       acceptedPolicyAt: Timestamp.now(),
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
@@ -82,7 +82,7 @@ async function seedUserProfile(uid: string) {
       banned: false,
       ageConfirmed17Plus: true,
       userReportCount: 0,
-      acceptedPolicyVersion: "v1",
+      acceptedPolicyVersion: "v2",
       acceptedPolicyAt: Timestamp.now(),
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
@@ -231,7 +231,7 @@ async function seedBannedUser(uid: string) {
       banned: true,
       ageConfirmed17Plus: true,
       userReportCount: 0,
-      acceptedPolicyVersion: "v1",
+      acceptedPolicyVersion: "v2",
       acceptedPolicyAt: Timestamp.now(),
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
@@ -249,7 +249,7 @@ async function seedDeletionPendingUser(uid: string, role = "user") {
       deletionPending: true,
       ageConfirmed17Plus: true,
       userReportCount: 0,
-      acceptedPolicyVersion: "v1",
+      acceptedPolicyVersion: "v2",
       acceptedPolicyAt: Timestamp.now(),
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
@@ -726,7 +726,7 @@ describe("profiles", () => {
       role: "user",
       banned: false,
       ageConfirmed17Plus: true,
-      acceptedPolicyVersion: "v1",
+      acceptedPolicyVersion: "v2",
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
     }));
@@ -751,7 +751,7 @@ describe("profiles", () => {
     await seedUserProfileNoPolicyAcceptance("user9");
     const db = verifiedContext("user9").firestore();
     await assertFails(updateDoc(doc(db, "profiles", "user9"), {
-      acceptedPolicyVersion: "v1",
+      acceptedPolicyVersion: "v2",
     }));
   });
 
@@ -2848,6 +2848,20 @@ describe("policy acceptance gate", () => {
     await assertFails(setDoc(doc(db, "chants", "gated-chant"), {
       ...validChantData,
       createdBy: "noaccept1",
+    }));
+  });
+
+  it("denies chant create when the user accepted only stale v1", async () => {
+    await seedUserProfile("stale-v1");
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await updateDoc(doc(context.firestore(), "profiles", "stale-v1"), {
+        acceptedPolicyVersion: "v1",
+      });
+    });
+    const db = verifiedContext("stale-v1").firestore();
+    await assertFails(setDoc(doc(db, "chants", "stale-v1-chant"), {
+      ...validChantData,
+      createdBy: "stale-v1",
     }));
   });
 

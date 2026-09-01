@@ -1,6 +1,6 @@
 (function () {
   'use strict';
-  const storageKey = 'chants-launch-command-center-v3';
+  const storageKey = 'chants-launch-command-center-v4';
   const results = ['Not run', 'Passed', 'Failed', 'Blocked'];
   const contextKeys = ['source', 'backend', 'ios', 'android'];
   const text = value => typeof value === 'string' ? value.slice(0, 4000) : '';
@@ -61,7 +61,6 @@
   const checks = [...document.querySelectorAll('[data-check]')];
   const notes = [...document.querySelectorAll('[data-note]')];
   const cards = [...document.querySelectorAll('[data-task]')];
-  const stages = [...document.querySelectorAll('details.stage')];
   const contexts = [...document.querySelectorAll('[data-context]')];
   const persistence = document.getElementById('persistenceStatus');
   const filter = document.getElementById('filterIncomplete');
@@ -73,7 +72,7 @@
   }));
   const badges = [];
   function showPersistence(saved) {
-    persistence.textContent = saved ? 'Progress is saved in this browser only. Keep a copied report before moving the file or changing browsers. Older v2 checks are not imported.' : 'Local storage is unavailable or unreadable. This page still works, but progress may disappear on reload. Copy your report before closing. Older progress was not deleted.';
+    persistence.textContent = saved ? 'Progress stays in this browser only. Copy your walk report before moving browsers. Older v2/v3 checks are kept separately, not imported.' : 'Local storage is unavailable or unreadable. This page still works, but progress may disappear on reload. Copy your report before closing. Older progress was not deleted.';
   }
   function refresh() {
     const complete = checks.filter(box => box.checked).length;
@@ -134,18 +133,20 @@
       });
       group.append(label, select, badge, noteLabel, field, record);
     }
-    journey.card.querySelector('.task-body').appendChild(group);
+    const disclosure = document.createElement('details'); disclosure.className = 'observations';
+    const summary = document.createElement('summary'); summary.textContent = 'Record iPhone / Android result';
+    disclosure.append(summary, group);
+    journey.card.querySelector('.task-body').appendChild(disclosure);
   }
   filter.addEventListener('click', () => { state.hideComplete = !state.hideComplete; persist(); });
   document.getElementById('expandAll').addEventListener('click', () => {
-    stages.forEach(stage => { stage.open = true; });
-    document.querySelectorAll('details.task-card').forEach(card => { if (!card.classList.contains('filtered')) card.open = true; });
+    document.querySelectorAll('details').forEach(detail => { if (!detail.closest('.filtered')) detail.open = true; });
   });
   document.getElementById('collapseAll').addEventListener('click', () => {
     document.querySelectorAll('details').forEach(detail => { detail.open = false; });
   });
   document.getElementById('resetChecks').addEventListener('click', () => {
-    if (!window.confirm('Clear checks, notes and observations in this v3 guide? Copy your report first. Older guide data is not changed.')) return;
+    if (!window.confirm('Clear checks, notes and observations in this v4 guide? Copy your report first. Older guide data is not changed.')) return;
     Object.assign(state, fresh());
     checks.forEach(box => { box.checked = false; });
     notes.concat(contexts).forEach(field => { field.value = ''; });

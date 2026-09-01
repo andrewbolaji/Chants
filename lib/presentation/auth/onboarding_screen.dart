@@ -81,7 +81,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       return;
     }
     if (!_policyAccepted) {
-      setState(() => _error = 'Agree to the Content Policy to continue.');
+      setState(
+        () => _error = 'Agree to the Terms and Community Rules to continue.',
+      );
       return;
     }
 
@@ -199,15 +201,29 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               onChanged: _loading || _setupSaved
                   ? null
                   : (value) => setState(() => _policyAccepted = value ?? false),
-              title: const Text('I agree to the Content Policy.'),
-              subtitle: TextButton(
-                style: TextButton.styleFrom(
-                  padding: EdgeInsets.zero,
-                  alignment: Alignment.centerLeft,
-                ),
-                onPressed: () =>
-                    Navigator.pushNamed(context, AppRouter.contentPolicy),
-                child: const Text('READ CONTENT POLICY'),
+              title: const Text('I agree to the Terms and Community Rules.'),
+              subtitle: Wrap(
+                spacing: Spacing.sm,
+                children: [
+                  TextButton(
+                    style: TextButton.styleFrom(padding: EdgeInsets.zero),
+                    onPressed: () =>
+                        Navigator.pushNamed(context, AppRouter.terms),
+                    child: const Text('READ TERMS'),
+                  ),
+                  TextButton(
+                    style: TextButton.styleFrom(padding: EdgeInsets.zero),
+                    onPressed: () =>
+                        Navigator.pushNamed(context, AppRouter.community),
+                    child: const Text('COMMUNITY RULES'),
+                  ),
+                  TextButton(
+                    style: TextButton.styleFrom(padding: EdgeInsets.zero),
+                    onPressed: () =>
+                        Navigator.pushNamed(context, AppRouter.privacy),
+                    child: const Text('PRIVACY NOTICE'),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: Spacing.lg),

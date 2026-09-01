@@ -150,6 +150,44 @@ void main() {
     expect(find.text('CONTINUE WITH APPLE'), findsNothing);
     expect(find.text('CONTINUE WITH GOOGLE'), findsNothing);
     expect(find.text('MORE WAYS TO SIGN IN'), findsNothing);
+    expect(find.text('PRIVACY'), findsOneWidget);
+    expect(find.text('TERMS'), findsOneWidget);
+    expect(find.text('COMMUNITY'), findsOneWidget);
+    expect(find.text('SUPPORT'), findsOneWidget);
+    expect(find.text('HELP & POLICIES'), findsOneWidget);
+  });
+
+  testWidgets('signed-out welcome reaches all six launch documents', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      wrap(const SignInScreen(), onGenerateRoute: AppRouter.onGenerateRoute),
+    );
+
+    await tester.scrollUntilVisible(
+      find.text('HELP & POLICIES'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('HELP & POLICIES'));
+    await tester.pumpAndSettle();
+
+    for (final label in [
+      'PRIVACY NOTICE',
+      'TERMS OF USE',
+      'COMMUNITY RULES',
+      'RIGHTS AND TAKEDOWN',
+      'DELETE ACCOUNT',
+      'SUPPORT',
+    ]) {
+      final destination = find.widgetWithText(ListTile, label);
+      expect(destination, findsOneWidget);
+      await tester.tap(destination);
+      await tester.pumpAndSettle();
+      expect(find.text(label), findsWidgets);
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+    }
   });
 
   testWidgets(
