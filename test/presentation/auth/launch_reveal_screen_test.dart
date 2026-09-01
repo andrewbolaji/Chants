@@ -157,4 +157,46 @@ void main() {
     );
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('keeps unresolved progress safe just above compact height', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 481);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      wrap(reduceMotion: true, showProgress: true, textScale: 1.5),
+    );
+
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.text('GETTING THINGS READY'), findsOneWidget);
+    expect(
+      find.bySemanticsLabel('Chants. Getting things ready.'),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('keeps unresolved progress safe at the upper overflow band', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 558);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      wrap(reduceMotion: true, showProgress: true, textScale: 2),
+    );
+
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.text('GETTING THINGS READY'), findsOneWidget);
+    expect(
+      find.bySemanticsLabel('Chants. Getting things ready.'),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
 }

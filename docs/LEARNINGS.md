@@ -16,10 +16,10 @@ This is durable, evidence-backed project memory. It prevents the same failure or
 
 - **Status:** promoted
 - **Scope:** Flutter launch surfaces whose optional state adds geometry after the base responsive layout is selected.
-- **Observed:** Compact layout, enlarged text, and unresolved progress each passed in isolation. Combining them overflowed by 37 pixels at 568 by 320 with 2x text and by 19 pixels at 320 by 480 with 1.5x text.
-- **Evidence:** Two production-widget regressions failed on the reviewed source with the exact render overflows and the unwanted compact progress label. They pass after the short portrait joins the compact layout and compact progress retains only the spinner while the root semantics still announces `Chants. Getting things ready.`
-- **Rule:** Responsive evidence must cross every state that adds or removes content with the smallest supported geometry and enlarged text. Separate tests for state, viewport, and text scale can all pass while their real intersection fails.
-- **Applied control:** Launch reveal tests exercise unresolved progress at both reproduced geometries, assert spinner-only compact presentation, retain the normal-portrait written cue, and protect the full semantic announcement.
+- **Observed:** Compact layout, enlarged text, and unresolved progress each passed in isolation. Combining them first overflowed by 37 pixels at 568 by 320 with 2x text and by 19 pixels at 320 by 480 with 1.5x text. After the compact correction, the adjacent non-compact band still overflowed by 18 pixels at 320 by 481 with 1.5x text and by 0.144 pixels at 320 by 558 with 2x text.
+- **Evidence:** Four production-widget regressions failed on their reviewed sources at the exact combined geometries. The compact pair passes with a spinner-only visual cue. The adjacent non-compact pair passes after the non-compact column becomes vertically scrollable while retaining its written cue. Every case keeps the root semantic announcement `Chants. Getting things ready.`
+- **Rule:** Responsive evidence must cross every state that adds or removes content with the smallest supported geometry and enlarged text. Separate tests for state, viewport, and text scale can all pass while their real intersection fails. A breakpoint chooses presentation, not safety, so representative cases must cover both sides of the boundary.
+- **Applied control:** Launch reveal tests exercise unresolved progress at both compact and adjacent non-compact reproduced geometries, protect the distinct visible cues, preserve requested text scale, and retain the full semantic announcement.
 - **Revisit:** Any launch-copy addition, compact breakpoint change, progress treatment change, localization, or supported-viewport revision.
 
 ### 2026-09-01T07:20:00Z Declared routes do not prove entry-state reachability
