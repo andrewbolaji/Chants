@@ -104,13 +104,15 @@ class _LaunchRevealScreenState extends State<LaunchRevealScreen>
                                       Expanded(flex: 3, child: details),
                                     ],
                                   )
-                                : Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      mark,
-                                      const SizedBox(height: 18),
-                                      details,
-                                    ],
+                                : SingleChildScrollView(
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        mark,
+                                        const SizedBox(height: 18),
+                                        details,
+                                      ],
+                                    ),
                                   ),
                           ),
                         ),

@@ -1,126 +1,74 @@
-# Change spec: V1 launch presentation polish
+# Change spec: V1 final pre-launch hardening
 
-**Status: Approved for packaging and gated rollout.** Andrew approved `V1 Chants public landing page spec`, directly approved a final launch-presentation pass covering the app entry, policy gate, and public landing page, granted visual acceptance, and authorized one package, push, exact-head clean CI, independent review, and then public deployment and domain connection on 1 September 2026.
+**Status: Approved, with evidence correction approved.** Andrew approved `V1 final pre-launch hardening spec` and later approved `PR 32 documentation evidence correction spec` on 1 September 2026.
 
 **Owner:** Andrew, through ThunderRiver Tech LLC
 
-**Lane:** 2 for source and packaging; 3 for the separately gated live rollout
+**Lane:** 1, bounded interface correctness and CI maintenance
 
-**Baseline:** PR 30 correction head `75e1bc32dd277a47a829b636f739ea18856c8985`, with all eight jobs green in run `33487936863`
+**Baseline:** merged `main` at `ff6587d8b800f7ff4722d0ef6b3da6c68a331aa7`, containing PR 31 and its eight-job green exact-head run `33541666404`
 
-**Source authority:** implementation, local preview, verification, durable records, one commit, push, pull request, exact-head clean CI, and an independent review handoff.
-
-**Production authority:** after exact-head clean CI and independent review return without an unresolved blocker, publish the reviewed Firebase Hosting source, connect the registered `chantsfc.com` domain using only the exact records Firebase supplies, and read back the live routes. Merge, store publication, analytics, account collection, unrelated DNS edits, backend deployment, and any other production change remain outside this authority.
+**Authority requested:** local source, tests, durable records, one reviewable commit, push, pull request, and exact-head clean CI. Merge, Hosting deployment, DNS, domain connection, store changes, backend deployment, and production mutation remain outside this block.
 
 ## Outcome
 
-Give the first public and in-app moments one coherent Chants identity while preserving every existing authority, trust, and deep-link boundary.
+Close the last independently measured launch-layout overflow band before public release and remove the current GitHub-hosted artifact upload deprecation warning without changing app behavior outside that loading surface.
 
-## Approved independent-review correction
+## Evidence and current defect
 
-Andrew approved `PR 31 post-review and operator-name correction spec` on 1 September 2026. The correction closes the independently reproduced launch-transition, landscape, enlarged-text, semantic, contrast, illustration, and documentation defects before deployment. It also applies the exact legal operator spelling `ThunderRiver Tech LLC` across public copy, app policy copy, tests, and durable records.
+The final PR 31 reviewer independently swept the unresolved launch state and found that the non-compact column still overflows just above the 480-logical-pixel compact threshold when text is enlarged. The reproduced band includes 320 by 481 at 1.5x text and extends through 320 by 558 at 2x text. No standard portrait device height occupies the full band, but split-screen, freeform, foldable transitions, iPad multitasking, and display-size settings can reach it.
 
-The correction remains inside the approved presentation and policy-copy boundary. It does not change policy meaning, the 17+ rule, authentication or backend authority, Firebase rewrites, DNS, deployment, or store availability.
+PR 31 CI also emitted a GitHub-hosted runner warning because both artifact steps use `actions/upload-artifact@v4`. The official action source now documents `actions/upload-artifact@v7` for GitHub.com. The current inputs used by Chants remain supported.
 
-### Final compact loading correction
+## Included
 
-Andrew approved `PR 31 final compact loading correction spec` on 1 September 2026 after the targeted independent review reproduced one remaining low-severity layout defect. The correction must keep the full written progress cue on a normal portrait, reduce the visual compact cue to its spinner, preserve the complete semantic loading announcement, and treat a 320 by 480 short portrait as compact. Regression coverage must combine the unresolved-loading state with the exact 568 by 320 at 2x text and 320 by 480 at 1.5x text geometries. It must be capable of failing on the reviewed source and must assert both visible and semantic behavior.
+- Make the non-compact launch column vertically scrollable only when its content exceeds available height.
+- Keep the current compact row choice, spinner-only compact progress cue, normal-portrait written progress cue, reduced-motion behavior, and root semantic announcement.
+- Add known-bad-capable widget coverage at representative lower and upper points of the independently reproduced band, with unresolved progress and enlarged text active together.
+- Change both existing CI artifact upload steps from `actions/upload-artifact@v4` to `actions/upload-artifact@v7` without changing artifact names, paths, retention, failure behavior, job permissions, triggers, or job topology.
+- Update execution, interface, learning, and scoped change records only where the verified result changes current truth.
 
-This final correction does not change launch timing, authentication authority, policy copy or meaning, the 17+ rule, backend behavior, Hosting, DNS, deployment, or store availability.
+## Excluded
 
-The page should make the product understandable in one visit:
+- Another compact threshold adjustment, text shrinking, font-size reduction, copy removal, animation timing change, or navigation change.
+- A new package, workflow, job, script, dependency, service, permission, secret, cache, or artifact.
+- Changes to authentication, policy meaning or version, the 17+ rule, Functions, Firestore, Storage, seed data, native signing, Hosting, DNS, domain connection, analytics, store state, or production data.
+- The physical-device walkthrough, public deployment, rich-preview cache verification, and verified store buttons. Those remain separate launch gates.
 
-1. Chants is the songbook of the terraces and the workshop for what gets sung next.
-2. Songbook helps fans learn and save real matchday chants.
-3. Chant Lab gives supporters a place to write, rank, and improve new ideas without presenting popularity as stadium proof.
-4. Stage lets creators publish moderated short performances around a chant, with popularity distinct from Terrace Proven status.
-5. The app is coming soon. No store availability, user count, testimonial, licensing relationship, or launch date is invented.
+## Design and invariants
 
-## Scope
-
-### Included
-
-- A responsive root landing page under `hosting/index.html` using the approved Chants visual language.
-- Product-specific hero, positioning, Songbook, Chant Lab, Stage, trust, and launch-status copy.
-- An honest app-preview composition built from existing approved brand assets and interface language.
-- Clear links to Privacy, Terms, Community Rules, Rights and takedown, Delete account, Support, and `support@chantsfc.com`.
-- Root Open Graph and X metadata using the existing approved Chants preview asset.
-- Keyboard-visible focus, semantic headings and landmarks, reduced-motion handling, readable contrast, narrow-layout resilience, and no autoplay.
-- Deterministic source tests that protect the root metadata, core product meaning, launch honesty, policy links, and existing Hosting boundaries.
-- Interface, decision, execution, and completed-change records.
-- A launch-time Flutter brand reveal that carries the static native splash into a short `CHANTS` word reveal without delaying Firebase initialization.
-- A native splash color correction so the operating-system frame and Flutter frame do not flash between gray and the app's ink black.
-- A redesigned current-policy gate with a loud, unmistakably Chants introduction, calm readable rule text, and the same acceptance, deletion, support, privacy, terms, policy-hub, and sign-out behavior.
-- Focused animation, semantics, acceptance, route-access, narrow-layout, and enlarged-text regressions for the two app surfaces.
-- A gated post-review Firebase Hosting deployment, exact `chantsfc.com` connection, HTTPS verification, and live readback of the root and public trust routes.
-
-### Excluded
-
-- Any Cloudflare DNS change other than the exact `chantsfc.com` records supplied by Firebase during the approved post-review connection.
-- Mailing-list signup, contact forms, cookies, analytics, pixels, advertisements, remote fonts, external JavaScript, or new data collection.
-- Live App Store or Google Play buttons before their verified public listing URLs exist.
-- Embedded social feeds, account sign-in, app functionality, direct uploads, or web playback outside the existing current-authority share routes.
-- New player, club, stadium, supporter, or licensed-media imagery.
-- Changes to the meaning of policy copy, the policy version, the 17+ rule, authentication authority, Functions, Firestore, Storage, seed data, public share authority, or media delivery.
-- A blocking animation, looping launch movie, audio, video, remote artwork, or new runtime permission.
-
-## Interface contract
-
-- The first viewport names **Chants FC**, leads with `Every chant starts with one voice.`, preserves the canonical product promise, and offers one honest `Coming soon on iOS and Android` status plus a clear `Explore the app` route into the product explanation.
-- The public visual frame is a restrained premium app launch, not a Vouch imitation, generic template, radar scene, oversized poster, or grid of interchangeable feature cards. It uses the app's ink black, supporter gold, warm off-white, restrained community coral, local Oswald and Nunito, generous negative space, thin rules, and two club-neutral product devices. The phones show Stage and offline Songbook meaning rather than fake production screenshots or social proof. Reading surfaces remain calm, high contrast, and free of decorative clutter.
-- Songbook, Chant Lab, and Stage each have one distinct job and one short truthful explanation.
-- `Terrace Proven` means reviewed stadium evidence. `Rising` means community momentum. Performance popularity never proves stadium use.
-- The app preview uses CSS-native, club-neutral Stage and Songbook surfaces plus the existing supporter-and-scarf mark at the closing moment. It must not imply a live feed, a real creator, or real popularity metrics.
-- Footer trust links stay visible and use the exact existing public routes.
-- The page remains useful with images disabled, motion reduced, JavaScript unavailable, or a narrow viewport.
-- Native launch remains instant and static. The first Flutter frame continues the same black-and-gold scene, reveals `CHANTS` once, exposes a useful semantic label, and resolves immediately when reduced motion is requested. A normal portrait writes the unresolved progress cue; compact and short layouts keep the spinner while the same complete loading announcement remains available to assistive technology.
-- The policy gate leads with `KEEP THE TERRACE LOUD. KEEP IT SAFE.`, states exactly which two documents are being accepted, keeps Privacy separate, and preserves all six pre-acceptance escape and help routes. Long rule copy remains a calm, aligned reading surface below the loud frame.
-
-## Invariants
-
-1. Existing `/chants/**`, `/performances/**`, `/creators/**`, and `/media/performances/**` rewrites are unchanged.
-2. Existing policy routes, the Apple association source, and the Android association header configuration remain present and semantically unchanged.
-3. The landing page never exposes lyrics, user data, raw Storage paths, private identifiers, or production configuration.
-4. No public CTA claims the app can be downloaded until a verified store listing exists.
-5. No popularity copy is presented as proof that a chant is sung in a stadium.
-6. No new network dependency, tracking, form submission, persistent state, or runtime permission is introduced.
-7. Public contact copy uses `support@chantsfc.com`; social handles are omitted until Andrew confirms the accounts are reserved and ready to publish.
-8. Policy acceptance still writes only through the existing callable and still advances only when the authoritative profile projection changes.
-9. Account deletion and sign out remain usable before acceptance and are disabled only while acceptance is in flight.
-10. Launch animation never changes authentication, profile, deletion, or policy-state authority.
+1. The breakpoint chooses presentation, not safety. Both branches must remain overflow-safe at reachable bounded geometry.
+2. The non-compact branch preserves enlarged text at its requested scale. It scrolls instead of scaling content down.
+3. A normal portrait still displays `GETTING THINGS READY` and its spinner while initialization remains unresolved.
+4. Compact geometry still displays the spinner without the redundant written cue.
+5. Both forms retain the root semantic announcement `Chants. Getting things ready.`
+6. Reduced-motion users continue to receive the final reveal frame immediately.
+7. Artifact upload remains failure evidence only for failed goldens and a seven-day debug APK for successful Android builds.
+8. CI continues to build and verify the exact Android and iOS application identities from the pull-request head.
 
 ## Failure and recovery
 
 | Trigger | Required behavior |
 |---|---|
-| Brand image fails to load | Product name, promise, structure, and trust links remain readable |
-| CSS is unavailable | Semantic document order still explains the product and exposes every public trust route |
-| JavaScript is unavailable | The complete landing page still works; JavaScript is not required |
-| Viewport is narrow or text is enlarged | Content reflows into one column with no hidden action or horizontal page scroll |
-| Store URL is not verified | Show launch status as text, not a dead or guessed store link |
-| Hosting deployment or DNS is absent | Record source completion only; do not call `chantsfc.com` live until the post-review rollout succeeds |
-| A future homepage edit removes a trust link or changes product meaning | Deterministic source contract fails before handoff |
-| Reduced motion is enabled | App launch and web decoration render their final state without animation |
-| Policy acceptance fails | Keep the gate usable, preserve every route, and show the existing honest retry message |
-| Policy copy is enlarged or the viewport is 320 pixels wide | Keep every document and account action reachable with no overflow or hidden agreement control |
-| Initialization remains unresolved at 568 by 320 with 2x text or 320 by 480 with 1.5x text | Use the compact row and spinner-only visible cue with the complete semantic loading announcement and no overflow |
+| Non-compact launch content exceeds available height | Preserve content and semantics in a vertical scroll surface with no render overflow |
+| Content fits normally | Keep the current centered composition and visible written progress cue |
+| Artifact path is absent | Preserve the existing `ignore` behavior for optional golden failures and `error` behavior for the required APK |
+| Artifact action migration fails on GitHub-hosted runners | Do not merge; restore the reviewed workflow version or repair forward, then run replacement exact-head CI |
+
+The runtime correction is reverted by removing the scroll wrapper. The CI correction is reverted by restoring the prior action major. Neither rollback changes data, schemas, credentials, production state, or public routes.
 
 ## Verification
 
-Evidence must be capable of failing against the placeholder page:
+1. Before runtime correction, new production-widget cases reproduce the overflow at 320 by 481 with 1.5x text and 320 by 558 with 2x text while unresolved progress is shown.
+2. After correction, the shipped cases render without exception and preserve the spinner, written non-compact progress, and complete semantic announcement. The shipped cases assert that the written cue remains in the widget tree; the independent review's separate drag probe confirms that the scroll surface can bring it fully into view.
+3. Existing exact compact cases at 568 by 320 with 2x text and 320 by 480 with 1.5x text remain spinner-only and overflow-free.
+4. Existing normal portrait, animation, reduced-motion, app-gate, and policy-gate evidence remains green.
+5. The complete Flutter suite and `flutter analyze lib test` pass with the repository's documented non-secret Firebase analysis fixture.
+6. Workflow inspection confirms exactly two `actions/upload-artifact@v7` uses and no `upload-artifact@v4` use.
+7. Project memory, writing style, governance regressions, native-project, launch-services, and whitespace checks pass.
+8. One exact-head pull-request run completes all eight jobs, produces the Android artifact through the migrated action, and has no Node 20 artifact annotation. A green golden job skips the failed-golden upload step, so that second migration is verified from workflow source rather than claimed as executed evidence.
+9. A bounded independent review finds no unresolved blocker before merge.
 
-1. A root Hosting test requires the canonical title, description, Open Graph and X metadata, Songbook, Chant Lab, Stage, trust explanation, launch-status honesty, and all six public trust links.
-2. The test rejects guessed store links, positive availability claims, fabricated audience metrics, seeded club names, chant or lyric-shaped illustration copy, popularity-as-stadium-proof copy, forms, remote embeds or resources, autoplay, trackers, and removal of any existing Firebase rewrite or the Apple association source.
-3. A local static preview returns the root and representative policy routes successfully.
-4. The complete source is inspected at desktop and narrow widths, with keyboard focus, enlarged text, reduced motion, missing-image fallback, and no-script behavior considered. Browser inspection requires an explicitly permitted surface; source and render evidence must not be mislabeled as live publication.
-5. `git diff --check`, staged project-memory, writing-style, and governance checks pass.
-6. A clean-runner result and independent review without an unresolved blocker are required before the separately gated live deployment.
-7. Focused Flutter tests prove the reveal's start, completed, and reduced-motion states and the gate's exact agreement, route, failure, pending, and constrained-layout behavior.
-8. Inspected renders cover the landing page at wide and narrow widths and the policy gate at its representative mobile viewport. Semantic assertions protect trust and agreement meaning independently of pixels.
-9. Launch regressions combine the unresolved-loading state with the exact compact enlarged-text geometries. Separate progress, viewport, and text-scale tests do not satisfy this boundary.
+## Packaging and next gate
 
-## Rollout and rollback
-
-Package and review the source first. Only after exact-head clean CI and independent review close without an unresolved blocker, publish the static Hosting tree, connect `chantsfc.com` using only Firebase-supplied DNS records, and read back the root, policy routes, Apple association source, Android association response behavior, share routes, and media route behavior. This rollout does not authorize a Functions, Firestore rules, Storage rules, seed, authentication-provider, store, analytics, or unrelated DNS change.
-
-If the root page fails after publication, restore the last reviewed static root without changing rewrites or policy routes, then repair forward. Never use a rollback that removes the public deletion, rights, support, privacy, terms, or community destinations.
+The implementation was packaged at `1e2ce93a3b46879fd1b59c0d4a8efa80ae67efb7`, pushed to PR 32, and verified by all eight jobs in exact-head run `33550474487`. A bounded independent review approved the source for merge with no Critical or High finding. This documentation-only evidence correction is not yet committed or pushed; any new PR head requires replacement exact-head CI. Merge remains Andrew's decision. Hosting publication and `chantsfc.com` connection begin only in the separately approved deployment phase.
