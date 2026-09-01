@@ -16,13 +16,13 @@ flutter pub get
 flutter test                              # models, services, widgets. Needs no Firebase config.
 
 # Backend suites, each self-contained. Use the package's runtime:
-cd functions && npm ci && npm run build && npm test  # Node 22, 229 unit tests; 24 emulator-only cases skip here
+cd functions && npm ci && npm run build && npm test  # Node 22, 230 unit tests; 24 emulator-only cases skip here
 cd seed && npm install && npm test        # Node 20, seed and rollout controls, 74 tests
 
 # Firestore rules tests need Java plus firebase-tools:
 npm --prefix test_rules install
 firebase emulators:exec --only firestore,storage --project chants-f95b4 "cd test_rules && npm test"  # 174 tests
-firebase emulators:exec --only firestore --project demo-chants-repair "cd functions && npx mocha --timeout 60000 lib-test/test/report_repair.integration.test.js"  # 23 control/repair/upload transaction cases, after Functions test compilation
+firebase emulators:exec --only firestore --project demo-chants-repair "cd functions && npx mocha --timeout 60000 lib-test/test/report_repair.integration.test.js"  # 24 control/repair/upload transaction cases, after Functions test compilation
 
 # To run the actual app you need your own Firebase project:
 cp lib/firebase_options.dart.example lib/firebase_options.dart   # then add real keys

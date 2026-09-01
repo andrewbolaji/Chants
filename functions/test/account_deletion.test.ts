@@ -11,9 +11,26 @@ import {
   requestAccountDeletion,
   requestVerifiedAccountDeletion,
 } from "../src/account_deletion";
+import {
+  chantSourceChanged,
+  reconcileChantPerformanceSource,
+} from "../src/performance_source";
 
 type Data = Record<string, unknown>;
 type Ref = { __collection: string; id: string; path: string };
+type QueryRef = {
+  __collection: string;
+  field: string;
+  value: unknown;
+  limitCount?: number;
+  get: () => Promise<QuerySnapshot>;
+  limit: (limit: number) => QueryRef;
+};
+type QuerySnapshot = {
+  docs: ReturnType<FirestoreHarness["snapshot"]>[];
+  size: number;
+  empty: boolean;
+};
 type Operation =
   | { kind: "create" | "set" | "update"; ref: Ref; data: Data }
   | { kind: "delete"; ref: Ref };
@@ -66,7 +83,7 @@ class FirestoreHarness {
     return { __collection: collection, id, path: `${collection}/${id}` };
   }
 
-  private snapshot(ref: Ref) {
+  snapshot(ref: Ref) {
     const value = this.bucket(ref.__collection).get(ref.id);
     return {
       exists: value !== undefined,
@@ -74,6 +91,43 @@ class FirestoreHarness {
       ref,
       data: () => value ? { ...value } : undefined,
     };
+  }
+
+  private querySnapshot(query: QueryRef): QuerySnapshot {
+    const matchingEntries = [...this.bucket(query.__collection).entries()]
+      .filter(([, data]) => data[query.field] === query.value);
+    const entries = query.limitCount === undefined
+      ? matchingEntries
+      : matchingEntries.slice(0, query.limitCount);
+    const docs = entries.map(([id]) =>
+      this.snapshot(this.ref(query.__collection, id))
+    );
+    const hook = this.afterNextQuery;
+    this.afterNextQuery = null;
+    hook?.();
+    return { docs, size: docs.length, empty: docs.length === 0 };
+  }
+
+  private query(
+    collection: string,
+    field: string,
+    value: unknown,
+    limitCount?: number,
+  ): QueryRef {
+    const query: QueryRef = {
+      __collection: collection,
+      field,
+      value,
+      limitCount,
+      get: async () => this.querySnapshot(query),
+      limit: (limit: number) => this.query(
+        collection,
+        field,
+        value,
+        limit,
+      ),
+    };
+    return query;
   }
 
   private collection(name: string) {
@@ -85,20 +139,10 @@ class FirestoreHarness {
           get: async () => this.snapshot(ref),
         };
       },
-      where: (field: string, _operator: string, value: unknown) => ({
-        limit: (limit: number) => ({
-          get: async () => {
-            const entries = [...this.bucket(name).entries()]
-              .filter(([, data]) => data[field] === value)
-              .slice(0, limit);
-            const docs = entries.map(([id]) => this.snapshot(this.ref(name, id)));
-            const hook = this.afterNextQuery;
-            this.afterNextQuery = null;
-            hook?.();
-            return { docs, size: docs.length, empty: docs.length === 0 };
-          },
-        }),
-      }),
+      where: (field: string, operator: string, value: unknown) => {
+        if (operator !== "==") throw new Error(`Unsupported: ${operator}`);
+        return this.query(name, field, value);
+      },
     };
   }
 
@@ -143,7 +187,9 @@ class FirestoreHarness {
 
   private async runTransaction<T>(
     handler: (transaction: {
-      get: (ref: Ref) => Promise<ReturnType<FirestoreHarness["snapshot"]>>;
+      get: (
+        target: Ref | QueryRef
+      ) => Promise<ReturnType<FirestoreHarness["snapshot"]> | QuerySnapshot>;
       create: (ref: Ref, data: Data) => void;
       set: (ref: Ref, data: Data) => void;
       update: (ref: Ref, data: Data) => void;
@@ -156,7 +202,9 @@ class FirestoreHarness {
     }
     const operations: Operation[] = [];
     const result = await handler({
-      get: async (ref) => this.snapshot(ref),
+      get: async (target) => "field" in target
+        ? this.querySnapshot(target)
+        : this.snapshot(target),
       create: (ref, data) => operations.push({ kind: "create", ref, data }),
       set: (ref, data) => operations.push({ kind: "set", ref, data }),
       update: (ref, data) => operations.push({ kind: "update", ref, data }),
@@ -720,6 +768,66 @@ describe("account deletion recovery", () => {
       updatedAt: BASE_TIME,
     });
     assert.deepStrictEqual(db.get("chants", "system"), system);
+  });
+
+  it("closes another creator's performance when its authored chant is deleted", async () => {
+    db.set("accountDeletionJobs", "fan", job("anonymize-chants"));
+    db.set("chants", "supporter", {
+      createdBy: "fan",
+      title: "Fan-authored chant",
+      lyrics: "Fan-authored lyrics",
+      tuneName: "Fan-authored tune",
+      contextNotes: null,
+      coverImageUrl: null,
+      mediaUrl: null,
+      mediaType: "none",
+      evidence: null,
+      variations: [],
+      status: "community",
+      hidden: false,
+      removed: false,
+    });
+    db.set("creatorProfiles", "performer", { performanceCount: 1 });
+    db.set("performances", "third-party-performance", {
+      schemaVersion: 1,
+      creatorId: "performer",
+      chantId: "supporter",
+      chantTitle: "Fan-authored chant",
+      chantStatus: "community",
+      publicationState: "approved",
+      hidden: false,
+      removed: false,
+      sourceChantVisible: true,
+      sourceCreatorVisible: true,
+    });
+    const before = db.get("chants", "supporter");
+
+    await processAccountDeletionStep({
+      uid: "fan", firestore: db.firestore, auth, now,
+    });
+
+    const after = db.get("chants", "supporter");
+    assert.strictEqual(chantSourceChanged(before, after), true);
+    await reconcileChantPerformanceSource({
+      chantId: "supporter",
+      firestore: db.firestore,
+      now,
+    });
+    assert.deepStrictEqual(
+      {
+        creatorId: db.get("performances", "third-party-performance")?.creatorId,
+        chantTitle: db.get("performances", "third-party-performance")?.chantTitle,
+        sourceChantVisible:
+          db.get("performances", "third-party-performance")?.sourceChantVisible,
+        performanceCount: db.get("creatorProfiles", "performer")?.performanceCount,
+      },
+      {
+        creatorId: "performer",
+        chantTitle: "",
+        sourceChantVisible: false,
+        performanceCount: 0,
+      }
+    );
   });
 
   it("fails before redacting an owned performance with an invalid media path", async () => {

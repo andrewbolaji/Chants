@@ -17,6 +17,18 @@ const routes = Object.fromEntries(
 );
 const correspondenceAddress =
   '5667 Treaschwig Rd #1014, Spring, TX 77373, United States';
+const approvedNegative24HourStatements = [
+  'Chants does not promise 24/7 monitoring.',
+  'Chants does not promise 24/7 monitoring, an instant reply, or automatic removal after every report.',
+];
+
+const assertNoUnapproved24HourPromise = copy => {
+  const residue = approvedNegative24HourStatements.reduce(
+    (value, statement) => value.replaceAll(statement, ''),
+    copy,
+  );
+  assert.doesNotMatch(residue, /24\/7/i);
+};
 
 test('all six public policy routes are complete and mutually reachable', () => {
   for (const [name, html] of Object.entries(routes)) {
@@ -27,7 +39,23 @@ test('all six public policy routes are complete and mutually reachable', () => {
     for (const destination of routeNames) {
       assert.match(html, new RegExp(`href="/${destination}(?:["#?])`), `${name} lacks ${destination}`);
     }
-    assert.doesNotMatch(html, /\[PLACEHOLDER\]|coming soon|24\/7 (?:support|monitoring is provided)/i);
+    assert.doesNotMatch(html, /\[PLACEHOLDER\]|coming soon/i);
+    assertNoUnapproved24HourPromise(html);
+  }
+});
+
+test('24/7 guard allows only the approved negative statements', () => {
+  for (const statement of approvedNegative24HourStatements) {
+    assert.doesNotThrow(() => assertNoUnapproved24HourPromise(statement));
+  }
+  for (const promise of [
+    'We provide 24/7 monitoring.',
+    'Support and moderation are available 24/7.',
+  ]) {
+    assert.throws(
+      () => assertNoUnapproved24HourPromise(promise),
+      assert.AssertionError,
+    );
   }
 });
 

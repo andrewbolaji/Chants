@@ -4,6 +4,8 @@
 
 **Independent-review correction:** Approved on 1 September 2026 as `post-launch-policy independent review correction spec`. The correction must make all six documents reachable from the real signed-out welcome, preserve support, actual account deletion, and sign-out for a returning user who does not accept `v2`, put complete urgent child-safety instructions and the accepted version/date in the app, strengthen stale-policy and real-transaction evidence, and correct the review records. Decision 016 target-side safety retention and the 17+ rule remain unchanged. No commit, push, merge, deployment, publication, provider change, or production mutation is authorized.
 
+**PR 30 independent-review correction:** Approved on 1 September 2026 as `PR 30 independent review correction spec`. This bounded follow-up documents and tests the existing consequence that redacting a user-authored chant closes current-source visibility for every dependent performance, including a performance owned by another creator. It also corrects the dedicated emulator count from 23 to 24 and strengthens the public-copy contract so paraphrased positive `24/7` promises fail. No runtime behavior, accepted policy version, 17+ rule, deployment, publication, production state, or launch territory changes are authorized.
+
 **Owner:** Andrew, through Thunderriver Tech LLC
 **Lane:** 2
 **Baseline:** merged PR 29 at `c3a071cfea70f68cd4d8f76d26561843d7478c31`, tree `2d59b99cd2539c42007ae728b54b25e397fad2b2`, with all eight jobs green in run `33408526284`
