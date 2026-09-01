@@ -279,6 +279,11 @@ void main() {
 
     testWidgets('signed in, profile stream has not emitted yet shows neutral '
         'loading, not the gate and not home', (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
       await tester.pumpWidget(
         wrap(
           authStream: Stream.value(fakeUser as User?),

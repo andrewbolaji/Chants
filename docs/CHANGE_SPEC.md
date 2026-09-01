@@ -22,6 +22,12 @@ Andrew approved `PR 31 post-review and operator-name correction spec` on 1 Septe
 
 The correction remains inside the approved presentation and policy-copy boundary. It does not change policy meaning, the 17+ rule, authentication or backend authority, Firebase rewrites, DNS, deployment, or store availability.
 
+### Final compact loading correction
+
+Andrew approved `PR 31 final compact loading correction spec` on 1 September 2026 after the targeted independent review reproduced one remaining low-severity layout defect. The correction must keep the full written progress cue on a normal portrait, reduce the visual compact cue to its spinner, preserve the complete semantic loading announcement, and treat a 320 by 480 short portrait as compact. Regression coverage must combine the unresolved-loading state with the exact 568 by 320 at 2x text and 320 by 480 at 1.5x text geometries. It must be capable of failing on the reviewed source and must assert both visible and semantic behavior.
+
+This final correction does not change launch timing, authentication authority, policy copy or meaning, the 17+ rule, backend behavior, Hosting, DNS, deployment, or store availability.
+
 The page should make the product understandable in one visit:
 
 1. Chants is the songbook of the terraces and the workshop for what gets sung next.
@@ -67,7 +73,7 @@ The page should make the product understandable in one visit:
 - The app preview uses CSS-native, club-neutral Stage and Songbook surfaces plus the existing supporter-and-scarf mark at the closing moment. It must not imply a live feed, a real creator, or real popularity metrics.
 - Footer trust links stay visible and use the exact existing public routes.
 - The page remains useful with images disabled, motion reduced, JavaScript unavailable, or a narrow viewport.
-- Native launch remains instant and static. The first Flutter frame continues the same black-and-gold scene, reveals `CHANTS` once, exposes a useful semantic label, and resolves immediately when reduced motion is requested.
+- Native launch remains instant and static. The first Flutter frame continues the same black-and-gold scene, reveals `CHANTS` once, exposes a useful semantic label, and resolves immediately when reduced motion is requested. A normal portrait writes the unresolved progress cue; compact and short layouts keep the spinner while the same complete loading announcement remains available to assistive technology.
 - The policy gate leads with `KEEP THE TERRACE LOUD. KEEP IT SAFE.`, states exactly which two documents are being accepted, keeps Privacy separate, and preserves all six pre-acceptance escape and help routes. Long rule copy remains a calm, aligned reading surface below the loud frame.
 
 ## Invariants
@@ -97,6 +103,7 @@ The page should make the product understandable in one visit:
 | Reduced motion is enabled | App launch and web decoration render their final state without animation |
 | Policy acceptance fails | Keep the gate usable, preserve every route, and show the existing honest retry message |
 | Policy copy is enlarged or the viewport is 320 pixels wide | Keep every document and account action reachable with no overflow or hidden agreement control |
+| Initialization remains unresolved at 568 by 320 with 2x text or 320 by 480 with 1.5x text | Use the compact row and spinner-only visible cue with the complete semantic loading announcement and no overflow |
 
 ## Verification
 
@@ -110,6 +117,7 @@ Evidence must be capable of failing against the placeholder page:
 6. A clean-runner result and independent review without an unresolved blocker are required before the separately gated live deployment.
 7. Focused Flutter tests prove the reveal's start, completed, and reduced-motion states and the gate's exact agreement, route, failure, pending, and constrained-layout behavior.
 8. Inspected renders cover the landing page at wide and narrow widths and the policy gate at its representative mobile viewport. Semantic assertions protect trust and agreement meaning independently of pixels.
+9. Launch regressions combine the unresolved-loading state with the exact compact enlarged-text geometries. Separate progress, viewport, and text-scale tests do not satisfy this boundary.
 
 ## Rollout and rollback
 

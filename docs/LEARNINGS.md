@@ -12,6 +12,16 @@ This is durable, evidence-backed project memory. It prevents the same failure or
 
 ## Entries
 
+### 2026-09-01T17:55:17Z Responsive regressions must intersect state, viewport, and text scale
+
+- **Status:** promoted
+- **Scope:** Flutter launch surfaces whose optional state adds geometry after the base responsive layout is selected.
+- **Observed:** Compact layout, enlarged text, and unresolved progress each passed in isolation. Combining them overflowed by 37 pixels at 568 by 320 with 2x text and by 19 pixels at 320 by 480 with 1.5x text.
+- **Evidence:** Two production-widget regressions failed on the reviewed source with the exact render overflows and the unwanted compact progress label. They pass after the short portrait joins the compact layout and compact progress retains only the spinner while the root semantics still announces `Chants. Getting things ready.`
+- **Rule:** Responsive evidence must cross every state that adds or removes content with the smallest supported geometry and enlarged text. Separate tests for state, viewport, and text scale can all pass while their real intersection fails.
+- **Applied control:** Launch reveal tests exercise unresolved progress at both reproduced geometries, assert spinner-only compact presentation, retain the normal-portrait written cue, and protect the full semantic announcement.
+- **Revisit:** Any launch-copy addition, compact breakpoint change, progress treatment change, localization, or supported-viewport revision.
+
 ### 2026-09-01T07:20:00Z Declared routes do not prove entry-state reachability
 
 - **Status:** promoted

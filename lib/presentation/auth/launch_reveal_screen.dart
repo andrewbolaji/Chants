@@ -77,7 +77,7 @@ class _LaunchRevealScreenState extends State<LaunchRevealScreen>
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       final compact =
-                          constraints.maxHeight < 460 ||
+                          constraints.maxHeight <= 480 ||
                           constraints.maxWidth > constraints.maxHeight;
                       final mark = _LaunchMark(
                         progress: progress,
@@ -86,6 +86,7 @@ class _LaunchRevealScreenState extends State<LaunchRevealScreen>
                       final details = _LaunchDetails(
                         progress: progress,
                         showProgress: widget.showProgress,
+                        compact: compact,
                       );
                       return Padding(
                         padding: EdgeInsets.symmetric(
@@ -153,8 +154,13 @@ class _LaunchMark extends StatelessWidget {
 class _LaunchDetails extends StatelessWidget {
   final double progress;
   final bool showProgress;
+  final bool compact;
 
-  const _LaunchDetails({required this.progress, required this.showProgress});
+  const _LaunchDetails({
+    required this.progress,
+    required this.showProgress,
+    required this.compact,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -193,13 +199,13 @@ class _LaunchDetails extends StatelessWidget {
         _SoundBars(progress: progress),
         if (showProgress) ...[
           const SizedBox(height: 16),
-          const Wrap(
+          Wrap(
             alignment: WrapAlignment.center,
             crossAxisAlignment: WrapCrossAlignment.center,
-            spacing: 10,
-            runSpacing: 8,
+            spacing: compact ? 0 : 10,
+            runSpacing: compact ? 0 : 8,
             children: [
-              SizedBox(
+              const SizedBox(
                 width: 14,
                 height: 14,
                 child: CircularProgressIndicator(
@@ -207,17 +213,18 @@ class _LaunchDetails extends StatelessWidget {
                   strokeWidth: 2,
                 ),
               ),
-              Text(
-                'GETTING THINGS READY',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: AppColors.textMuted,
-                  fontFamily: 'SpaceMono',
-                  fontSize: 9,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1,
+              if (!compact)
+                const Text(
+                  'GETTING THINGS READY',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: AppColors.textMuted,
+                    fontFamily: 'SpaceMono',
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1,
+                  ),
                 ),
-              ),
             ],
           ),
         ],

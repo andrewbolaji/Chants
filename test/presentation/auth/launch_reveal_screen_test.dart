@@ -101,6 +101,11 @@ void main() {
   testWidgets('shows an honest busy cue while account state is unresolved', (
     tester,
   ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
     await tester.pumpWidget(wrap(reduceMotion: true, showProgress: true));
 
     expect(find.text('GETTING THINGS READY'), findsOneWidget);
@@ -109,5 +114,47 @@ void main() {
       find.bySemanticsLabel('Chants. Getting things ready.'),
       findsOneWidget,
     );
+  });
+
+  testWidgets('keeps unresolved progress inside compact landscape at 2x text', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(568, 320);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      wrap(reduceMotion: true, showProgress: true, textScale: 2),
+    );
+
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.text('GETTING THINGS READY'), findsNothing);
+    expect(
+      find.bySemanticsLabel('Chants. Getting things ready.'),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('keeps unresolved progress inside a short enlarged portrait', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 480);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      wrap(reduceMotion: true, showProgress: true, textScale: 1.5),
+    );
+
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.text('GETTING THINGS READY'), findsNothing);
+    expect(
+      find.bySemanticsLabel('Chants. Getting things ready.'),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
   });
 }
