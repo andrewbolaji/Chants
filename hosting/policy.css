@@ -1,0 +1,87 @@
+:root {
+  color-scheme: dark;
+  --ink: #f5f1e8;
+  --body: #c7c1b6;
+  --muted: #8f8a81;
+  --gold: #ffc02e;
+  --surface: #141414;
+  --line: #303030;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: #060606;
+  color: var(--ink);
+  font-family: Arial, sans-serif;
+  line-height: 1.6;
+}
+
+header, main, footer {
+  width: min(760px, calc(100% - 32px));
+  margin: 0 auto;
+}
+
+header { padding: 28px 0 18px; }
+
+nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+}
+
+a { color: var(--gold); }
+nav a { color: var(--body); font-weight: 700; text-decoration: none; }
+nav a[aria-current="page"] { color: var(--gold); }
+
+main { padding: 34px 0 64px; }
+
+.eyebrow {
+  color: var(--gold);
+  font-size: .8rem;
+  font-weight: 800;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+}
+
+h1 { font-size: clamp(2.25rem, 8vw, 4.25rem); line-height: 1; margin: 12px 0 20px; }
+h2 { margin-top: 38px; font-size: 1.35rem; }
+p, li { color: var(--body); }
+li { margin-bottom: 10px; }
+
+.callout, pre {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 18px;
+}
+
+pre {
+  color: var(--ink);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  overflow-x: auto;
+  white-space: pre-wrap;
+}
+
+.action {
+  display: inline-block;
+  margin: 10px 0;
+  padding: 13px 18px;
+  border-radius: 999px;
+  background: var(--gold);
+  color: #111;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+footer {
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  padding: 22px 0 40px;
+  font-size: .9rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { scroll-behavior: auto !important; }
+}

@@ -1,5 +1,6 @@
 import * as admin from "firebase-admin";
 import { HttpsError } from "firebase-functions/v2/https";
+import { CURRENT_POLICY_VERSION } from "./policy";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -46,7 +47,7 @@ export async function handleMarkCreatorNotificationRead(params: {
       !profile ||
       profile.banned !== false ||
       profile.ageConfirmed17Plus !== true ||
-      profile.acceptedPolicyVersion !== "v1" ||
+      profile.acceptedPolicyVersion !== CURRENT_POLICY_VERSION ||
       profile.deletionPending === true ||
       deletionSnapshot.exists
     ) {

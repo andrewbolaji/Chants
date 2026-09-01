@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:chants/app/providers.dart';
+import 'package:chants/app/router.dart';
 import 'package:chants/data/repositories/moderation_repository.dart';
 import 'package:chants/presentation/auth/policy_acceptance_gate_screen.dart';
 
@@ -57,27 +58,55 @@ class _FakeModerationRepository implements ModerationRepository {
 }
 
 void main() {
-  Widget wrap(Widget child, ModerationRepository repo) {
+  Widget wrap(Widget child, ModerationRepository repo, {double textScale = 1}) {
     return ProviderScope(
       overrides: [moderationRepositoryProvider.overrideWithValue(repo)],
-      child: MaterialApp(home: child),
+      child: MaterialApp(
+        onGenerateRoute: AppRouter.onGenerateRoute,
+        home: MediaQuery(
+          data: MediaQueryData(textScaler: TextScaler.linear(textScale)),
+          child: child,
+        ),
+      ),
     );
   }
 
   group('PolicyAcceptanceGateScreen', () {
-    testWidgets('renders the policy text and an agree button', (tester) async {
+    testWidgets('renders the accepted documents and separate privacy notice', (
+      tester,
+    ) async {
       final repo = _FakeModerationRepository();
       await tester.pumpWidget(wrap(const PolicyAcceptanceGateScreen(), repo));
 
-      expect(find.text('CONTENT POLICY'), findsOneWidget);
-      expect(find.text('I AGREE'), findsOneWidget);
+      expect(find.text('COMMUNITY RULES'), findsOneWidget);
+      expect(find.text('READ TERMS'), findsOneWidget);
+      expect(find.text('PRIVACY NOTICE'), findsOneWidget);
+      expect(find.text('HELP & POLICIES'), findsOneWidget);
+      expect(find.text('SUPPORT'), findsOneWidget);
+      expect(find.text('DELETE ACCOUNT'), findsOneWidget);
+      expect(find.text('SIGN OUT'), findsOneWidget);
+      expect(find.textContaining('not part of this agreement'), findsOneWidget);
+      expect(find.textContaining('contract version v2'), findsOneWidget);
+      expect(
+        find.text('KEEP THE TERRACE LOUD.\nKEEP IT SAFE.'),
+        findsOneWidget,
+      );
+      expect(
+        find.bySemanticsLabel(
+          'TERMS OF USE. The legal agreement for using Chants. READ TERMS',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('AGREE AND CONTINUE'), findsOneWidget);
     });
 
-    testWidgets('tapping I agree calls acceptPolicy', (tester) async {
+    testWidgets('tapping agree and continue calls acceptPolicy', (
+      tester,
+    ) async {
       final repo = _FakeModerationRepository();
       await tester.pumpWidget(wrap(const PolicyAcceptanceGateScreen(), repo));
 
-      await tester.tap(find.text('I AGREE'));
+      await tester.tap(find.text('AGREE AND CONTINUE'));
       // Not pumpAndSettle: on success the screen intentionally stays in its
       // busy state and never navigates itself away (ChantApp's reactive
       // gate does that once the profile stream catches up), so the loading
@@ -94,12 +123,79 @@ void main() {
       final repo = _FakeModerationRepository()..shouldFail = true;
       await tester.pumpWidget(wrap(const PolicyAcceptanceGateScreen(), repo));
 
-      await tester.tap(find.text('I AGREE'));
+      await tester.tap(find.text('AGREE AND CONTINUE'));
       await tester.pumpAndSettle();
 
       expect(find.textContaining('Could not save'), findsOneWidget);
       // Button is usable again, not stuck in a loading state.
-      expect(find.text('I AGREE'), findsOneWidget);
+      expect(find.text('AGREE AND CONTINUE'), findsOneWidget);
+    });
+
+    testWidgets('opens the full terms without accepting', (tester) async {
+      final repo = _FakeModerationRepository();
+      await tester.pumpWidget(wrap(const PolicyAcceptanceGateScreen(), repo));
+
+      await tester.scrollUntilVisible(
+        find.text('READ TERMS'),
+        100,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.text('READ TERMS'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('TERMS OF USE'), findsWidgets);
+      expect(find.text('YOUR CONTRIBUTIONS'), findsOneWidget);
+      expect(repo.acceptPolicyCalls, 0);
+    });
+
+    testWidgets('opens support without accepting', (tester) async {
+      final repo = _FakeModerationRepository();
+      await tester.pumpWidget(wrap(const PolicyAcceptanceGateScreen(), repo));
+
+      await tester.scrollUntilVisible(
+        find.text('SUPPORT'),
+        100,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.text('SUPPORT'));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('support@chantsfc.com'), findsWidgets);
+      expect(repo.acceptPolicyCalls, 0);
+    });
+
+    testWidgets('gate remains usable at 320 pixels and 1.8x text', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(320, 568);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final repo = _FakeModerationRepository();
+
+      await tester.pumpWidget(
+        wrap(const PolicyAcceptanceGateScreen(), repo, textScale: 1.8),
+      );
+      await tester.pump();
+
+      expect(find.byKey(const ValueKey('policy-gate-scroll')), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('DELETE ACCOUNT'),
+        100,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(find.text('DELETE ACCOUNT'), findsOneWidget);
+      expect(find.text('SIGN OUT'), findsOneWidget);
+
+      expect(find.text('AGREE AND CONTINUE'), findsOneWidget);
+      final buttonRect = tester.getRect(
+        find.byKey(const ValueKey('policy-accept-button')),
+      );
+      expect(buttonRect.left, greaterThanOrEqualTo(0));
+      expect(buttonRect.top, greaterThanOrEqualTo(0));
+      expect(buttonRect.right, lessThanOrEqualTo(320));
+      expect(buttonRect.bottom, lessThanOrEqualTo(568));
+      expect(tester.takeException(), isNull);
     });
   });
 }

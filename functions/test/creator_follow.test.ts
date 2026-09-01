@@ -121,7 +121,7 @@ function activeAccount(): Data {
   return {
     banned: false,
     ageConfirmed17Plus: true,
-    acceptedPolicyVersion: "v1",
+    acceptedPolicyVersion: "v2",
     deletionPending: false,
   };
 }

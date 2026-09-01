@@ -1,208 +1,126 @@
-# Change spec: V1 production backend rollout
+# Change spec: V1 launch presentation polish
 
-**Status: Approved for source preparation and packaging.** Andrew approved `V1 production rollout preparation spec` on 2026-08-31, then separately authorized one commit, push and exact-head CI. Live actions remain proposed and unauthorized.
+**Status: Approved for packaging and gated rollout.** Andrew approved `V1 Chants public landing page spec`, directly approved a final launch-presentation pass covering the app entry, policy gate, and public landing page, granted visual acceptance, and authorized one package, push, exact-head clean CI, independent review, and then public deployment and domain connection on 1 September 2026.
 
-**Review closure, approved 2026-08-31:** Claude found no code/merge blocker at `5280c3a`, which has eight-job green CI in run `33401110327`. Andrew approved one follow-up documentation/comment correction commit and replacement CI. The bounded correction makes cleanup observation, concurrent submission and deployer permission gates explicit, corrects retry wording and clarifies state-only CLI results. Runtime behavior, limits, schemas and tests stay unchanged. This approval does not merge or execute any live gate. The correction receipt must name its own head and CI; the prior run cannot certify it.
+**Owner:** Andrew, through ThunderRiver Tech LLC
 
-**Owner:** Andrew. **Lane:** 2 for source preparation; 3 for later live IAM, recovery, deployment, repair and admission changes.
+**Lane:** 2 for source and packaging; 3 for the separately gated live rollout
 
-**Baseline:** merged main `42f20dc675a1de4fe85956783774a4cdc67f3a01`, all eight jobs green in [exact-main run 33368497566](https://github.com/andrewbolaji/Chants/actions/runs/33368497566). Its tree also matches PR 28's prior green CI. The completed Call-Ups contract remains recoverable at that commit and in its scoped rationale. Neither run certifies the later preparation or this review closure.
+**Baseline:** PR 30 correction head `75e1bc32dd277a47a829b636f739ea18856c8985`, with all eight jobs green in run `33487936863`
 
-## Outcome and authority
+**Source authority:** implementation, local preview, verification, durable records, one commit, push, pull request, exact-head clean CI, and an independent review handoff.
 
-Bring the existing V1 backend into production for the configured-device walkthrough. Keep video closed until its real dependencies and cleanup pass. No new product features, seed writes, lyric edits, provider enablement, Hosting release, App Check enforcement, signing or store release.
+**Production authority:** after exact-head clean CI and independent review return without an unresolved blocker, publish the reviewed Firebase Hosting source, connect the registered `chantsfc.com` domain using only the exact records Firebase supplies, and read back the live routes. Merge, store publication, analytics, account collection, unrelated DNS edits, backend deployment, and any other production change remain outside this authority.
 
-Three explicit stages:
+## Outcome
 
-1. **Source preparation:** pin deploy-time resources/runtime identity and add one exact operational-control command. Prepare the containment/recovery manifest. Package and obtain one review and exact-head CI when separately authorized.
-2. **Core production rollout:** a later approval names the immutable candidate, exact infrastructure/IAM actions, maintenance window, repair and private test identities.
-3. **Media production canary:** a later approval releases workers and a disposable media/account test after core proof. Public launch remains separately gated.
+Give the first public and in-app moments one coherent Chants identity while preserving every existing authority, trust, and deep-link boundary.
 
-The original approval authorized step 1 source work and local tests only. The subsequent packaging approval authorizes one commit, push, a review PR and exact-head CI. Neither approval authorizes cloud writes, paid rehearsal, resource creation, deployment, repair, account/media deletion or merge. This is not approval of any live action.
+## Approved independent-review correction
 
-## Fresh evidence
+Andrew approved `PR 31 post-review and operator-name correction spec` on 1 September 2026. The correction closes the independently reproduced launch-transition, landscape, enlarged-text, semantic, contrast, illustration, and documentation defects before deployment. It also applies the exact legal operator spelling `ThunderRiver Tech LLC` across public copy, app policy copy, tests, and durable records.
 
-Read-only inventory at 2026-08-31T07:37:34-07:37:43Z:
+The correction remains inside the approved presentation and policy-copy boundary. It does not change policy meaning, the 17+ rule, authentication or backend authority, Firebase rewrites, DNS, deployment, or store availability.
 
-| Surface | Observed | Consequence |
-|---|---|---|
-| Functions | Nine July Node 20 functions; source has 48 Node 22 exports | Ordered deployment, no all-Functions sweep |
-| Legacy runtime/build | One default Compute service account with project Editor | Dedicated new runtime; prove old writers are contained |
-| Reports | Two old created-event handlers, same pinned source generations | Exact replacement with written handlers, no overlap |
-| Rules/indexes | Old rules hash unchanged; two of 16 indexes READY | Current maintenance-compatible rules and 14 missing indexes |
-| Storage/Scheduler | Firebase Storage and Scheduler disabled; no default media bucket or Storage rules release | Explicit provision/activation and observed verification |
-| Control | `operationalControls/v1` returned 404 | Source fails closed; create only under later approval |
-| Content | 192 chants, four comments, one chant report, zero comment reports | Repair every parent, including zero-report parents |
-| Backlog | Zero drafts, performances, creator profiles and all three deletion/cleanup job collections | Prefer zero-backlog path; fresh nonzero work stops for exact recovery |
-| Recovery | PITR and database delete protection disabled | Prove recovery before production data changes |
-| Artifact retention | One-day DELETE/ANY cleanup policy now present | Drift from prior no-policy observation; deliberate retention decision |
+### Final compact loading correction
 
-One profile exists; its identity/content was not read. Counts are separate observations, not a paused transactional snapshot. Cloud Run's 100-percent-latest traffic does not prove old revision URLs or in-flight work are inaccessible. Re-read all facts at the execution gate. Provenance: `docs/changes/2026-08-31-v1-production-rollout-planning.md`.
+Andrew approved `PR 31 final compact loading correction spec` on 1 September 2026 after the targeted independent review reproduced one remaining low-severity layout defect. The correction must keep the full written progress cue on a normal portrait, reduce the visual compact cue to its spinner, preserve the complete semantic loading announcement, and treat a 320 by 480 short portrait as compact. Regression coverage must combine the unresolved-loading state with the exact 568 by 320 at 2x text and 320 by 480 at 1.5x text geometries. It must be capable of failing on the reviewed source and must assert both visible and semantic behavior.
 
-## Recommended decisions, not saved settings
+This final correction does not change launch timing, authentication authority, policy copy or meaning, the 17+ rule, backend behavior, Hosting, DNS, deployment, or store availability.
 
-| Choice | Proposal |
-|---|---|
-| Locations | Keep Functions in `europe-west2`, Firestore `(default)` and events in `nam5`. No relocation |
-| Media bucket | Firebase default `chants-f95b4.firebasestorage.app`, Standard, `europe-west2`, close to compute and initial UK product. Existing transatlantic database leg remains |
-| Media access/retention | Uniform bucket-level access, public-access prevention, no object versioning or retention lock; explicit seven-day soft delete. Removed bytes can remain privately recoverable for seven days, not immediate physical erasure |
-| Runtime identity | Proposed `chants-v1-runtime@chants-f95b4.iam.gserviceaccount.com`, no downloaded key. Database use, required Auth user operations, bucket-scoped object operations and self-scoped signing only; verify exact permissions against actual calls |
-| General Functions | Node 22, 1 CPU, 256 MiB, timeout 60s, minInstances 0, maxInstances 3, concurrency 20. This explicitly reduces the eight observed caps of 20 and adds a cap for the ninth |
-| Heavy operations | Three destructive event workers and daily cleanup: 512 MiB, timeout 300s, maxInstances 1, concurrency 1. Draft submit/approval: 512 MiB, timeout 60s, maxInstances 1, concurrency 1. Monitor: 256 MiB, timeout 60s, maxInstances 1, concurrency 1. Preserve existing retry policies |
-| Artifact recovery | Change only the named `gcf-artifacts` cleanup policy from one to 30 days after approval/readback. Separately retain reviewed source, lock and build manifests |
-| Database recovery | Enable PITR/delete protection; private managed export before cutover. Proposed recovery bucket `chants-f95b4-rollout-recovery`, Standard `us-central1`, no public/client access, 30-day lifecycle without retention lock. Approve the exact isolated restore database and cost before rehearsal |
-| Admission | Maintenance/workers false first; core/workers false next. Workers/media have later holds. Increase generation on every transition |
-| Cost | Keep USD 25 alert-only budget and existing alerts. Instance limits reduce bursts, not a guaranteed spend cap. No automatic billing shutdown |
-| Observation | Core: 30 minutes after successful private smoke. Media: concurrent-submission proof against an approved workload/budget, 60 minutes, the next real daily cleanup, at least two 15-minute monitor executions and manual deferred-cleanup/delivery reconciliation before public media |
+The page should make the product understandable in one visit:
 
-New-format default bucket location is independent of Firestore and cannot be changed in place. [Firebase locations](https://firebase.google.com/docs/storage/locations). Soft delete retains recoverable bytes and incurs storage; final policy must describe it before public media. [Storage soft delete](https://docs.cloud.google.com/storage/docs/soft-delete).
+1. Chants is the songbook of the terraces and the workshop for what gets sung next.
+2. Songbook helps fans learn and save real matchday chants.
+3. Chant Lab gives supporters a place to write, rank, and improve new ideas without presenting popularity as stadium proof.
+4. Stage lets creators publish moderated short performances around a chant, with popularity distinct from Terrace Proven status.
+5. The app is coming soon. No store availability, user count, testimonial, licensing relationship, or launch date is invented.
 
-## Bounded source preparation
+## Scope
 
-1. Pin effective resource options and the dedicated runtime identity using the existing Functions SDK's global options and narrow wrapper overrides. No new endpoint, event path, retry policy, admission class or business behavior. Compare the compiled 48-endpoint manifest with the expected settings. Source options can override dashboard values. [Runtime management](https://firebase.google.com/docs/functions/manage-functions).
-2. Add one local `functions/src/operational_control_cli.ts`, reusing `parseOperationalControl` and current project/source/private-file checks. Default read/plan, explicit apply. Compare the exact absent/existing document and approved expected generation in a transaction; write only the four allowed fields at the next generation. Reject malformed data, wrong project/source, unknown fields and media without workers. Never merge unknown fields or roll generation back.
-3. The command must resolve duplicate/lost acknowledgement by exact readback, not apply another transition. A stale or concurrent plan stops. Only non-sensitive mode/generation/result is output; private approval evidence stays outside the exact-schema control document.
-4. Add focused tests for absent creation, malformed input, wrong project/SHA, concurrent/stale generation, lost response, illegal mode and close/reopen. No automatic deploy, replay, IAM changes or mode progression.
-5. Prepare exact private IAM identities/etags, negative-probe procedure and recovery resource targets for review. Reuse CLI/API surfaces, not a broad cloud executor. Any paid/live rehearsal has a separate release.
-6. Use the existing build, emulator, governance and eight-job CI. One consolidated Claude review covers this preparation diff and operational manifest, referencing prior backend review. Do not reopen unchanged feature reviews.
+### Included
 
-Expected footprint: one runtime-options definition if useful, existing `index.ts` options, one control CLI and focused tests plus scoped records. Stop/re-plan if a new service, endpoint, collection, dependency or replay worker is needed. Freeze the future compiled candidate after preparation; today's baseline SHA does not certify future modified output.
+- A responsive root landing page under `hosting/index.html` using the approved Chants visual language.
+- Product-specific hero, positioning, Songbook, Chant Lab, Stage, trust, and launch-status copy.
+- An honest app-preview composition built from existing approved brand assets and interface language.
+- Clear links to Privacy, Terms, Community Rules, Rights and takedown, Delete account, Support, and `support@chantsfc.com`.
+- Root Open Graph and X metadata using the existing approved Chants preview asset.
+- Keyboard-visible focus, semantic headings and landmarks, reduced-motion handling, readable contrast, narrow-layout resilience, and no autoplay.
+- Deterministic source tests that protect the root metadata, core product meaning, launch honesty, policy links, and existing Hosting boundaries.
+- Interface, decision, execution, and completed-change records.
+- A launch-time Flutter brand reveal that carries the static native splash into a short `CHANTS` word reveal without delaying Firebase initialization.
+- A native splash color correction so the operating-system frame and Flutter frame do not flash between gray and the app's ink black.
+- A redesigned current-policy gate with a loud, unmistakably Chants introduction, calm readable rule text, and the same acceptance, deletion, support, privacy, terms, policy-hub, and sign-out behavior.
+- Focused animation, semantics, acceptance, route-access, narrow-layout, and enlarged-text regressions for the two app surfaces.
+- A gated post-review Firebase Hosting deployment, exact `chantsfc.com` connection, HTTPS verification, and live readback of the root and public trust routes.
 
-Implemented source and verification are recorded in `docs/changes/2026-08-31-v1-production-rollout-preparation.md`. The control command binds Firestore update time as well as exact data, creates only a closed initial state, rejects no-op/overflow transitions and reports target observation without attributing a duplicate write. It reuses the existing ignored private-plan directory and two repair-CLI guards. The live IAM/recovery/cohort manifest remains explicitly on HOLD where fresh private evidence is missing. This is no additional live authorization.
+### Excluded
 
-## P0: Candidate, recovery and execution identity
+- Any Cloudflare DNS change other than the exact `chantsfc.com` records supplied by Firebase during the approved post-review connection.
+- Mailing-list signup, contact forms, cookies, analytics, pixels, advertisements, remote fonts, external JavaScript, or new data collection.
+- Live App Store or Google Play buttons before their verified public listing URLs exist.
+- Embedded social feeds, account sign-in, app functionality, direct uploads, or web playback outside the existing current-authority share routes.
+- New player, club, stadium, supporter, or licensed-media imagery.
+- Changes to the meaning of policy copy, the policy version, the 17+ rule, authentication authority, Functions, Firestore, Storage, seed data, public share authority, or media delivery.
+- A blocking animation, looping launch movie, audio, video, remote artwork, or new runtime permission.
 
-All following operations are **future and unauthorized**. No commands run from a dirty/proposed checkout. Freeze an exact candidate commit/tree, locked production build hash, effective endpoint manifest, all-eight-green CI and independent review.
+## Interface contract
 
-Re-read live revisions, source generations, runtime settings, rules, indexes, services, IAM and counts. Any unexpected drift stops. The July archive is forensic evidence, not safe blanket rollback: it has weak rules, blind report increments, active merge and sequential deletion.
+- The first viewport names **Chants FC**, leads with `Every chant starts with one voice.`, preserves the canonical product promise, and offers one honest `Coming soon on iOS and Android` status plus a clear `Explore the app` route into the product explanation.
+- The public visual frame is a restrained premium app launch, not a Vouch imitation, generic template, radar scene, oversized poster, or grid of interchangeable feature cards. It uses the app's ink black, supporter gold, warm off-white, restrained community coral, local Oswald and Nunito, generous negative space, thin rules, and two club-neutral product devices. The phones show Stage and offline Songbook meaning rather than fake production screenshots or social proof. Reading surfaces remain calm, high contrast, and free of decorative clutter.
+- Songbook, Chant Lab, and Stage each have one distinct job and one short truthful explanation.
+- `Terrace Proven` means reviewed stadium evidence. `Rising` means community momentum. Performance popularity never proves stadium use.
+- The app preview uses CSS-native, club-neutral Stage and Songbook surfaces plus the existing supporter-and-scarf mark at the closing moment. It must not imply a live feed, a real creator, or real popularity metrics.
+- Footer trust links stay visible and use the exact existing public routes.
+- The page remains useful with images disabled, motion reduced, JavaScript unavailable, or a narrow viewport.
+- Native launch remains instant and static. The first Flutter frame continues the same black-and-gold scene, reveals `CHANTS` once, exposes a useful semantic label, and resolves immediately when reduced motion is requested. A normal portrait writes the unresolved progress cue; compact and short layouts keep the spinner while the same complete loading announcement remains available to assistive technology.
+- The policy gate leads with `KEEP THE TERRACE LOUD. KEEP IT SAFE.`, states exactly which two documents are being accepted, keeps Privacy separate, and preserves all six pre-acceptance escape and help routes. Long rule copy remains a calm, aligned reading surface below the loud frame.
 
-Approve and establish backup/PITR/delete protection. Record managed export completion and object identity; restore into a separately named, client-inaccessible database without production trigger bindings. Verify counts/private integrity without storing raw rows in Git. PITR does not retroactively prove a pre-enable recovery point. No repair before restore proof. [Firestore PITR](https://firebase.google.com/docs/firestore/use-pitr).
+## Invariants
 
-Resolve deployer, build, runtime, Eventarc, Storage/Firestore service-agent and isolated repair identities. Keep private account names outside Git. Verify actual gcloud authentication if choosing gcloud; Firebase CLI login is not a gcloud login.
-
-Andrew owns an initial two-hour attended maintenance window with a 30-minute checkpoint. Overrun needs explicit extension or continued safe closure, never automatic reopening.
-
-## P1: Dependencies and effective containment
-
-1. Create the dedicated runtime account and reviewed narrow grants. Before any Functions deploy, verify the exact deploying principal has effective `iam.serviceAccounts.actAs` on `chants-v1-runtime@chants-f95b4.iam.gserviceaccount.com`, with the reviewed account-scoped binding (for example `roles/iam.serviceAccountUser`) and current permission evidence in the private release packet. Runtime, build and Eventarc invocation are separate identities/permissions; the control/repair principal does not inherit this grant by association. Missing or unverified actAs stops before deployment, never triggers a broad fallback grant. Do not globally strip Editor or remove service-agent roles without an impact inventory. Self-scoped signing must not become project-wide Token Creator. [Runtime identity deployment permission](https://docs.cloud.google.com/functions/docs/troubleshooting#user_missing_permissions_on_runtime_service_account_while_deploying_a_function).
-2. Review a project-attached IAM deny boundary for the exact legacy runtime and identified non-rollout Admin writers. Candidate data permissions: `datastore.googleapis.com/entities.create`, `datastore.googleapis.com/entities.update`, `datastore.googleapis.com/entities.delete`, plus import/bulk-delete routes when granted. Preserve reads where possible. Verify inherited permissions and impersonation paths; do not exempt a shared Admin key just because the repair CLI accepts it.
-3. Contain legacy callable ingress and alternate Cloud Run revision/tag URLs. Old runtime writes must remain denied even if delayed events execute. Account deletion's Auth side effects also need containment/drain. Its actual predecessor awaits profile deletion/audit before Auth deletion, but no live existing-account probe is permitted.
-4. Prove the nine decision-026 pause surfaces with effective policy/revision evidence and separately approved synthetic negative probes. IAM is eventually consistent. The observed 60-second runtime is a minimum drain input, not a propagation guarantee. No timers or quiet logs substitute for evidence. [Supported deny permissions](https://docs.cloud.google.com/iam/docs/deny-permissions-support), [IAM propagation](https://docs.cloud.google.com/iam/docs/access-change-propagation).
-5. Create the control through the reviewed CAS operation: maintenance, workers false. Generation 1 is valid only if it is still absent; otherwise inspect and approve the actual next generation.
-6. Deploy current Firestore rules while maintenance is active. Create only the 14 missing indexes and await all 16 READY. Reject unexpected index deletion. Rules alone do not contain Admin.
-7. Enable Firebase Storage only after approval; provision the exact Firebase default bucket through `projects.defaultBucket.create`, location `EUROPE-WEST2`, class `STANDARD`. Do not substitute an unlinked plain-GCS bucket. Read back Firebase linkage, runtime bucket identity, access/retention and cross-service permissions before Storage rules. [Default bucket API](https://firebase.google.com/docs/reference/rest/storage/rest/v1alpha/projects.defaultBucket/create).
-
-Future scoped commands, each with readback before advancing:
-
-```sh
-firebase deploy --project chants-f95b4 --only firestore:rules
-firebase deploy --project chants-f95b4 --only firestore:indexes
-firebase deploy --project chants-f95b4 --only storage
-```
-
-**Hold:** effective old-writer isolation, exact IAM/probe manifests and recovery proof do not exist merely because this plan names them. If any pause surface cannot be proved, stop before report replacement. After containment, confirm the recovery point covers the cutover baseline; take a fresh export if intervening writes invalidate it. Do not claim a pre-containment snapshot is zero-loss recovery. Keep the legacy fence through repair and observation; do not release it while old execution/impersonation paths remain.
-
-## P2: Ordered Function deployment
-
-Each export appears once below; groups contain at most eight functions. For each group, verify ACTIVE state, runtime account/options, revision/source identity and event bindings. CLI success is not sufficient. A comma list does not guarantee ordering inside that group. Pause after B2 for P3 before F2.
-
-| Stage | Exact `--only` selector | Prerequisite |
-|---|---|---|
-| A | `functions:mergeChants,functions:onModerationAction,functions:onChantCreated,functions:onVoteWritten,functions:onCommentLikeWritten,functions:onCommentWritten` | P1, old writers fenced |
-| B1 | `functions:onReportCreated` | Exact old identity removal/absence first, then written replacement |
-| B2 | `functions:onCommentReportCreated` | B1 verified; exact old identity removal then written replacement |
-| C | `functions:onChantWrittenForPerformances,functions:onProfileAuthorityWrittenForPerformances,functions:onPerformanceWritten,functions:onPerformanceLikeWritten,functions:onPerformanceViewWritten,functions:onPerformanceShareWritten,functions:onPerformanceCommentWritten` | Both report replacements installed |
-| D | `functions:updateCreatorProfile,functions:setCreatorFollow,functions:markCreatorNotificationRead,functions:onCreatorFollowWritten` | C readback; still maintenance |
-| E1 | `functions:onAccountDeletionJobWritten,functions:onPerformanceMediaDeletionJobWritten,functions:onPerformanceDraftDeleted` | Storage ready; fresh backlog inventory; workers false; Andrew owns the manual deferred-cleanup/delivery gate in the runbook, because the existing monitor excludes this path |
-| E2 | `functions:deleteAccount` | E1 readback; replace old sequential code, no deletion test |
-| F1 | `functions:onUserReportCreated,functions:onUserReportDeleted` | Report dependencies ready |
-| F2 | `functions:acceptPolicy,functions:completeOnboarding,functions:submitReport,functions:submitFeedback,functions:submitChantUpdateSuggestion,functions:moderateChantUpdateSuggestion` | F1 readback and P3 complete |
-| G | `functions:createPerformanceDraft,functions:submitPerformanceDraft,functions:cancelPerformanceDraft,functions:moderatePerformance,functions:moderatePublishedPerformance,functions:resolvePerformanceDraftPlayback,functions:resolvePerformancePlayback` | Storage ready; media closed |
-| H | `functions:setPerformanceLike,functions:recordPerformanceShare,functions:recordQualifiedPerformanceView,functions:createPerformanceComment,functions:deletePerformanceComment,functions:resolvePublicShareDestination,functions:publicSharePage,functions:publicPerformanceMedia` | G readback; no Hosting release |
-| I | `functions:monitorOperationalBacklogsJob,functions:cleanupAbandonedPerformanceDraftsJob` | Separately approved Scheduler enablement/activation, inventory after enabling, workers false |
-
-Run `firebase deploy --project chants-f95b4 --only` with exactly one table selector. Never a bare `--only functions`, `npm run deploy`, an automatic all-stage loop or `--force` to bypass a stop.
-
-Only B1/B2 authorize Function identity deletion after the later exact live release:
-
-```sh
-firebase functions:delete onReportCreated --region europe-west2 --project chants-f95b4
-# Verify deletion completion and isolation, then:
-firebase deploy --project chants-f95b4 --only functions:onReportCreated
-
-# After B1 written-event readback:
-firebase functions:delete onCommentReportCreated --region europe-west2 --project chants-f95b4
-firebase deploy --project chants-f95b4 --only functions:onCommentReportCreated
-```
-
-Review each CLI target confirmation individually. No other deletion. Preserve `nam5` events, `(default)` database/namespace, original document paths and `europe-west2` compute. If either replacement fails, remain in maintenance and recover forward. Never overlap an incrementer with reconstruction.
-
-## P3: Complete bounded report repair
-
-After B2, before F2/admission:
-
-1. Re-observe all nine pause surfaces. Schema 2 needs UTC observation after each measured maximum runtime, no more than 15 minutes old, not future-dated, matching candidate and current maintenance generation. Never refresh timestamps without real observations.
-2. Reuse `report_repair_cli` plan/apply commands in `docs/RUNBOOK.md`, rebuilt from the exact candidate. Private owner-only files, reviewed digest and isolated credential only. Its current credential contract requires a service-account file; isolation/key handling must be approved explicitly, not solved by exempting an uncontrolled shared credential.
-3. Start both collections from the beginning and follow actual page/end markers. Today's estimate: eight chant pages for 192 parents; four one-comment pages plus an empty terminal page for four comments. Separate count queries are not authority to skip/add targets. Include zero-report and hidden/removed parents.
-4. Review each page privately, apply that exact digest, and verify checkpoint, flags, any necessary hide, parent comment count and audit. No lyric, identity, trust/evidence or report-content edits; never automatically unhide.
-5. Full pages require another page to prove completion. Preserve start-to-end cursor chains for both collections. Pending/reviewed/dismissed are valid; unknown status, more than 500 reports or 1,000 visible comments stops without widening.
-6. Lost response resumes the same compatible plan/digest after inspection. Expired evidence requires fresh observations. Changed source/generation/input/audit stops. Applied without successful separate readback is not complete.
-
-## P4: Private core proof
-
-Verify all 48 deployed identities, current rules, 16 READY indexes and merge's unconditional stop. Re-read zero historical media/deletion work while still closed. Nonzero requires an exact recovery plan, not a no-op job update or queue wipe.
-
-Resolve the real private test cohort **before core opens**. Controls are project-wide, not a UID allowlist; Firebase signup/provider settings and all existing Auth identities must be inventoried. Prove only approved identities can obtain actor authority using a separately approved signup/endpoint admission restriction, or request explicit approval for actual exposure. One profile and an unpublished app do not prove there are no other Auth users. A hidden UI button is not containment.
-
-Use one dedicated private test account through actual Auth/onboarding, with no manual profile bootstrap. Before P5's concurrent-submission proof, separately approve one additional disposable account and its admission scope; simultaneous submissions need distinct valid upload slots. Preserve the existing owner. Synthetic test content only, no destructive tests on seed chants.
-
-Explicit CAS transition to core/workers false, next generation. Verify browse, onboarding, club/player/Songbook, Call-Up submission/return, vote/comment convergence, report duplicate/rate handling, moderation and Living Songbook intake. Media and account deletion must show truthful paused state. Public release is prohibited while account deletion is unavailable.
-
-Observe 30 minutes after successful smoke: no unexplained server errors, unauthorized access, counter mismatch or persistent valid-user failure. Obtain actual alert delivery with an approved test signal, not merely a saved policy. Failure closes at a higher generation and stops widening.
-
-## P5: Workers and private media proof
-
-1. Separate release. Re-read all three deletion/cleanup collections and every draft state. Zero-backlog route requires fresh zeros. Nonzero means exact-target recovery/replay approval, never inferred replay or deletion.
-2. Scheduler deployment can activate jobs immediately. The daily cleanup must still observe workers false; the ungated monitor is a specifically approved read-only scheduled activity. Read back 03:00 UTC daily cleanup and 15-minute monitor configuration.
-3. Enable workers in core at a higher generation only after Storage/cleanup readiness. Test deletion on a newly disposable identity, never the existing owner: durable acceptance, denied active authority, worker completion and retained-evidence semantics.
-4. After proof, explicitly transition to media/workers true at another generation for the verified private cohort. The flag still opens project-wide media authority; no enforced cohort is claimed without P4's real admission restriction.
-5. Owner supplies a test recording they created and have rights to use, under 30 seconds/50 MiB. Prove record/library, interrupted upload/cancel, review, hidden preview/restore/remove, block/ban/source takedown, signed playback, share resolution, comments and deletion. No public Hosting link before domain/association/policy approval.
-6. Run the runbook's concurrent-submission probe with at least two separately approved disposable accounts, then the explicitly approved launch workload and latency/error budget before public media. Record client completion/recovery, throttling/timeouts, server duration, cost and cleanup outcomes; do not infer public capacity from a single successful submission. Re-decide maxInstances/concurrency from this evidence under separate approval, not by automatically raising caps. Missing evidence, exceeded budget or unresolved recovery holds public media.
-7. Verify absence of the live object separately from seven-day soft-deleted retention. Observe 60 minutes and the next real cleanup plus two monitor runs and actual alert delivery. Andrew must also perform the runbook's manual deferred-cleanup/delivery checks before widening, every 15 minutes during this attended canary and at its final observation. Two green scheduled monitor runs do not cover this path. Before public media, approve a sustainable ongoing observation owner/cadence or a separately scoped monitoring improvement; neither exists merely because this gate names it.
-8. Any cancelled/rejected terminal row or pending/attempted/blocked deferred job needs private inspection. Attempted is not permanent cleanup. Grant expiry does not prove completion of an admitted transfer. Cloud Storage resumable sessions can last a week; establish the Firebase SDK's actual transfer/cancellation behavior before claiming permanent absence. Keep unresolved exact-path evidence; no invented TTL. [Resumable uploads](https://docs.cloud.google.com/storage/docs/resumable-uploads).
-
-Public media remains held on final policy/retention, real cohort scope, observed submission capacity, operational delivery, sustainable deferred-cleanup observation, terminal cleanup and both configured-device walkthroughs. The zero historical backlog simplifies initial deployment but does not remove ongoing recovery duties.
+1. Existing `/chants/**`, `/performances/**`, `/creators/**`, and `/media/performances/**` rewrites are unchanged.
+2. Existing policy routes, the Apple association source, and the Android association header configuration remain present and semantically unchanged.
+3. The landing page never exposes lyrics, user data, raw Storage paths, private identifiers, or production configuration.
+4. No public CTA claims the app can be downloaded until a verified store listing exists.
+5. No popularity copy is presented as proof that a chant is sung in a stadium.
+6. No new network dependency, tracking, form submission, persistent state, or runtime permission is introduced.
+7. Public contact copy uses `support@chantsfc.com`; social handles are omitted until Andrew confirms the accounts are reserved and ready to publish.
+8. Policy acceptance still writes only through the existing callable and still advances only when the authoritative profile projection changes.
+9. Account deletion and sign out remain usable before acceptance and are disabled only while acceptance is in flight.
+10. Launch animation never changes authentication, profile, deletion, or policy-state authority.
 
 ## Failure and recovery
 
-| Failure | Response |
+| Trigger | Required behavior |
 |---|---|
-| IAM/revision/source/inventory mismatch | Stop; refresh exact manifest and approve changed scope |
-| Partial/ambiguous deploy | Read actual cloud operation/state; no blanket retry or reopening |
-| One report family missing | Stay in maintenance with old writers fenced; forward-deploy only missing reviewed written handler |
-| Repair changes or incomplete readback | Preserve plan/checkpoint/audit; investigate and resume only compatible exact work |
-| Core/media smoke failure | CAS close at higher generation; retain strong rules/legacy isolation; forward-fix |
-| Missing Storage/signing/cleanup | Media closed; core success is not media readiness |
-| Unexpected retained backlog | Hold workers/media; separate bounded recovery |
-| Recovery artifact unavailable | Remain closed; retrieve reviewed compatible source/build, never the unsafe July bundle |
-| Time/cost limit reached | Stop widening; no automatic spend increase or billing shutdown |
+| Brand image fails to load | Product name, promise, structure, and trust links remain readable |
+| CSS is unavailable | Semantic document order still explains the product and exposes every public trust route |
+| JavaScript is unavailable | The complete landing page still works; JavaScript is not required |
+| Viewport is narrow or text is enlarged | Content reflows into one column with no hidden action or horizontal page scroll |
+| Store URL is not verified | Show launch status as text, not a dead or guessed store link |
+| Hosting deployment or DNS is absent | Record source completion only; do not call `chantsfc.com` live until the post-review rollout succeeds |
+| A future homepage edit removes a trust link or changes product meaning | Deterministic source contract fails before handoff |
+| Reduced motion is enabled | App launch and web decoration render their final state without animation |
+| Policy acceptance fails | Keep the gate usable, preserve every route, and show the existing honest retry message |
+| Policy copy is enlarged or the viewport is 320 pixels wide | Keep every document and account action reachable with no overflow or hidden agreement control |
+| Initialization remains unresolved at 568 by 320 with 2x text or 320 by 480 with 1.5x text | Use the compact row and spinner-only visible cue with the complete semantic loading announcement and no overflow |
 
-Restoring an old database can erase newer contributions and revive deleted content/accounts. Restore rehearsal is not permission to overwrite production; any actual restoration must reconcile Firestore, Auth and Storage under a separate approval.
+## Verification
 
-## Acceptance and verification
+Evidence must be capable of failing against the placeholder page:
 
-1. No cloud write before exact live release. Planning, source preparation, deployment and observation remain distinct.
-2. Stage selectors cover all 48 exports exactly once, with no renamed/extra endpoint or unreviewed default resource values.
-3. Compiled runtime manifest proves identity/options; existing admission/merge-stop tests remain green.
-4. Control command proves wrong source/project, illegal fields, absent creation, stale/concurrent generation and lost acknowledgement without duplicate transitions.
-5. Effective legacy/Admin containment covers all nine surfaces, supported by live policy/revision/probe/drain evidence, not just fixtures.
-6. Both report replacements, complete cursor chains and independent readback pass while intake is closed.
-7. Backup/restore, zero-backlog decision, Storage linkage/rules/signing, resources/retention and schedules have observed receipts.
-8. Core and media each have their own explicit release, real-path smoke and accurately constrained exposure.
-9. Final inventory, artifact hashes, modes/generations and remaining launch gates are recorded without raw rows, credentials or media.
+1. A root Hosting test requires the canonical title, description, Open Graph and X metadata, Songbook, Chant Lab, Stage, trust explanation, launch-status honesty, and all six public trust links.
+2. The test rejects guessed store links, positive availability claims, fabricated audience metrics, seeded club names, chant or lyric-shaped illustration copy, popularity-as-stadium-proof copy, forms, remote embeds or resources, autoplay, trackers, and removal of any existing Firebase rewrite or the Apple association source.
+3. A local static preview returns the root and representative policy routes successfully.
+4. The complete source is inspected at desktop and narrow widths, with keyboard focus, enlarged text, reduced motion, missing-image fallback, and no-script behavior considered. Browser inspection requires an explicitly permitted surface; source and render evidence must not be mislabeled as live publication.
+5. `git diff --check`, staged project-memory, writing-style, and governance checks pass.
+6. A clean-runner result and independent review without an unresolved blocker are required before the separately gated live deployment.
+7. Focused Flutter tests prove the reveal's start, completed, and reduced-motion states and the gate's exact agreement, route, failure, pending, and constrained-layout behavior.
+8. Inspected renders cover the landing page at wide and narrow widths and the policy gate at its representative mobile viewport. Semantic assertions protect trust and agreement meaning independently of pixels.
+9. Launch regressions combine the unresolved-loading state with the exact compact enlarged-text geometries. Separate progress, viewport, and text-scale tests do not satisfy this boundary.
 
-The earlier planning verification was documentation/source inspection, official references and read-only metadata/counts only. Preparation adds local build, compiled-manifest, CLI and demo transaction evidence in the scoped record and execution log. No paid rehearsal or production smoke ran. One independent review should cover the preparation diff and operational manifest before core approval.
+## Rollout and rollback
 
-## Next approval
+Package and review the source first. Only after exact-head clean CI and independent review close without an unresolved blocker, publish the static Hosting tree, connect `chantsfc.com` using only Firebase-supplied DNS records, and read back the root, policy routes, Apple association source, Android association response behavior, share routes, and media route behavior. This rollout does not authorize a Functions, Firestore rules, Storage rules, seed, authentication-provider, store, analytics, or unrelated DNS change.
 
-Preparation is packaged and independently reviewed at `5280c3a`. The approved documentation/comment correction is pending its own commit, push and exact-head CI at this snapshot; record that immutable result on PR 29. No repeat whole-app review is needed for unchanged behavior. Resolve every private manifest HOLD, including containment/probe identities, repair credential isolation, recovery verification and real test-cohort restrictions, before seeking live approval. The proposed restore database is `chants-rollout-restore-20260831`; availability, access, compatibility and cost remain unverified. If any unresolved gate requires broader source work, stop and amend the scope rather than silently expanding implementation.
+If the root page fails after publication, restore the last reviewed static root without changing rewrites or policy routes, then repair forward. Never use a rollback that removes the public deletion, rights, support, privacy, terms, or community destinations.

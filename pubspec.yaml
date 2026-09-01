@@ -65,11 +65,11 @@ flutter_launcher_icons:
   min_sdk_android: 21
 
 flutter_native_splash:
-  color: "#444444"
+  color: "#060606"
   image: "assets/icon/splash.png"
   android_12:
     image: "assets/icon/splash.png"
-    color: "#444444"
+    color: "#060606"
 
 flutter:
   # Keep the V1 iOS dependency graph on CocoaPods. Flutter's automatic mixed
@@ -79,6 +79,9 @@ flutter:
     enable-swift-package-manager: false
 
   uses-material-design: true
+
+  assets:
+    - assets/icon/splash.png
 
   fonts:
     - family: Anton

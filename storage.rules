@@ -28,7 +28,7 @@ service firebase.storage {
         )
         && profile.data.banned == false
         && profile.data.ageConfirmed17Plus == true
-        && profile.data.acceptedPolicyVersion == 'v1'
+        && profile.data.acceptedPolicyVersion == 'v2'
         && profile.data.deletionPending != true
         && !firestore.exists(
           /databases/(default)/documents/accountDeletionJobs/$(uid)
@@ -55,7 +55,7 @@ service firebase.storage {
         && control.generation is int && control.generation >= 1 && control.generation <= 9007199254740991
         && control.mode == 'media' && control.destructiveWorkersEnabled == true
         && profile.banned == false && profile.ageConfirmed17Plus == true
-        && profile.acceptedPolicyVersion == 'v1' && profile.deletionPending == false
+        && profile.acceptedPolicyVersion == 'v2' && profile.deletionPending == false
         && grant is map
         && grant.keys().hasOnly(['schemaVersion', 'draftId', 'ownerId', 'uploadPath',
           'sizeBytes', 'contentType', 'generation', 'issuedAt', 'expiresAt'])

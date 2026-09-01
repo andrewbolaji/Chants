@@ -1,5 +1,6 @@
 import * as admin from "firebase-admin";
 import { setGlobalOptions } from "firebase-functions/v2/options";
+import { CURRENT_POLICY_VERSION } from "./policy";
 import { V1_RUNTIME, SERIAL_WORKER_RUNTIME, MEDIA_VALIDATION_RUNTIME, MONITOR_RUNTIME } from "./runtime_options";
 import { pendingReportCount, reportAutoHide } from "./report_projection";
 import { operationEnabled, requireOperationEnabled } from "./operational_gate";
@@ -163,7 +164,6 @@ export const monitorOperationalBacklogsJob = onSchedule(
 // Must match kCurrentPolicyVersion in lib/app/policy.dart and the version
 // check in firestore.rules. Bump all three together, only for a substantive
 // policy text change (a bump re-gates every existing user on next open).
-const CURRENT_POLICY_VERSION = "v1";
 
 export const submitReport = onCall(
   { region: "europe-west2" },
@@ -1190,7 +1190,7 @@ export const onAccountDeletionJobWritten = onDocumentWritten(
 );
 
 // --- acceptPolicy (callable) ---
-// Records that the calling user accepted the current content policy
+// Records that the calling user accepted the current Terms and Community Rules
 // version. Actor derived from auth context, never from a client parameter.
 // The version and timestamp are decided server-side, never trusted from the
 // client, so this write is the only source of truth for consent.
@@ -1235,7 +1235,7 @@ export const acceptPolicy = onCall(
       action: "accept-policy",
       targetType: "user",
       targetId: uid,
-      detail: `Accepted content policy version ${CURRENT_POLICY_VERSION}.`,
+      detail: `Accepted Terms and Community Rules version ${CURRENT_POLICY_VERSION}.`,
     });
 
     return { success: true, version: CURRENT_POLICY_VERSION };

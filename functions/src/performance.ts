@@ -1,6 +1,7 @@
 import * as admin from "firebase-admin";
 import { HttpsError } from "firebase-functions/v2/https";
 import { transactionControl } from "./operational_gate";
+import { CURRENT_POLICY_VERSION } from "./policy";
 import { clearMatchingUploadGrant, parseUploadGrant, requireFreeUploadSlot, UPLOAD_GRANT_LIFETIME_MS } from "./upload_grant";
 import {
   currentChantSourceVisible,
@@ -232,7 +233,7 @@ function requireActiveAccount(account: Data | undefined, deletionJobExists: bool
     !account ||
     account.banned !== false ||
     account.ageConfirmed17Plus !== true ||
-    account.acceptedPolicyVersion !== "v1"
+    account.acceptedPolicyVersion !== CURRENT_POLICY_VERSION
   ) {
     throw new HttpsError("permission-denied", "This account cannot use this feature.");
   }

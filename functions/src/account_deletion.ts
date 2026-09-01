@@ -1,7 +1,7 @@
 import * as admin from "firebase-admin";
 import { HttpsError } from "firebase-functions/v2/https";
 
-export const ACCOUNT_DELETION_SCHEMA_VERSION = 1;
+export const ACCOUNT_DELETION_SCHEMA_VERSION = 2;
 export const ACCOUNT_DELETION_PAGE_SIZE = 200;
 
 export const ACCOUNT_DELETION_PHASES = [
@@ -30,6 +30,7 @@ export const ACCOUNT_DELETION_PHASES = [
   "delete-performance-reports",
   "delete-performance-comment-reports",
   "anonymize-performance-comments",
+  "delete-performance-upload-limits",
   "anonymize-performances",
   "delete-performance-drafts",
   "anonymize-audit-by",
@@ -49,7 +50,7 @@ export type AccountDeletionAuth = {
 };
 
 type AccountDeletionJob = {
-  schemaVersion: number;
+  schemaVersion: 1 | 2;
   phase: AccountDeletionPhase;
   requestedAt: admin.firestore.Timestamp;
   updatedAt: admin.firestore.Timestamp;
@@ -60,6 +61,18 @@ type RequestAccountDeletionParams = {
   data: unknown;
   firestore: admin.firestore.Firestore;
   now: () => admin.firestore.Timestamp;
+};
+
+export type VerifiedAccountDeletionDispatch = {
+  actorUid: string;
+  targetUid: string;
+  caseReference: string;
+  verificationMethod:
+    | "current-email-challenge"
+    | "current-phone-challenge"
+    | "provider-reauth";
+  verificationCompletedAt: admin.firestore.Timestamp;
+  targetAuthExists: boolean;
 };
 
 type ProcessAccountDeletionParams = {
@@ -83,9 +96,12 @@ type PagePhase = {
     | admin.firestore.UpdateData<admin.firestore.DocumentData>
     | ((
         data: admin.firestore.DocumentData,
-        uid: string
+        uid: string,
+        timestamp: admin.firestore.Timestamp
       ) => admin.firestore.UpdateData<admin.firestore.DocumentData>);
 };
+
+const DELETED_COMMENT_BODY = "Comment deleted";
 
 const OPERATOR_AUDIT_ACTIONS = new Set<string>([
   "ban",
@@ -100,6 +116,7 @@ const OPERATOR_AUDIT_ACTIONS = new Set<string>([
   "accept-chant-evidence",
   "resolve-chant-update",
   "decline-chant-update",
+  "request-account-deletion",
 ]);
 
 export function auditRedactionForDeletedActor(
@@ -139,12 +156,30 @@ const PAGE_PHASES: Partial<Record<AccountDeletionPhase, PagePhase>> = {
   "anonymize-chants": {
     collection: "chants",
     field: "createdBy",
-    update: { createdBy: "deleted-user" },
+    update: (_data, _uid, timestamp) => ({
+      createdBy: "deleted-user",
+      title: "",
+      lyrics: "",
+      tuneName: "",
+      contextNotes: null,
+      coverImageUrl: null,
+      mediaUrl: null,
+      mediaType: "none",
+      evidence: null,
+      variations: [],
+      hidden: true,
+      removed: true,
+      updatedAt: timestamp,
+    }),
   },
   "anonymize-comments": {
     collection: "comments",
     field: "userId",
-    update: { userId: "deleted-user", displayName: "Deleted user" },
+    update: {
+      userId: "deleted-user",
+      displayName: "Deleted user",
+      body: DELETED_COMMENT_BODY,
+    },
   },
   "delete-comment-likes": { collection: "commentLikes", field: "userId" },
   "delete-comment-reports": {
@@ -207,23 +242,17 @@ const PAGE_PHASES: Partial<Record<AccountDeletionPhase, PagePhase>> = {
   "anonymize-performance-comments": {
     collection: "performanceComments",
     field: "userId",
-    update: {
+    update: (_data, _uid, timestamp) => ({
       userId: "deleted-user",
       creatorHandle: "deleted",
       creatorDisplayName: "Deleted creator",
-    },
+      body: DELETED_COMMENT_BODY,
+      mentionedHandles: [],
+      updatedAt: timestamp,
+    }),
   },
-  "anonymize-performances": {
-    collection: "performances",
-    field: "creatorId",
-    update: {
-      creatorId: "deleted-user",
-      creatorHandle: "deleted",
-      creatorDisplayName: "Deleted creator",
-    },
-  },
-  "delete-performance-drafts": {
-    collection: "performanceDrafts",
+  "delete-performance-upload-limits": {
+    collection: "performanceUploadLimits",
     field: "ownerId",
   },
   "anonymize-audit-by": {
@@ -257,7 +286,8 @@ function parseJob(data: admin.firestore.DocumentData): AccountDeletionJob {
   if (
     keys.length !== expectedKeys.length ||
     keys.some((key, index) => key !== expectedKeys[index]) ||
-    data.schemaVersion !== ACCOUNT_DELETION_SCHEMA_VERSION ||
+    (data.schemaVersion !== 1 &&
+      data.schemaVersion !== ACCOUNT_DELETION_SCHEMA_VERSION) ||
     !ACCOUNT_DELETION_PHASES.includes(data.phase as AccountDeletionPhase) ||
     !isTimestamp(data.requestedAt) ||
     !isTimestamp(data.updatedAt)
@@ -276,27 +306,138 @@ function isAuthUserMissing(error: unknown): boolean {
   return (error as { code?: unknown } | undefined)?.code === "auth/user-not-found";
 }
 
-export async function requestAccountDeletion({
-  uid,
-  data,
-  firestore,
-  now,
-}: RequestAccountDeletionParams): Promise<{ accepted: true; success: true }> {
-  requireEmptyPayload(data);
-  const jobRef = firestore.collection("accountDeletionJobs").doc(uid);
-  const profileRef = firestore.collection("profiles").doc(uid);
+function validUid(value: string): boolean {
+  return /^[A-Za-z0-9_-]{1,128}$/.test(value);
+}
 
-  await firestore.runTransaction(async (transaction) => {
-    const jobSnap = await transaction.get(jobRef);
-    const profileSnap = await transaction.get(profileRef);
+function validateVerifiedDispatch(
+  dispatch: VerifiedAccountDeletionDispatch,
+  timestamp: admin.firestore.Timestamp
+): void {
+  if (
+    !validUid(dispatch.actorUid) ||
+    !validUid(dispatch.targetUid) ||
+    dispatch.actorUid === dispatch.targetUid ||
+    !/^[A-Z0-9-]{8,64}$/.test(dispatch.caseReference) ||
+    ![
+      "current-email-challenge",
+      "current-phone-challenge",
+      "provider-reauth",
+    ].includes(dispatch.verificationMethod) ||
+    !isTimestamp(dispatch.verificationCompletedAt) ||
+    typeof dispatch.targetAuthExists !== "boolean"
+  ) {
+    throw new HttpsError(
+      "invalid-argument",
+      "Invalid verified account-deletion dispatch."
+    );
+  }
+  const ageMs = timestamp.toMillis() - dispatch.verificationCompletedAt.toMillis();
+  if (ageMs < 0 || ageMs > 24 * 60 * 60 * 1000) {
+    throw new HttpsError(
+      "failed-precondition",
+      "Account-control verification is no longer current."
+    );
+  }
+}
 
-    if (profileSnap.exists && (profileSnap.data()?.deletionPending !== true || profileSnap.data()?.activePerformanceUpload != null)) {
-      transaction.update(profileRef, { deletionPending: true, activePerformanceUpload: null });
+async function requestAccountDeletionForUid(params: {
+  uid: string;
+  firestore: admin.firestore.Firestore;
+  now: () => admin.firestore.Timestamp;
+  dispatch?: VerifiedAccountDeletionDispatch;
+}): Promise<{ accepted: true; success: true }> {
+  const timestamp = params.now();
+  if (params.dispatch) validateVerifiedDispatch(params.dispatch, timestamp);
+  const jobRef = params.firestore.collection("accountDeletionJobs").doc(params.uid);
+  const profileRef = params.firestore.collection("profiles").doc(params.uid);
+  const actorRef = params.dispatch
+    ? params.firestore.collection("profiles").doc(params.dispatch.actorUid)
+    : undefined;
+  const actorDeletionRef = params.dispatch
+    ? params.firestore
+      .collection("accountDeletionJobs")
+      .doc(params.dispatch.actorUid)
+    : undefined;
+  const auditRef = params.dispatch
+    ? params.firestore
+      .collection("auditLog")
+      .doc(`external-delete-${params.dispatch.caseReference}`)
+    : undefined;
+
+  await params.firestore.runTransaction(async (transaction) => {
+    const [jobSnap, profileSnap, actorSnap, actorDeletionSnap, auditSnap] =
+      await Promise.all([
+        transaction.get(jobRef),
+        transaction.get(profileRef),
+        actorRef ? transaction.get(actorRef) : Promise.resolve(undefined),
+        actorDeletionRef
+          ? transaction.get(actorDeletionRef)
+          : Promise.resolve(undefined),
+        auditRef ? transaction.get(auditRef) : Promise.resolve(undefined),
+      ]);
+
+    if (params.dispatch) {
+      if (!params.dispatch.targetAuthExists && !jobSnap.exists) {
+        throw new HttpsError(
+          "not-found",
+          "Deletion target has no Auth user or resumable job."
+        );
+      }
+      const actor = actorSnap?.data();
+      if (
+        !actor ||
+        actor.role !== "operator" ||
+        actor.banned !== false ||
+        actor.deletionPending === true ||
+        actorDeletionSnap?.exists
+      ) {
+        throw new HttpsError(
+          "permission-denied",
+          "Active operator access required."
+        );
+      }
+      const detail =
+        `Verified external deletion request dispatched. Case ${params.dispatch.caseReference}; ` +
+        `method ${params.dispatch.verificationMethod}.`;
+      if (auditSnap?.exists) {
+        const audit = auditSnap.data();
+        if (
+          audit?.actorId !== params.dispatch.actorUid ||
+          audit.action !== "request-account-deletion" ||
+          audit.targetType !== "user" ||
+          audit.targetId !== params.uid ||
+          audit.detail !== detail
+        ) {
+          throw new HttpsError(
+            "failed-precondition",
+            "Deletion case reference is already in use."
+          );
+        }
+      } else {
+        transaction.create(auditRef!, {
+          actorId: params.dispatch.actorUid,
+          action: "request-account-deletion",
+          targetType: "user",
+          targetId: params.uid,
+          detail,
+          createdAt: timestamp,
+        });
+      }
+    }
+
+    if (
+      profileSnap.exists &&
+      (profileSnap.data()?.deletionPending !== true ||
+        profileSnap.data()?.activePerformanceUpload != null)
+    ) {
+      transaction.update(profileRef, {
+        deletionPending: true,
+        activePerformanceUpload: null,
+      });
     }
 
     if (jobSnap.exists) return;
-
-    const timestamp = now();
     transaction.create(jobRef, {
       schemaVersion: ACCOUNT_DELETION_SCHEMA_VERSION,
       phase: ACCOUNT_DELETION_PHASES[0],
@@ -306,6 +447,32 @@ export async function requestAccountDeletion({
   });
 
   return { accepted: true, success: true };
+}
+
+export async function requestAccountDeletion({
+  uid,
+  data,
+  firestore,
+  now,
+}: RequestAccountDeletionParams): Promise<{ accepted: true; success: true }> {
+  requireEmptyPayload(data);
+  return requestAccountDeletionForUid({ uid, firestore, now });
+}
+
+export async function requestVerifiedAccountDeletion(params: {
+  dispatch: VerifiedAccountDeletionDispatch;
+  firestore: admin.firestore.Firestore;
+  now: () => admin.firestore.Timestamp;
+}): Promise<{ accepted: true; success: true }> {
+  if (params.dispatch.targetUid.length === 0) {
+    throw new HttpsError("invalid-argument", "Deletion target is required.");
+  }
+  return requestAccountDeletionForUid({
+    uid: params.dispatch.targetUid,
+    firestore: params.firestore,
+    now: params.now,
+    dispatch: params.dispatch,
+  });
 }
 
 async function advancePhase(
@@ -323,6 +490,29 @@ async function advancePhase(
     const current = parseJob(snapshot.data()!);
     if (current.phase !== expected) return false;
     transaction.update(jobRef, { phase: following, updatedAt: now() });
+    return true;
+  });
+}
+
+async function migrateLegacyJob(
+  params: ProcessAccountDeletionParams
+): Promise<boolean> {
+  const jobRef = params.firestore
+    .collection("accountDeletionJobs")
+    .doc(params.uid);
+  return params.firestore.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(jobRef);
+    if (!snapshot.exists) return false;
+    const current = parseJob(snapshot.data()!);
+    if (current.schemaVersion !== 1) return false;
+    const replayStart: AccountDeletionPhase = "anonymize-chants";
+    const currentIndex = ACCOUNT_DELETION_PHASES.indexOf(current.phase);
+    const replayIndex = ACCOUNT_DELETION_PHASES.indexOf(replayStart);
+    transaction.update(jobRef, {
+      schemaVersion: ACCOUNT_DELETION_SCHEMA_VERSION,
+      phase: currentIndex >= replayIndex ? replayStart : current.phase,
+      updatedAt: params.now(),
+    });
     return true;
   });
 }
@@ -349,21 +539,220 @@ async function processPage(
   }
 
   const batch = params.firestore.batch();
+  const timestamp = params.now();
   for (const document of snapshot.docs) {
     if (page.update) {
       const update = typeof page.update === "function"
-        ? page.update(document.data(), params.uid)
+        ? page.update(document.data(), params.uid, timestamp)
         : page.update;
       batch.update(document.ref, update);
     } else batch.delete(document.ref);
   }
   batch.update(params.firestore.collection("accountDeletionJobs").doc(params.uid), {
-    updatedAt: params.now(),
+    updatedAt: timestamp,
   });
   await batch.commit();
   return {
     phase,
     processed: snapshot.size,
+    advanced: false,
+    complete: false,
+  };
+}
+
+async function processPerformancePage(
+  params: ProcessAccountDeletionParams
+): Promise<AccountDeletionStepResult> {
+  const phase: AccountDeletionPhase = "anonymize-performances";
+  const snapshot = await params.firestore
+    .collection("performances")
+    .where("creatorId", "==", params.uid)
+    .limit(ACCOUNT_DELETION_PAGE_SIZE)
+    .get();
+
+  if (snapshot.empty) {
+    const advanced = await advancePhase(
+      params.firestore,
+      params.uid,
+      phase,
+      params.now
+    );
+    return { phase, processed: 0, advanced, complete: false };
+  }
+
+  const cleanupRows = snapshot.docs.map((document) => {
+    if (!/^[A-Za-z0-9_-]{1,500}$/.test(document.id)) {
+      throw new Error("Invalid owned performance identity.");
+    }
+    const expectedPath = `performance-media/${document.id}/source`;
+    const ref = params.firestore
+      .collection("performanceMediaDeletionJobs")
+      .doc(document.id);
+    return { document, expectedPath, ref };
+  });
+
+  const jobRef = params.firestore
+    .collection("accountDeletionJobs")
+    .doc(params.uid);
+  const processed = await params.firestore.runTransaction(async (transaction) => {
+    const [jobSnapshot, ...rows] = await Promise.all([
+      transaction.get(jobRef),
+      ...cleanupRows.map(async (row) => ({
+        ...row,
+        current: await transaction.get(row.document.ref),
+        existing: await transaction.get(row.ref),
+      })),
+    ]);
+    if (
+      !jobSnapshot.exists ||
+      parseJob(jobSnapshot.data()!).phase !== phase
+    ) {
+      return 0;
+    }
+    for (const row of rows) {
+      if (!row.current.exists || row.current.data()?.creatorId !== params.uid) {
+        throw new Error("Owned performance changed during deletion.");
+      }
+      if (row.current.data()?.mediaPath !== row.expectedPath) {
+        throw new Error("Invalid owned performance media path.");
+      }
+      if (
+        row.existing.exists &&
+        (row.existing.data()?.performanceId !== row.document.id ||
+          row.existing.data()?.mediaPath !== row.expectedPath)
+      ) {
+        throw new Error("Conflicting performance media cleanup identity.");
+      }
+    }
+    const timestamp = params.now();
+    for (const row of rows) {
+      if (row.existing.exists) {
+        transaction.update(row.ref, {
+          ownerId: params.uid,
+          updatedAt: timestamp,
+        });
+      } else {
+        transaction.set(row.ref, {
+          performanceId: row.document.id,
+          mediaPath: row.expectedPath,
+          ownerId: params.uid,
+          requestedAt: timestamp,
+          updatedAt: timestamp,
+        });
+      }
+      transaction.update(row.document.ref, {
+        creatorId: "deleted-user",
+        creatorHandle: "deleted",
+        creatorDisplayName: "Deleted creator",
+        caption: "",
+        hidden: true,
+        removed: true,
+        sourceCreatorVisible: false,
+        updatedAt: timestamp,
+      });
+    }
+    transaction.update(jobRef, { updatedAt: timestamp });
+    return rows.length;
+  });
+  return {
+    phase,
+    processed,
+    advanced: false,
+    complete: false,
+  };
+}
+
+async function processPerformanceDraftPage(
+  params: ProcessAccountDeletionParams
+): Promise<AccountDeletionStepResult> {
+  const phase: AccountDeletionPhase = "delete-performance-drafts";
+  const snapshot = await params.firestore
+    .collection("performanceDrafts")
+    .where("ownerId", "==", params.uid)
+    .limit(ACCOUNT_DELETION_PAGE_SIZE)
+    .get();
+
+  if (snapshot.empty) {
+    const advanced = await advancePhase(
+      params.firestore,
+      params.uid,
+      phase,
+      params.now
+    );
+    return { phase, processed: 0, advanced, complete: false };
+  }
+
+  const cleanupRows = snapshot.docs.map((document) => {
+    if (!/^[A-Za-z0-9_-]{1,200}$/.test(document.id)) {
+      throw new Error("Invalid owned performance draft identity.");
+    }
+    const expectedPath =
+      `performance-staging/${params.uid}/${document.id}/source`;
+    const ref = params.firestore
+      .collection("deferredDraftCleanupJobs")
+      .doc(document.id);
+    return { document, expectedPath, ref };
+  });
+
+  const jobRef = params.firestore
+    .collection("accountDeletionJobs")
+    .doc(params.uid);
+  const processed = await params.firestore.runTransaction(async (transaction) => {
+    const [jobSnapshot, ...rows] = await Promise.all([
+      transaction.get(jobRef),
+      ...cleanupRows.map(async (row) => ({
+        ...row,
+        current: await transaction.get(row.document.ref),
+        existing: await transaction.get(row.ref),
+      })),
+    ]);
+    if (
+      !jobSnapshot.exists ||
+      parseJob(jobSnapshot.data()!).phase !== phase
+    ) {
+      return 0;
+    }
+    for (const row of rows) {
+      if (!row.current.exists || row.current.data()?.ownerId !== params.uid) {
+        throw new Error("Owned performance draft changed during deletion.");
+      }
+      if (row.current.data()?.uploadPath !== row.expectedPath) {
+        throw new Error("Invalid owned performance draft media path.");
+      }
+      if (
+        row.existing.exists &&
+        (row.existing.data()?.draftId !== row.document.id ||
+          row.existing.data()?.uploadPath !== row.expectedPath)
+      ) {
+        throw new Error("Conflicting performance draft cleanup identity.");
+      }
+    }
+    const timestamp = params.now();
+    for (const row of rows) {
+      if (row.existing.exists) {
+        transaction.update(row.ref, {
+          accountDeletionOwnerId: params.uid,
+          updatedAt: timestamp,
+        });
+      } else {
+        transaction.set(row.ref, {
+          schemaVersion: 1,
+          draftId: row.document.id,
+          uploadPath: row.expectedPath,
+          accountDeletionOwnerId: params.uid,
+          state: "pending",
+          createdAt: timestamp,
+          updatedAt: timestamp,
+        });
+      }
+      transaction.delete(row.document.ref);
+    }
+    transaction.update(jobRef, { updatedAt: timestamp });
+    return rows.length;
+  });
+  return {
+    phase,
+    processed,
     advanced: false,
     complete: false,
   };
@@ -485,6 +874,10 @@ export async function processAccountDeletionStep(
     .get();
   if (!jobSnapshot.exists) return null;
   const job = parseJob(jobSnapshot.data()!);
+  if (job.schemaVersion === 1) {
+    await migrateLegacyJob(params);
+    return processAccountDeletionStep(params);
+  }
   const page = PAGE_PHASES[job.phase];
   if (page) return processPage(params, job.phase, page);
 
@@ -494,6 +887,10 @@ export async function processAccountDeletionStep(
       return processAuthOperation(params, job.phase);
     case "delete-safety-rate":
       return processDirectDelete(params, job.phase, "safetyRateLimits");
+    case "anonymize-performances":
+      return processPerformancePage(params);
+    case "delete-performance-drafts":
+      return processPerformanceDraftPage(params);
     case "write-audit":
       return processAudit(params);
     case "finalize":

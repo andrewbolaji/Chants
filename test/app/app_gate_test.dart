@@ -20,6 +20,7 @@ import 'package:chants/data/services/account_deletion_service.dart';
 import 'package:chants/presentation/auth/account_deletion_pending_screen.dart';
 import 'package:chants/presentation/auth/account_deletion_recovery_screen.dart';
 import 'package:chants/presentation/auth/policy_acceptance_gate_screen.dart';
+import 'package:chants/presentation/auth/launch_reveal_screen.dart';
 import 'package:chants/presentation/auth/sign_in_screen.dart';
 import 'package:chants/presentation/auth/email_verification_screen.dart';
 import 'package:chants/presentation/auth/onboarding_screen.dart';
@@ -196,6 +197,7 @@ void main() {
     AuthRepository? authRepository,
     AccountDeletionService? accountDeletionService,
     _FakeSavedSongbookRepository? savedSongbookRepository,
+    Duration launchRevealDuration = Duration.zero,
   }) {
     final fakeProfileRepo = _FakeProfileRepository()
       ..makeStream = makeProfileStream;
@@ -225,7 +227,7 @@ void main() {
           fakeUser.uid,
         ).overrideWith((ref) => makeProfileStream()),
       ],
-      child: const ChantApp(),
+      child: ChantApp(launchRevealDuration: launchRevealDuration),
     );
   }
 
@@ -238,6 +240,31 @@ void main() {
   }
 
   group('ChantApp signed-in gate', () {
+    testWidgets('timed launch reveal hands off to the resolved auth screen', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        wrap(
+          authStream: Stream.value(null),
+          makeProfileStream: () => const Stream.empty(),
+          launchRevealDuration: const Duration(milliseconds: 120),
+        ),
+      );
+
+      expect(find.byType(LaunchRevealScreen), findsOneWidget);
+      expect(find.byType(SignInScreen), findsNothing);
+
+      await tester.pump(const Duration(milliseconds: 119));
+      expect(find.byType(LaunchRevealScreen), findsOneWidget);
+
+      await tester.pump(const Duration(milliseconds: 1));
+      await tester.pump();
+
+      expect(find.byType(LaunchRevealScreen), findsNothing);
+      expect(find.byType(SignInScreen), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('signed out shows SignInScreen', (tester) async {
       await tester.pumpWidget(
         wrap(
@@ -252,6 +279,11 @@ void main() {
 
     testWidgets('signed in, profile stream has not emitted yet shows neutral '
         'loading, not the gate and not home', (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
       await tester.pumpWidget(
         wrap(
           authStream: Stream.value(fakeUser as User?),
@@ -260,7 +292,14 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.byType(LaunchRevealScreen), findsOneWidget);
+      expect(
+        tester
+            .widget<LaunchRevealScreen>(find.byType(LaunchRevealScreen))
+            .animationDuration,
+        Duration.zero,
+      );
+      expect(find.text('GETTING THINGS READY'), findsOneWidget);
       expect(find.byType(PolicyAcceptanceGateScreen), findsNothing);
       expect(find.byType(AppShell), findsNothing);
     });
@@ -324,12 +363,46 @@ void main() {
           wrap(
             authStream: Stream.value(fakeUser as User?),
             makeProfileStream: () =>
-                Stream.value(_makeProfile(acceptedPolicyVersion: 'v0-old')),
+                Stream.value(_makeProfile(acceptedPolicyVersion: 'v1')),
           ),
         );
         await tester.pumpAndSettle();
 
         expect(find.byType(PolicyAcceptanceGateScreen), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'stale-policy gate permits deletion and sign-out without acceptance',
+      (tester) async {
+        final authRepository = _FakeAuthRepository();
+        final deletionService = _FakeAccountDeletionService();
+        await tester.pumpWidget(
+          wrap(
+            authStream: Stream.value(fakeUser as User?),
+            makeProfileStream: () =>
+                Stream.value(_makeProfile(acceptedPolicyVersion: 'v1')),
+            authRepository: authRepository,
+            accountDeletionService: deletionService,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.scrollUntilVisible(
+          find.text('DELETE ACCOUNT'),
+          100,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tester.tap(find.text('DELETE ACCOUNT'));
+        await tester.pumpAndSettle();
+        expect(find.text('Delete your account?'), findsOneWidget);
+        await tester.tap(find.text('DELETE MY ACCOUNT'));
+        await tester.pumpAndSettle();
+        expect(deletionService.calls, 1);
+
+        await tester.tap(find.text('SIGN OUT'));
+        await tester.pump();
+        expect(authRepository.signOutCalls, 1);
       },
     );
 
@@ -540,7 +613,13 @@ void main() {
       await tester.pump();
       await tester.pump();
 
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.byType(LaunchRevealScreen), findsOneWidget);
+      expect(
+        tester
+            .widget<LaunchRevealScreen>(find.byType(LaunchRevealScreen))
+            .animationDuration,
+        Duration.zero,
+      );
       expect(find.byType(AppShell), findsNothing);
       expect(find.byType(PolicyAcceptanceGateScreen), findsNothing);
     });
@@ -624,7 +703,7 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(
-          find.textContaining('Cleanup may continue briefly'),
+          find.textContaining('Media cleanup can continue'),
           findsOneWidget,
         );
         expect(find.textContaining('This cannot be undone'), findsOneWidget);

@@ -179,7 +179,7 @@ void main() {
       await tester.pump();
 
       expect(
-        find.text('Agree to the Content Policy to continue.'),
+        find.text('Agree to the Terms and Community Rules to continue.'),
         findsOneWidget,
       );
     });

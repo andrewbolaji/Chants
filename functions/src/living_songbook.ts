@@ -2,6 +2,7 @@ import * as admin from "firebase-admin";
 import { createHash } from "node:crypto";
 import { HttpsError } from "firebase-functions/v2/https";
 import { isValidStoredEvidence } from "./chant_trust";
+import { CURRENT_POLICY_VERSION } from "./policy";
 import { planAnchoredWindow } from "./safety_submission";
 
 const SCHEMA_VERSION = 1;
@@ -233,7 +234,7 @@ function requireActiveSubmitter(
     !profile ||
     profile.banned !== false ||
     profile.ageConfirmed17Plus !== true ||
-    profile.acceptedPolicyVersion !== "v1"
+    profile.acceptedPolicyVersion !== CURRENT_POLICY_VERSION
   ) {
     throw new HttpsError(
       "permission-denied",

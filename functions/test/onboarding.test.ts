@@ -169,7 +169,7 @@ describe("complete onboarding", () => {
         action: "accept-policy",
         targetType: "user",
         targetId: "fan",
-        detail: "Accepted content policy version v1.",
+        detail: "Accepted Terms and Community Rules version v1.",
         createdAt: NOW,
       }
     );

@@ -125,7 +125,7 @@ class ModerationRepository {
     }
   }
 
-  /// Records that the caller accepted the current content policy version.
+  /// Records acceptance of the current Terms and Community Rules version.
   /// The server (not the client) decides what "current" means and stamps
   /// the timestamp, so this cannot be forged by a raw client write.
   Future<void> acceptPolicy() async {

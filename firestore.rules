@@ -63,11 +63,11 @@ service cloud.firestore {
             || get(/databases/$(database)/documents/profiles/$(userId)).data.deletionPending == false);
     }
 
-    // Must match CURRENT_POLICY_VERSION in functions/src/index.ts and
+    // Must match CURRENT_POLICY_VERSION in functions/src/policy.ts and
     // kCurrentPolicyVersion in lib/app/policy.dart.
     function hasAcceptedPolicy() {
       return exists(/databases/$(database)/documents/profiles/$(request.auth.uid))
-        && get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.acceptedPolicyVersion == 'v1';
+        && get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.acceptedPolicyVersion == 'v2';
     }
 
     function isVisibleChant(chantId) {

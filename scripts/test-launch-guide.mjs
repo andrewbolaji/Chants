@@ -20,8 +20,18 @@ test('guide excludes stale seed, broad deployment and config-overwrite recipes',
   assert.match(html, /20 clubs, 622 players and 192 chants/);
   assert.doesNotMatch(html, /Arsenal is the only club|Keep verifying the remaining|firebase deploy.*--only functions|ef7195cf5159c45/);
   assert.doesNotMatch(html, /cp\s+lib\/firebase_options\.dart\.example\s+lib\/firebase_options\.dart/);
-  assert.match(html, /use it before backend rollout/);
-  assert.match(html, /cb50d3cc966c6a367309c887a8c765891155cf0e/);
+  assert.match(html, /PR 29 merged/);
+  assert.match(html, /c3a071c/);
+  assert.match(html, /33408526284/);
+  assert.match(html, /Backend rollout still held/);
+  assert.match(html, /Updated 1 September 2026/);
+  assert.match(html, /iPhone release build opened/);
+  assert.match(html, /approved V1 launch policy and deletion closure spec/);
+  assert.match(html, /should not be deployed yet/);
+  assert.match(html, /no Auth blocking function exists/);
+  assert.match(html, /missed events/);
+  assert.match(html, /ROADMAP.md#automated-media-cleanup-monitoring/);
+  assert.doesNotMatch(html, /combined Claude review still needs|Source merged; review pending/);
   assert.match(html, /explicit destructive-test approval/);
   for (const id of ['walk-core', 'walk-songbook', 'walk-creator', 'walk-social-safety', 'walk-deletion', 'walk-polish', 'walk-updates']) assert.match(html, new RegExp(`id="${id}"`));
 });
@@ -34,7 +44,7 @@ test('unavailable or malformed storage returns truthful defaults and never delet
   assert.deepEqual(guide.loadState({ getItem: () => 'null' }).state.checks, {});
 });
 
-test('v3 state roundtrips without touching legacy state', () => {
+test('v4 state roundtrips without touching legacy state', () => {
   const keys = [];
   let stored;
   const storage = { setItem: (key, value) => { keys.push(key); stored = value; }, getItem: key => { keys.push(key); return stored; } };
@@ -42,7 +52,10 @@ test('v3 state roundtrips without touching legacy state', () => {
   state.context = context; state.checks['prep-local'] = true;
   assert.equal(guide.saveState(storage, state), true);
   assert.deepEqual(guide.loadState(storage).state, state);
-  assert.deepEqual(keys, ['chants-launch-command-center-v3', 'chants-launch-command-center-v3']);
+  assert.deepEqual(keys, ['chants-launch-command-center-v4', 'chants-launch-command-center-v4']);
+  const legacy = JSON.stringify({ checks: { 'walk-core': true }, context });
+  const isolated = guide.loadState({ getItem: key => key.endsWith('-v3') ? legacy : null });
+  assert.deepEqual(isolated.state.checks, {});
 });
 
 test('a pass needs source, backend and its platform build; blocked can be recorded now', () => {
@@ -88,6 +101,7 @@ test('real guide script wires record, stale context, copy failure and storage re
     setAttribute(name, value) { this.attrs[name] = value; }
     getAttribute(name) { return this.attrs[name]; }
     removeAttribute(name) { delete this.attrs[name]; }
+    closest() { return this.filteredAncestor || null; }
   }
   const ids = Object.fromEntries(['persistenceStatus', 'filterIncomplete', 'walk-report', 'progressText', 'progressBar', 'expandAll', 'collapseAll', 'resetChecks'].map(id => [id, new Element(id)]));
   ids.progressBar.style = {};
@@ -96,15 +110,27 @@ test('real guide script wires record, stale context, copy failure and storage re
   const card = new Element(); card.querySelector = selector => ({ '[data-check]': box, '.task-title': title, '.task-body': body })[selector];
   const fields = ['source', 'backend', 'ios', 'android'].map(key => new Element(`session-${key}`));
   const copy = new Element(); copy.attrs['data-copy-target'] = 'walk-report';
+  const nestedDetail = new Element();
+  const filteredDetail = new Element(); filteredDetail.filteredAncestor = card;
   const document = {
-    querySelectorAll: selector => ({ '[data-check]': [box], '[data-note]': [], '[data-task]': [card], 'details.stage': [], '[data-context]': fields, '#walk [data-task]': [card], '[data-copy-target]': [copy], 'a[href^="#"]': [] })[selector] || [],
+    querySelectorAll: selector => ({ '[data-check]': [box], '[data-note]': [], '[data-task]': [card], details: [nestedDetail, filteredDetail, ...body.children], '[data-context]': fields, '#walk [data-task]': [card], '[data-copy-target]': [copy], 'a[href^="#"]': [] })[selector] || [],
     getElementById: id => ids[id], createElement: () => new Element(),
   };
   const window = { localStorage: { getItem: () => { throw Error(); }, setItem: () => { throw Error(); } }, isSecureContext: true, setTimeout() {}, confirm: () => true };
   vm.runInNewContext(readFileSync(new URL('../docs/launch-command-center.js', import.meta.url), 'utf8'), { document, window, navigator: { clipboard: { writeText: async () => { throw Error(); } } } });
   assert.match(ids.persistenceStatus.textContent, /unavailable/);
   fields.forEach(field => { field.value = context[field.id.replace('session-', '')]; field.events.input(); });
-  const group = body.children[0];
+  const disclosure = body.children[0];
+  assert.equal(disclosure.className, 'observations');
+  assert.equal(disclosure.children[0].textContent, 'Record iPhone / Android result');
+  ids.expandAll.events.click();
+  assert.equal(disclosure.open, true);
+  assert.equal(nestedDetail.open, true);
+  assert.notEqual(filteredDetail.open, true);
+  ids.collapseAll.events.click();
+  assert.equal(disclosure.open, false);
+  assert.equal(nestedDetail.open, false);
+  const group = disclosure.children[1];
   const iosSelect = group.children.find(child => child.id === 'walk-core-ios-result');
   const record = group.children.find(child => child.attrs['aria-label'] === 'Record ios result for Core');
   iosSelect.value = 'Passed'; record.events.click(); assert.match(ids['walk-report'].value, /ios: Passed/);

@@ -37,12 +37,24 @@ export async function handleDeletedDraftCleanup(params: {
     const job = jobs.doc(params.draftId);
     const existing = await transaction.get(job);
     if (existing.exists && existing.data()?.uploadPath !== path) return block("path-conflict");
-    const profile = await transaction.get(params.firestore.collection("profiles").doc(ownerId));
+    const [profile, deletion] = await Promise.all([
+      transaction.get(params.firestore.collection("profiles").doc(ownerId)),
+      transaction.get(
+        params.firestore.collection("accountDeletionJobs").doc(ownerId)
+      ),
+    ]);
     clearMatchingUploadGrant(transaction, profile, params.draftId);
     if (!existing.exists) transaction.create(job, {
       schemaVersion: 1, draftId: params.draftId, uploadPath: path,
       state: "pending", createdAt: timestamp, updatedAt: timestamp,
+      ...(deletion.exists ? { accountDeletionOwnerId: ownerId } : {}),
     });
+    else if (deletion.exists && existing.data()?.accountDeletionOwnerId == null) {
+      transaction.update(job, {
+        accountDeletionOwnerId: ownerId,
+        updatedAt: timestamp,
+      });
+    }
     return "ready";
   });
   // Permanent faults acknowledge only after durable quarantine. Infrastructure

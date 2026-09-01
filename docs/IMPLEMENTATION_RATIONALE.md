@@ -1,16 +1,16 @@
 # Repository implementation rationale
 
-This document explains the current Chants repository through PR 26 preparation at `fe0ea92` and its combined-review corrections, including inherited systems, creator/authentication, Living Songbook and the completed live catalogue. `docs/changes/2026-08-31-post-combined-review-corrections.md` owns F1-F5 closure evidence. It is a reviewer map, not proof that source is independently reviewed, deployed or release-ready. Decision 026 and `docs/changes/2026-08-31-v1-deployment-safety-and-report-cutover.md` own the control, upload and repair reasoning. `docs/changes/2026-08-31-v1-device-test-preparation.md` owns the local-only helper and private walkthrough guide; browser visual verification remains open.
+This document explains the current Chants repository through merged PR 29 at `c3a071c` plus the uncommitted V1 launch policy and deletion closure. It includes inherited systems, creator/authentication, Living Songbook, the completed live catalogue, operational preparation, and the current policy/deletion source. It is a reviewer map, not proof that the new source is independently reviewed, deployed, published, or release-ready. Decisions 026 and 027 own operational admission plus policy/deletion reasoning. `docs/changes/2026-08-31-v1-device-test-preparation.md` owns the local-only helper and private walkthrough guide; full configured-device verification remains open.
 
 ## Document identity and completeness
 
 - **Current change:** `docs/CHANGE_SPEC.md`
 - **Completed change reasoning:** `docs/changes/2026-08-27-creator-platform-foundation.md`, `docs/changes/2026-08-28-pr17-post-review-takedown-integrity.md`, `docs/changes/2026-08-28-v1-launch-auth-onboarding-android.md`, `docs/changes/2026-08-28-post-auth-independent-review-corrections.md`, `docs/changes/2026-08-29-final-source-freeze-minor-closure.md`, and `docs/changes/2026-08-29-v1-launch-services-configuration.md`
 - **Additional completed reasoning:** the Living Songbook correction, Premier League seed catalogue, live seed safety controls, and backend rollout readiness records under `docs/changes/` dated 2026-08-30
-- **Durable creator, identity, launch and operational decisions:** 017 through 026
+- **Durable creator, identity, launch and operational decisions:** 017 through 027
 - **Execution evidence:** `docs/EXECUTION.md`
 - **Interface memory:** `docs/INTERFACE.md`
-- **Known missing evidence:** combined device walk, including live catalogue inspection; remaining provider configuration; association deployment; final policy text; source deployment; observed alert delivery; device provisioning and distribution signing; and release. Development-certificate setup is complete, with one valid local identity verified on 2026-08-30.
+- **Known missing evidence:** independent review and exact-head CI for the current closure; configured-device walk, including live catalogue and policy inspection; legal review; support-email receipt and branded reply; child-safety and retention rehearsal; remaining provider configuration; association and policy deployment; observed alert delivery; distribution signing; and release. The approved virtual business correspondence address is present in source but unpublished. Development-certificate setup is complete, with one valid local identity verified on 2026-08-30.
 
 ## Repository coverage ledger
 
@@ -25,7 +25,7 @@ This document explains the current Chants repository through PR 26 preparation a
 | `firestore.rules` | Yes | Public and private read boundaries, hostile direct-write denial, query requirements |
 | `storage.rules` | Yes | Exact draft staging admission and denial of direct published-media reads |
 | `firestore.indexes.json` | Yes | Stage, profile, notification, moderation, and deletion query indexes |
-| `firebase.json`, `hosting/` | Yes | Functions, Hosting rewrites, public fallback assets, Firestore and Storage emulator config |
+| `firebase.json`, `hosting/` | Yes | Functions, Hosting rewrites, public fallback assets, six signed-out policy/help routes, Firestore and Storage emulator config |
 | `seed/`, `seed_data/` | Yes | Stable IDs, review metadata, dated roster source, 20-club currentness and owner overrides, validation, runtime projection, named-project preflight, writer-free readback, exact guarded player retirement, Admin writes, and counter reconciliation |
 | `.github/`, `scripts/` | Yes | Clean-runner jobs, memory/writing/native contracts, passive device inventory and opt-in sanitized discovery; focused preparation/guide tests join the existing governance job |
 | Private launch command center | Source/logic inspected; browser visual gate open | Gated local preparation, contextual per-platform observations, stale-result marking and local-only report capture. No server authority or production executor |
@@ -33,6 +33,7 @@ This document explains the current Chants repository through PR 26 preparation a
 | Android and iOS projects | Yes in source | Auth plugins, permissions, deep links, entitlements, deployment target, CocoaPods lock, fail-closed release signing, compile fixtures, and remaining SDK or provider gates |
 | Operational admission and repair | Yes in current block | Exact endpoint classification, direct-write control, profile upload grant, deferred cleanup, private plan/apply and evidence validator; no production executor |
 | Runtime and local control preparation | Yes in bounded 2026-08-31 extension | Explicit 48-endpoint resource/runtime contract and local exact-state/version CAS command; no IAM/deployment/replay executor |
+| Launch policy and external deletion | Yes in current uncommitted block | Versioned Terms and Rules, separate Privacy, six no-login routes, authored-content deletion, exact media cleanup, and a private verified dispatch command; no publication or live execution |
 
 Generated build outputs and installed dependency trees are excluded except when a tool result depends on them.
 
@@ -134,7 +135,17 @@ Approval retains an idempotent immediate `performanceCount` update. Lifecycle re
 
 The client still durably marks local Songbook state before requesting deletion. The server accepts deletion into a private job, sets pending authority, and advances bounded phases under retry.
 
-The phase set now removes creator handle and profile, drafts and staging references, interactions, follows in both directions, notifications, private chant-update suggestions, user-authored report material, and other inherited private rows. Retained approved content loses active creator linkage. Delayed audit writes still pass through privacy-safe classification. Auth deletion and finalization remain idempotent.
+Schema two removes creator handle and profile, interactions, follows in both directions, notifications, private chant-update suggestions, user-authored report material, upload limits, drafts, authored chant fields, comment bodies, performance captions and creator projection, and other inherited private rows. Seeded system chants are not user-owned. Every comment and reply row retains only structural identity needed to keep another person's reply connected. Decision 016 separately permits a restricted target-side safety or moderation record created by another person to retain the deleted account ID until its own retention rule deletes or genuinely de-identifies it.
+
+An owned performance creates its deterministic exact-path media deletion job in the same transaction that closes visibility and removes creator attribution. An owned draft creates or links exact staging cleanup evidence with private account correlation in the same bounded transaction that removes the draft. Both transactions recheck the current deletion phase, ownership, media path, and any existing cleanup identity before writing; a stale worker or invalid/conflicting identity stops before mutation. A schema-one job upgrades and, when necessary, replays from authored-content cleanup so an in-flight old job cannot skip the stronger privacy phases. Delayed audit writes still pass through privacy-safe classification. Auth deletion and finalization remain idempotent.
+
+The signed-out deletion page is instructions, not a mutation endpoint. `account_deletion_dispatch_cli.ts` provides a private source-bound plan/apply path for an operator who separately verified current account control. It requires a distinct active operator, an operator-attested verification time no older than 24 hours, clean reviewed Functions and rule source, exact project, owner-only credential/plan, reviewed digest, and a target with Auth or an existing job. The command validates the attestation's format and freshness but does not perform or independently prove the challenge. It invokes the same durable workflow and records no support address or raw request in Firestore.
+
+## Critical path: policy and signed-out help
+
+Policy version `v2` names Terms and Community Rules as the accepted contract. New onboarding and returning-user reacceptance use the same server-owned version; Firestore writes remain gated until it is current. Privacy is linked and described separately, so reading it is not presented as blanket consent. The account age boundary stays 17+ and the client still sends no birth date.
+
+The actual signed-out welcome reaches a policy hub that exposes Privacy, Terms, Community Rules, Rights and takedown, Delete account, and Support without authentication. A returning user blocked on stale acceptance keeps those documents, support, real account deletion, and sign out without accepting. Static Hosting exposes the same six routes. Both surfaces include the accepted version/effective date and complete urgent child-safety directions where relevant. Copy names the LLC, branded support address, daily moderation, urgent prioritization, two-business-day ordinary acknowledgement, 30-calendar-day verified deletion, and no 24/7 promise. A source contract checks entry-state routes, per-page dates, child-safety directions, shared commitments, version parity, Privacy separation, retention language, and unchanged age. None of this source is published by the current work.
 
 ## Persistent state and ownership
 
@@ -151,7 +162,7 @@ The phase set now removes creator handle and profile, drafts and staging referen
 | Staged media | Exact owner draft only | UID-scoped Storage rule |
 | Operational control and repair checkpoints | No client reads or writes | Separate local control and repair plan/apply commands; each still requires approved isolated operator access |
 | Active upload grant | Private profile, never public creator data | Draft and account lifecycle transactions; two-lookup Storage authorization |
-| Deferred draft cleanup | No client reads or writes | Deleted event retains exact path before acknowledgement; explicit later replay |
+| Deferred draft cleanup | No client reads or writes | Deleted event retains exact path before acknowledgement; account deletion also retains or links exact path before removing a draft; explicit later replay |
 | Published media | No direct client read | Server copy and signed delivery |
 | `performanceMediaDeletionJobs` | No client read or write | Terminal moderation transaction and retry-enabled cleanup trigger |
 | Performance interactions | Actor or recipient where needed; aggregates public only | Server callables and triggers |
@@ -190,6 +201,9 @@ The phase set now removes creator handle and profile, drafts and staging referen
 | Terminal performance removal schedules exact retryable Storage cleanup | Deterministic server-only job and path-validating worker | Functions cleanup and moderation tests |
 | Creator performance totals converge from live rows | Parent-serialized exact reconstruction | Source overlap and repair tests |
 | Creator/social user data joins deletion | Added bounded phases and finalization; operational cleanup evidence is separately retained | Failure-injection and app-gate tests; decision 026 retention hold |
+| Authored content does not survive account deletion merely because a relationship row remains | User chants lose authored fields; every comment/reply row becomes a structural tombstone; owned performances close and queue exact media cleanup. Deleting a user-authored chant also closes source eligibility and title projection for every dependent performance, including one owned by another creator, without deleting that creator's account or media ownership. Decision 016 target-side safety retention stays separate and disclosed | Functions schema-migration, body-removal, system-chant, cross-owner dependent-performance, path-failure, cleanup, maximum-page emulator source, and policy tests; decisions 016 and 027 |
+| External support cannot choose a deletion target through a public endpoint | No-login instructions plus private reviewed plan/apply with operator-attested recent verification and active operator | Dispatch parser, authority, idempotence, missing-Auth, stale-verification, and reviewed-source-scope tests |
+| Policy acceptance does not treat Privacy as agreement or strand a stale user | `v2` Terms and Community Rules acceptance with separately linked Privacy; help, support, deletion, and sign out remain available without acceptance | Real-entry Flutter auth/app-gate tests and Hosting policy contract |
 | CI enforces project memory for the review range | `--range` workflow and regression harness | Governance tests |
 | New protected work fails closed during maintenance | Uncached wrapper control and 19 direct-write expressions | Actual wrappers, mutation detection and open/closed emulator tests |
 | Storage upload uses only two distinct Firestore documents | Profile grant plus global control | Source call-graph budget test including known-bad third lookup, separately from emulator behavior |
@@ -249,6 +263,10 @@ The launch-services block provides bounded staged-object cleanup and the privacy
 
 | Command or probe | Result |
 |---|---|
+| Current launch-policy and deletion Functions verification | PASS locally: production TypeScript build, all 230 locally runnable tests, and all 24 dedicated Firestore-emulator transaction cases, including the maximum 200-performance and 200-draft deletion pages |
+| Current launch-policy and deletion Flutter verification | PASS: all 519 tests, including the actual signed-out six-document journey, stale-gate deletion and sign-out, policy documents at 320 by 568 and 1.8x text, and signed-out visibility of the approved business mailbox; `flutter analyze lib test` reports no issues |
+| Current policy, launch-guide, seed, and rules verification | PASS locally: 26 focused Node tests, 74 seed tests, launch-services checks, native-source contract, structural memory check, rules TypeScript, and all 174 Java-backed Firestore and Storage assertions, including exact stale-`v1` denial. The first rules run exposed stale `v1` Storage and feature-handler gates; shared `v2` authority and conformance coverage remain in source. The Android SDK is absent locally |
+| Current native compilation | UNVERIFIED locally: Android cannot start without an SDK; an iOS simulator build entered Xcode but produced no terminal completion receipt before the bounded wait ended. Exact-head clean-runner CI owns both build gates |
 | Combined-review correction | PASS locally: Functions build, 205 unit tests, 18 demo-Firestore transaction cases and 74 seed tests/typecheck. Changed behavior has pre-fix or known-bad evidence. Replacement exact-head CI is recorded on PR 26 after packaging, not presumed here |
 | Reviewed preparation base | Claude reviewed cb50d3c through fe0ea92. Run 33350239642 passed all eight jobs at the fe0ea92 tree, including 493 Flutter, 202 Functions, 12 transactions, 74 seed and 173 rules cases. That run excludes the correction |
 | Prior readiness exact-head CI | PASS: all eight jobs in run `33340779709` at `d7b8b6fe9c421e321ada2790c9410d52f1f81cc8`; excludes the current safety working tree |
@@ -294,11 +312,11 @@ The subsequently approved source preparation is implemented but uncommitted in `
 
 | Record | Current meaning |
 |---|---|
-| `docs/CHANGE_SPEC.md` | Approved source-preparation contract; later production rollout remains proposed and requires exact live approval |
+| `docs/CHANGE_SPEC.md` | Approved V1 launch policy and deletion closure; publication and production rollout remain separate approvals |
 | Six current change records dated 2026-08-27 through 2026-08-29 | Creator implementation, takedown correction, launch authentication extension, post-auth correction, final minor closure, and V1 launch services |
-| Decisions 017 through 026 | Shell, creator, performance, public, social, safety, source eligibility, verified identity, staged launch integrity, Living Songbook and operational admission |
+| Decisions 017 through 027 | Shell, creator, performance, public, social, safety, source eligibility, verified identity, staged launch integrity, Living Songbook, operational admission, and policy/deletion closure |
 | `docs/INTERFACE.md` | Current launch, Stage, creator, conversation, moderation, and inherited interaction contract |
-| `docs/ROADMAP.md` | Feature source and all 20 production clubs are exact; device evidence, remaining provider configuration, policy, deployment, and release remain |
+| `docs/ROADMAP.md` | Feature source and all 20 production clubs are exact; current policy/deletion source awaits review and packaging; device, legal, provider, publication, deployment, and release evidence remain |
 | `ENGINEERING_OVERVIEW.md` | Reviewer-oriented current code map |
 
 ## Known compromises and uncertainty
@@ -318,7 +336,7 @@ The subsequently approved source preparation is implemented but uncommitted in `
 | Apple association is source-ready but not hosted; Android and store association remain absent | Public pages cannot yet guarantee app opening | Before release emits links |
 | Requested providers are source-complete but disabled | Launch breadth depends on external console, credential, callback, privacy, cost, and device proof | Before enabling each provider flag |
 | No cross-UID account merge | A user with two existing accounts must choose one and link only credentials not already owned | When measured support demand justifies a separately reviewed recovery system |
-| Policy copy is placeholder and the saved alert-only cost control has no observed delivery | Public UGC release remains blocked on policy and operational proof | Before public submission |
+| Policy copy is implemented but unreviewed/unpublished, and the saved alert-only cost control has no observed delivery | Public UGC release remains blocked on legal, support-delivery, child-safety, retention-operation, deployment, and operational proof | Before public submission |
 | No staging, restore proof, or export | Operational recovery remains manual | Before public beta or meaningful user data |
 
 ## Material files
