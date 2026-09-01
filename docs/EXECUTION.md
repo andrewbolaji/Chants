@@ -13,6 +13,16 @@ This is the chronological evidence trail for substantial engineering work. It re
 
 ## Entries
 
+### 2026-09-01T20:55:14Z Correct PR 32 documentation evidence
+
+- **Status:** Andrew approved `PR 32 documentation evidence correction spec`. The documentation-only correction is staged for a packaging handoff. Commit, push, replacement exact-head CI, merge, and deployment remain separately gated.
+- **Baseline correction:** The baseline recorded in the active change spec and the earlier execution checkpoint ended in `...d7` because of a transcription error. PR 32's verified base and commit `1e2ce93a3b46879fd1b59c0d4a8efa80ae67efb7`'s parent are both `ff6587d8b800f7ff4722d0ef6b3da6c68a331aa7`. This dated correction supersedes that erroneous string without changing the earlier checkpoint's historical packaging state.
+- **Packaging and CI evidence:** Commit `1e2ce93a3b46879fd1b59c0d4a8efa80ae67efb7` was pushed to PR 32. Exact-head run `33550474487` completed all eight jobs successfully at that commit with no annotations. The iOS and Android jobs verified the expected application identities, and the Android job produced its seven-day debug artifact.
+- **Artifact evidence boundary:** The Android artifact upload using `actions/upload-artifact@v7` executed successfully. The failed-golden upload step was skipped because the golden tests passed. Its `@v7` migration and compatible inputs are verified by source inspection, not by an executed upload in that green run.
+- **Independent review:** A read-only review independently reran 528 Flutter tests, 36 focused launch and gate cases, 37 Node cases, and clean Flutter analysis; inspected workflow behavior and CI attribution; and approved the source for merge with no Critical or High finding. The review identified the baseline transcription error and evidence overstatements corrected in this documentation block.
+- **Test evidence boundary:** The shipped regression cases prove that both measured non-compact geometries render without exception and retain the spinner, written cue, and root semantic announcement. They do not perform a drag. The independent review's separate probe confirmed that dragging the production scroll surface fully reveals the written cue at the shorter measured geometry.
+- **Remaining boundary:** No runtime, test, workflow, dependency, backend, native, Hosting, DNS, store, or production source changes are part of this correction. Once this documentation is committed, PR 32 will need replacement exact-head CI before Andrew decides whether to merge.
+
 ### 2026-09-01T19:07:47Z Prepare V1 final pre-launch hardening
 
 - **Status:** Approved source is locally implemented and verified; awaiting separate packaging authority.

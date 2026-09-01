@@ -1,12 +1,12 @@
 # Change spec: V1 final pre-launch hardening
 
-**Status: Approved.** Andrew approved `V1 final pre-launch hardening spec` on 1 September 2026.
+**Status: Approved, with evidence correction approved.** Andrew approved `V1 final pre-launch hardening spec` and later approved `PR 32 documentation evidence correction spec` on 1 September 2026.
 
 **Owner:** Andrew, through ThunderRiver Tech LLC
 
 **Lane:** 1, bounded interface correctness and CI maintenance
 
-**Baseline:** merged `main` at `ff6587d7ba74836be5220732375b0ded53258300`, containing PR 31 and its eight-job green exact-head run `33541666404`
+**Baseline:** merged `main` at `ff6587d8b800f7ff4722d0ef6b3da6c68a331aa7`, containing PR 31 and its eight-job green exact-head run `33541666404`
 
 **Authority requested:** local source, tests, durable records, one reviewable commit, push, pull request, and exact-head clean CI. Merge, Hosting deployment, DNS, domain connection, store changes, backend deployment, and production mutation remain outside this block.
 
@@ -60,15 +60,15 @@ The runtime correction is reverted by removing the scroll wrapper. The CI correc
 ## Verification
 
 1. Before runtime correction, new production-widget cases reproduce the overflow at 320 by 481 with 1.5x text and 320 by 558 with 2x text while unresolved progress is shown.
-2. After correction, those cases render without exception, preserve spinner, written non-compact progress, and the complete semantic announcement, and can bring the written cue into view.
+2. After correction, the shipped cases render without exception and preserve the spinner, written non-compact progress, and complete semantic announcement. The shipped cases assert that the written cue remains in the widget tree; the independent review's separate drag probe confirms that the scroll surface can bring it fully into view.
 3. Existing exact compact cases at 568 by 320 with 2x text and 320 by 480 with 1.5x text remain spinner-only and overflow-free.
 4. Existing normal portrait, animation, reduced-motion, app-gate, and policy-gate evidence remains green.
 5. The complete Flutter suite and `flutter analyze lib test` pass with the repository's documented non-secret Firebase analysis fixture.
 6. Workflow inspection confirms exactly two `actions/upload-artifact@v7` uses and no `upload-artifact@v4` use.
 7. Project memory, writing style, governance regressions, native-project, launch-services, and whitespace checks pass.
-8. One exact-head pull-request run completes all eight jobs, produces the Android artifact, and has no Node 20 annotation from either artifact step.
+8. One exact-head pull-request run completes all eight jobs, produces the Android artifact through the migrated action, and has no Node 20 artifact annotation. A green golden job skips the failed-golden upload step, so that second migration is verified from workflow source rather than claimed as executed evidence.
 9. A bounded independent review finds no unresolved blocker before merge.
 
 ## Packaging and next gate
 
-After approval, implement and verify this as one bounded block. Commit, push, and pull-request creation still require Andrew's explicit packaging authorization. After exact-head CI and independent closure, merge remains Andrew's decision. Hosting publication and `chantsfc.com` connection begin only in the separately approved deployment phase.
+The implementation was packaged at `1e2ce93a3b46879fd1b59c0d4a8efa80ae67efb7`, pushed to PR 32, and verified by all eight jobs in exact-head run `33550474487`. A bounded independent review approved the source for merge with no Critical or High finding. This documentation-only evidence correction is not yet committed or pushed; any new PR head requires replacement exact-head CI. Merge remains Andrew's decision. Hosting publication and `chantsfc.com` connection begin only in the separately approved deployment phase.
