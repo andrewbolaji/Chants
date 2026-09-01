@@ -87,11 +87,9 @@ void main() {
       expect(find.text('SIGN OUT'), findsOneWidget);
       expect(find.textContaining('not part of this agreement'), findsOneWidget);
       expect(find.textContaining('contract version v2'), findsOneWidget);
-
-      await tester.scrollUntilVisible(
-        find.text('AGREE AND CONTINUE'),
-        200,
-        scrollable: find.byType(Scrollable).first,
+      expect(
+        find.text('KEEP THE TERRACE LOUD.\nKEEP IT SAFE.'),
+        findsOneWidget,
       );
       expect(find.text('AGREE AND CONTINUE'), findsOneWidget);
     });
@@ -102,11 +100,6 @@ void main() {
       final repo = _FakeModerationRepository();
       await tester.pumpWidget(wrap(const PolicyAcceptanceGateScreen(), repo));
 
-      await tester.scrollUntilVisible(
-        find.text('AGREE AND CONTINUE'),
-        200,
-        scrollable: find.byType(Scrollable).first,
-      );
       await tester.tap(find.text('AGREE AND CONTINUE'));
       // Not pumpAndSettle: on success the screen intentionally stays in its
       // busy state and never navigates itself away (ChantApp's reactive
@@ -124,11 +117,6 @@ void main() {
       final repo = _FakeModerationRepository()..shouldFail = true;
       await tester.pumpWidget(wrap(const PolicyAcceptanceGateScreen(), repo));
 
-      await tester.scrollUntilVisible(
-        find.text('AGREE AND CONTINUE'),
-        200,
-        scrollable: find.byType(Scrollable).first,
-      );
       await tester.tap(find.text('AGREE AND CONTINUE'));
       await tester.pumpAndSettle();
 
@@ -141,6 +129,11 @@ void main() {
       final repo = _FakeModerationRepository();
       await tester.pumpWidget(wrap(const PolicyAcceptanceGateScreen(), repo));
 
+      await tester.scrollUntilVisible(
+        find.text('READ TERMS'),
+        100,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.tap(find.text('READ TERMS'));
       await tester.pumpAndSettle();
 
@@ -153,6 +146,11 @@ void main() {
       final repo = _FakeModerationRepository();
       await tester.pumpWidget(wrap(const PolicyAcceptanceGateScreen(), repo));
 
+      await tester.scrollUntilVisible(
+        find.text('SUPPORT'),
+        100,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.tap(find.text('SUPPORT'));
       await tester.pumpAndSettle();
 
@@ -174,7 +172,7 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.byType(ListView), findsOneWidget);
+      expect(find.byKey(const ValueKey('policy-gate-scroll')), findsOneWidget);
       await tester.scrollUntilVisible(
         find.text('DELETE ACCOUNT'),
         100,
@@ -183,11 +181,6 @@ void main() {
       expect(find.text('DELETE ACCOUNT'), findsOneWidget);
       expect(find.text('SIGN OUT'), findsOneWidget);
 
-      await tester.scrollUntilVisible(
-        find.text('AGREE AND CONTINUE'),
-        200,
-        scrollable: find.byType(Scrollable).first,
-      );
       expect(find.text('AGREE AND CONTINUE'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });

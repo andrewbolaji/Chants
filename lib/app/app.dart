@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,14 +17,50 @@ import 'package:chants/presentation/auth/policy_acceptance_gate_screen.dart';
 import 'package:chants/presentation/auth/account_deletion_pending_screen.dart';
 import 'package:chants/presentation/auth/sign_in_screen.dart';
 import 'package:chants/presentation/auth/magic_link_gate.dart';
+import 'package:chants/presentation/auth/launch_reveal_screen.dart';
 import 'package:chants/presentation/shell/app_shell.dart';
 
-class ChantApp extends ConsumerWidget {
-  const ChantApp({super.key});
+class ChantApp extends ConsumerStatefulWidget {
+  final Duration launchRevealDuration;
+
+  const ChantApp({
+    super.key,
+    this.launchRevealDuration = const Duration(milliseconds: 1250),
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ChantApp> createState() => _ChantAppState();
+}
+
+class _ChantAppState extends ConsumerState<ChantApp> {
+  Timer? _launchTimer;
+  bool _launchRevealComplete = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.launchRevealDuration == Duration.zero) {
+      _launchRevealComplete = true;
+    } else {
+      _launchTimer = Timer(widget.launchRevealDuration, () {
+        if (mounted) setState(() => _launchRevealComplete = true);
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _launchTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final authState = ref.watch(authStateProvider);
+    final reducedMotion = MediaQueryData.fromView(
+      View.of(context),
+    ).disableAnimations;
+    final showLaunchReveal = !_launchRevealComplete && !reducedMotion;
 
     // Addition B: force dark system UI overlay
     SystemChrome.setSystemUIOverlayStyle(
@@ -41,13 +79,16 @@ class ChantApp extends ConsumerWidget {
       themeMode: ThemeMode.dark, // Addition B: force dark regardless of system
       onGenerateRoute: AppRouter.onGenerateRoute,
       builder: (context, child) => MagicLinkGate(child: child!),
-      home: authState.when(
-        data: (user) => user != null
-            ? _SignedInGate(key: ValueKey(user.uid), uid: user.uid)
-            : const SignInScreen(),
-        loading: () => const _NeutralLoadingScreen(),
-        error: (_, _) => const SignInScreen(),
-      ),
+      home: showLaunchReveal
+          ? LaunchRevealScreen(animationDuration: widget.launchRevealDuration)
+          : authState.when(
+              data: (user) => user != null
+                  ? _SignedInGate(key: ValueKey(user.uid), uid: user.uid)
+                  : const SignInScreen(),
+              loading: () =>
+                  const LaunchRevealScreen(animationDuration: Duration.zero),
+              error: (_, _) => const SignInScreen(),
+            ),
     );
   }
 }
@@ -115,7 +156,9 @@ class _SignedInGateState extends ConsumerState<_SignedInGate> {
         onSignOut: ref.read(authRepositoryProvider).signOut,
       );
     }
-    if (!profileSnapshotAvailable) return const _NeutralLoadingScreen();
+    if (!profileSnapshotAvailable) {
+      return const LaunchRevealScreen(animationDuration: Duration.zero);
+    }
     if (!contactVerified) return EmailVerificationScreen(email: email);
     if (profile == null) {
       return OnboardingScreen(
@@ -161,7 +204,7 @@ class _SignedInGateState extends ConsumerState<_SignedInGate> {
         localState: state,
         deletionInput: deletionInput,
       ),
-      loading: () => const _NeutralLoadingScreen(),
+      loading: () => const LaunchRevealScreen(animationDuration: Duration.zero),
       error: (_, _) => AccountDeletionRecoveryScreen(
         statusCheckFailed: true,
         onRetry: () async {
@@ -170,14 +213,5 @@ class _SignedInGateState extends ConsumerState<_SignedInGate> {
         onSignOut: ref.read(authRepositoryProvider).signOut,
       ),
     );
-  }
-}
-
-class _NeutralLoadingScreen extends StatelessWidget {
-  const _NeutralLoadingScreen();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(body: Center(child: CircularProgressIndicator()));
   }
 }

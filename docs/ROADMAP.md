@@ -93,6 +93,7 @@ The complete reviewed V1 source stack is merged at `e8f2591`. Exact-main run `33
 
 - Apple Developer and Google Play accounts, store listings and data-safety declarations, app icon and branding. Keep the existing 17+ in-app minimum distinct from each store's questionnaire-derived rating.
 - Package and run exact-head review of the corrected [launch policy pack](LAUNCH_POLICY_PACK.md), then close its remaining legal, support-mailbox delivery, child-safety, retention-operation, store-disclosure, and deployment holds. The approved virtual business correspondence address, actual signed-out access to six public routes, matching in-app documents, `v2` Terms and Community Rules acceptance, no-login deletion instructions, and strengthened deletion source exist but are not published. The age rule remains 17+.
+- Review and package the responsive public landing-page source, then publish it only with the compatible Hosting rollout. It explains Songbook, Chant Lab, Stage, and their trust boundaries, but it has no store buttons, social links, signup form, tracking, or live-domain evidence yet.
 - Prove real-device App Check traffic and obtain separate enforcement-target and rollback approval; elapsed time alone does not authorize enforcement.
 
 **Trigger to launch:** All of the above complete and Phase 3 signed off.
@@ -288,7 +289,7 @@ The implementation boundary and remaining verification gate live in `docs/CHANGE
 
 ### Legal, store, and launch mechanics
 
-- **DONE IN SOURCE, NOT DEPLOYED** Privacy, Terms, Community, Rights, Delete account, and Support exist in Hosting source and are reachable from the signed-out app welcome. Publication and signed-out production readback remain.
+- **DONE IN SOURCE, NOT DEPLOYED** The root public landing page plus Privacy, Terms, Community, Rights, Delete account, and Support exist in Hosting source. The six trust routes are reachable from the signed-out app welcome and the root footer. Publication and signed-out production readback remain.
 - **TODO** Apple Developer account ($99) and Google Play Developer account ($25).
 - **TODO** Wire final app icon; set 17+ age rating.
 - **TODO** Store listings, screenshots, and data-safety / app-privacy forms.
@@ -302,19 +303,19 @@ The implementation boundary and remaining verification gate live in `docs/CHANGE
 ### Pre-launch (start now, needs weeks of runway)
 
 - **One-sentence pitch**, used everywhere (store subtitle, site headline, social bios): *Chants is the songbook of the terraces and the workshop for what gets sung next.*
-- **Build in public** on one platform, 2 to 3 posts a week. Primary platform is the one where football fans actually gather (X or TikTok). Claim the @chantsfc handle everywhere for consistency but only post actively on the primary.
-- **Collect waitlist emails** on chantsfc.com. Even 30 to 100 people means launch day is not silent.
+- **Build in public** on one platform, 2 to 3 posts a week. Primary platform is the one where football fans actually gather, likely X or TikTok. `@chantsapp` is the preferred reservation candidate because it is readable, product-specific, and does not depend on punctuation that platforms handle differently. Reserve it consistently across Instagram, TikTok, X, and YouTube only if it remains available, and keep every handle off public product copy until the accounts are confirmed.
+- **Keep the V1 site data-free.** Use the public explanation, support route, and owned social accounts before adding a mailing list. A future waitlist needs a separately approved privacy, delivery, retention, and abuse boundary.
 - **Join five watering holes** as a real member, weeks before launch: Arsenal and other club subreddits, football fan Twitter, terrace-culture and fan forums. Be helpful, never spam, so at launch you are a member sharing something, not a stranger advertising.
 - **Line up 5 to 10 soft-launch testers** who will try it early, give honest feedback, and leave a day-one rating.
 - **Assemble a launch kit** in one folder: logo, 3 to 5 clean screenshots, the one-sentence pitch, a 100-word description, and the founder story in three sentences (English-born Arsenal supporter building the songbook the terraces never had).
 
 ### Launch day
 
-- Email the waitlist first, in the morning.
+- Post first to the confirmed owned social accounts, in the morning, with the live store destination.
 - Post to the five watering holes, tailored to each, leading with the story and the problem, not the feature list.
 - Launch on Product Hunt (Tuesday to Thursday), and Show HN if the technical angle fits.
 - Post the LinkedIn launch piece the same day, only once the app is live with a working store link.
-- Flip the store pills on chantsfc.com from coming-soon to the real App Store and Play URLs.
+- Replace the coming-soon status with verified App Store and Play buttons only after both public listing URLs work.
 - Reply to every comment and email for the first 48 hours. Ask for ratings.
 
 ### Post-launch (the grind)

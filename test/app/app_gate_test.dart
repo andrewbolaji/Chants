@@ -20,6 +20,7 @@ import 'package:chants/data/services/account_deletion_service.dart';
 import 'package:chants/presentation/auth/account_deletion_pending_screen.dart';
 import 'package:chants/presentation/auth/account_deletion_recovery_screen.dart';
 import 'package:chants/presentation/auth/policy_acceptance_gate_screen.dart';
+import 'package:chants/presentation/auth/launch_reveal_screen.dart';
 import 'package:chants/presentation/auth/sign_in_screen.dart';
 import 'package:chants/presentation/auth/email_verification_screen.dart';
 import 'package:chants/presentation/auth/onboarding_screen.dart';
@@ -225,7 +226,7 @@ void main() {
           fakeUser.uid,
         ).overrideWith((ref) => makeProfileStream()),
       ],
-      child: const ChantApp(),
+      child: const ChantApp(launchRevealDuration: Duration.zero),
     );
   }
 
@@ -260,7 +261,13 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.byType(LaunchRevealScreen), findsOneWidget);
+      expect(
+        tester
+            .widget<LaunchRevealScreen>(find.byType(LaunchRevealScreen))
+            .animationDuration,
+        Duration.zero,
+      );
       expect(find.byType(PolicyAcceptanceGateScreen), findsNothing);
       expect(find.byType(AppShell), findsNothing);
     });
@@ -349,6 +356,11 @@ void main() {
         );
         await tester.pumpAndSettle();
 
+        await tester.scrollUntilVisible(
+          find.text('DELETE ACCOUNT'),
+          100,
+          scrollable: find.byType(Scrollable).first,
+        );
         await tester.tap(find.text('DELETE ACCOUNT'));
         await tester.pumpAndSettle();
         expect(find.text('Delete your account?'), findsOneWidget);
@@ -569,7 +581,13 @@ void main() {
       await tester.pump();
       await tester.pump();
 
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.byType(LaunchRevealScreen), findsOneWidget);
+      expect(
+        tester
+            .widget<LaunchRevealScreen>(find.byType(LaunchRevealScreen))
+            .animationDuration,
+        Duration.zero,
+      );
       expect(find.byType(AppShell), findsNothing);
       expect(find.byType(PolicyAcceptanceGateScreen), findsNothing);
     });

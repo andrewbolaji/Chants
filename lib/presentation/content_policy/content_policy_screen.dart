@@ -6,7 +6,9 @@ import 'package:chants/app/spacing.dart';
 /// The Community Rules, shared between the signed-out document and the
 /// versioned acceptance gate.
 class ContentPolicyBody extends StatelessWidget {
-  const ContentPolicyBody({super.key});
+  final bool showHeader;
+
+  const ContentPolicyBody({super.key, this.showHeader = true});
 
   @override
   Widget build(BuildContext context) {
@@ -15,14 +17,16 @@ class ContentPolicyBody extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('COMMUNITY RULES', style: textTheme.headlineMedium),
-        const SizedBox(height: Spacing.xs),
-        Text(
-          'Effective $kPolicyEffectiveDate. Accepted contract version '
-          '$kCurrentPolicyVersion.',
-          style: textTheme.bodySmall?.copyWith(color: AppColors.textMuted),
-        ),
-        const SizedBox(height: Spacing.lg),
+        if (showHeader) ...[
+          Text('COMMUNITY RULES', style: textTheme.headlineMedium),
+          const SizedBox(height: Spacing.xs),
+          Text(
+            'Effective $kPolicyEffectiveDate. Accepted contract version '
+            '$kCurrentPolicyVersion.',
+            style: textTheme.bodySmall?.copyWith(color: AppColors.textMuted),
+          ),
+          const SizedBox(height: Spacing.lg),
+        ],
         Text(
           'Funny, brilliant, ridiculous, or a first attempt: football '
           'creativity belongs here. Swearing and ordinary rivalry are not '

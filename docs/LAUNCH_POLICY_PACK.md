@@ -33,7 +33,7 @@ The six source routes below are the publication candidates. They are mutually li
 | `/delete-account` | `hosting/delete-account/index.html` | In-app deletion, copyable email request, identity-verification warning, timing target, and what is removed or retained |
 | `/support` | `hosting/support/index.html` | Support categories, safe diagnostic information, response target, daily moderation, and no 24/7 promise |
 
-`hosting/policy.css` is the shared presentation source. The root Hosting page links all six destinations. Matching in-app documents live in `lib/presentation/content_policy/policy_documents_screen.dart` and the Community Rules body lives in `lib/presentation/content_policy/content_policy_screen.dart`.
+`hosting/policy.css` is the shared presentation source for the six documents. `hosting/site.css` styles the separate product landing page at the root, which links all six destinations without collecting information. Matching in-app documents live in `lib/presentation/content_policy/policy_documents_screen.dart` and the Community Rules body lives in `lib/presentation/content_policy/content_policy_screen.dart`.
 
 The exact acceptance copy is:
 
@@ -81,7 +81,7 @@ A legal hold needs a reason, restricted access, owner, review date, and release 
 | External deletion rehearsal | The source-bound plan/apply path is new and has not touched production | Independent source review, exact-head CI, a non-production rehearsal, and a private operator checklist |
 | Retention operation | Targets are public copy, but mailbox, cloud logs, moderation records, and cleanup-evidence reviews are not yet proven end to end | Config/readback evidence or a dated manual review ledger for each target, with no deletion of unresolved recovery evidence |
 | Store disclosures | Apple privacy labels and Google Data Safety must match the final SDK and behavior | Final console answers cross-checked against the release binary and this pack |
-| Deployment | These pages and `v2` acceptance are source only | Separate approved rollout, compatible backend/rules/client order, signed builds, and post-deploy route/readback checks |
+| Deployment | The landing page, six policy/help pages, and `v2` acceptance are source only | Separate approved rollout, compatible backend/rules/client order, signed builds, and post-deploy root/route/readback checks |
 
 ## Public address status
 
