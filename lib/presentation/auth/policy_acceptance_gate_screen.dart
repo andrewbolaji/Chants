@@ -162,15 +162,23 @@ class _PolicyAcceptanceGateScreenState
                 child: FilledButton(
                   key: const ValueKey('policy-accept-button'),
                   onPressed: _accepting ? null : _accept,
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(0, 56),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: Spacing.lg,
+                      vertical: Spacing.md,
+                    ),
+                  ),
                   child: _accepting
                       ? const SizedBox(
                           height: 20,
                           width: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text('AGREE AND CONTINUE'),
+                      : const Text(
+                          'AGREE AND CONTINUE',
+                          textAlign: TextAlign.center,
+                          softWrap: true,
                         ),
                 ),
               ),
@@ -310,7 +318,9 @@ class _PolicyRouteRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       button: true,
-      label: '$title. $description. $actionLabel',
+      label: '$title. $description $actionLabel',
+      onTap: onTap,
+      excludeSemantics: true,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final compact = constraints.maxWidth < 360;

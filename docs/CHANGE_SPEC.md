@@ -2,7 +2,7 @@
 
 **Status: Approved for packaging and gated rollout.** Andrew approved `V1 Chants public landing page spec`, directly approved a final launch-presentation pass covering the app entry, policy gate, and public landing page, granted visual acceptance, and authorized one package, push, exact-head clean CI, independent review, and then public deployment and domain connection on 1 September 2026.
 
-**Owner:** Andrew, through Thunderriver Tech LLC
+**Owner:** Andrew, through ThunderRiver Tech LLC
 
 **Lane:** 2 for source and packaging; 3 for the separately gated live rollout
 
@@ -15,6 +15,12 @@
 ## Outcome
 
 Give the first public and in-app moments one coherent Chants identity while preserving every existing authority, trust, and deep-link boundary.
+
+## Approved independent-review correction
+
+Andrew approved `PR 31 post-review and operator-name correction spec` on 1 September 2026. The correction closes the independently reproduced launch-transition, landscape, enlarged-text, semantic, contrast, illustration, and documentation defects before deployment. It also applies the exact legal operator spelling `ThunderRiver Tech LLC` across public copy, app policy copy, tests, and durable records.
+
+The correction remains inside the approved presentation and policy-copy boundary. It does not change policy meaning, the 17+ rule, authentication or backend authority, Firebase rewrites, DNS, deployment, or store availability.
 
 The page should make the product understandable in one visit:
 

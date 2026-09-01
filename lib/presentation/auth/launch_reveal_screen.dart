@@ -10,10 +10,12 @@ import 'package:chants/app/colors.dart';
 /// and the account gates finish resolving behind it.
 class LaunchRevealScreen extends StatefulWidget {
   final Duration animationDuration;
+  final bool showProgress;
 
   const LaunchRevealScreen({
     super.key,
     this.animationDuration = const Duration(milliseconds: 1100),
+    this.showProgress = false,
   });
 
   @override
@@ -58,7 +60,9 @@ class _LaunchRevealScreenState extends State<LaunchRevealScreen>
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Semantics(
-        label: 'Chants. Find your voice in the crowd.',
+        label: widget.showProgress
+            ? 'Chants. Getting things ready.'
+            : 'Chants. Find your voice in the crowd.',
         container: true,
         excludeSemantics: true,
         child: AnimatedBuilder(
@@ -70,64 +74,47 @@ class _LaunchRevealScreenState extends State<LaunchRevealScreen>
               children: [
                 CustomPaint(painter: _LaunchAtmospherePainter(progress)),
                 SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 28),
-                    child: Column(
-                      children: [
-                        const Spacer(flex: 2),
-                        Opacity(
-                          opacity: _interval(progress, 0, 0.36),
-                          child: Transform.translate(
-                            offset: Offset(
-                              0,
-                              24 * (1 - _interval(progress, 0, 0.36)),
-                            ),
-                            child: Image.asset(
-                              'assets/icon/splash.png',
-                              width: 172,
-                              height: 172,
-                              fit: BoxFit.contain,
-                            ),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final compact =
+                          constraints.maxHeight < 460 ||
+                          constraints.maxWidth > constraints.maxHeight;
+                      final mark = _LaunchMark(
+                        progress: progress,
+                        size: compact ? 124 : 172,
+                      );
+                      final details = _LaunchDetails(
+                        progress: progress,
+                        showProgress: widget.showProgress,
+                      );
+                      return Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: compact ? 24 : 28,
+                          vertical: compact ? 20 : 28,
+                        ),
+                        child: Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 620),
+                            child: compact
+                                ? Row(
+                                    children: [
+                                      Expanded(flex: 2, child: mark),
+                                      const SizedBox(width: 24),
+                                      Expanded(flex: 3, child: details),
+                                    ],
+                                  )
+                                : Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      mark,
+                                      const SizedBox(height: 18),
+                                      details,
+                                    ],
+                                  ),
                           ),
                         ),
-                        const SizedBox(height: 16),
-                        _WordReveal(progress: progress),
-                        const SizedBox(height: 14),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          widthFactor: 1,
-                          child: FractionallySizedBox(
-                            widthFactor: _interval(progress, 0.44, 0.86),
-                            child: const SizedBox(
-                              width: 218,
-                              child: Divider(
-                                color: AppColors.gold,
-                                thickness: 4,
-                                height: 4,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 18),
-                        Opacity(
-                          opacity: _interval(progress, 0.72, 1),
-                          child: const Text(
-                            'FIND YOUR VOICE IN THE CROWD',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: AppColors.textMuted,
-                              fontFamily: 'SpaceMono',
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 1.25,
-                            ),
-                          ),
-                        ),
-                        const Spacer(flex: 3),
-                        _SoundBars(progress: progress),
-                        const SizedBox(height: 22),
-                      ],
-                    ),
+                      );
+                    },
                   ),
                 ),
               ],
@@ -135,6 +122,106 @@ class _LaunchRevealScreenState extends State<LaunchRevealScreen>
           },
         ),
       ),
+    );
+  }
+}
+
+class _LaunchMark extends StatelessWidget {
+  final double progress;
+  final double size;
+
+  const _LaunchMark({required this.progress, required this.size});
+
+  @override
+  Widget build(BuildContext context) {
+    final reveal = _interval(progress, 0, 0.36);
+    return Opacity(
+      opacity: reveal,
+      child: Transform.translate(
+        offset: Offset(0, 24 * (1 - reveal)),
+        child: Image.asset(
+          'assets/icon/splash.png',
+          width: size,
+          height: size,
+          fit: BoxFit.contain,
+        ),
+      ),
+    );
+  }
+}
+
+class _LaunchDetails extends StatelessWidget {
+  final double progress;
+  final bool showProgress;
+
+  const _LaunchDetails({required this.progress, required this.showProgress});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _WordReveal(progress: progress),
+        const SizedBox(height: 14),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: FractionallySizedBox(
+            widthFactor: _interval(progress, 0.44, 0.86),
+            child: const Divider(
+              color: AppColors.gold,
+              thickness: 4,
+              height: 4,
+            ),
+          ),
+        ),
+        const SizedBox(height: 18),
+        Opacity(
+          opacity: _interval(progress, 0.72, 1),
+          child: const Text(
+            'FIND YOUR VOICE IN THE CROWD',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: AppColors.textMuted,
+              fontFamily: 'SpaceMono',
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.25,
+            ),
+          ),
+        ),
+        const SizedBox(height: 18),
+        _SoundBars(progress: progress),
+        if (showProgress) ...[
+          const SizedBox(height: 16),
+          const Wrap(
+            alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 10,
+            runSpacing: 8,
+            children: [
+              SizedBox(
+                width: 14,
+                height: 14,
+                child: CircularProgressIndicator(
+                  color: AppColors.gold,
+                  strokeWidth: 2,
+                ),
+              ),
+              Text(
+                'GETTING THINGS READY',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: AppColors.textMuted,
+                  fontFamily: 'SpaceMono',
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
     );
   }
 }

@@ -145,7 +145,7 @@ class PolicySection {
 const privacyDocument = PolicyDocumentScreen(
   title: 'PRIVACY NOTICE',
   intro:
-      'Chants is operated by Thunderriver Tech LLC in Texas, United States. '
+      'Chants is operated by ThunderRiver Tech LLC in Texas, United States. '
       'Contact $kSupportEmail. This notice covers the app and Chants public '
       'chant, creator, and performance pages. Business correspondence can be '
       'sent to $kBusinessCorrespondenceAddress.',
@@ -194,7 +194,7 @@ const privacyDocument = PolicyDocumentScreen(
 const termsDocument = PolicyDocumentScreen(
   title: 'TERMS OF USE',
   intro:
-      'Chants is provided by Thunderriver Tech LLC. You must be at least 17 '
+      'Chants is provided by ThunderRiver Tech LLC. You must be at least 17 '
       'to create an account. Contact $kSupportEmail.',
   sections: [
     PolicySection(
@@ -207,7 +207,7 @@ const termsDocument = PolicyDocumentScreen(
     PolicySection(
       title: 'YOUR CONTRIBUTIONS',
       paragraphs: [
-        'You keep the rights you hold in your contributions. You give Thunderriver Tech LLC a non-exclusive, royalty-free permission to host, technically process, display, and distribute them as needed to operate Chants and its public share pages. This covers only rights you can grant and does not permit unrelated advertising use without separate permission.',
+        'You keep the rights you hold in your contributions. You give ThunderRiver Tech LLC a non-exclusive, royalty-free permission to host, technically process, display, and distribute them as needed to operate Chants and its public share pages. This covers only rights you can grant and does not permit unrelated advertising use without separate permission.',
         'Upload only material you made or are entitled to share. A short clip can involve rights in music, lyrics, recordings, footage, and people shown. A 30-second limit, attribution, fan status, or a link does not automatically clear those rights. Do not upload broadcast footage or another creator\'s clip without the necessary rights or legal basis.',
       ],
     ),
@@ -287,7 +287,7 @@ const deletionDocument = PolicyDocumentScreen(
 const supportDocument = PolicyDocumentScreen(
   title: 'SUPPORT',
   intro:
-      'Email $kSupportEmail. Chants is operated by Thunderriver Tech LLC. We '
+      'Email $kSupportEmail. Chants is operated by ThunderRiver Tech LLC. We '
       'aim to acknowledge ordinary support and video-review requests within '
       'two business days. Business correspondence can be sent to '
       '$kBusinessCorrespondenceAddress.',

@@ -91,6 +91,12 @@ void main() {
         find.text('KEEP THE TERRACE LOUD.\nKEEP IT SAFE.'),
         findsOneWidget,
       );
+      expect(
+        find.bySemanticsLabel(
+          'TERMS OF USE. The legal agreement for using Chants. READ TERMS',
+        ),
+        findsOneWidget,
+      );
       expect(find.text('AGREE AND CONTINUE'), findsOneWidget);
     });
 
@@ -182,6 +188,13 @@ void main() {
       expect(find.text('SIGN OUT'), findsOneWidget);
 
       expect(find.text('AGREE AND CONTINUE'), findsOneWidget);
+      final buttonRect = tester.getRect(
+        find.byKey(const ValueKey('policy-accept-button')),
+      );
+      expect(buttonRect.left, greaterThanOrEqualTo(0));
+      expect(buttonRect.top, greaterThanOrEqualTo(0));
+      expect(buttonRect.right, lessThanOrEqualTo(320));
+      expect(buttonRect.bottom, lessThanOrEqualTo(568));
       expect(tester.takeException(), isNull);
     });
   });

@@ -85,8 +85,10 @@ class _ChantAppState extends ConsumerState<ChantApp> {
               data: (user) => user != null
                   ? _SignedInGate(key: ValueKey(user.uid), uid: user.uid)
                   : const SignInScreen(),
-              loading: () =>
-                  const LaunchRevealScreen(animationDuration: Duration.zero),
+              loading: () => const LaunchRevealScreen(
+                animationDuration: Duration.zero,
+                showProgress: true,
+              ),
               error: (_, _) => const SignInScreen(),
             ),
     );
@@ -157,7 +159,10 @@ class _SignedInGateState extends ConsumerState<_SignedInGate> {
       );
     }
     if (!profileSnapshotAvailable) {
-      return const LaunchRevealScreen(animationDuration: Duration.zero);
+      return const LaunchRevealScreen(
+        animationDuration: Duration.zero,
+        showProgress: true,
+      );
     }
     if (!contactVerified) return EmailVerificationScreen(email: email);
     if (profile == null) {
@@ -204,7 +209,10 @@ class _SignedInGateState extends ConsumerState<_SignedInGate> {
         localState: state,
         deletionInput: deletionInput,
       ),
-      loading: () => const LaunchRevealScreen(animationDuration: Duration.zero),
+      loading: () => const LaunchRevealScreen(
+        animationDuration: Duration.zero,
+        showProgress: true,
+      ),
       error: (_, _) => AccountDeletionRecoveryScreen(
         statusCheckFailed: true,
         onRetry: () async {

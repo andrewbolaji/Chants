@@ -33,7 +33,8 @@ const assertNoUnapproved24HourPromise = copy => {
 test('all six public policy routes are complete and mutually reachable', () => {
   for (const [name, html] of Object.entries(routes)) {
     assert.match(html, /support@chantsfc\.com/);
-    assert.match(html, /Thunderriver Tech LLC/);
+    assert.match(html, /ThunderRiver Tech LLC/);
+    assert.doesNotMatch(html, /Thunderriver Tech LLC/);
     assert.match(html, new RegExp(correspondenceAddress));
     assert.match(html, /Effective 31 August 2026/);
     for (const destination of routeNames) {
@@ -72,9 +73,9 @@ test('public correspondence uses the approved business mailbox', () => {
   assert.match(dartPolicy, /kBusinessCorrespondenceAddress/);
   assert.match(dartPolicy, /5667 Treaschwig Rd #1014, Spring, TX 77373/);
   assert.match(dartPolicy, /United States/);
-  assert.match(routes.privacy, /Business correspondence can be sent to Thunderriver Tech LLC/);
+  assert.match(routes.privacy, /Business correspondence can be sent to ThunderRiver Tech LLC/);
   assert.match(routes.rights, /Email remains the fastest way to start a request/);
-  assert.match(routes.support, /Business correspondence can be sent to Thunderriver Tech LLC/);
+  assert.match(routes.support, /Business correspondence can be sent to ThunderRiver Tech LLC/);
 });
 
 test('the policy pack closes only the correspondence-address hold', () => {

@@ -25,7 +25,7 @@ The nine existing launch-guide tests pass after adding the nearby draft link. Fo
 
 ## Follow-up and recovery
 
-The draft records Thunderriver Tech LLC as the confirmed Chants operator and the United States, United Kingdom and Canada as the approved initial markets. This does not verify corporate/store records or clear those markets legally. Worldwide reach remains the later product direction. Personal reviewer availability is not represented as staffed 24/7 coverage. Legal applicability and a separately approved implementation scope for the gaps remain open. Any implementation must preserve durable deletion/retry authority and the existing age rule. No destructive work follows automatically from this document.
+The draft records ThunderRiver Tech LLC as the confirmed Chants operator and the United States, United Kingdom and Canada as the approved initial markets. This does not verify corporate/store records or clear those markets legally. Worldwide reach remains the later product direction. Personal reviewer availability is not represented as staffed 24/7 coverage. Legal applicability and a separately approved implementation scope for the gaps remain open. Any implementation must preserve durable deletion/retry authority and the existing age rule. No destructive work follows automatically from this document.
 
 Removing the draft and its guide/roadmap links would undo this local artifact without affecting a live service. The existing final-guide source and its prior staged changes remain intact.
 

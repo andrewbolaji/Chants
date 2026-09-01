@@ -8,10 +8,10 @@ This pack records the reviewed product decisions and points to the exact copy im
 
 | Topic | Decision |
 |---|---|
-| Operator | Thunderriver Tech LLC operates Chants. Andrew is the initial human operator. |
+| Operator | ThunderRiver Tech LLC operates Chants. Andrew is the initial human operator. |
 | Initial markets | United States, United Kingdom, and Canada after their launch gates pass. Worldwide remains a later direction, not current approval. |
 | Support | `support@chantsfc.com`, after inbound and branded outbound delivery are tested. |
-| Business correspondence | Thunderriver Tech LLC, 5667 Treaschwig Rd #1014, Spring, TX 77373, United States. This is the approved virtual business mailbox, not the Texas registered office. |
+| Business correspondence | ThunderRiver Tech LLC, 5667 Treaschwig Rd #1014, Spring, TX 77373, United States. This is the approved virtual business mailbox, not the Texas registered office. |
 | Moderation | Review daily and prioritize urgent safety concerns. Do not promise 24/7 coverage or instant action. |
 | Ordinary acknowledgement | Aim to acknowledge ordinary support and video-review requests within two business days. |
 | Account deletion | Aim to complete verified deletion within 30 calendar days, subject to an earlier legal deadline or an explained permitted delay. |
@@ -85,7 +85,7 @@ A legal hold needs a reason, restricted access, owner, review date, and release 
 
 ## Public address status
 
-Andrew confirmed on 1 September 2026 that the commercial mail receiving agency approved the notarized USPS Form 1583 for Thunderriver Tech LLC. Source uses the assigned address only as public business correspondence. Private identity documents, the completed Form 1583, account details, and the residential address stay outside Git.
+Andrew confirmed on 1 September 2026 that the commercial mail receiving agency approved the notarized USPS Form 1583 for ThunderRiver Tech LLC. Source uses the assigned address only as public business correspondence. Private identity documents, the completed Form 1583, account details, and the residential address stay outside Git.
 
 The mailbox is not represented as the Texas registered office, a staffed Chants location, or proof that Apple, Google, D&B, tax, licensing, or other provider records accept it. Those records must use their own verified requirements. Re-open the publication hold if the mailbox approval lapses or mail cannot be received.
 

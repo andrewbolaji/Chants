@@ -197,6 +197,7 @@ void main() {
     AuthRepository? authRepository,
     AccountDeletionService? accountDeletionService,
     _FakeSavedSongbookRepository? savedSongbookRepository,
+    Duration launchRevealDuration = Duration.zero,
   }) {
     final fakeProfileRepo = _FakeProfileRepository()
       ..makeStream = makeProfileStream;
@@ -226,7 +227,7 @@ void main() {
           fakeUser.uid,
         ).overrideWith((ref) => makeProfileStream()),
       ],
-      child: const ChantApp(launchRevealDuration: Duration.zero),
+      child: ChantApp(launchRevealDuration: launchRevealDuration),
     );
   }
 
@@ -239,6 +240,31 @@ void main() {
   }
 
   group('ChantApp signed-in gate', () {
+    testWidgets('timed launch reveal hands off to the resolved auth screen', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        wrap(
+          authStream: Stream.value(null),
+          makeProfileStream: () => const Stream.empty(),
+          launchRevealDuration: const Duration(milliseconds: 120),
+        ),
+      );
+
+      expect(find.byType(LaunchRevealScreen), findsOneWidget);
+      expect(find.byType(SignInScreen), findsNothing);
+
+      await tester.pump(const Duration(milliseconds: 119));
+      expect(find.byType(LaunchRevealScreen), findsOneWidget);
+
+      await tester.pump(const Duration(milliseconds: 1));
+      await tester.pump();
+
+      expect(find.byType(LaunchRevealScreen), findsNothing);
+      expect(find.byType(SignInScreen), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('signed out shows SignInScreen', (tester) async {
       await tester.pumpWidget(
         wrap(
@@ -268,6 +294,7 @@ void main() {
             .animationDuration,
         Duration.zero,
       );
+      expect(find.text('GETTING THINGS READY'), findsOneWidget);
       expect(find.byType(PolicyAcceptanceGateScreen), findsNothing);
       expect(find.byType(AppShell), findsNothing);
     });

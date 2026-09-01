@@ -58,6 +58,8 @@ test('root metadata identifies the real Chants product and canonical origin', ()
   assert.match(html, /name="twitter:card" content="summary_large_image"/);
   assert.match(html, /name="twitter:image" content="https:\/\/chantsfc\.com\/share\/og-default\.png"/);
   assert.match(html, /name="twitter:image:alt" content="Chants FC supporter holding a scarf"/);
+  assert.match(html, /Operated by ThunderRiver Tech LLC/);
+  assert.doesNotMatch(html, /Thunderriver Tech LLC/);
 });
 
 test('root explains Songbook, Chant Lab, Stage, and trust without collapsing their meaning', () => {
@@ -163,6 +165,8 @@ test('the page keeps accessible and responsive source controls', () => {
   assert.match(html, /aria-labelledby="trust-title"/);
   assert.match(html, /aria-labelledby="matchday-title"/);
   assert.match(css, /:focus-visible/);
+  assert.match(css, /outline: 3px solid #ffffff;/);
+  assert.match(css, /box-shadow: 0 0 0 7px #000000;/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
   assert.match(css, /@media \(max-width: 900px\)/);
   assert.match(css, /@media \(max-width: 580px\)/);
@@ -174,10 +178,9 @@ test('the page keeps accessible and responsive source controls', () => {
   assert.match(sharedLinkTargetRule[1], /min-height: 44px;/);
   assert.match(css, /url\("\/assets\/fonts\/Oswald-Bold\.ttf"\)/);
   assert.match(css, /url\("\/assets\/fonts\/Nunito-Variable\.ttf"\)/);
-  assert.match(css, /url\("\/assets\/fonts\/Anton-Regular\.ttf"\)/);
+  assert.doesNotMatch(css, /Anton-Regular\.ttf/);
   assert.doesNotMatch(css, /url\(["']?https?:\/\//i);
   for (const font of [
-    'Anton-Regular.ttf',
     'Nunito-Variable.ttf',
     'Oswald-Bold.ttf',
   ]) {
@@ -187,6 +190,26 @@ test('the page keeps accessible and responsive source controls', () => {
       `missing local font: ${font}`,
     );
   }
+});
+
+test('illustrations expose one useful label without leaking fake app structure', () => {
+  assert.match(
+    html,
+    /class="product-stage" role="img" aria-label="Illustration of the Chants Stage and Songbook screens"/,
+  );
+  assert.match(html, /class="phone primary-phone" aria-hidden="true"/);
+  assert.match(html, /class="product-panel songbook-panel" role="img"/);
+  assert.match(html, /class="product-panel lab-panel" role="img"/);
+  assert.match(html, /class="product-panel stage-panel" role="img"/);
+  assert.doesNotMatch(html, />For you</i);
+  assert.match(
+    html,
+    /class="app-tabs">\s*<span class="active">Feed<\/span><span>Clubs<\/span><span>Create<\/span><span>Songbook<\/span><span>You<\/span>/,
+  );
+  assert.match(css, /\.dark-eyebrow \{ color: #8a5f00; \}/);
+  assert.match(css, /\.lab-prompt \{[^}]*color: #6f6a5e;/);
+  assert.match(css, /\.lab-footer \{[^}]*color: #6f6a5e;/);
+  assert.match(css, /\.play-button \{[^}]*top: 28px;[^}]*right: 24px;/);
 });
 
 test('existing public route and media authority rewrites are unchanged', () => {

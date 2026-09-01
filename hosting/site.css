@@ -1,12 +1,4 @@
 @font-face {
-  font-family: "Anton";
-  src: url("/assets/fonts/Anton-Regular.ttf") format("truetype");
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-}
-
-@font-face {
   font-family: "Oswald";
   src: url("/assets/fonts/Oswald-Bold.ttf") format("truetype");
   font-style: normal;
@@ -97,8 +89,9 @@ button { font: inherit; }
 .skip-link:focus { transform: translateY(0); }
 
 :focus-visible {
-  outline: 3px solid var(--coral);
+  outline: 3px solid #ffffff;
   outline-offset: 4px;
+  box-shadow: 0 0 0 7px #000000;
 }
 
 .section-shell {
@@ -521,7 +514,7 @@ button { font: inherit; }
 .supporter-mark {
   position: absolute;
   top: 64px;
-  left: 50%;
+  left: 42%;
   width: 120px;
   height: 124px;
   transform: translateX(-50%);
@@ -564,18 +557,17 @@ button { font: inherit; }
 .play-button {
   position: absolute;
   z-index: 3;
-  top: 50%;
-  left: 50%;
+  top: 28px;
+  right: 24px;
   display: grid;
-  width: 54px;
-  height: 54px;
+  width: 50px;
+  height: 50px;
   place-items: center;
   padding-left: 4px;
   border: 1px solid rgba(255, 255, 255, 0.46);
   border-radius: 50%;
   background: rgba(8, 8, 6, 0.66);
   color: var(--headline);
-  transform: translate(-50%, -20%);
 }
 
 .performance-visual > p {
@@ -684,7 +676,7 @@ button { font: inherit; }
   color: var(--ink);
 }
 
-.dark-eyebrow { color: #946500; }
+.dark-eyebrow { color: #8a5f00; }
 
 .product-intro-grid {
   display: grid;
@@ -819,14 +811,14 @@ button { font: inherit; }
 }
 
 .lab-panel .panel-top { position: relative; color: #a83827; }
-.lab-prompt { margin-top: 70px; color: #8d8578; font-size: 0.62rem; font-weight: 900; letter-spacing: 0.08em; }
+.lab-prompt { margin-top: 70px; color: #6f6a5e; font-size: 0.62rem; font-weight: 900; letter-spacing: 0.08em; }
 .lab-answer { max-width: 450px; margin-top: 14px; color: var(--ink); font-size: clamp(1.7rem, 3vw, 3rem); font-weight: 800; letter-spacing: -0.05em; line-height: 1.05; }
 .lab-lines { display: grid; gap: 13px; margin-top: 42px; }
 .lab-lines i { display: block; height: 1px; background: var(--dark-line); }
 .lab-lines i:nth-child(2) { width: 88%; }
 .lab-lines i:nth-child(3) { width: 72%; }
 .lab-lines i:nth-child(4) { width: 55%; }
-.lab-footer { margin-top: auto; padding-top: 36px; color: #8d8578; }
+.lab-footer { margin-top: auto; padding-top: 36px; color: #6f6a5e; }
 .lab-footer b { color: #a83827; }
 
 .stage-panel {

@@ -64,7 +64,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.textContaining('5667 Treaschwig Rd #1014'), findsOneWidget);
-      expect(find.textContaining('Thunderriver Tech LLC'), findsOneWidget);
+      expect(find.textContaining('ThunderRiver Tech LLC'), findsOneWidget);
     },
   );
 

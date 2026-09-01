@@ -13,5 +13,5 @@ const String kCurrentPolicyVersion = 'v2';
 const String kPolicyEffectiveDate = '31 August 2026';
 const String kSupportEmail = 'support@chantsfc.com';
 const String kBusinessCorrespondenceAddress =
-    'Thunderriver Tech LLC, 5667 Treaschwig Rd #1014, Spring, TX 77373, '
+    'ThunderRiver Tech LLC, 5667 Treaschwig Rd #1014, Spring, TX 77373, '
     'United States';
