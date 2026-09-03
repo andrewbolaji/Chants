@@ -106,7 +106,7 @@ test('acceptance contract is v2 Terms and Community Rules, with Privacy separate
   }
   const gate = read('lib/presentation/auth/policy_acceptance_gate_screen.dart');
   assert.match(gate, /Terms and Community Rules/);
-  assert.match(gate, /Privacy Notice explains how/);
+  assert.match(gate, /Privacy Notice\. Explains how Chants handles information/);
   assert.match(gate, /not part of this agreement/);
   assert.match(gate, /AppRouter\.support/);
   assert.match(gate, /showDeleteAccountDialog/);
