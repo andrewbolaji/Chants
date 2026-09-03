@@ -24,6 +24,10 @@ jobs:
         run: node scripts/check-ios-startup.mjs
       - name: Test iOS startup contract checks
         run: node --test scripts/test-ios-startup-check.mjs
+      - name: Check store submission packet
+        run: node scripts/check-store-submission.mjs
+      - name: Test store submission packet checks
+        run: node --test scripts/test-store-submission.mjs
       - name: Check launch services contract
         run: node scripts/check-launch-services.mjs
       - name: Test launch services checks

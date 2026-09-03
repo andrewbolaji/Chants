@@ -1,16 +1,17 @@
 # Repository implementation rationale
 
-This document explains the current Chants repository through merged PR 29 at `c3a071c` plus the uncommitted V1 launch policy and deletion closure. It includes inherited systems, creator/authentication, Living Songbook, the completed live catalogue, operational preparation, and the current policy/deletion source. It is a reviewer map, not proof that the new source is independently reviewed, deployed, published, or release-ready. Decisions 026 and 027 own operational admission plus policy/deletion reasoning. `docs/changes/2026-08-31-v1-device-test-preparation.md` owns the local-only helper and private walkthrough guide; full configured-device verification remains open.
+This document explains the current Chants repository through the PR 34 exact green head `b952389e20b7c510f204f5cbbeb87af70b4c2574` plus the uncommitted V1 store submission presentation packet. It includes inherited systems, creator and authentication, Living Songbook, the completed live catalogue, operational preparation, policy and deletion, the Stage and Club Signal release presentation, and current store preparation. It is a reviewer map, not proof that the new packet is independently reviewed, merged, entered in either console, submitted, or released. Decisions 026 and 027 still own operational admission plus policy and deletion reasoning. `docs/changes/2026-09-03-v1-store-submission-presentation-packet.md` owns the current bounded store work.
 
 ## Document identity and completeness
 
 - **Current change:** `docs/CHANGE_SPEC.md`
-- **Completed change reasoning:** `docs/changes/2026-08-27-creator-platform-foundation.md`, `docs/changes/2026-08-28-pr17-post-review-takedown-integrity.md`, `docs/changes/2026-08-28-v1-launch-auth-onboarding-android.md`, `docs/changes/2026-08-28-post-auth-independent-review-corrections.md`, `docs/changes/2026-08-29-final-source-freeze-minor-closure.md`, and `docs/changes/2026-08-29-v1-launch-services-configuration.md`
+- **Current change reasoning:** `docs/changes/2026-09-03-v1-store-submission-presentation-packet.md`
+- **Earlier completed change reasoning:** the dated records under `docs/changes/`, including creator, launch authentication, policy, production preparation, iOS launch calibration, and the Stage and Club Signal release redesign
 - **Additional completed reasoning:** the Living Songbook correction, Premier League seed catalogue, live seed safety controls, and backend rollout readiness records under `docs/changes/` dated 2026-08-30
 - **Durable creator, identity, launch and operational decisions:** 017 through 027
 - **Execution evidence:** `docs/EXECUTION.md`
 - **Interface memory:** `docs/INTERFACE.md`
-- **Known missing evidence:** independent review and exact-head CI for the current closure; configured-device walk, including live catalogue and policy inspection; legal review; support-email receipt and branded reply; child-safety and retention rehearsal; remaining provider configuration; association and policy deployment; observed alert delivery; distribution signing; and release. The approved virtual business correspondence address is present in source but unpublished. Development-certificate setup is complete, with one valid local identity verified on 2026-08-30.
+- **Known missing evidence:** final local packet validation; independent review and exact-head CI for the current store block; merged release candidate; open-production walkthrough; live public-route and support readback; private reviewer access; exact distribution artifacts; final screenshot and Google feature-graphic acceptance; Apple App Privacy and Google Data safety entry; questionnaire-derived store ratings; console metadata readback; submission; and release. Review credentials remain private and outside Git.
 
 ## Repository coverage ledger
 
@@ -34,6 +35,7 @@ This document explains the current Chants repository through merged PR 29 at `c3
 | Operational admission and repair | Yes in current block | Exact endpoint classification, direct-write control, profile upload grant, deferred cleanup, private plan/apply and evidence validator; no production executor |
 | Runtime and local control preparation | Yes in bounded 2026-08-31 extension | Explicit 48-endpoint resource/runtime contract and local exact-state/version CAS command; no IAM/deployment/replay executor |
 | Launch policy and external deletion | Yes in current uncommitted block | Versioned Terms and Rules, separate Privacy, six no-login routes, authored-content deletion, exact media cleanup, and a private verified dispatch command; no publication or live execution |
+| Store submission presentation | Yes in current block | Canonical Apple and Google copy, SDK-aware privacy worksheet, five-scene platform manifests, validated icon sources, and false-readiness guards; no console or store mutation |
 
 Generated build outputs and installed dependency trees are excluded except when a tool result depends on them.
 
@@ -46,6 +48,18 @@ Chants has three related content roles:
 3. **Performances:** manually approved short creator videos attached to either chant type and ranked by performance reach.
 
 The roles share navigation and chant identity but not trust authority. A popular performance cannot make its chant canonical. A creator can still submit words without video. A matchgoer can still use the device-local Songbook without loading social state.
+
+## Critical path: present the real V1 to both stores
+
+`store/submission.json` is the machine-readable authority for app identity, market scope, public URLs, platform copy, review instructions, and readiness. `docs/STORE_SUBMISSION_PACKET.md` is its copy-paste owner view. The packet keeps Sports as the main category and uses Social Networking only as Apple's secondary category because community behavior serves the football songbook rather than replacing it.
+
+`docs/STORE_PRIVACY_WORKSHEET.md` maps current source and included Firebase SDKs, not only user-entered fields. It covers account identity, public creator and chant content, comments and replies, optional 30-second video with recorded voice, interaction records, crash and diagnostic data, installation or attestation identifiers, IP metadata, and deletion. Crash linkage, IP-derived location treatment, and Firebase processor status remain exact-binary console checks. Dormant provider source stays conditional until the exact release enables it.
+
+`store/screenshots/manifest.json` defines five different product jobs for iOS and Android: Stage, Clubs, chant reading, Create, and Saved Matchday Songbook. Each has exact output paths and visible-truth requirements. `store/screenshots/frame.html` adds only a restrained headline, deck, sequence number, and Chants FC line around an exact release-candidate capture; a missing source stays visibly unpublishable. Final captures cannot include debug UI, another app, personal account data, maintenance or error states, fabricated engagement, club or player rights-sensitive assets, or a disabled feature. The old 1320 by 2663 development captures are intentionally rejected for the 1320 by 2868 iPhone set.
+
+`store/assets/google-feature-graphic.png` is a 1024 by 500 RGB asset rendered from a reproducible local HTML source. It uses the same Stage and Club Signal visual language without unsupported affiliation, ratings, awards, or store badges. Andrew granted visual acceptance for this exact asset on 3 September 2026; any later source or output change invalidates that acceptance.
+
+`scripts/check-store-submission.mjs` enforces field limits, identity, the three-market boundary, the unchanged 17+ account rule, exact HTTPS trust routes, readiness-state coherence, scene inventory, PNG size and alpha, both icon sources, and the feature graphic when present. `scripts/test-store-submission.mjs` proves the valid prepared state and known-bad mutations. The status cannot advance from `prepared_not_submitted` to `ready_for_submission` while any required merged-source, production, URL, support, reviewer, distribution, screenshot, feature-graphic, privacy, rating, or console gate is false.
 
 ## Critical path: authentication to product shell
 
@@ -263,6 +277,7 @@ The launch-services block provides bounded staged-object cleanup and the privacy
 
 | Command or probe | Result |
 |---|---|
+| Store packet validator and focused tests | PASS locally in honest `prepared_not_submitted` state: field limits, identity, markets, 17+ rule, URLs, readiness, five-scene manifests, screenshot dimensions and alpha, stale development captures, 1024 App Store source, derived 512 Google Play icon, 1024 by 500 feature graphic, and two-platform frame contract; eleven focused tests pass |
 | Current launch-policy and deletion Functions verification | PASS locally: production TypeScript build, all 230 locally runnable tests, and all 24 dedicated Firestore-emulator transaction cases, including the maximum 200-performance and 200-draft deletion pages |
 | Current launch-policy and deletion Flutter verification | PASS: all 519 tests, including the actual signed-out six-document journey, stale-gate deletion and sign-out, policy documents at 320 by 568 and 1.8x text, and signed-out visibility of the approved business mailbox; `flutter analyze lib test` reports no issues |
 | Current policy, launch-guide, seed, and rules verification | PASS locally: 26 focused Node tests, 74 seed tests, launch-services checks, native-source contract, structural memory check, rules TypeScript, and all 174 Java-backed Firestore and Storage assertions, including exact stale-`v1` denial. The first rules run exposed stale `v1` Storage and feature-handler gates; shared `v2` authority and conformance coverage remain in source. The Android SDK is absent locally |
@@ -312,11 +327,12 @@ The subsequently approved source preparation is implemented but uncommitted in `
 
 | Record | Current meaning |
 |---|---|
-| `docs/CHANGE_SPEC.md` | Approved V1 launch policy and deletion closure; publication and production rollout remain separate approvals |
-| Six current change records dated 2026-08-27 through 2026-08-29 | Creator implementation, takedown correction, launch authentication extension, post-auth correction, final minor closure, and V1 launch services |
+| `docs/CHANGE_SPEC.md` | Approved V1 store submission presentation packet; console entry, submission, release, and all external mutations remain separate |
+| `docs/changes/2026-09-03-v1-store-submission-presentation-packet.md` | Current bounded reasoning, known-bad cases, local evidence, and remaining store gates |
+| Earlier dated records under `docs/changes/` | Historical creator, launch, policy, production, iOS, interface, review, and correction decisions |
 | Decisions 017 through 027 | Shell, creator, performance, public, social, safety, source eligibility, verified identity, staged launch integrity, Living Songbook, operational admission, and policy/deletion closure |
 | `docs/INTERFACE.md` | Current launch, Stage, creator, conversation, moderation, and inherited interaction contract |
-| `docs/ROADMAP.md` | Feature source and all 20 production clubs are exact; current policy/deletion source awaits review and packaging; device, legal, provider, publication, deployment, and release evidence remain |
+| `docs/ROADMAP.md` | Feature source and all 20 production clubs are exact; the store packet is prepared; live URL, support, device, legal, provider, distribution, console, submission, and release evidence remain |
 | `ENGINEERING_OVERVIEW.md` | Reviewer-oriented current code map |
 
 ## Known compromises and uncertainty

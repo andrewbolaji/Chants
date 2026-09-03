@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "captureSource": "exact submitted release candidate",
+  "rules": {
+    "iosTarget": {
+      "set": "iPhone 6.9-inch portrait",
+      "width": 1320,
+      "height": 2868,
+      "format": "png",
+      "alphaAllowed": false
+    },
+    "androidTarget": {
+      "width": 1080,
+      "height": 1920,
+      "format": "png",
+      "alphaAllowed": false
+    }
+  },
+  "scenes": [
+    {
+      "id": "01-stage",
+      "headline": "The crowd starts here.",
+      "purpose": "Lead with the performance-first supporter feed and real engagement context.",
+      "mustShow": ["one approved visible performance", "creator handle", "chant and subject", "written trust label", "real non-invented counts", "five labelled destinations"],
+      "iosPath": "store/screenshots/ios/01-stage.png",
+      "androidPath": "store/screenshots/android/01-stage.png",
+      "iosStatus": "pending_capture",
+      "androidStatus": "pending_capture"
+    },
+    {
+      "id": "02-clubs",
+      "headline": "Find your club's songs.",
+      "purpose": "Show the calm Club Signal directory and Premier League scope.",
+      "mustShow": ["Premier League heading", "search or browse affordance", "club-neutral source-owned marks only", "no unsupported crest or partnership"],
+      "iosPath": "store/screenshots/ios/02-clubs.png",
+      "androidPath": "store/screenshots/android/02-clubs.png",
+      "iosStatus": "pending_capture",
+      "androidStatus": "pending_capture"
+    },
+    {
+      "id": "03-chant",
+      "headline": "Know the words by kickoff.",
+      "purpose": "Show a readable chant detail with source and trust context.",
+      "mustShow": ["complete readable original or cleared lyric sample", "Terrace Proven or Chant Lab label", "team or player context", "save action"],
+      "iosPath": "store/screenshots/ios/03-chant.png",
+      "androidPath": "store/screenshots/android/03-chant.png",
+      "iosStatus": "pending_capture",
+      "androidStatus": "pending_capture"
+    },
+    {
+      "id": "04-create",
+      "headline": "Start with the words.",
+      "purpose": "Show the honest creation choice without implying publication or verification.",
+      "mustShow": ["Already sung and I made this choices", "optional evidence wording", "no unsubmitted personal text", "no keyboard or permission sheet"],
+      "iosPath": "store/screenshots/ios/04-create.png",
+      "androidPath": "store/screenshots/android/04-create.png",
+      "iosStatus": "pending_capture",
+      "androidStatus": "pending_capture"
+    },
+    {
+      "id": "05-songbook",
+      "headline": "No signal. Still singing.",
+      "purpose": "Close on the device-local Matchday Songbook and its practical offline value.",
+      "mustShow": ["at least one saved club or chant", "refresh or saved-date truth", "device-local wording", "no claim of cloud sync"],
+      "iosPath": "store/screenshots/ios/05-songbook.png",
+      "androidPath": "store/screenshots/android/05-songbook.png",
+      "iosStatus": "pending_capture",
+      "androidStatus": "pending_capture"
+    }
+  ]
+}

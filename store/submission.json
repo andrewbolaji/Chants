@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "status": "prepared_not_submitted",
+  "sourceBaseline": "b952389e20b7c510f204f5cbbeb87af70b4c2574",
+  "identity": {
+    "productName": "Chants FC",
+    "installedDisplayName": "Chants",
+    "operator": "ThunderRiver Tech LLC",
+    "supportEmail": "support@chantsfc.com",
+    "iosBundleId": "com.chants.chants",
+    "androidPackageName": "com.chants.chants",
+    "versionName": "1.0.0",
+    "versionCode": 1,
+    "releaseMarkets": [
+      "United States",
+      "United Kingdom",
+      "Canada"
+    ],
+    "accountMinimumAge": "17+",
+    "storeRatingStatus": "Answer each store questionnaire from the exact release behavior. This packet does not change or pre-decide a store rating."
+  },
+  "urls": {
+    "marketing": "https://chantsfc.com/",
+    "support": "https://chantsfc.com/support",
+    "privacy": "https://chantsfc.com/privacy",
+    "terms": "https://chantsfc.com/terms",
+    "community": "https://chantsfc.com/community",
+    "rights": "https://chantsfc.com/rights",
+    "accountDeletion": "https://chantsfc.com/delete-account"
+  },
+  "apple": {
+    "locale": "en-GB",
+    "name": "Chants FC",
+    "subtitle": "Football chants, together",
+    "promotionalText": "Learn your club's songs, save them for matchday, and take the Stage with original 30-second performances. Follow creators and help the next chant travel.",
+    "keywords": "football,soccer,songbook,supporters,terrace,matchday,fan songs,stadium,lyrics",
+    "primaryCategory": "Sports",
+    "secondaryCategory": "Social Networking",
+    "description": "Football sounds better together.\n\nChants FC brings the supporter songbook and the workshop for what gets sung next into one place.\n\nLEARN THE SONGBOOK\nBrowse Premier League clubs and players, read clear chant lyrics, see which songs are Terrace Proven, and keep community ideas separate in Chant Lab.\n\nTAKE IT TO MATCHDAY\nSave one chant or a club's Songbook to your device before you leave. Open those saved lyrics again when stadium connectivity lets you down.\n\nBUILD WHAT GETS SUNG NEXT\nSubmit a chant as something already sung or something you made. Evidence is optional when you post, but only current real-world evidence and operator review can make a chant Terrace Proven.\n\nSTEP ONTO THE STAGE\nRecord or upload a video up to 30 seconds. New performances stay private until review. Watch supporter performances, like, comment, share, follow creators, report abuse, and block accounts.\n\nKEEP THE SONGBOOK LIVING\nSuggest a correction, variation, or better evidence when a chant is wrong or dated. An operator reviews suggestions before any catalogue change.\n\nChants FC is an independent supporter service. It is not affiliated with or endorsed by any club, league, player, or music rightsholder. You must be at least 17 to create an account.",
+    "reviewNotes": "Chants FC is a supporter songbook and moderated creator platform. Account creation and most interactions require sign-in. Use the dedicated review account supplied privately in App Store Connect. The account must be verified, 17+ confirmed, on current policy v2, and able to browse seeded Premier League content. Performance uploads are limited to 30 seconds and remain private until operator approval. The reviewer can browse Stage, Clubs, Songbook, and You; open chant lyrics; save a local Matchday Songbook; submit feedback; report or block supported content; and request account deletion from You. Public deletion instructions are at https://chantsfc.com/delete-account. Chants is independent and is not affiliated with clubs, leagues, players, or music rightsholders. If production is in maintenance, do not submit the build because review access will fail honestly.",
+    "screenshotSet": "iphone_6_9_portrait"
+  },
+  "google": {
+    "locale": "en-GB",
+    "title": "Chants FC",
+    "shortDescription": "Learn football chants, save a matchday songbook, and share your own take.",
+    "category": "Sports",
+    "featureGraphicPath": "store/assets/google-feature-graphic.png",
+    "fullDescription": "Football sounds better together.\n\nChants FC brings the supporter songbook and the workshop for what gets sung next into one place.\n\nLearn the Songbook\nBrowse Premier League clubs and players, read clear chant lyrics, see which songs are Terrace Proven, and keep community ideas separate in Chant Lab.\n\nTake it to matchday\nSave one chant or a club's Songbook to your device before you leave. Open those saved lyrics again when stadium connectivity lets you down.\n\nBuild what gets sung next\nSubmit a chant as something already sung or something you made. Evidence is optional when you post, but only current real-world evidence and operator review can make a chant Terrace Proven.\n\nStep onto the Stage\nRecord or upload a video up to 30 seconds. New performances stay private until review. Watch supporter performances, like, comment, share, follow creators, report abuse, and block accounts.\n\nKeep the Songbook living\nSuggest a correction, variation, or better evidence when a chant is wrong or dated. An operator reviews suggestions before any catalogue change.\n\nChants FC is an independent supporter service. It is not affiliated with or endorsed by any club, league, player, or music rightsholder. You must be at least 17 to create an account.",
+    "appAccessInstructions": "Select that some functionality is restricted. Enter only the dedicated review account credentials in the private Play Console. The account must be verified, 17+ confirmed, on current policy v2, and able to browse seeded Premier League content. Start on Stage, then use Clubs, Songbook, Create, and You. Performance uploads stay private until operator approval. Account deletion is under You and public deletion instructions are at https://chantsfc.com/delete-account. Do not submit while production is in maintenance."
+  },
+  "readiness": {
+    "releaseCandidateMerged": false,
+    "productionOpenAndWalked": false,
+    "publicUrlsVerified": false,
+    "supportDeliveryVerified": false,
+    "reviewAccountVerified": false,
+    "iosDistributionArchiveVerified": false,
+    "androidReleaseBundleVerified": false,
+    "iosScreenshotsCaptured": false,
+    "androidScreenshotsCaptured": false,
+    "googleFeatureGraphicFinal": true,
+    "applePrivacyEntered": false,
+    "googleDataSafetyEntered": false,
+    "storeRatingQuestionnairesCompleted": false,
+    "consoleMetadataEntered": false,
+    "submitted": false
+  }
+}
