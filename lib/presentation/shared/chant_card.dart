@@ -12,6 +12,7 @@ class ChantCard extends StatelessWidget {
   final bool rising;
   final bool actionsEnabled;
   final bool homePreview;
+  final bool signalAppearance;
   final EdgeInsetsGeometry? margin;
   final Color risingColor;
   final VoidCallback onTap;
@@ -24,6 +25,7 @@ class ChantCard extends StatelessWidget {
     this.rising = false,
     this.actionsEnabled = true,
     this.homePreview = false,
+    this.signalAppearance = false,
     this.margin,
     this.risingColor = AppColors.success,
     required this.onTap,
@@ -42,17 +44,41 @@ class ChantCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final who = _whoLine;
+    final cardColor = signalAppearance
+        ? AppColors.signalPaper
+        : AppColors.surfaceRaised;
+    final borderColor = signalAppearance
+        ? AppColors.signalRule
+        : AppColors.outline;
+    final titleColor = signalAppearance
+        ? AppColors.signalInk
+        : AppColors.textHeadline;
+    final bodyColor = signalAppearance
+        ? AppColors.signalTextMuted
+        : AppColors.textBody;
+    final metadataColor = signalAppearance
+        ? AppColors.signalForestMuted
+        : AppColors.textMuted;
+    final accentColor = signalAppearance
+        ? AppColors.signalGold
+        : AppColors.gold;
 
     final subjectLabel = chant.subjectTag.toUpperCase();
 
     return Card(
+      color: cardColor,
       margin:
           margin ??
           const EdgeInsets.symmetric(
             horizontal: Spacing.sm,
             vertical: Spacing.xs,
           ),
-      shape: homePreview
+      shape: signalAppearance
+          ? RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(Radii.sm),
+              side: BorderSide(color: borderColor, width: 0.5),
+            )
+          : homePreview
           ? RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(Radii.lg),
               side: BorderSide(
@@ -63,7 +89,9 @@ class ChantCard extends StatelessWidget {
             )
           : null,
       child: InkWell(
-        borderRadius: BorderRadius.circular(Radii.lg),
+        borderRadius: BorderRadius.circular(
+          signalAppearance ? Radii.sm : Radii.lg,
+        ),
         onTap: onTap,
         child: Padding(
           padding: EdgeInsets.symmetric(
@@ -85,7 +113,12 @@ class ChantCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: Spacing.xs),
-                  Flexible(child: ChantProvenanceLabel(chant: chant)),
+                  Flexible(
+                    child: ChantProvenanceLabel(
+                      chant: chant,
+                      signalAppearance: signalAppearance,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: Spacing.xs),
@@ -94,10 +127,13 @@ class ChantCard extends StatelessWidget {
               Text(
                 chant.title.toUpperCase(),
                 style: textTheme.titleMedium?.copyWith(
+                  color: titleColor,
                   fontSize: homePreview ? 20 : null,
                   shadows: [
                     Shadow(
-                      color: AppColors.gold.withValues(alpha: 0.30),
+                      color: accentColor.withValues(
+                        alpha: signalAppearance ? 0.16 : 0.30,
+                      ),
                       offset: const Offset(1, 1),
                       blurRadius: 0,
                     ),
@@ -111,10 +147,10 @@ class ChantCard extends StatelessWidget {
               if (who.isNotEmpty)
                 Text(
                   who,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'SpaceMono',
                     fontSize: 12,
-                    color: AppColors.gold,
+                    color: accentColor,
                     letterSpacing: 0.3,
                   ),
                   maxLines: 1,
@@ -130,12 +166,12 @@ class ChantCard extends StatelessWidget {
                 style: textTheme.bodyMedium?.copyWith(
                   fontFamily: 'Fraunces',
                   fontVariations: const [FontVariation('wght', 400)],
-                  color: AppColors.textBody,
+                  color: bodyColor,
                   fontSize: 14,
                 ),
               ),
               if (homePreview)
-                const Divider(height: Spacing.lg, color: AppColors.outline)
+                Divider(height: Spacing.lg, color: borderColor)
               else
                 const SizedBox(height: Spacing.sm),
 
@@ -149,10 +185,10 @@ class ChantCard extends StatelessWidget {
                       children: [
                         Text(
                           subjectLabel,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'SpaceMono',
                             fontSize: 9,
-                            color: AppColors.textMuted,
+                            color: metadataColor,
                             letterSpacing: 0.8,
                             fontWeight: FontWeight.w700,
                           ),
@@ -175,15 +211,15 @@ class ChantCard extends StatelessWidget {
                     Icon(
                       Icons.chat_bubble_outline,
                       size: 14,
-                      color: AppColors.textMuted,
+                      color: metadataColor,
                     ),
                     const SizedBox(width: Spacing.xs),
                     Text(
                       '${chant.commentCount}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'SpaceMono',
                         fontSize: 11,
-                        color: AppColors.textMuted,
+                        color: metadataColor,
                       ),
                     ),
                     const SizedBox(width: Spacing.md),

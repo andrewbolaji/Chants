@@ -8,6 +8,7 @@ class ChantCallUpCard extends StatelessWidget {
   final bool isSignedIn;
   final VoidCallback onWrite;
   final VoidCallback? onNextPlayer;
+  final bool signalAppearance;
 
   const ChantCallUpCard({
     super.key,
@@ -16,19 +17,34 @@ class ChantCallUpCard extends StatelessWidget {
     required this.isSignedIn,
     required this.onWrite,
     this.onNextPlayer,
+    this.signalAppearance = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
+    final panelColor = signalAppearance
+        ? AppColors.signalPaper
+        : AppColors.surface;
+    final borderColor = signalAppearance
+        ? AppColors.signalRule
+        : AppColors.chantLab;
+    final headlineColor = signalAppearance
+        ? AppColors.signalInk
+        : AppColors.textHeadline;
+    final bodyColor = signalAppearance
+        ? AppColors.signalTextMuted
+        : AppColors.textMuted;
     return Padding(
       padding: const EdgeInsets.all(Spacing.lg),
       child: Container(
         padding: const EdgeInsets.all(Spacing.lg),
         decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(Radii.lg),
-          border: Border.all(color: AppColors.chantLab),
+          color: panelColor,
+          borderRadius: BorderRadius.circular(
+            signalAppearance ? Radii.sm : Radii.lg,
+          ),
+          border: Border.all(color: borderColor),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -50,22 +66,32 @@ class ChantCallUpCard extends StatelessWidget {
             const SizedBox(height: Spacing.md),
             Semantics(
               header: true,
-              child: Text(playerName.toUpperCase(), style: text.headlineMedium),
+              child: Text(
+                playerName.toUpperCase(),
+                style: text.headlineMedium?.copyWith(color: headlineColor),
+              ),
             ),
             const SizedBox(height: Spacing.sm),
-            Text("Who's got a song for them?", style: text.titleMedium),
+            Text(
+              "Who's got a song for them?",
+              style: text.titleMedium?.copyWith(color: headlineColor),
+            ),
             const SizedBox(height: Spacing.xs),
             Text(
               'No chant for them at $clubName in Chants yet. Funny or full of heart, '
               'start with the words.',
-              style: text.bodyMedium,
+              style: text.bodyMedium?.copyWith(color: bodyColor),
             ),
             const SizedBox(height: Spacing.lg),
             FilledButton.icon(
               key: const Key('call-up-write'),
               style: FilledButton.styleFrom(
-                backgroundColor: AppColors.chantLab,
-                foregroundColor: AppColors.goldOnDark,
+                backgroundColor: signalAppearance
+                    ? AppColors.signalForest
+                    : AppColors.chantLab,
+                foregroundColor: signalAppearance
+                    ? AppColors.signalPaper
+                    : AppColors.goldOnDark,
               ),
               onPressed: onWrite,
               icon: const Icon(Icons.edit_outlined, size: 20),
@@ -74,6 +100,11 @@ class ChantCallUpCard extends StatelessWidget {
             if (onNextPlayer != null)
               TextButton(
                 key: const Key('call-up-next'),
+                style: TextButton.styleFrom(
+                  foregroundColor: signalAppearance
+                      ? AppColors.signalForest
+                      : AppColors.gold,
+                ),
                 onPressed: () {
                   onNextPlayer!();
                   // A shorter next name must not leave the new card above

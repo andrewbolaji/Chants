@@ -166,7 +166,36 @@ class _ChantStageScreenState extends ConsumerState<ChantStageScreen> {
         .toList(growable: false);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('CHANT STAGE'),
+        backgroundColor: AppColors.stageChrome,
+        toolbarHeight: 68,
+        titleSpacing: Spacing.lg,
+        title: const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'CHANTS FC',
+              style: TextStyle(
+                fontFamily: 'SpaceMono',
+                fontSize: 9,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.4,
+                color: AppColors.gold,
+              ),
+            ),
+            SizedBox(height: 2),
+            Text(
+              'CHANT STAGE',
+              style: TextStyle(
+                fontFamily: 'Anton',
+                fontSize: 24,
+                height: 1,
+                letterSpacing: 0.3,
+                color: AppColors.textHeadline,
+              ),
+            ),
+          ],
+        ),
         actions: [
           IconButton(
             tooltip: 'Activity',
@@ -180,23 +209,24 @@ class _ChantStageScreenState extends ConsumerState<ChantStageScreen> {
         key: PageStorageKey<String>('chant-stage-${_filter.name}'),
         slivers: [
           SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(
-                Spacing.lg,
-                0,
-                Spacing.lg,
-                Spacing.md,
+            child: DecoratedBox(
+              decoration: const BoxDecoration(
+                color: AppColors.stageChrome,
+                border: Border(
+                  bottom: BorderSide(color: AppColors.stageRule, width: 0.5),
+                ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Where terrace ideas get a first voice.',
-                    style: TextStyle(color: AppColors.textMuted),
-                  ),
-                  const SizedBox(height: Spacing.lg),
-                  _FeedFilters(selected: _filter, onSelected: _selectFilter),
-                ],
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  Spacing.lg,
+                  0,
+                  0,
+                  Spacing.sm,
+                ),
+                child: _FeedFilters(
+                  selected: _filter,
+                  onSelected: _selectFilter,
+                ),
               ),
             ),
           ),
@@ -249,15 +279,10 @@ class _ChantStageScreenState extends ConsumerState<ChantStageScreen> {
             )
           else ...[
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(
-                Spacing.lg,
-                Spacing.sm,
-                Spacing.lg,
-                Spacing.xl,
-              ),
+              padding: const EdgeInsets.fromLTRB(0, 0, 0, Spacing.xl),
               sliver: SliverList.separated(
                 itemCount: visiblePerformances.length,
-                separatorBuilder: (_, _) => const SizedBox(height: Spacing.xl),
+                separatorBuilder: (_, _) => const SizedBox(height: Spacing.sm),
                 itemBuilder: (context, index) => PerformanceCard(
                   key: ValueKey<String>(
                     'performance-card-${visiblePerformances[index].id}',
@@ -318,34 +343,49 @@ class _FeedFilters extends StatelessWidget {
       (PerformanceFeedFilter.following, 'FOLLOWING'),
     ];
     return Semantics(
-      label: 'Performance feed filter',
+      label: 'Performance Stage filter',
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
           children: [
             for (final item in items)
-              Padding(
-                padding: const EdgeInsets.only(right: Spacing.sm),
-                child: ChoiceChip(
+              Semantics(
+                selected: selected == item.$1,
+                button: true,
+                child: InkWell(
                   key: ValueKey<String>('stage-filter-${item.$1.name}'),
-                  showCheckmark: false,
-                  selectedColor: AppColors.gold,
-                  backgroundColor: AppColors.surface,
-                  side: BorderSide.none,
-                  labelStyle: TextStyle(
-                    fontFamily: 'SpaceMono',
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: selected == item.$1
-                        ? AppColors.goldOnDark
-                        : AppColors.textMuted,
+                  onTap: () => onSelected(item.$1),
+                  child: Container(
+                    constraints: BoxConstraints(
+                      minWidth: item.$1 == PerformanceFeedFilter.following
+                          ? 104
+                          : 78,
+                      minHeight: 48,
+                    ),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          color: selected == item.$1
+                              ? AppColors.gold
+                              : Colors.transparent,
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                    child: Text(
+                      item.$2,
+                      style: TextStyle(
+                        fontFamily: 'SpaceMono',
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.7,
+                        color: selected == item.$1
+                            ? AppColors.textHeadline
+                            : AppColors.textMuted,
+                      ),
+                    ),
                   ),
-                  label: SizedBox(
-                    width: item.$1 == PerformanceFeedFilter.following ? 82 : 66,
-                    child: Text(item.$2, textAlign: TextAlign.center),
-                  ),
-                  selected: selected == item.$1,
-                  onSelected: (_) => onSelected(item.$1),
                 ),
               ),
           ],
@@ -732,175 +772,271 @@ class _PerformanceCardState extends ConsumerState<PerformanceCard> {
       container: true,
       label:
           '${performance.creatorDisplayName} performs ${performance.chantTitle} for $subject',
-      child: Card(
-        margin: EdgeInsets.zero,
-        clipBehavior: Clip.antiAlias,
+      child: ColoredBox(
         color: AppColors.surface,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.all(Spacing.md),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Semantics(
-                      button: true,
-                      label:
-                          'Open @${performance.creatorHandle} creator profile',
-                      child: InkWell(
-                        onTap: _openCreator,
-                        borderRadius: BorderRadius.circular(Radii.md),
-                        child: Row(
-                          children: [
-                            CircleAvatar(
-                              radius: 20,
-                              backgroundColor: AppColors.chantLab,
-                              foregroundColor: AppColors.textHeadline,
-                              child: Text(
-                                performance.creatorDisplayName.trim().isEmpty
-                                    ? '?'
-                                    : performance.creatorDisplayName
-                                          .trim()[0]
-                                          .toUpperCase(),
-                              ),
-                            ),
-                            const SizedBox(width: Spacing.md),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    performance.creatorDisplayName,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w700,
+            DecoratedBox(
+              decoration: const BoxDecoration(
+                color: AppColors.stagePanel,
+                border: Border(
+                  top: BorderSide(color: AppColors.stageRule, width: 0.5),
+                  bottom: BorderSide(color: AppColors.stageRule, width: 0.5),
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  Spacing.lg,
+                  Spacing.sm,
+                  Spacing.sm,
+                  Spacing.sm,
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Semantics(
+                        button: true,
+                        label:
+                            'Open @${performance.creatorHandle} creator profile',
+                        child: InkWell(
+                          onTap: _openCreator,
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(minHeight: 48),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 38,
+                                  height: 38,
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.surfaceRaised,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: AppColors.gold,
+                                      width: 1,
                                     ),
                                   ),
-                                  Text(
-                                    '@${performance.creatorHandle}',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
+                                  child: Text(
+                                    performance.creatorDisplayName
+                                            .trim()
+                                            .isEmpty
+                                        ? '?'
+                                        : performance.creatorDisplayName
+                                              .trim()[0]
+                                              .toUpperCase(),
                                     style: const TextStyle(
                                       fontFamily: 'SpaceMono',
-                                      fontSize: 10,
-                                      color: AppColors.textMuted,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.textHeadline,
                                     ),
                                   ),
-                                ],
-                              ),
+                                ),
+                                const SizedBox(width: Spacing.md),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        performance.creatorDisplayName,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.textHeadline,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 1),
+                                      Text(
+                                        '@${performance.creatorHandle}',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontFamily: 'SpaceMono',
+                                          fontSize: 9,
+                                          color: AppColors.textMuted,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: Spacing.sm),
-                  PopupMenuButton<String>(
-                    tooltip: 'Performance actions',
-                    onSelected: (value) {
-                      if (value == 'block-creator') {
-                        _blockCreator();
-                      } else if (value == 'report-performance') {
-                        _reportPerformance();
-                      } else if (value == 'report-creator') {
-                        _reportCreator();
-                      }
-                    },
-                    itemBuilder: (_) => [
-                      if (viewer != null && viewer.uid != performance.creatorId)
+                    const SizedBox(width: Spacing.sm),
+                    PopupMenuButton<String>(
+                      tooltip: 'Performance actions',
+                      onSelected: (value) {
+                        if (value == 'block-creator') {
+                          _blockCreator();
+                        } else if (value == 'report-performance') {
+                          _reportPerformance();
+                        } else if (value == 'report-creator') {
+                          _reportCreator();
+                        }
+                      },
+                      itemBuilder: (_) => [
+                        if (viewer != null &&
+                            viewer.uid != performance.creatorId)
+                          const PopupMenuItem(
+                            value: 'block-creator',
+                            child: Text('Block creator'),
+                          ),
                         const PopupMenuItem(
-                          value: 'block-creator',
-                          child: Text('Block creator'),
+                          value: 'report-performance',
+                          child: Text('Report performance'),
                         ),
-                      const PopupMenuItem(
-                        value: 'report-performance',
-                        child: Text('Report performance'),
-                      ),
-                      const PopupMenuItem(
-                        value: 'report-creator',
-                        child: Text('Report creator'),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            if (widget.stageLeader && performance.weeklyUniqueSharerCount > 0)
-              const Padding(
-                padding: EdgeInsets.fromLTRB(
-                  Spacing.md,
-                  0,
-                  Spacing.md,
-                  Spacing.md,
-                ),
-                child: _TrustPill(
-                  label: '#1 MOST SHARED',
-                  color: AppColors.chantLab,
-                ),
-              ),
-            AspectRatio(aspectRatio: 4 / 5, child: media),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                Spacing.lg,
-                Spacing.lg,
-                Spacing.lg,
-                Spacing.xl,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Wrap(
-                    spacing: Spacing.sm,
-                    runSpacing: Spacing.sm,
-                    children: [
-                      _TrustPill(
-                        label: performance.isTerraceProven
-                            ? 'TERRACE PROVEN'
-                            : 'CHANT LAB',
-                        color: performance.isTerraceProven
-                            ? AppColors.gold
-                            : AppColors.chantLab,
-                      ),
-                      _TrustPill(
-                        label: performance.playerName == null
-                            ? performance.teamName.toUpperCase()
-                            : performance.playerName!.toUpperCase(),
-                        color: AppColors.textMuted,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: Spacing.md),
-                  Text(
-                    performance.chantTitle.toUpperCase(),
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                  if (performance.caption.isNotEmpty) ...[
-                    const SizedBox(height: Spacing.sm),
-                    Text(
-                      performance.caption,
-                      style: const TextStyle(color: AppColors.textBody),
+                        const PopupMenuItem(
+                          value: 'report-creator',
+                          child: Text('Report creator'),
+                        ),
+                      ],
                     ),
                   ],
-                  const SizedBox(height: Spacing.lg),
-                  _PerformanceMetrics(
-                    performance: performance,
-                    liked: _liked,
-                    likeBusy: _likeBusy,
-                    onLike: _toggleLike,
-                    onComments: _openComments,
-                    shareKey: _shareKey,
-                    shareBusy: _shareBusy,
-                    onShare: _share,
+                ),
+              ),
+            ),
+            Stack(
+              children: [
+                AspectRatio(aspectRatio: 4 / 5, child: media),
+                if (widget.stageLeader &&
+                    performance.weeklyUniqueSharerCount > 0)
+                  const Positioned(
+                    left: Spacing.lg,
+                    top: Spacing.lg,
+                    child: _BroadcastLabel(
+                      text: '#1 MOST SHARED',
+                      icon: Icons.trending_up,
+                    ),
                   ),
-                  const SizedBox(height: Spacing.md),
-                  TextButton.icon(
-                    onPressed: _openLyrics,
-                    icon: const Icon(Icons.article_outlined),
-                    label: const Text('OPEN CHANT & LYRICS'),
-                  ),
-                ],
+              ],
+            ),
+            DecoratedBox(
+              decoration: const BoxDecoration(
+                color: AppColors.stagePanel,
+                border: Border(
+                  top: BorderSide(color: AppColors.stageRule, width: 0.5),
+                  bottom: BorderSide(color: AppColors.stageRule, width: 0.5),
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  Spacing.lg,
+                  Spacing.lg,
+                  Spacing.lg,
+                  Spacing.xl,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Wrap(
+                      spacing: Spacing.sm,
+                      runSpacing: Spacing.sm,
+                      children: [
+                        _TrustPill(
+                          label: performance.isTerraceProven
+                              ? 'TERRACE PROVEN'
+                              : 'CHANT LAB',
+                          color: performance.isTerraceProven
+                              ? AppColors.gold
+                              : AppColors.chantLab,
+                        ),
+                        _TrustPill(
+                          label: performance.playerName == null
+                              ? performance.teamName.toUpperCase()
+                              : performance.playerName!.toUpperCase(),
+                          color: AppColors.textMuted,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: Spacing.md),
+                    Text(
+                      performance.chantTitle.toUpperCase(),
+                      style: const TextStyle(
+                        fontFamily: 'Anton',
+                        fontSize: 30,
+                        height: 0.98,
+                        letterSpacing: 0.2,
+                        color: AppColors.textHeadline,
+                      ),
+                    ),
+                    if (performance.caption.isNotEmpty) ...[
+                      const SizedBox(height: Spacing.sm),
+                      Text(
+                        performance.caption,
+                        style: const TextStyle(
+                          color: AppColors.textBody,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: Spacing.lg),
+                    _PerformanceMetrics(
+                      performance: performance,
+                      liked: _liked,
+                      likeBusy: _likeBusy,
+                      onLike: _toggleLike,
+                      onComments: _openComments,
+                      shareKey: _shareKey,
+                      shareBusy: _shareBusy,
+                      onShare: _share,
+                    ),
+                    const SizedBox(height: Spacing.sm),
+                    const Divider(color: AppColors.stageRule),
+                    TextButton.icon(
+                      onPressed: _openLyrics,
+                      icon: const Icon(Icons.article_outlined),
+                      label: const Text('OPEN CHANT & LYRICS'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BroadcastLabel extends StatelessWidget {
+  final String text;
+  final IconData icon;
+
+  const _BroadcastLabel({required this.text, required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: AppColors.stageScrim,
+        border: Border.all(color: AppColors.gold.withValues(alpha: 0.7)),
+        borderRadius: BorderRadius.circular(Radii.sm),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: Spacing.smMd,
+          vertical: Spacing.sm,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 15, color: AppColors.gold),
+            const SizedBox(width: Spacing.xs),
+            Text(
+              text,
+              style: const TextStyle(
+                fontFamily: 'SpaceMono',
+                fontSize: 9,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.6,
+                color: AppColors.textHeadline,
               ),
             ),
           ],
