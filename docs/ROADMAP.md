@@ -4,13 +4,14 @@ The path from code-complete to public launch, with concrete triggers on every ga
 
 ---
 
-## Status (as of 1 September 2026)
+## Status (as of 2 September 2026)
 
 **Built and verified by automated checks:**
 
+- The complete V1 source, launch-policy closure, public landing presentation, and final pre-launch hardening are merged through PR 32 at `88ce483f1ea18df6a7a2b4e790803773164ac9a5`. Fresh exact-main run `33562025155` completed all eight jobs successfully. Gate 2 deployed its 46 non-scheduled Functions while production stayed closed. No Hosting, DNS, store, or public-release action is implied.
 - Backend safety, review corrections and Chant Call-Ups are merged through PR 28 at `42f20dc675a1de4fe85956783774a4cdc67f3a01`. [Exact-main run 33368497566](https://github.com/andrewbolaji/Chants/actions/runs/33368497566) passed all eight jobs. This is source/build evidence, not deployment or device proof.
 - v1 feature set: auth, agnostic Sport/Competition/Team/Chant data model, browse and search, chant detail, user submission, moderation (report, remove, ban, unban, rate limits, audit log), voting with counter reconciliation, one-level comment replies with likes, user blocking, and suggestion box.
-- v1 hardening in source: account deletion, App Check client wiring, complete native Crashlytics delivery hooks, bounded abandoned-media cleanup, and privacy-safe stale deletion-job detection. iOS App Attest is registered but unenforced; two operational policies and the alert-only budget are saved. Android registration, first Crashlytics delivery, observed alert delivery, and deployment remain release-verification items.
+- v1 hardening in source: account deletion, App Check client wiring, complete native Crashlytics delivery hooks, bounded abandoned-media cleanup, and privacy-safe stale deletion-job detection. Gate 0 found iOS App Attest and Android Play Integrity configurations, both unenforced at the Firestore and Authentication products; two operational policies remain enabled. Gate 1 refreshed the budget. First Crashlytics delivery, App Check release-traffic observation, alert delivery, and deployment remain release-verification items.
 - Stable seeded chant identity in source and the Arsenal production boundary: explicit immutable IDs, collision preflight, transactional ownership checks, writer-free readback, and exact guarded retirement. Named-project preflight is clean for all 192 targets, and final Arsenal readback is exact.
 - V1 Premier League catalogue source and production: complete for all 20 approved clubs. The files contain 192 chants and 622 reviewed squad rows, dated squad and source metadata, explicit current or historic treatment, and named owner overrides where the refreshed official feed lags reviewed Arsenal membership. All-club production readback is exact. No club write remains; configured-device inspection does.
 - The complete V1 feature and remediation stack from PRs 4 through 10 and 12 through 14 is merged to `main`. It includes provenance and evidence, Songbook and Chant Lab, Saved Matchday Songbook, Basic Share-Out, parser-safe authority boundaries, server-authoritative report and feedback intake, durable account deletion, and the final freeze corrections.
@@ -24,14 +25,14 @@ The path from code-complete to public launch, with concrete triggers on every ga
 
 **Not yet done:**
 
-- **Next, updated 2026-09-01:** PR 29 is merged at `c3a071cfea70f68cd4d8f76d26561843d7478c31`, with the same tree as correction `a4c5c4b` and its eight-job green replacement run `33408526284`. The refreshed production preflight and physical iPhone release-mode launch are recorded. The bounded V1 launch policy and deletion source closure received one independent review, and its approved correction is implemented and locally verified. It still needs packaging, exact-head CI with 174 rules and 24 real transactions, one corrected-range review, and merge before a fresh Lane 3 rollout packet. The maintained owner checklist is `docs/CHANTS_LAUNCH_COMMAND_CENTER.html`.
-- **Live rollout hold:** The 1 September read-only inventory still has nine July Node 20 Functions, old rules, two created-to-written report migrations, fourteen missing indexes, no operational control, no Firebase app-media bucket and disabled Scheduler. PITR/delete protection and deny policy are absent. Effective old-writer/key containment, recovery proof, exact replacements, complete repair/readback and real private-test admission remain required. Current local source replaces the placeholder policy contract and strengthens deletion, but its correction is not exact-head reviewed or merged, and none of it is published or deployed. Fresh nonzero jobs need an exact recovery plan, not speculative replay.
+- **Next, updated 2026-09-02:** Four Gate 3 attempts all returned safely to maintenance, most recently generation 9, without an owner request. The approved explicit-engine correction then removed the paired-iPhone pre-Dart startup crash. Cold launch, force quit, background, resume, the owner-confirmed 2.8-second reveal, compact policy hierarchy, visible acceptance progress, and truthful maintenance denial have physical evidence. The first independent review found one bounded policy-recovery defect plus documentation and guard corrections. The independent closure review found no blocker; its four low findings are closed, and the corrected 537-test Flutter matrix plus the backend and source-contract suites pass locally. Packaging and exact-head CI are next. Do not prepare another production opening. Gate 4 is not next. The maintained owner checklist is `docs/CHANTS_LAUNCH_COMMAND_CENTER.html`.
+- **Live rollout hold:** Production has exactly 46 non-scheduled Node 22 Functions from one reviewed source build. The two report migrations completed without overlap; 196 repair checkpoints and audits have zero projection mismatch. Maintenance generation 9 is active with destructive workers false. All four Gate 3 windows had zero backend requests, zero severity errors, and no Auth or collection-count change, so the core journeys remain unverified rather than passed. The client startup and policy-recovery corrections are local, physically presentation-verified, locally verified, and not yet merged. The Firebase app-media bucket remains absent. Scheduler API is enabled as a recorded Firebase CLI side effect, but no scheduled Function or job exists.
 - **Safe preparation in parallel:** `scripts/check-device-readiness.mjs` and the existing private command-center guide now provide local inventory and per-platform walkthrough capture. Focused source/logic evidence is recorded locally; use the preparation PR receipt for exact-head CI. Browser visual proof remains open. No runtime feature or live service changes are included.
 - Complete remaining provider dashboards and credentials, Android association, deployed Apple association, production signing, policy, observed cost and abuse controls, and the combined iOS and Android V1 device walkthrough. Feature source at `e8f2591` compiles and passes identity inspection on both clean runners.
 - Configured-device catalogue inspection for the source-complete and production-exact 20-club catalogue. Transfer-sensitive roster review, named-project identity preflight, guarded Arsenal reconciliation, Leeds canary, six-group widening, and final all-club readback are complete.
 - Saved Matchday Songbook airplane-mode device walk; its iOS client compilation now passes.
 - Camera and library permission, upload recovery, playback, public sharing, Following, activity, threaded conversation, moderation, block, and deletion device walks.
-- Content policy, privacy, terms, association deployment, store destinations, URL-signing IAM, cleanup deployment, Android App Check, observed alert and billing delivery, deployed parity, signing, and store assets.
+- Content policy, privacy, terms, association deployment, store destinations, URL-signing IAM, cleanup deployment, App Check release-traffic observation and enforcement, observed alert and billing delivery, deployed parity, signing, and store assets.
 - Store launch prep.
 
 ---
@@ -79,7 +80,7 @@ V1 is a trusted songbook and a creator workshop. The work is sequenced as bounde
 15. **Build launch authentication, onboarding, and Android readiness.** Merged through PRs 18 and 17, clean-runner green across eight jobs at exact `main`, and independently accepted for source freeze. Chants has a product-specific welcome, verified email and automatic return, recoverable server-owned onboarding, Apple, Google, Facebook, magic-link and phone paths behind fail-closed flags, explicit same-UID linking, truthful reset, native entitlements and paths, fail-closed Android signing, and native CI.
 16. **Close post-auth review findings.** Merged, independently verified, and exact-main clean-runner green. The nine corrections align Storage operator authority, retry provider initialization, restore onboarding escape paths, make phone cooldown and cancellation monotonic, retain ambiguous magic-link state, distinguish requested from connected or complete, and enlarge the onboarding destination target.
 17. **Close final source-freeze minor findings.** Merged and exact-main CI verified. Runtime commit `e1474ad` freezes saved onboarding values while profile projection catches up, documentation commit `c1c4ea4` records the evidence, and merge commit `e8f2591` passes all eight jobs in run `33256843751`.
-18. **Stage launch services without premature enforcement.** In progress on the approved launch-services branch. Source now contains exact Apple association, complete native Crashlytics delivery hooks, daily bounded abandoned-draft cleanup, capped aggregate stale-job monitoring, and CI contract checks. Firebase Auth authorizes both planned domains; iOS App Attest is registered at the default one-hour TTL and remains unenforced; two privacy-safe operational policies and the USD 25 alert-only budget are saved and re-read. Deployment, observed alert delivery, Android signing identity, device proof, and clean-runner evidence remain open.
+18. **Stage launch services without premature enforcement.** Merged in source. Exact Apple association, complete native Crashlytics delivery hooks, daily bounded abandoned-draft cleanup, capped aggregate stale-job monitoring, and CI contract checks exist. Firebase Auth authorizes both planned domains. Gate 0 found both App Check provider configurations and two enabled privacy-safe operational policies, and Gate 1 refreshed the budget. Product enforcement, deployment, observed alert delivery, Android signing identity, and device proof remain open.
 
 The original Songbook and Chant Lab boundary remains in `docs/decisions/004-songbook-and-chant-lab.md`; creator-platform decisions are 017 through 022 and the active post-merge documentation contract is `docs/CHANGE_SPEC.md`. Beat-synced karaoke editing, licensed backing tracks, duet or remix tools, payouts, scheduled challenges, automated large-scale media screening, and personalized recommendation models remain later work.
 
@@ -207,6 +208,26 @@ These ideas are pinned for deliberate V1.1 evaluation. They are not launch promi
 - **Keep out initially:** payouts, sponsorship matching, rights representation, exclusivity, and rankings presented as professional worth.
 - **Decision trigger:** legal and rights review plus meaningful creator and share volume.
 
+### 9. API-Football Matchday Songbook foundation
+
+- **Status:** Approved for V1.1 by Andrew on 2 September 2026 and queued behind V1 release closure. The active V1 Lane 3 rollout specification remains the only active change specification, so this work must not be mixed into the production-rollout branch. Before implementation, promote this approved scope into the single active `docs/CHANGE_SPEC.md` and re-check any material contract change.
+- **Purpose:** Make the saved Songbook timely on matchday without turning Chants into another scores app.
+- **Provider boundary:** Use the existing API-Football Pro access through a Chants-specific server-side key and environment. Never expose the provider credential to either client.
+- **Smallest first slice:** Cache the next fixture, opponent, and kickoff for a followed club, then present that context above the already saved club Songbook. Missing or stale fixture data must fail quietly back to the normal offline-capable Songbook.
+- **Success signal:** supporters open saved chants near kickoff and return to their club Songbook without depending on live connectivity at the ground.
+- **Keep out initially:** live scores, timelines, tables, odds, predictions, automatic notifications, vendor player photos or club badges, and any provider data whose display or redistribution terms have not been verified.
+- **Implementation gates:** document club identifier reconciliation, cache freshness, quota ceilings, provider outage behavior, deletion and retention boundaries, monitoring, and a no-provider fallback before enabling the integration.
+
+### 10. API-Football roster watch
+
+- **Status:** Pinned for V1.1 as a separate follow-on block. It is intentionally outside the approved Matchday Songbook foundation and requires its own Lane 2 specification and approval.
+- **Purpose:** Reduce transfer-window cleanup while preserving human editorial judgment over chant history and currentness.
+- **Smallest first slice:** Produce an operator-only advisory when a tracked player disappears from a club squad or appears in a transfer result. Link the alert to the affected chant records for manual review.
+- **Safety boundary:** Never auto-delete, auto-hide, demote, relabel, or rewrite a chant from provider data. Historic songs for departed players remain archive candidates, and every public change stays an explicit operator action with an audit trail.
+- **Success signal:** fewer stale current-player rows after operator review, with no incorrect automated content mutation.
+- **Keep out initially:** automatic roster reconciliation, public transfer news, speculative transfer alerts, lineup-derived chant status, and player media.
+- **Implementation gates:** verify squad and transfer coverage, identifier stability, false-positive handling, rate limits, cost, manual dismissal and recheck behavior, and the operator queue's privacy and audit contract.
+
 Deep comment mentions and nesting beyond the current performance-thread design, duet or remix, licensed music, beat-synced karaoke, personalized recommendations, automated large-scale media screening, and creator payouts remain future work with their existing safety, rights, privacy, cost, and operations gates.
 
 ## FanChants reference audit, checked 2026-08-29
@@ -293,7 +314,7 @@ The implementation boundary and remaining verification gate live in `docs/CHANGE
 - **TODO** Apple Developer account ($99) and Google Play Developer account ($25).
 - **TODO** Wire final app icon; set 17+ age rating.
 - **TODO** Store listings, screenshots, and data-safety / app-privacy forms.
-- **IN PROGRESS** App Check production: iOS App Attest is registered and remains unenforced. Register Android Play Integrity only after trusted release signing exists, observe one to two weeks of valid release traffic, then approve enforcement separately. DeviceCheck fallback still requires an approved private-key path.
+- **IN PROGRESS** App Check production: iOS App Attest and Android Play Integrity configurations exist, while Firestore and Authentication enforcement remain off. Observe one to two weeks of valid release traffic from trusted signing identities, then approve enforcement separately. DeviceCheck fallback still requires an approved private-key path.
 - **TODO** Production build, signing, and deploy.
 
 ---

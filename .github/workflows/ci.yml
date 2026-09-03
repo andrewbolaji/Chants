@@ -20,6 +20,10 @@ jobs:
         run: ./scripts/check-writing-style.sh
       - name: Check native project contract
         run: ./scripts/check-native-project.sh
+      - name: Check iOS explicit-engine startup contract
+        run: node scripts/check-ios-startup.mjs
+      - name: Test iOS startup contract checks
+        run: node --test scripts/test-ios-startup-check.mjs
       - name: Check launch services contract
         run: node scripts/check-launch-services.mjs
       - name: Test launch services checks
