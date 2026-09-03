@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chants FC store screenshot storyboard</title>
+<style>
+@font-face{font-family:Oswald;src:url('../../assets/fonts/Oswald-Bold.ttf') format('truetype');font-display:block;font-weight:700}
+@font-face{font-family:Nunito;src:url('../../assets/fonts/Nunito-Variable.ttf') format('truetype');font-display:block;font-weight:200 1000}
+:root{--ink:#080806;--ink-soft:#11110f;--paper:#f3efe6;--canvas:#e8ecea;--headline:#f4efe5;--body:#c7beae;--muted:#918879;--dark-body:#4e4a43;--gold:#ffc126;--coral:#d95945;--club:#082a1f;--club-muted:#68776f;--line:rgba(244,239,229,.15);--dark-line:rgba(8,8,6,.16)}
+*{box-sizing:border-box}
+html,body{margin:0;min-width:0;min-height:100%}
+body{font-family:Nunito,Arial,sans-serif;font-variation-settings:'wght' 560;font-weight:560;background:var(--ink);color:var(--headline)}
+.frame,.storyboard{display:none}
+body[data-mode="storyboard"]{overflow:auto;background:#eeefec;color:var(--club)}
+body[data-mode="storyboard"] .storyboard{display:block;width:min(1180px,calc(100% - 64px));margin:0 auto;padding:72px 0 64px}
+.story-head{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(280px,.65fr);gap:80px;align-items:end;padding-bottom:58px}
+.story-brand{display:flex;align-items:center;gap:12px;margin-bottom:50px;font:700 15px/1 Oswald,'Arial Narrow',sans-serif;letter-spacing:.08em}
+.story-brand-mark{display:flex;width:30px;height:30px;align-items:center;justify-content:center;gap:3px;border-radius:50%;background:var(--gold)}
+.story-brand-mark i{width:3px;background:var(--club)}.story-brand-mark i:nth-child(1){height:8px}.story-brand-mark i:nth-child(2){height:15px}.story-brand-mark i:nth-child(3){height:11px}
+.story-kicker,.scene-kind,.scene-number,.status-label{font:700 12px/1 Oswald,'Arial Narrow',sans-serif;letter-spacing:.12em;text-transform:uppercase}
+.story-kicker{margin:0 0 17px;color:#9a6b00}
+.storyboard h1{max-width:720px;margin:0;font-size:72px;font-variation-settings:'wght' 880;font-weight:880;letter-spacing:-.06em;line-height:.92}
+.story-intro{margin:0;padding-left:30px;border-left:1px solid var(--dark-line);color:var(--dark-body);font-size:18px;line-height:1.6}
+.story-intro strong{display:block;margin-bottom:11px;color:var(--club);font:700 14px/1 Oswald,'Arial Narrow',sans-serif;letter-spacing:.08em;text-transform:uppercase}
+.scene-list{border-bottom:1px solid var(--dark-line)}
+.scene-row{position:relative;display:grid;grid-template-columns:64px minmax(260px,1fr) minmax(300px,1.2fr) auto;gap:28px;align-items:center;min-height:126px;padding-left:18px;border-top:1px solid var(--dark-line);transition:background-color .18s ease}
+.scene-row::before{content:"";position:absolute;top:25px;bottom:25px;left:0;width:4px;background:var(--club)}
+.scene-row[data-theme="stage"]::before{background:var(--coral)}
+.scene-row[data-theme="create"]::before{background:var(--gold)}
+.scene-row:hover{background:rgba(243,239,230,.55)}
+.scene-number{color:#9a6b00}
+.scene-title{font-size:24px;font-variation-settings:'wght' 820;font-weight:820;letter-spacing:-.025em}
+.scene-copy{margin:7px 0 0;color:var(--club-muted);font-size:15px;line-height:1.45}
+.scene-kind{color:var(--club-muted)}
+.scene-links{display:flex;gap:19px;justify-content:flex-end}
+.scene-links a{color:var(--club);font:700 12px/1 Oswald,'Arial Narrow',sans-serif;letter-spacing:.08em;text-underline-offset:6px;text-decoration-thickness:1px;text-transform:uppercase}
+.scene-links a:hover,.scene-links a:focus-visible{color:#9a6b00}
+.story-foot{display:flex;align-items:flex-start;justify-content:space-between;gap:30px;padding-top:28px;color:var(--club-muted);font-size:14px;line-height:1.5}
+.story-foot p{max-width:610px;margin:0}.status-label{color:var(--coral)}
+body[data-mode="frame"]{width:100vw;height:100vh;overflow:hidden}
+body[data-mode="frame"] .frame{position:relative;display:flex;width:100vw;height:100vh;flex-direction:column;align-items:center;overflow:hidden;background:var(--ink);color:var(--headline)}
+.frame::before{content:"";position:absolute;top:0;right:0;left:0;height:4px;background:var(--gold)}
+.header{width:calc(100% - 128px);padding-top:74px}
+.eyebrow{display:flex;align-items:center;gap:18px;color:var(--gold);font:700 21px/1 Oswald,'Arial Narrow',sans-serif;letter-spacing:.1em;text-transform:uppercase}
+.eyebrow::after{content:"";width:52px;height:1px;background:currentColor;opacity:.55}
+.frame h1{max-width:1060px;margin:26px 0 17px;font-size:86px;font-variation-settings:'wght' 880;font-weight:880;letter-spacing:-.06em;line-height:.94}
+.deck{max-width:1040px;margin:0;color:var(--body);font-size:30px;font-variation-settings:'wght' 580;font-weight:580;line-height:1.34}
+.capture-shell{position:relative;flex:0 0 auto;margin-top:38px;overflow:hidden;border:1px solid rgba(244,239,229,.2);border-radius:24px;background:var(--ink-soft)}
+.capture{display:block;width:100%;height:100%;object-fit:contain;background:var(--ink-soft)}
+.pending{position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:90px;text-align:center;background:var(--ink-soft);color:var(--body)}
+.missing .pending{display:flex}.missing .capture{display:none}
+.pending-inner{display:flex;max-width:640px;flex-direction:column;align-items:center}
+.pending-label{margin-bottom:35px;color:var(--muted);font:700 16px/1 Oswald,'Arial Narrow',sans-serif;letter-spacing:.14em;text-transform:uppercase}
+.pending-sound{display:flex;height:75px;align-items:center;gap:10px;margin-bottom:34px}
+.pending-sound i{display:block;width:8px;background:var(--gold)}
+.pending-sound i:nth-child(1),.pending-sound i:nth-child(5){height:22px}.pending-sound i:nth-child(2),.pending-sound i:nth-child(4){height:48px}.pending-sound i:nth-child(3){height:75px;background:var(--coral)}
+.pending h2{margin:0 0 15px;color:var(--headline);font-size:34px;font-variation-settings:'wght' 820;font-weight:820;letter-spacing:-.035em}
+.pending p{max-width:530px;margin:0;color:var(--muted);font-size:19px;line-height:1.5}
+.pending strong{margin-top:32px;padding-top:13px;border-top:1px solid var(--line);color:var(--coral);font:700 14px/1 Oswald,'Arial Narrow',sans-serif;letter-spacing:.12em;text-transform:uppercase}
+.frame-footer{display:flex;width:calc(100% - 128px);align-items:center;justify-content:space-between;margin-top:auto;margin-bottom:40px;color:var(--muted);font:700 17px/1 Oswald,'Arial Narrow',sans-serif;letter-spacing:.09em;text-transform:uppercase}
+.frame-footer .brand-name{color:var(--body)}
+body[data-platform="ios"] .capture-shell{width:1030px;height:2238px}
+body[data-platform="android"] .header{width:calc(100% - 96px);padding-top:48px}
+body[data-platform="android"] .eyebrow{font-size:16px;gap:13px}.eyebrow::after{width:38px}
+body[data-platform="android"] .frame h1{max-width:920px;margin-top:20px;font-size:58px}
+body[data-platform="android"] .deck{max-width:900px;font-size:24px}
+body[data-platform="android"] .capture-shell{width:820px;height:1458px;margin-top:26px;border-radius:18px}
+body[data-platform="android"] .frame-footer{width:calc(100% - 96px);margin-bottom:28px;font-size:14px}
+body[data-theme="signal"] .frame{background:var(--canvas);color:var(--club)}
+body[data-theme="signal"] .frame::before{background:var(--club)}
+body[data-theme="signal"] .eyebrow{color:#9a6b00}
+body[data-theme="signal"] .deck{color:var(--club-muted)}
+body[data-theme="signal"] .capture-shell{border-color:rgba(8,42,31,.24);background:var(--paper)}
+body[data-theme="signal"] .pending{background:var(--paper);color:var(--dark-body)}
+body[data-theme="signal"] .pending h2{color:var(--club)}
+body[data-theme="signal"] .pending p,body[data-theme="signal"] .pending-label,body[data-theme="signal"] .frame-footer{color:var(--club-muted)}
+body[data-theme="signal"] .pending strong{border-color:var(--dark-line)}
+body[data-theme="signal"] .frame-footer .brand-name{color:var(--club)}
+body[data-theme="create"] .frame{background:var(--paper);color:var(--ink)}
+body[data-theme="create"] .frame::before{background:var(--coral)}
+body[data-theme="create"] .eyebrow{color:#9a6b00}
+body[data-theme="create"] .deck{color:#6f6556}
+body[data-theme="create"] .capture-shell{border-color:var(--dark-line);background:#ece7dd}
+body[data-theme="create"] .pending{background:#ece7dd;color:#6f6556}
+body[data-theme="create"] .pending h2{color:var(--ink)}
+body[data-theme="create"] .pending p,body[data-theme="create"] .pending-label,body[data-theme="create"] .frame-footer{color:#6f6556}
+body[data-theme="create"] .pending strong{border-color:var(--dark-line)}
+body[data-theme="create"] .frame-footer .brand-name{color:var(--ink)}
+@media(max-width:760px){body[data-mode="storyboard"] .storyboard{width:min(100% - 36px,1180px);padding-top:42px}.story-head{grid-template-columns:1fr;gap:32px;padding-bottom:38px}.story-brand{margin-bottom:34px}.storyboard h1{font-size:clamp(44px,14vw,68px)}.story-intro{padding-left:19px}.scene-row{grid-template-columns:42px 1fr;gap:12px 18px;padding:23px 0}.scene-kind{grid-column:2}.scene-links{grid-column:2;justify-content:flex-start}.story-foot{flex-direction:column}}
+</style>
+</head>
+<body>
+<main class="storyboard" aria-labelledby="story-title">
+  <header class="story-head">
+    <div>
+      <div class="story-brand"><span class="story-brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span>CHANTS FC</span></div>
+      <p class="story-kicker">Store presentation system</p>
+      <h1 id="story-title">Five product jobs. One clear story.</h1>
+    </div>
+    <p class="story-intro"><strong>Frame ready. Captures pending.</strong>The layouts are presentation sources, not release evidence. Final app captures arrive only after the exact candidate passes its production walkthrough.</p>
+  </header>
+  <section class="scene-list" aria-label="Store screenshot scenes">
+    <article class="scene-row" data-theme="stage"><span class="scene-number">01</span><div><div class="scene-title">The crowd starts here.</div><p class="scene-copy">Supporter performances and the voices worth sharing.</p></div><span class="scene-kind">Chant Stage</span><div class="scene-links"><a href="?platform=ios&amp;scene=01-stage">iOS frame</a><a href="?platform=android&amp;scene=01-stage">Android frame</a></div></article>
+    <article class="scene-row" data-theme="signal"><span class="scene-number">02</span><div><div class="scene-title">Find your club's songs.</div><p class="scene-copy">Premier League chants, players, and supporter ideas.</p></div><span class="scene-kind">Club Signal</span><div class="scene-links"><a href="?platform=ios&amp;scene=02-clubs">iOS frame</a><a href="?platform=android&amp;scene=02-clubs">Android frame</a></div></article>
+    <article class="scene-row" data-theme="signal"><span class="scene-number">03</span><div><div class="scene-title">Know the words by kickoff.</div><p class="scene-copy">Lyrics, context, and a trust label that stays clear.</p></div><span class="scene-kind">Chant detail</span><div class="scene-links"><a href="?platform=ios&amp;scene=03-chant">iOS frame</a><a href="?platform=android&amp;scene=03-chant">Android frame</a></div></article>
+    <article class="scene-row" data-theme="create"><span class="scene-number">04</span><div><div class="scene-title">Start with the words.</div><p class="scene-copy">Share what is sung or give a new idea its first voice.</p></div><span class="scene-kind">Create</span><div class="scene-links"><a href="?platform=ios&amp;scene=04-create">iOS frame</a><a href="?platform=android&amp;scene=04-create">Android frame</a></div></article>
+    <article class="scene-row" data-theme="signal"><span class="scene-number">05</span><div><div class="scene-title">No signal. Still singing.</div><p class="scene-copy">Saved chants stay on this device for the ground.</p></div><span class="scene-kind">Matchday Songbook</span><div class="scene-links"><a href="?platform=ios&amp;scene=05-songbook">iOS frame</a><a href="?platform=android&amp;scene=05-songbook">Android frame</a></div></article>
+  </section>
+  <footer class="story-foot"><span class="status-label">Awaiting exact release-candidate captures</span><p>Opening a frame before its source exists shows a deliberate hold state. That state is never a store screenshot.</p></footer>
+</main>
+<main class="frame" aria-labelledby="headline">
+  <header class="header">
+    <div class="eyebrow" id="eyebrow">01 / CHANT STAGE</div>
+    <h1 id="headline">The crowd starts here.</h1>
+    <p class="deck" id="deck">Watch supporter performances and back the voices worth sharing.</p>
+  </header>
+  <div class="capture-shell missing" id="shell">
+    <img class="capture" id="capture" alt="">
+    <div class="pending">
+      <div class="pending-inner">
+        <span class="pending-label">Release capture slot</span>
+        <span class="pending-sound" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+        <h2>Final app capture pending.</h2>
+        <p>The presentation frame is ready. Exact release evidence is not.</p>
+        <strong>Do not publish this frame</strong>
+      </div>
+    </div>
+  </div>
+  <footer class="frame-footer"><span class="brand-name">Chants FC</span><span id="index">01 / 05</span></footer>
+</main>
+<script>
+const scenes={
+  '01-stage':{label:'01 / CHANT STAGE',headline:'The crowd starts here.',deck:'Watch supporter performances and back the voices worth sharing.',theme:'stage'},
+  '02-clubs':{label:'02 / CLUB SIGNAL',headline:"Find your club's songs.",deck:'Browse Premier League chants, players, and supporter ideas.',theme:'signal'},
+  '03-chant':{label:'03 / CHANT DETAIL',headline:'Know the words by kickoff.',deck:'Read the lyrics, story, and trust label before matchday.',theme:'signal'},
+  '04-create':{label:'04 / CREATE',headline:'Start with the words.',deck:'Share what is already sung or give a new idea its first voice.',theme:'create'},
+  '05-songbook':{label:'05 / MATCHDAY SONGBOOK',headline:'No signal. Still singing.',deck:'Keep saved chants on this device for the ground.',theme:'signal'}
+};
+const params=new URLSearchParams(location.search);
+const requested=params.get('scene');
+const hasFrameRequest=params.has('platform')&&requested&&scenes[requested];
+if(!hasFrameRequest){
+  document.body.dataset.mode='storyboard';
+}else{
+  const platform=params.get('platform')==='android'?'android':'ios';
+  const scene=requested;
+  const details=scenes[scene];
+  const position=Object.keys(scenes).indexOf(scene)+1;
+  const shell=document.getElementById('shell');
+  const capture=document.getElementById('capture');
+  document.body.dataset.mode='frame';
+  document.body.dataset.platform=platform;
+  document.body.dataset.theme=details.theme;
+  document.getElementById('eyebrow').textContent=details.label;
+  document.getElementById('headline').textContent=details.headline;
+  document.getElementById('deck').textContent=details.deck;
+  document.getElementById('index').textContent=String(position).padStart(2,'0')+' / 05';
+  capture.alt=details.headline+' app screenshot';
+  capture.addEventListener('load',()=>shell.classList.remove('missing'));
+  capture.addEventListener('error',()=>shell.classList.add('missing'));
+  capture.src='source/'+platform+'/'+scene+'.png';
+}
+</script>
+</body>
+</html>

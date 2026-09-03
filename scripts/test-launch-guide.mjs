@@ -24,7 +24,7 @@ test('guide excludes stale seed, broad deployment and config-overwrite recipes',
   assert.match(html, /88ce483/);
   assert.match(html, /33562025155/);
   assert.match(html, /Production closed, client check passed/);
-  assert.match(html, /Updated 2 September 2026/);
+  assert.match(html, /Updated 3 September 2026/);
   assert.match(html, /Corrected iPhone client proven/);
   assert.doesNotMatch(html, />approved V1 Lane 3 Gate 3 owner walkthrough retry</);
   assert.doesNotMatch(html, />approved V1 Lane 3 Gate 3 immediate owner walkthrough retry</);

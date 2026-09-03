@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chants FC Google Play feature graphic</title>
+<style>
+@font-face{font-family:Oswald;src:url('../../assets/fonts/Oswald-Bold.ttf') format('truetype');font-display:block;font-weight:700}
+@font-face{font-family:Nunito;src:url('../../assets/fonts/Nunito-Variable.ttf') format('truetype');font-display:block;font-weight:200 1000}
+@font-face{font-family:Fraunces;src:url('../../assets/fonts/Fraunces-Variable.ttf') format('truetype');font-display:block;font-weight:100 900}
+:root{--ink:#080806;--paper:#f3efe6;--gold:#ffc126;--coral:#d95945;--club:#082a1f;--club-muted:#65746d;--line:rgba(243,239,230,.18)}
+*{box-sizing:border-box}
+html,body{width:1024px;height:500px;margin:0;overflow:hidden;background:var(--ink)}
+body{font-family:Nunito,Arial,sans-serif;color:var(--paper)}
+.graphic{position:relative;width:1024px;height:500px;overflow:hidden;background:var(--ink)}
+.top-rule{position:absolute;z-index:5;top:27px;right:48px;left:48px;height:1px;background:var(--line)}
+.brand{position:absolute;z-index:5;top:44px;left:49px;display:flex;align-items:center;gap:12px;font:700 14px/1 Oswald,'Arial Narrow',sans-serif;letter-spacing:.09em}
+.brand-mark{display:flex;width:28px;height:28px;align-items:center;justify-content:center;gap:3px;border-radius:50%;background:var(--gold)}
+.brand-mark i{display:block;width:3px;background:var(--ink)}
+.brand-mark i:nth-child(1){height:8px}.brand-mark i:nth-child(2){height:15px}.brand-mark i:nth-child(3){height:11px}
+.stage-field{position:absolute;z-index:1;top:28px;right:-54px;width:420px;height:337px;background:var(--coral);clip-path:polygon(23% 0,100% 0,100% 100%,0 100%)}
+.stage-label{position:absolute;z-index:3;top:58px;right:54px;font:700 11px/1 Oswald,'Arial Narrow',sans-serif;letter-spacing:.13em;text-transform:uppercase}
+.stage-label span{margin-left:16px;color:rgba(243,239,230,.65)}
+.message{position:absolute;z-index:4;top:119px;left:51px;width:650px}
+.message p{margin:0 0 3px;color:var(--paper);font-size:47px;font-variation-settings:'wght' 850;font-weight:850;letter-spacing:-.055em;line-height:.98}
+.message h1{display:flex;align-items:baseline;gap:18px;margin:0;color:var(--gold);font-family:Fraunces,Georgia,serif;font-size:99px;font-variation-settings:'wght' 610,'SOFT' 75,'WONK' 1;font-weight:610;letter-spacing:-.075em;line-height:.9}
+.message h1::after{content:"";display:inline-block;width:77px;height:7px;margin:0 0 15px 19px;background:var(--paper)}
+.chorus{position:absolute;z-index:3;top:116px;right:59px;display:flex;width:266px;height:180px;align-items:center;justify-content:space-between}
+.chorus i{display:block;width:16px;background:var(--paper)}
+.chorus i:nth-child(1),.chorus i:nth-child(9){height:34px}
+.chorus i:nth-child(2),.chorus i:nth-child(8){height:65px}
+.chorus i:nth-child(3),.chorus i:nth-child(7){height:104px}
+.chorus i:nth-child(4),.chorus i:nth-child(6){height:144px}
+.chorus i:nth-child(5){height:180px;background:var(--gold)}
+.stage-copy{position:absolute;z-index:3;right:56px;bottom:151px;width:265px;padding-top:11px;border-top:1px solid rgba(243,239,230,.38);font:700 12px/1.15 Oswald,'Arial Narrow',sans-serif;letter-spacing:.08em;text-transform:uppercase}
+.stage-copy span{float:right;color:rgba(243,239,230,.72);font-size:10px;letter-spacing:.1em;text-align:right}
+.signal{position:absolute;z-index:6;right:0;bottom:0;left:0;height:135px;background:var(--paper);color:var(--club)}
+.signal::before{content:"";position:absolute;top:0;right:0;left:0;height:5px;background:var(--club)}
+.signal-title{position:absolute;top:31px;left:51px}
+.signal-title small{display:block;margin-bottom:11px;color:#956800;font:700 10px/1 Oswald,'Arial Narrow',sans-serif;letter-spacing:.14em;text-transform:uppercase}
+.signal-title strong{font-size:27px;font-variation-settings:'wght' 870;font-weight:870;letter-spacing:-.045em}
+.route{position:absolute;top:35px;left:390px;display:flex;gap:39px}
+.route div{min-width:94px;padding-top:13px;border-top:1px solid rgba(8,42,31,.2)}
+.route span{display:block;color:#956800;font:700 9px/1 Oswald,'Arial Narrow',sans-serif;letter-spacing:.1em}
+.route strong{display:block;margin-top:10px;font-size:13px;font-variation-settings:'wght' 850;font-weight:850}
+.saved{position:absolute;top:35px;right:51px;width:183px;padding-top:13px;border-top:1px solid rgba(8,42,31,.2);color:var(--club-muted);font:700 9px/1.45 Oswald,'Arial Narrow',sans-serif;letter-spacing:.1em;text-align:right;text-transform:uppercase}
+</style>
+</head>
+<body>
+<main class="graphic" aria-label="Chants FC: every chant starts with one voice">
+  <div class="top-rule"></div>
+  <div class="brand"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span>CHANTS FC</span></div>
+  <div class="stage-field" aria-hidden="true"></div>
+  <div class="stage-label">CHANT STAGE <span>01</span></div>
+  <section class="message">
+    <p>Every chant starts with</p>
+    <h1><span>one</span><span>voice.</span></h1>
+  </section>
+  <div class="chorus" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  <p class="stage-copy">SUPPORTER PERFORMANCES <span>THE STAGE<br>IS YOURS</span></p>
+  <section class="signal">
+    <div class="signal-title"><small>02 / CLUB SIGNAL</small><strong>Matchday Songbook</strong></div>
+    <div class="route" aria-hidden="true"><div><span>01</span><strong>LEARN</strong></div><div><span>02</span><strong>SAVE</strong></div><div><span>03</span><strong>CREATE</strong></div></div>
+    <p class="saved">Saved on this device<br>Ready for the ground</p>
+  </section>
+</main>
+</body>
+</html>
