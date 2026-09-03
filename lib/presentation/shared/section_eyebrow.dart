@@ -6,8 +6,14 @@ import 'package:chants/app/colors.dart';
 class SectionEyebrow extends StatelessWidget {
   final String text;
   final bool gold;
+  final bool signalAppearance;
 
-  const SectionEyebrow({super.key, required this.text, this.gold = false});
+  const SectionEyebrow({
+    super.key,
+    required this.text,
+    this.gold = false,
+    this.signalAppearance = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -16,7 +22,11 @@ class SectionEyebrow extends StatelessWidget {
       style: TextStyle(
         fontFamily: 'SpaceMono',
         fontSize: 11,
-        color: gold ? AppColors.gold : AppColors.textMuted,
+        color: gold
+            ? (signalAppearance ? AppColors.signalGold : AppColors.gold)
+            : (signalAppearance
+                  ? AppColors.signalForestMuted
+                  : AppColors.textMuted),
         letterSpacing: 1.2,
       ),
     );

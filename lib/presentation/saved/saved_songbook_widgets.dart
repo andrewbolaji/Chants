@@ -27,25 +27,51 @@ String savedSongbookDate(DateTime timestamp) {
 class SavedChantCard extends StatelessWidget {
   final SavedChantSnapshot chant;
   final String teamName;
+  final bool signalAppearance;
   final VoidCallback onTap;
 
   const SavedChantCard({
     super.key,
     required this.chant,
     required this.teamName,
+    this.signalAppearance = false,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final cardColor = signalAppearance
+        ? AppColors.signalPaper
+        : AppColors.surfaceRaised;
+    final borderColor = signalAppearance
+        ? AppColors.signalRule
+        : AppColors.outline;
+    final titleColor = signalAppearance
+        ? AppColors.signalInk
+        : AppColors.textHeadline;
+    final bodyColor = signalAppearance
+        ? AppColors.signalTextMuted
+        : AppColors.textBody;
+    final metadataColor = signalAppearance
+        ? AppColors.signalForestMuted
+        : AppColors.textMuted;
     return Card(
+      color: cardColor,
       margin: const EdgeInsets.symmetric(
         horizontal: Spacing.md,
         vertical: Spacing.xs,
       ),
+      shape: RoundedRectangleBorder(
+        side: BorderSide(color: borderColor, width: 0.5),
+        borderRadius: BorderRadius.circular(
+          signalAppearance ? Radii.sm : Radii.lg,
+        ),
+      ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(Radii.lg),
+        borderRadius: BorderRadius.circular(
+          signalAppearance ? Radii.sm : Radii.lg,
+        ),
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.all(Spacing.md),
@@ -67,6 +93,7 @@ class SavedChantCard extends StatelessWidget {
                     child: ChantProvenanceLabel.fromValues(
                       status: chant.status,
                       origin: chant.origin,
+                      signalAppearance: signalAppearance,
                     ),
                   ),
                 ],
@@ -77,9 +104,12 @@ class SavedChantCard extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: textTheme.titleMedium?.copyWith(
+                  color: titleColor,
                   shadows: [
                     Shadow(
-                      color: AppColors.gold.withValues(alpha: 0.3),
+                      color: AppColors.signalGold.withValues(
+                        alpha: signalAppearance ? 0.18 : 0.3,
+                      ),
                       offset: const Offset(1, 1),
                     ),
                   ],
@@ -89,10 +119,12 @@ class SavedChantCard extends StatelessWidget {
                 teamName,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'SpaceMono',
                   fontSize: 12,
-                  color: AppColors.gold,
+                  color: signalAppearance
+                      ? AppColors.signalGold
+                      : AppColors.gold,
                 ),
               ),
               const SizedBox(height: Spacing.xs),
@@ -102,17 +134,17 @@ class SavedChantCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: textTheme.bodyMedium?.copyWith(
                   fontFamily: 'Fraunces',
-                  color: AppColors.textBody,
+                  color: bodyColor,
                 ),
               ),
               const SizedBox(height: Spacing.sm),
-              const Text(
+              Text(
                 'SAVED COPY',
                 style: TextStyle(
                   fontFamily: 'SpaceMono',
                   fontSize: 9,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textMuted,
+                  color: metadataColor,
                   letterSpacing: 0.8,
                 ),
               ),
@@ -127,11 +159,13 @@ class SavedChantCard extends StatelessWidget {
 class SavedFreshnessNotice extends StatelessWidget {
   final DateTime refreshedAt;
   final String? message;
+  final bool signalAppearance;
 
   const SavedFreshnessNotice({
     super.key,
     required this.refreshedAt,
     this.message,
+    this.signalAppearance = false,
   });
 
   @override
@@ -146,17 +180,19 @@ class SavedFreshnessNotice extends StatelessWidget {
       ),
       padding: const EdgeInsets.all(Spacing.md),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: signalAppearance ? AppColors.signalPaper : AppColors.surface,
         borderRadius: BorderRadius.circular(Radii.sm),
-        border: Border.all(color: AppColors.divider),
+        border: Border.all(
+          color: signalAppearance ? AppColors.signalRule : AppColors.divider,
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
+          Icon(
             Icons.offline_pin_outlined,
             size: 20,
-            color: AppColors.gold,
+            color: signalAppearance ? AppColors.signalGold : AppColors.gold,
           ),
           const SizedBox(width: Spacing.sm),
           Expanded(
@@ -165,11 +201,13 @@ class SavedFreshnessNotice extends StatelessWidget {
               children: [
                 Text(
                   'SAVED COPY  •  LAST REFRESHED ${savedSongbookDate(refreshedAt)}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'SpaceMono',
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textHeadline,
+                    color: signalAppearance
+                        ? AppColors.signalInk
+                        : AppColors.textHeadline,
                     letterSpacing: 0.5,
                   ),
                 ),
@@ -177,9 +215,11 @@ class SavedFreshnessNotice extends StatelessWidget {
                   const SizedBox(height: Spacing.xs),
                   Text(
                     message!,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(color: AppColors.textMuted),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: signalAppearance
+                          ? AppColors.signalTextMuted
+                          : AppColors.textMuted,
+                    ),
                   ),
                 ],
               ],

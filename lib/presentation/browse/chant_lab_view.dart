@@ -4,6 +4,7 @@ import 'package:chants/data/models/chant.dart';
 import 'package:chants/data/services/chant_browse.dart';
 import 'package:chants/presentation/browse/browse_supporting_notice.dart';
 import 'package:chants/presentation/shared/chant_card.dart';
+import 'package:chants/presentation/shared/club_signal.dart';
 import 'package:chants/presentation/shared/empty_state.dart';
 import 'package:chants/presentation/shared/section_eyebrow.dart';
 import 'package:flutter/material.dart';
@@ -20,6 +21,7 @@ class ChantLabView extends StatefulWidget {
   final ValueChanged<Chant> onChantTap;
   final VoidCallback? onStartChant;
   final Widget? callUp;
+  final bool signalAppearance;
 
   const ChantLabView({
     super.key,
@@ -34,6 +36,7 @@ class ChantLabView extends StatefulWidget {
     required this.onChantTap,
     this.onStartChant,
     this.callUp,
+    this.signalAppearance = false,
   });
 
   @override
@@ -58,23 +61,29 @@ class _ChantLabViewState extends State<ChantLabView>
 
     final items = <Widget>[
       ?widget.callUp,
-      const Padding(
+      Padding(
         padding: EdgeInsets.fromLTRB(
           Spacing.lg,
           Spacing.md,
           Spacing.lg,
           Spacing.xs,
         ),
-        child: SectionEyebrow(text: 'New songs start here', gold: true),
+        child: SectionEyebrow(
+          text: 'New songs start here',
+          gold: true,
+          signalAppearance: widget.signalAppearance,
+        ),
       ),
-      const Padding(
-        padding: EdgeInsets.symmetric(horizontal: Spacing.lg),
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
         child: Text(
           'Rising means early community support. It does not mean Terrace Proven.',
           style: TextStyle(
             fontFamily: 'Nunito',
             fontSize: 13,
-            color: AppColors.textMuted,
+            color: widget.signalAppearance
+                ? AppColors.signalTextMuted
+                : AppColors.textMuted,
           ),
         ),
       ),
@@ -102,31 +111,43 @@ class _ChantLabViewState extends State<ChantLabView>
         ),
       ),
       if (widget.isFromCache)
-        const BrowseSupportingNotice(
+        BrowseSupportingNotice(
           label: 'DEVICE CACHE',
           message: 'These chants are from this device while Chants reconnects.',
           icon: Icons.offline_pin_outlined,
+          signalAppearance: widget.signalAppearance,
         ),
       if (widget.hasRecoverableError)
-        const BrowseSupportingNotice(
+        BrowseSupportingNotice(
           label: 'LAST LOADED CHANTS',
           message:
               'Fresh updates are unavailable. You can still open these chants.',
           icon: Icons.sync_problem_outlined,
+          signalAppearance: widget.signalAppearance,
         ),
     ];
 
     if (visible.isEmpty) {
       items.add(
-        EmptyState(
-          headline: 'THE LAB IS OPEN',
-          message: widget.canStartChant
-              ? widget.emptyMessage
-              : widget.signedOutEmptyMessage,
-          icon: Icons.science_outlined,
-          onAction: widget.canStartChant ? widget.onStartChant : null,
-          actionLabel: widget.canStartChant ? 'START A CHANT' : null,
-        ),
+        widget.signalAppearance
+            ? ClubSignalState(
+                headline: 'The lab is open',
+                message: widget.canStartChant
+                    ? widget.emptyMessage
+                    : widget.signedOutEmptyMessage,
+                icon: Icons.science_outlined,
+                onAction: widget.canStartChant ? widget.onStartChant : null,
+                actionLabel: widget.canStartChant ? 'START A CHANT' : null,
+              )
+            : EmptyState(
+                headline: 'THE LAB IS OPEN',
+                message: widget.canStartChant
+                    ? widget.emptyMessage
+                    : widget.signedOutEmptyMessage,
+                icon: Icons.science_outlined,
+                onAction: widget.canStartChant ? widget.onStartChant : null,
+                actionLabel: widget.canStartChant ? 'START A CHANT' : null,
+              ),
       );
     } else {
       items.addAll(
@@ -138,6 +159,7 @@ class _ChantLabViewState extends State<ChantLabView>
                 ? null
                 : widget.playerNames[chant.playerId],
             rising: isRisingChant(chant, now: widget.now),
+            signalAppearance: widget.signalAppearance,
             onTap: () => widget.onChantTap(chant),
           ),
         ),

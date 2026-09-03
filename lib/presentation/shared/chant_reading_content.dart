@@ -22,6 +22,7 @@ class ChantReadingContent extends StatelessWidget {
   final Widget provenanceLabel;
   final ChantEvidence? evidence;
   final bool showMediaPlaceholder;
+  final bool signalAppearance;
 
   const ChantReadingContent({
     super.key,
@@ -33,26 +34,50 @@ class ChantReadingContent extends StatelessWidget {
     required this.provenanceLabel,
     this.evidence,
     this.showMediaPlaceholder = false,
+    this.signalAppearance = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final lyricAlign = chantLyricsAlignment(lyrics);
+    final accentColor = signalAppearance
+        ? AppColors.signalGold
+        : AppColors.gold;
+    final titleColor = signalAppearance
+        ? AppColors.signalInk
+        : AppColors.textHeadline;
+    final bodyColor = signalAppearance
+        ? AppColors.signalInk
+        : AppColors.textBody;
+    final mutedColor = signalAppearance
+        ? AppColors.signalTextMuted
+        : AppColors.textMuted;
+    final panelColor = signalAppearance
+        ? AppColors.signalPaper
+        : AppColors.surface;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         CustomPaint(
-          painter: const HalftonePainter(opacity: 0.04),
+          painter: HalftonePainter(opacity: signalAppearance ? 0 : 0.04),
           child: Container(
             width: double.infinity,
-            decoration: const BoxDecoration(
-              gradient: RadialGradient(
-                center: Alignment.topCenter,
-                radius: 1.2,
-                colors: [AppColors.glowGold, Colors.transparent],
-              ),
+            decoration: BoxDecoration(
+              color: signalAppearance ? AppColors.signalPaper : null,
+              gradient: signalAppearance
+                  ? null
+                  : const RadialGradient(
+                      center: Alignment.topCenter,
+                      radius: 1.2,
+                      colors: [AppColors.glowGold, Colors.transparent],
+                    ),
+              border: signalAppearance
+                  ? const Border(
+                      bottom: BorderSide(color: AppColors.signalRule),
+                    )
+                  : null,
             ),
             padding: const EdgeInsets.fromLTRB(
               Spacing.xl,
@@ -68,10 +93,13 @@ class ChantReadingContent extends StatelessWidget {
                 Text(
                   title.toUpperCase(),
                   style: textTheme.headlineLarge?.copyWith(
-                    shadows: const [
+                    color: titleColor,
+                    shadows: [
                       Shadow(
-                        color: AppColors.gold,
-                        offset: Offset(1.5, 1.5),
+                        color: accentColor.withValues(
+                          alpha: signalAppearance ? 0.22 : 1,
+                        ),
+                        offset: const Offset(1.5, 1.5),
                         blurRadius: 0,
                       ),
                     ],
@@ -88,16 +116,12 @@ class ChantReadingContent extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const Icon(
-                    Icons.music_note_outlined,
-                    size: 14,
-                    color: AppColors.textMuted,
-                  ),
+                  Icon(Icons.music_note_outlined, size: 14, color: mutedColor),
                   const SizedBox(width: Spacing.sm),
                   Expanded(
                     child: Text(
                       tuneName.toUpperCase(),
-                      style: textTheme.labelMedium,
+                      style: textTheme.labelMedium?.copyWith(color: mutedColor),
                     ),
                   ),
                 ],
@@ -108,7 +132,7 @@ class ChantReadingContent extends StatelessWidget {
                 child: Text(
                   lyrics,
                   textAlign: lyricAlign,
-                  style: textTheme.bodyLarge,
+                  style: textTheme.bodyLarge?.copyWith(color: bodyColor),
                 ),
               ),
               const SizedBox(height: Spacing.xxl),
@@ -117,19 +141,25 @@ class ChantReadingContent extends StatelessWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.all(Spacing.lg),
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
+                    color: panelColor,
                     borderRadius: BorderRadius.circular(Radii.sm),
+                    border: signalAppearance
+                        ? Border.all(color: AppColors.signalRule)
+                        : null,
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('CONTEXT', style: textTheme.labelMedium),
+                      Text(
+                        'CONTEXT',
+                        style: textTheme.labelMedium?.copyWith(
+                          color: mutedColor,
+                        ),
+                      ),
                       const SizedBox(height: Spacing.xs),
                       Text(
                         contextNotes!,
-                        style: textTheme.bodyMedium?.copyWith(
-                          color: AppColors.textBody,
-                        ),
+                        style: textTheme.bodyMedium?.copyWith(color: bodyColor),
                       ),
                     ],
                   ),
@@ -141,7 +171,10 @@ class ChantReadingContent extends StatelessWidget {
                 const SizedBox(height: Spacing.xl),
               ],
               if (variations.isNotEmpty) ...[
-                Text('ALSO SUNG AS', style: textTheme.labelMedium),
+                Text(
+                  'ALSO SUNG AS',
+                  style: textTheme.labelMedium?.copyWith(color: mutedColor),
+                ),
                 const SizedBox(height: Spacing.md),
                 for (final variation in variations)
                   Padding(
@@ -150,8 +183,11 @@ class ChantReadingContent extends StatelessWidget {
                       width: double.infinity,
                       padding: const EdgeInsets.all(Spacing.lg),
                       decoration: BoxDecoration(
-                        color: AppColors.surface,
+                        color: panelColor,
                         borderRadius: BorderRadius.circular(Radii.sm),
+                        border: signalAppearance
+                            ? Border.all(color: AppColors.signalRule)
+                            : null,
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -162,17 +198,15 @@ class ChantReadingContent extends StatelessWidget {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColors.textMuted.withValues(
-                                alpha: 0.15,
-                              ),
+                              color: mutedColor.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
                               variation.label.toUpperCase(),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontFamily: 'SpaceMono',
                                 fontSize: 9,
-                                color: AppColors.textMuted,
+                                color: mutedColor,
                                 letterSpacing: 0.8,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -184,7 +218,9 @@ class ChantReadingContent extends StatelessWidget {
                             child: Text(
                               variation.lyric,
                               textAlign: chantLyricsAlignment(variation.lyric),
-                              style: textTheme.bodyLarge,
+                              style: textTheme.bodyLarge?.copyWith(
+                                color: bodyColor,
+                              ),
                             ),
                           ),
                           if (variation.contextNote != null &&
@@ -193,7 +229,7 @@ class ChantReadingContent extends StatelessWidget {
                             Text(
                               variation.contextNote!,
                               style: textTheme.bodyMedium?.copyWith(
-                                color: AppColors.textBody,
+                                color: bodyColor,
                               ),
                             ),
                           ],
@@ -206,10 +242,10 @@ class ChantReadingContent extends StatelessWidget {
               if (showMediaPlaceholder) ...[
                 Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.play_circle_outline,
                       size: 16,
-                      color: AppColors.textMuted,
+                      color: mutedColor,
                     ),
                     const SizedBox(width: Spacing.sm),
                     Text(

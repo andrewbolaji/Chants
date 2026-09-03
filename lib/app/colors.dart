@@ -10,6 +10,23 @@ class AppColors extends ThemeExtension<AppColors> {
   static const surface = Color(0xFF161616);
   static const surfaceRaised = Color(0xFF1C1C1C);
 
+  // Terrace Broadcast: the expressive performance surface.
+  static const stageChrome = Color(0xFF090907);
+  static const stagePanel = Color(0xFF11110F);
+  static const stageRule = Color(0xFF2A2924);
+  static const stageScrim = Color(0xD9000000);
+
+  // Club Signal: calm, club-neutral matchday utility surfaces.
+  static const signalCanvas = Color(0xFFE9EBEA);
+  static const signalPaper = Color(0xFFF7F5EE);
+  static const signalPaperMuted = Color(0xFFDEE1DE);
+  static const signalInk = Color(0xFF101714);
+  static const signalForest = Color(0xFF10231A);
+  static const signalForestMuted = Color(0xFF5F6F65);
+  static const signalTextMuted = Color(0xFF626A65);
+  static const signalRule = Color(0xFFC9CECA);
+  static const signalGold = Color(0xFFC99512);
+
   // Text hierarchy: softened off pure white for comfort
   static const textHeadline = Color(0xFFE9E0CE); // titles, headlines
   static const textBody = Color(0xFFD9CFBD); // reading, body text
