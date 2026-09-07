@@ -59,6 +59,20 @@ if ! grep -F 'CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;' \
   native_fail 'the iOS target is missing the reviewed Runner entitlements'
 fi
 
+native_iphone_family_count=$(grep -F -c 'TARGETED_DEVICE_FAMILY = 1;' \
+  "$native_project_root/ios/Runner.xcodeproj/project.pbxproj" || true)
+if [ "$native_iphone_family_count" -ne 3 ]; then
+  native_fail 'all V1 iOS build configurations must target iPhone only'
+fi
+if grep -F 'TARGETED_DEVICE_FAMILY = "1,2";' \
+  "$native_project_root/ios/Runner.xcodeproj/project.pbxproj" >/dev/null 2>&1; then
+  native_fail 'V1 must not claim unverified iPad support'
+fi
+if grep -F 'UISupportedInterfaceOrientations~ipad' \
+  "$native_project_root/ios/Runner/Info.plist" >/dev/null 2>&1; then
+  native_fail 'V1 iPhone-only packaging must not retain iPad orientation metadata'
+fi
+
 for native_entitlement in \
   'com.apple.developer.applesignin' \
   'applinks:auth.chantsfc.com' \

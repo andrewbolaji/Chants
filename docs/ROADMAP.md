@@ -4,10 +4,11 @@ The path from code-complete to public launch, with concrete triggers on every ga
 
 ---
 
-## Status (as of 2 September 2026)
+## Status (as of 7 September 2026)
 
 **Built and verified by automated checks:**
 
+- The approved V1 store submission presentation packet is prepared in PR 35 from PR 34 exact green head `b952389e20b7c510f204f5cbbeb87af70b4c2574`. Independent-review corrections bind source, asset, release, and screenshot evidence to hashes; reject placeholder captures; account for the linked Meta SDK; and make Apple V1 iPhone-only. Andrew approved the final Google feature-graphic bytes on 7 September 2026. The packet remains `prepared_not_submitted`: final captures, live URL and support readback, review access, signing, exact binaries, console entry, questionnaires, submission, and release are not claimed.
 - The complete V1 source, launch-policy closure, public landing presentation, and final pre-launch hardening are merged through PR 32 at `88ce483f1ea18df6a7a2b4e790803773164ac9a5`. Fresh exact-main run `33562025155` completed all eight jobs successfully. Gate 2 deployed its 46 non-scheduled Functions while production stayed closed. No Hosting, DNS, store, or public-release action is implied.
 - Backend safety, review corrections and Chant Call-Ups are merged through PR 28 at `42f20dc675a1de4fe85956783774a4cdc67f3a01`. [Exact-main run 33368497566](https://github.com/andrewbolaji/Chants/actions/runs/33368497566) passed all eight jobs. This is source/build evidence, not deployment or device proof.
 - v1 feature set: auth, agnostic Sport/Competition/Team/Chant data model, browse and search, chant detail, user submission, moderation (report, remove, ban, unban, rate limits, audit log), voting with counter reconciliation, one-level comment replies with likes, user blocking, and suggestion box.
@@ -228,6 +229,15 @@ These ideas are pinned for deliberate V1.1 evaluation. They are not launch promi
 - **Keep out initially:** automatic roster reconciliation, public transfer news, speculative transfer alerts, lineup-derived chant status, and player media.
 - **Implementation gates:** verify squad and transfer coverage, identifier stability, false-positive handling, rate limits, cost, manual dismissal and recheck behavior, and the operator queue's privacy and audit contract.
 
+### 11. Native iPad support
+
+- **Status:** Pinned for V1.1 by Andrew on 7 September 2026. Apple V1 is deliberately iPhone-only and must not regain iPad targeting before this complete block is approved and proved.
+- **Purpose:** Give supporters a real larger-screen Chants experience instead of allowing iPhone layouts to run on iPad without design or store evidence.
+- **Smallest complete slice:** Adaptive Stage, Clubs, chant detail, Create, Songbook, You, authentication, policy, permission, loading, empty, offline, and recovery states; safe share anchors and media behavior; keyboard and orientation review; simulator and physical-device walks; and a truthful App Store screenshot set.
+- **Success signal:** the full release journey is readable, operable, and visually intentional on supported iPad sizes with no phone-only layout assumptions.
+- **Keep out initially:** a tablet-only information architecture, desktop windowing promises, split-view-only features, or new product capability that makes iPhone and iPad behavior diverge.
+- **Implementation gates:** separate Lane 2 specification, adaptive mockups only where hierarchy is unresolved, representative enlarged-text and orientation tests, physical-device proof, native device-family change, store metadata update, and renewed screenshot approval.
+
 Deep comment mentions and nesting beyond the current performance-thread design, duet or remix, licensed music, beat-synced karaoke, personalized recommendations, automated large-scale media screening, and creator payouts remain future work with their existing safety, rights, privacy, cost, and operations gates.
 
 ## FanChants reference audit, checked 2026-08-29
@@ -311,9 +321,9 @@ The implementation boundary and remaining verification gate live in `docs/CHANGE
 ### Legal, store, and launch mechanics
 
 - **DONE IN SOURCE, NOT DEPLOYED** The root public landing page plus Privacy, Terms, Community, Rights, Delete account, and Support exist in Hosting source. The six trust routes are reachable from the signed-out app welcome and the root footer. Publication and signed-out production readback remain.
-- **TODO** Apple Developer account ($99) and Google Play Developer account ($25).
-- **TODO** Wire final app icon; set 17+ age rating.
-- **TODO** Store listings, screenshots, and data-safety / app-privacy forms.
+- **OWNER GATE** The Apple developer membership and Chants FC App Store record exist. Confirm agreements, tax, banking, user access, and distribution readiness. Confirm the Google Play account and Chants record requirements separately.
+- **DONE IN SOURCE, FEATURE GRAPHIC APPROVED** The 1024 no-alpha App Store icon source exists, a validated 512 alpha-bearing Google Play icon is in the store packet, and the final 1024 by 500 Google feature graphic has exact-byte owner acceptance. Real screenshots, platform previews, and release-binary asset readback remain.
+- **PREPARED, NOT ENTERED OR SUBMITTED** `docs/STORE_SUBMISSION_PACKET.md`, `docs/STORE_PRIVACY_WORKSHEET.md`, `store/submission.json`, and `store/screenshots/manifest.json` own the store-copy and disclosure packet. Real iOS and Android captures, live trust-route readback, private reviewer access, privacy and Data safety entry, questionnaire-derived store ratings, console metadata, and submission remain owner gates. The app's 17+ account rule is unchanged and is not a substitute for either store questionnaire.
 - **IN PROGRESS** App Check production: iOS App Attest and Android Play Integrity configurations exist, while Firestore and Authentication enforcement remain off. Observe one to two weeks of valid release traffic from trusted signing identities, then approve enforcement separately. DeviceCheck fallback still requires an approved private-key path.
 - **TODO** Production build, signing, and deploy.
 
@@ -328,7 +338,7 @@ The implementation boundary and remaining verification gate live in `docs/CHANGE
 - **Keep the V1 site data-free.** Use the public explanation, support route, and owned social accounts before adding a mailing list. A future waitlist needs a separately approved privacy, delivery, retention, and abuse boundary.
 - **Join five watering holes** as a real member, weeks before launch: Arsenal and other club subreddits, football fan Twitter, terrace-culture and fan forums. Be helpful, never spam, so at launch you are a member sharing something, not a stranger advertising.
 - **Line up 5 to 10 soft-launch testers** who will try it early, give honest feedback, and leave a day-one rating.
-- **Assemble a launch kit** in one folder: logo, 3 to 5 clean screenshots, the one-sentence pitch, a 100-word description, and the founder story in three sentences (English-born Arsenal supporter building the songbook the terraces never had).
+- **Assemble the launch kit** through `docs/STORE_SUBMISSION_PACKET.md`: approved icon sources, five real screenshots per store, the canonical short and long descriptions, and the founder story. Keep the founder story out of console metadata unless separately approved.
 
 ### Launch day
 

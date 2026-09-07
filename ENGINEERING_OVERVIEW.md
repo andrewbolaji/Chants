@@ -1,10 +1,10 @@
 # Chants engineering overview
 
-This map includes the merged stack through PR 32, the exact green PR 33 head at `e24c9cc`, and the approved uncommitted V1 Stage and Club Signal release redesign. The current redesign changes presentation only: backend authority, data, ranking, trust, playback, safety, recovery, and lifecycle behavior remain inherited. Its full Flutter regression passes 539 tests; the 60-test affected journey group and scoped analysis also pass. The static public-root contract passes 10 tests, and the uncached local page has been rendered without horizontal overflow at 1440, 390, and 320 pixels. Current scoped reasoning is in `docs/changes/2026-09-02-v1-ios-startup-and-launch-calibration.md` and `docs/changes/2026-09-03-v1-stage-club-signal-release-redesign.md`. Physical-device visual acceptance beyond the truthful maintenance gate, packaging, independent review, exact-head CI, production reopening, signing, store assets, and submission remain open.
+This map includes the merged stack through PR 32, the exact green PR 34 head at `b952389e20b7c510f204f5cbbeb87af70b4c2574`, and the approved uncommitted V1 store submission presentation packet. The Stage and Club Signal redesign changes presentation only: backend authority, data, ranking, trust, playback, safety, recovery, and lifecycle behavior remain inherited. The current packet changes store documents, machine-readable metadata, derived store assets, a reusable screenshot frame, and governance checks only. It does not enter a console or touch production. Current scoped reasoning is in `docs/changes/2026-09-03-v1-stage-club-signal-release-redesign.md` and `docs/changes/2026-09-03-v1-store-submission-presentation-packet.md`. Final capture, feature-graphic visual acceptance, live public-route and support readback, review access, distribution signing, questionnaires, console entry, submission, and release remain open.
 
 The local helper inspects only config-file presence and tool locations by default; optional SDK discovery emits bounded aggregate device states, not identifiers (`scripts/check-device-readiness.mjs :: collectReadiness`). The private command center keeps instructions beside per-platform observations, marks changed-candidate results stale and handles storage/copy failures (`docs/launch-command-center.js :: recordObservation`, `observedStatus`, `copyText`). Neither authorizes production testing. Source and browser verification are complete as recorded in the scoped rationale. Hosting publication and live-domain readback remain unperformed.
 
-The active approval contract is `docs/CHANGE_SPEC.md`. Completed reasoning is in `docs/changes/`; durable architectural choices now run through decision 029. `docs/IMPLEMENTATION_RATIONALE.md` is the companion coverage ledger and verification record.
+The active approval contract is `docs/CHANGE_SPEC.md`. Completed reasoning is in `docs/changes/`; durable architectural choices now run through decision 029. `docs/STORE_SUBMISSION_PACKET.md` and `store/submission.json` are the owner and machine views of current store preparation. `docs/IMPLEMENTATION_RATIONALE.md` is the companion coverage ledger and verification record.
 
 ## Review outcome
 
@@ -140,7 +140,7 @@ The seed pipeline validates explicit chant identity, content shape, review prove
 
 `functions/package.json` and CI target Node 22; seed stays Node 20. The correction adds no dependency changes or jobs. The production Functions suite passes 230 locally runnable tests, and the dedicated real-emulator suite passes all 24 transaction cases. Seed CI runs `npx tsc --noEmit` over the entire configured program, including `seed.ts`, as well as 74 tests. A deliberate entrypoint type error fails that command. Exact-head CI for this uncommitted correction remains open.
 
-`.github/workflows/ci.yml` runs governance, full Flutter tests, full analysis with a deterministic non-secret Firebase fixture, Functions, seed, and Firestore plus Storage emulators. It now also builds an Android debug APK and iOS simulator app from obvious non-secret compile fixtures. Android CI inspects `com.chants.chants`, records the APK digest, and retains the artifact. iOS CI inspects the same bundle ID. The governance job fetches complete history and runs `scripts/check-project-memory.sh --range <base>`, so implementation changes must carry `docs/EXECUTION.md` in the same PR or push range.
+`.github/workflows/ci.yml` runs governance, full Flutter tests, full analysis with a deterministic non-secret Firebase fixture, Functions, seed, and Firestore plus Storage emulators. It builds an Android debug APK and iOS simulator app from obvious non-secret compile fixtures. Android CI inspects `com.chants.chants`, records the APK digest, and retains the artifact. iOS CI inspects the same bundle ID. Governance now validates store field limits, identity, exact trust routes, honest readiness, screenshot inventory, PNG constraints, both icon sources, the approved feature graphic, and the two-platform frame contract with known-bad tests (`scripts/check-store-submission.mjs`; `scripts/test-store-submission.mjs`). The governance job fetches complete history and runs `scripts/check-project-memory.sh --range <base>`, so implementation changes must carry `docs/EXECUTION.md` in the same PR or push range.
 
 The auth client adds Google Sign-In, Facebook Auth, app links, and shared preferences. FlutterFire resolves as one current graph in `pubspec.lock`; iOS resolves 18 direct dependencies and 56 total pods against Firebase iOS 12.18. Google Sign-In 9.2 moves `GTMSessionFetcher` from 5.3.1 to compatible 3.5.0. CocoaPods warns that its Firebase distribution will stop receiving new versions after October 2026, but the repository intentionally remains CocoaPods-owned under the existing native decision. A future dependency-manager migration requires its own compatibility block.
 
@@ -164,15 +164,15 @@ The proposed order is reviewed source/CI, verified maintenance and drain, additi
 
 ## Where I most want your eyes
 
-Claude completed the combined review from `cb50d3c` through `fe0ea92`. Next review only the correction range from fe0ea92 through the replacement exact-head-green PR 26 head, plus affected consumers. Verify moderated report states, permanent cleanup quarantine, seed-entrypoint typechecking, actual maintenance-generation binding and evidence expiry. Prior optional Living Songbook findings and all production/device gates remain tracked separately.
+Review the current store packet from PR 34 exact green head `b952389e20b7c510f204f5cbbeb87af70b4c2574`. Treat copy, disclosures, screenshot truth, and false readiness as correctness concerns. Do not infer production, console, signing, or submission evidence from prepared source.
 
-1. `functions/src/onboarding.ts`, `requireVerifiedUid`, and both rules implementations for inconsistent email, phone, current-provider, linked-provider, or operator authority.
-2. `lib/app/app.dart`, `MagicLinkGate`, onboarding, and `SignInMethodsScreen` for deletion precedence, stale Firebase user state, ambiguous delivery, cross-account links, collision, or last-method holes.
-3. `AuthRepository` Google initialization, phone callbacks, cancellation, and magic-link local binding for poisoned retry, duplicate credential use, replay, expiry, or unrelated-account replacement.
-4. Android Gradle signing, both native link declarations, non-secret fixtures, and the two new native CI jobs for false readiness claims.
-5. `functions/src/performance_source.ts` and performance media-deletion work for inherited stale projection, aggregate, or retry holes.
-6. Firestore and Storage rules for parser-safe public projections and path substitution.
-7. `.github/workflows/ci.yml` and the project-memory and native governance scripts for range and source-contract correctness.
+1. `store/submission.json` against actual V1 behavior, disabled provider flags, bundle identity, markets, and the current 17+ account rule.
+2. `docs/STORE_PRIVACY_WORKSHEET.md` against locked Firebase SDK behavior, especially diagnostics linkage, installation identifiers, IP-derived classification, processor status, and video voice recording.
+3. `store/screenshots/manifest.json`, its capture runbook, and `frame.html` for fabricated counts, stale UI, rights-sensitive media, unreadable trust labels, missing-source publication, cross-platform reuse, or false offline claims.
+4. `scripts/check-store-submission.mjs` for a mutation that can still mark the packet ready with missing evidence, bypass exact URLs, or accept invalid PNGs.
+5. `scripts/test-store-submission.mjs` for meaningful known-bad coverage without count-only test inflation.
+6. `.github/workflows/ci.yml` for correct clean-runner invocation and no deployment side effect.
+7. `docs/WISHLIST.md` for the early V1.1 appearance scope staying outside V1 and invalidating screenshots when presentation changes.
 
 ## Unverified
 
@@ -180,4 +180,4 @@ Claude completed the combined review from `cb50d3c` through `fe0ea92`. Next revi
 - Camera and library permissions, upload progress, backgrounding, retry, cancellation, playback, share destinations, Following, notifications, deep comments, moderation, blocking, deletion, accessibility, and offline behavior on real devices.
 - `chantsfc.com` Hosting deployment, DNS, domain association, social crawler output, app/store routing, and URL-signing IAM.
 - Android App Check, App Check enforcement and observation, alert delivery, deployed signal production, billing-threshold delivery, deployed staged-object cleanup, moderation response time, backup or restore, data export, and deployed parity.
-- Qualified review and publication of the implemented policy pack; support-mail receipt and branded reply proof; child-safety and retention rehearsal; signing, store metadata, configured-device catalogue and policy inspection; and release.
+- Qualified review and publication of the implemented policy pack; support-mail receipt and branded reply proof; child-safety and retention rehearsal; final release screenshots and feature graphic; exact-binary privacy and rating forms; reviewer access; distribution signing; store metadata readback; submission; and release.
