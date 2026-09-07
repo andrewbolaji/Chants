@@ -134,13 +134,18 @@ test('rejects an invalid or unbound source baseline', () => {
 test('rejects asset bytes that do not match their evidence digest', () => {
   const submission = clone(baselineSubmission);
   submission.assetEvidence.googlePlayIcon.sha256 = '0'.repeat(64);
+  submission.assetEvidence.googleFeatureGraphic.sha256 = '1'.repeat(64);
+  submission.assetEvidence.googleFeatureGraphic.sourceSha256 = '2'.repeat(64);
   const errors = validate(submission);
   assert(errors.includes('Google Play icon SHA-256 does not match store/assets/google-play-icon.png'));
+  assert(errors.includes('Google feature graphic SHA-256 does not match store/assets/google-feature-graphic.png'));
+  assert(errors.includes('Google feature graphic source SHA-256 does not match scripts/render-google-feature-graphic.swift'));
 });
 
 test('rejects stale feature graphic approval claims', () => {
   const submission = clone(baselineSubmission);
-  submission.assetEvidence.googleFeatureGraphic.ownerApproved = true;
+  submission.readiness.googleFeatureGraphicFinal = false;
+  submission.assetEvidence.googleFeatureGraphic.approvedOn = null;
   const errors = validate(submission);
   assert(errors.includes('feature graphic approval evidence must match readiness.googleFeatureGraphicFinal'));
   assert(errors.includes('approved feature graphic requires an approval date'));
@@ -149,6 +154,9 @@ test('rejects stale feature graphic approval claims', () => {
 test('rejects ready status while evidence gates remain false', () => {
   const submission = clone(baselineSubmission);
   submission.status = 'ready_for_submission';
+  submission.readiness.googleFeatureGraphicFinal = false;
+  submission.assetEvidence.googleFeatureGraphic.ownerApproved = false;
+  submission.assetEvidence.googleFeatureGraphic.approvedOn = null;
   const errors = validate(submission);
   assert(errors.includes('ready packet requires readiness.releaseCandidateMerged'));
   assert(errors.includes('ready packet requires readiness.reviewAccountVerified'));

@@ -4,7 +4,7 @@
 
 **Approval:** Andrew approved the original `V1 store submission presentation packet spec` on 2026-09-03, then approved `PR 35 independent review correction spec with iPhone-only V1 and iPad pinned for V1.1` on 2026-09-07. Light and dark appearance also remains pinned for early V1.1.
 
-**Visual acceptance:** Andrew approved the earlier Google Play feature graphic and screenshot storyboard on 3 September 2026. The correction changes the feature graphic bytes to repair its product label, so exact-asset approval is reopened. This does not invalidate the approved visual system or approve absent release-candidate screenshots.
+**Visual acceptance:** Andrew approved the screenshot storyboard on 3 September 2026 and approved the final simplified Google Play feature graphic bytes on 7 September 2026. This does not approve absent release-candidate screenshots.
 
 **Owner:** Andrew, through ThunderRiver Tech LLC
 
@@ -26,7 +26,7 @@ Prepare one copy-pasteable App Store and Google Play submission packet grounded 
 6. Known-good and known-bad tests for the validator, integrated into the existing governance job.
 7. A deterministic 512 by 512 Google Play icon with alpha, derived from the current no-alpha 1024 App Store icon and kept inside a conservative keyline safe zone.
 8. Durable rationale, execution evidence, roadmap status, and an early V1.1 light and dark theme commitment.
-9. A reproducible 1024 by 500 Google feature graphic candidate and one reusable, exact-size presentation frame for all ten final screenshot outputs.
+9. A reproducible, owner-approved 1024 by 500 Google feature graphic and one reusable, exact-size presentation frame for all ten final screenshot outputs.
 10. An iPhone-only Apple V1 package and screenshot boundary. iPad support and its full interface, device, screenshot, and submission proof are pinned for V1.1.
 11. SHA-256 bindings for mutable assets, source captures, framed outputs, intentional native drift, and future release artifacts, plus local Git ancestry and product-drift checks.
 

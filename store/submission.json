@@ -82,11 +82,11 @@
     },
     "googleFeatureGraphic": {
       "path": "store/assets/google-feature-graphic.png",
-      "sha256": "9b2bf9163f686bb5bbfba19fceb68e48a2512c640ec27d749938baa3eae1e07d",
-      "sourcePath": "store/assets/google-feature-graphic.html",
-      "sourceSha256": "862699e2c24d1171200a57265aeb787901c99af46f50fc5d3dd994b575dfb19c",
-      "ownerApproved": false,
-      "approvedOn": null
+      "sha256": "354f06f89ace434fade4f04e3a386e2f62b28a09c4cb4ccc974c78aee699f89f",
+      "sourcePath": "scripts/render-google-feature-graphic.swift",
+      "sourceSha256": "140b707cf5203db48cf0afc91b3fdd7f6ef2a8ef12cda3a16f9449f6c05184bd",
+      "ownerApproved": true,
+      "approvedOn": "2026-09-07"
     }
   },
   "apple": {
@@ -120,7 +120,7 @@
     "androidReleaseBundleVerified": false,
     "iosScreenshotsCaptured": false,
     "androidScreenshotsCaptured": false,
-    "googleFeatureGraphicFinal": false,
+    "googleFeatureGraphicFinal": true,
     "applePrivacyEntered": false,
     "googleDataSafetyEntered": false,
     "storeRatingQuestionnairesCompleted": false,

@@ -385,7 +385,7 @@ function checkAssetEvidence(errors, root, metadata) {
       path: evidence.googleFeatureGraphic.sourcePath,
       sha256: evidence.googleFeatureGraphic.sourceSha256,
     },
-    'store/assets/google-feature-graphic.html',
+    'scripts/render-google-feature-graphic.swift',
     'Google feature graphic source',
   );
   const graphic = evidence.googleFeatureGraphic ?? {};

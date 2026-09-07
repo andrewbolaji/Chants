@@ -2,7 +2,7 @@
 
 ## Status
 
-Implemented from PR 34 exact green head `b952389e20b7c510f204f5cbbeb87af70b4c2574` and corrected after independent review in PR 35. The screenshot storyboard retains owner visual acceptance. A product-label correction changed the feature-graphic bytes, so that exact asset needs renewed owner acceptance. Final capture, console entry, submission, and release remain separate.
+Implemented from PR 34 exact green head `b952389e20b7c510f204f5cbbeb87af70b4c2574` and corrected after independent review in PR 35. The screenshot storyboard retains owner visual acceptance, and Andrew approved the final Google feature graphic bytes on 7 September 2026. Final capture, console entry, submission, and release remain separate.
 
 ## Why this change exists
 
@@ -15,7 +15,7 @@ Chants had a launch command center and public policy source, but it did not have
 - Added `store/submission.json` as the machine-readable copy and readiness authority.
 - Added `store/screenshots/manifest.json`, a capture runbook, and a reusable exact-size presentation frame for five truthful scenes on each platform. A missing release-candidate source remains visibly unpublishable.
 - Derived `store/assets/google-play-icon.png` deterministically from the current 1024 no-alpha App Store icon as a 512 by 512 alpha-bearing Play asset with a conservative visible-mark safe zone.
-- Added a 1024 by 500 RGB Google feature graphic and reproducible HTML source using the current Stage and Songbook identity. The current corrected asset is hash-bound and pending renewed owner visual acceptance.
+- Added a 1024 by 500 RGB Google feature graphic. Its final deterministic renderer and PNG are hash-bound, and Andrew approved the exact bytes on 7 September 2026. The HTML remains a local preview rather than canonical render evidence.
 - Replaced the owner-rejected first graphic with one focused Nunito promise and overlapping Stage plus Club Signal product surfaces. Removed the split-poster layout, giant supporter mark, and repeated loud display treatment.
 - Replaced the still-too-corporate second candidate with a full-bleed Stage and Club Signal composition. A chorus waveform and one Fraunces lyric phrase carry the expressive moment; the matchday strip keeps the three V1 jobs grounded without cards or a fake device.
 - Made a bare `frame.html` open a useful five-scene storyboard with exact iOS and Android links. Exact frame routes now reserve most of the canvas for the real release capture and show a quiet, explicit hold state until that source exists.
@@ -49,7 +49,7 @@ The screenshot plan uses Stage, Clubs, chant detail, Create, and Songbook. Each 
 
 ### One expressive promise, then product proof
 
-The store creative follows the same two-speed interface as the release product. Nunito carries the setup and reading hierarchy, Fraunces is limited to the lyric-like `one voice.` phrase, and Oswald stays in compact signage. The feature graphic uses no fake phone, crest, badge, metric, testimonial, glow, card stack, or generic decorative gradient. The screenshot system uses thin rules, open space, and narrow mode-colored rails around the actual release capture rather than filling the frame with poster styling.
+The final feature graphic removes the rejected split panels, cards, route grid, waveform, echo effect, and competing typographic voices. One Anton statement, one Space Mono product line, and the established supporter mark make the matchday purpose legible at thumbnail size. It uses no fake phone, crest, badge, metric, testimonial, glow, card stack, or generic decorative gradient. The screenshot system uses thin rules, open space, and narrow mode-colored rails around the actual release capture rather than filling the frame with poster styling.
 
 ## Adversarial review
 
@@ -63,7 +63,7 @@ The validator covers the mistakes most likely to survive a hurried console sessi
 - Bare-storyboard browser QA: five scenes and ten platform links render without horizontal overflow at 390 CSS pixels and as one editorial planning view on desktop.
 - App Store icon source: 1024 by 1024 RGB PNG, no alpha.
 - Derived Google Play icon: 512 by 512 RGBA PNG with alpha, below 1 MiB, visible mark inside the 192-pixel radius guard.
-- Current Google feature graphic candidate: 1024 by 500 RGB PNG, no alpha, below 15 MiB, exact bytes pending renewed owner acceptance.
+- Final Google feature graphic: 1024 by 500 RGB PNG, no alpha, below 15 MiB, with exact PNG and renderer digests plus owner acceptance dated 7 September 2026.
 - Final writing, memory, whitespace, and complete governance checks remain before handoff.
 
 ## Remaining gates

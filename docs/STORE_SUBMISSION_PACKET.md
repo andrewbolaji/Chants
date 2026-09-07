@@ -8,6 +8,8 @@
 
 **Do not submit yet.** Final screenshots, public URL readback, review access, release signing, exact-binary checks, store questionnaires, and the open-production walkthrough are still gates. The machine-readable source for the copy below is `store/submission.json`.
 
+**Store creative status:** The screenshot storyboard retains owner visual acceptance. Andrew approved the final Google Play feature graphic bytes on 7 September 2026.
+
 ## 1. Identity to use everywhere
 
 | Field | Value |
@@ -186,7 +188,7 @@ Select that some functionality is restricted. Enter only the dedicated review ac
 ### Google graphics
 
 - App icon: `store/assets/google-play-icon.png`, 512 by 512 32-bit PNG with alpha, under 1 MiB. Its deterministic source renderer is `scripts/render-google-play-icon.swift`. The visible mark stays inside the validator's conservative safe-zone radius.
-- Feature graphic candidate: `store/assets/google-feature-graphic.png`, 1024 by 500 RGB PNG with no alpha. Its reproducible source is `store/assets/google-feature-graphic.html`. It uses the current Stage and Songbook identity without club crests, player images, fake ratings, awards, rankings, or store badges. The corrected `02 / SONGBOOK` bytes need renewed owner visual acceptance, so `googleFeatureGraphicFinal` remains false.
+- Feature graphic: `store/assets/google-feature-graphic.png`, 1024 by 500 RGB PNG with no alpha. Its deterministic source renderer is `scripts/render-google-feature-graphic.swift`; `store/assets/google-feature-graphic.html` remains a convenient local preview. The final graphic uses one matchday promise and the Chants supporter mark without club crests, player images, fake ratings, awards, rankings, or store badges. Andrew approved its exact bytes on 7 September 2026, so `googleFeatureGraphicFinal` is true.
 - Phone screenshots: use the five 1080 by 1920 paths in the manifest. Capture from the exact release candidate or make a truthful crop only when it preserves the real interface and store rules.
 
 ### Data safety, content rating, and account deletion
@@ -217,7 +219,7 @@ Complete these as prerequisites. The operational order may vary, but do not mark
 5. Create and test the dedicated reviewer account on clean iOS and Android installs.
 6. Verify the iOS distribution archive and Android release app bundle from the same source and configuration.
 7. Capture the five iOS and five Android scenes, inspect every pixel, and mark each manifest scene captured.
-8. Inspect the current hashed Google feature graphic and record renewed owner approval.
+8. Preserve the approved Google feature graphic digest. If its bytes or renderer change, clear its readiness gate and obtain renewed owner approval.
 9. Enter Apple App Privacy, Google Data safety, and both rating questionnaires from the exact binary.
 10. Enter the metadata and private access instructions in both consoles.
 11. Run `node scripts/check-store-submission.mjs` and the complete clean CI suite.
