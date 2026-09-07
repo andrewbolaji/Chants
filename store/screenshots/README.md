@@ -4,7 +4,7 @@ The manifest in this directory is the authority for scenes, captions, paths, siz
 
 ## Before capture
 
-1. Confirm the exact Git SHA and release configuration.
+1. Confirm the exact Git SHA and release configuration. Put that full SHA in `store/submission.json` under `releaseEvidence.commit` only after `releaseCandidateMerged` is true.
 2. Use a dedicated clean account with no personal email, phone number, moderation role, draft text, or private report visible.
 3. Prepare truthful content with real counts. Do not invent likes, views, comments, followers, ratings, or testimonials.
 4. Use only original or cleared chant text and supporter-created media. Do not show broadcast footage, club crests, player photos, copyrighted album art, or another app.
@@ -15,7 +15,7 @@ The manifest in this directory is the authority for scenes, captions, paths, siz
 
 ## iOS set
 
-Use the connected iPhone's native 1320 by 2868 portrait screenshots. Keep PNG output and no alpha.
+V1 supports iPhone only. Use the connected iPhone's native 1320 by 2868 portrait screenshots. Keep PNG output and no alpha. Do not create iPad captures for this release; iPad support and its screenshot set are pinned together for V1.1.
 
 1. `ios/01-stage.png`: Stage feed with one approved performance, creator identity, chant context, honest trust label and counts, plus the five labelled destinations.
 2. `ios/02-clubs.png`: Club Signal with Premier League scope, search or browse, and no unsupported marks.
@@ -31,7 +31,7 @@ Capture the same five scenes from the exact Android release candidate at 1080 by
 
 `frame.html` is the reusable presentation source for both platform sets. Opening it without query values shows a compact five-scene storyboard with links and capture status. That storyboard is a planning view, not a store image. Each linked exact-size frame adds only the scene headline, short deck, sequence number, and Chants FC line around an unmodified release-candidate screenshot.
 
-1. Put the clean source captures in `source/ios/` and `source/android/` using the exact five manifest filenames.
+1. Put the clean source captures in `source/ios/` and `source/android/` using the exact five manifest filenames. These are immutable raw captures from the release artifacts named in `store/submission.json`.
 2. Open `frame.html?platform=ios&scene=01-stage` or `frame.html?platform=android&scene=01-stage` through a local static server. Change only the platform and scene query values for the other nine outputs.
 3. Render the full page at 1320 by 2868 for iOS or 1080 by 1920 for Android.
 4. Save outputs to the final `ios/` and `android/` paths in the manifest.
@@ -54,7 +54,11 @@ The existing `docs/screenshots/*.png` files are product-development evidence. Th
 ## After capture
 
 1. Open all ten images at full size and at a narrow store-preview width.
-2. Run `node scripts/check-store-submission.mjs`.
-3. Change only the corresponding manifest statuses from `pending_capture` to `captured`.
-4. Set the platform screenshot readiness field in `store/submission.json` only when all five images for that platform pass.
-5. If the release source, appearance, content, navigation, or trust wording changes, return affected scenes to `pending_capture` and recapture them.
+2. Record each platform release artifact's SHA-256 in `store/submission.json`, then set its verified gate true. Do not use a debug, simulator-only, or differently sourced build.
+3. Compute SHA-256 digests for every raw source and framed output. Put them in the matching `iosSourceSha256`, `androidSourceSha256`, `iosSha256`, or `androidSha256` manifest field.
+4. Change only the corresponding manifest statuses from `pending_capture` to `captured`.
+5. Run `node scripts/check-store-submission.mjs`. It checks dimensions, alpha, non-placeholder content, path uniqueness, hashes, release commit evidence, and release artifact prerequisites.
+6. Set the platform screenshot readiness field in `store/submission.json` only when all five images for that platform pass.
+7. If the release source, artifact, appearance, content, navigation, or trust wording changes, return affected scenes to `pending_capture`, clear their hashes, and recapture them.
+
+A pending scene must keep both source and output hashes null and both image paths absent. Deleting or replacing a captured file without clearing its status is not recovery; the validator rejects the mismatch.

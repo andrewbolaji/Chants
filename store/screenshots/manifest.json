@@ -1,6 +1,7 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "captureSource": "exact submitted release candidate",
+  "releaseEvidenceSource": "store/submission.json#releaseEvidence",
   "rules": {
     "iosTarget": {
       "set": "iPhone 6.9-inch portrait",
@@ -24,6 +25,12 @@
       "mustShow": ["one approved visible performance", "creator handle", "chant and subject", "written trust label", "real non-invented counts", "five labelled destinations"],
       "iosPath": "store/screenshots/ios/01-stage.png",
       "androidPath": "store/screenshots/android/01-stage.png",
+      "iosSourcePath": "store/screenshots/source/ios/01-stage.png",
+      "androidSourcePath": "store/screenshots/source/android/01-stage.png",
+      "iosSourceSha256": null,
+      "androidSourceSha256": null,
+      "iosSha256": null,
+      "androidSha256": null,
       "iosStatus": "pending_capture",
       "androidStatus": "pending_capture"
     },
@@ -34,6 +41,12 @@
       "mustShow": ["Premier League heading", "search or browse affordance", "club-neutral source-owned marks only", "no unsupported crest or partnership"],
       "iosPath": "store/screenshots/ios/02-clubs.png",
       "androidPath": "store/screenshots/android/02-clubs.png",
+      "iosSourcePath": "store/screenshots/source/ios/02-clubs.png",
+      "androidSourcePath": "store/screenshots/source/android/02-clubs.png",
+      "iosSourceSha256": null,
+      "androidSourceSha256": null,
+      "iosSha256": null,
+      "androidSha256": null,
       "iosStatus": "pending_capture",
       "androidStatus": "pending_capture"
     },
@@ -44,6 +57,12 @@
       "mustShow": ["complete readable original or cleared lyric sample", "Terrace Proven or Chant Lab label", "team or player context", "save action"],
       "iosPath": "store/screenshots/ios/03-chant.png",
       "androidPath": "store/screenshots/android/03-chant.png",
+      "iosSourcePath": "store/screenshots/source/ios/03-chant.png",
+      "androidSourcePath": "store/screenshots/source/android/03-chant.png",
+      "iosSourceSha256": null,
+      "androidSourceSha256": null,
+      "iosSha256": null,
+      "androidSha256": null,
       "iosStatus": "pending_capture",
       "androidStatus": "pending_capture"
     },
@@ -54,6 +73,12 @@
       "mustShow": ["Already sung and I made this choices", "optional evidence wording", "no unsubmitted personal text", "no keyboard or permission sheet"],
       "iosPath": "store/screenshots/ios/04-create.png",
       "androidPath": "store/screenshots/android/04-create.png",
+      "iosSourcePath": "store/screenshots/source/ios/04-create.png",
+      "androidSourcePath": "store/screenshots/source/android/04-create.png",
+      "iosSourceSha256": null,
+      "androidSourceSha256": null,
+      "iosSha256": null,
+      "androidSha256": null,
       "iosStatus": "pending_capture",
       "androidStatus": "pending_capture"
     },
@@ -64,6 +89,12 @@
       "mustShow": ["at least one saved club or chant", "refresh or saved-date truth", "device-local wording", "no claim of cloud sync"],
       "iosPath": "store/screenshots/ios/05-songbook.png",
       "androidPath": "store/screenshots/android/05-songbook.png",
+      "iosSourcePath": "store/screenshots/source/ios/05-songbook.png",
+      "androidSourcePath": "store/screenshots/source/android/05-songbook.png",
+      "iosSourceSha256": null,
+      "androidSourceSha256": null,
+      "iosSha256": null,
+      "androidSha256": null,
       "iosStatus": "pending_capture",
       "androidStatus": "pending_capture"
     }

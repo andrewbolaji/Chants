@@ -1,10 +1,10 @@
 # Change spec: V1 store submission presentation packet
 
-**Status:** Approved for local implementation on 2026-09-03
+**Status:** Approved independent-review correction implemented and locally verified on 2026-09-07
 
-**Approval:** Andrew approved `V1 store submission presentation packet spec` and asked that light and dark mode be pinned for early V1.1.
+**Approval:** Andrew approved the original `V1 store submission presentation packet spec` on 2026-09-03, then approved `PR 35 independent review correction spec with iPhone-only V1 and iPad pinned for V1.1` on 2026-09-07. Light and dark appearance also remains pinned for early V1.1.
 
-**Visual acceptance:** Andrew approved the corrected Google Play feature graphic and screenshot storyboard on 3 September 2026. This does not approve absent final release-candidate screenshots.
+**Visual acceptance:** Andrew approved the earlier Google Play feature graphic and screenshot storyboard on 3 September 2026. The correction changes the feature graphic bytes to repair its product label, so exact-asset approval is reopened. This does not invalidate the approved visual system or approve absent release-candidate screenshots.
 
 **Owner:** Andrew, through ThunderRiver Tech LLC
 
@@ -24,9 +24,11 @@ Prepare one copy-pasteable App Store and Google Play submission packet grounded 
 4. A machine-readable metadata file and screenshot manifest.
 5. A local validator for store field limits, identity, URLs, screenshot inventory, PNG dimensions, alpha restrictions, and honest readiness state.
 6. Known-good and known-bad tests for the validator, integrated into the existing governance job.
-7. A deterministic 512 by 512 Google Play icon derived from the current no-alpha 1024 App Store icon.
+7. A deterministic 512 by 512 Google Play icon with alpha, derived from the current no-alpha 1024 App Store icon and kept inside a conservative keyline safe zone.
 8. Durable rationale, execution evidence, roadmap status, and an early V1.1 light and dark theme commitment.
 9. A reproducible 1024 by 500 Google feature graphic candidate and one reusable, exact-size presentation frame for all ten final screenshot outputs.
+10. An iPhone-only Apple V1 package and screenshot boundary. iPad support and its full interface, device, screenshot, and submission proof are pinned for V1.1.
+11. SHA-256 bindings for mutable assets, source captures, framed outputs, intentional native drift, and future release artifacts, plus local Git ancestry and product-drift checks.
 
 ## Excluded
 
@@ -49,7 +51,7 @@ Prepare one copy-pasteable App Store and Google Play submission packet grounded 
 5. Performance video is at most 30 seconds and stays private until operator approval.
 6. A chant can become Terrace Proven only through current operator-reviewed evidence. Popularity never proves provenance.
 7. The current binary uses Firebase Authentication, App Check, Firestore, Functions, Storage, and Crashlytics. It does not include Firebase Analytics or Performance Monitoring.
-8. Apple, Google, Facebook, magic-link, and phone entry points are compile-time disabled unless explicitly configured. Launch copy cannot advertise them.
+8. Apple, Google, Facebook, magic-link, and phone entry points are compile-time disabled unless explicitly configured. The Meta login package and native SDKs are still linked into the current dependency graph, so the exact-binary privacy review must account for their presence even though no Facebook app configuration or entry point is enabled.
 9. Public trust routes exist in source at `chantsfc.com`, but publication and signed-out readback remain separate gates.
 10. Production remains closed until a separately approved opening and walkthrough. Store assets cannot portray a maintenance denial as a working journey.
 
@@ -68,6 +70,8 @@ Prepare one copy-pasteable App Store and Google Play submission packet grounded 
 11. `prepared_not_submitted` cannot become `ready_for_submission` while any required capture, URL, form, review-access, signing, or exact-binary gate remains false.
 12. No authored file contains an em dash.
 13. A missing release-candidate screenshot remains visibly unpublishable in the presentation frame.
+14. Apple V1 targets only iPhone. No iPad screenshot exemption is inferred while the native target still claims iPad.
+15. Pending evidence fields remain null. A claim becomes valid only when its path, digest, release commit, and prerequisite gate agree.
 
 ## Devil's-advocate scenarios
 
@@ -79,6 +83,10 @@ Prepare one copy-pasteable App Store and Google Play submission packet grounded 
 - The privacy form omits Crashlytics installation identifiers, crash data, recorded audio inside a video, or public user content.
 - A later editor marks the packet ready by changing one status string while required evidence is still missing.
 - A PNG has accepted width and height but contains alpha, or an Android image is silently reused as iOS evidence.
+- A correctly sized solid-color hold image is renamed as a finished screenshot.
+- A capture status changes without source bytes, framed bytes, release commit, archive digest, or matching SHA-256 evidence.
+- A later product commit drifts away from the named baseline while an unbound baseline string still looks plausible.
+- The binary links a dormant SDK that is omitted from the privacy worksheet because its button is hidden.
 - The public support, privacy, or deletion URL is valid in source but unavailable on the live domain.
 - A future theme change alters screenshots without invalidating the captured-source record.
 
@@ -89,13 +97,15 @@ Prepare one copy-pasteable App Store and Google Play submission packet grounded 
 3. Privacy and Data safety answers cover email, public creator and user content, video and recorded audio, identifiers, product interaction, crash data, and device information with conservative linked, purpose, and sharing notes.
 4. The screenshot manifest has five distinct scenes per platform, exact paths, captions, content requirements, and pending states until real captures exist.
 5. Existing 1320 by 2663 documentation screenshots are explicitly rejected as pre-redesign and not App Store-ready.
-6. The validator rejects over-limit copy, identity drift, non-HTTPS or off-domain trust URLs, missing screenshot scenes, invalid PNG dimensions, alpha-bearing iOS PNGs, and false readiness.
+6. The validator rejects over-limit copy, identity drift, locale or version drift, non-HTTPS or off-domain trust URLs, missing screenshot scenes, invalid PNG dimensions, alpha-bearing iOS PNGs, blank or placeholder-like captures, stale hashes, unbound source drift, and false readiness.
 7. A known-good metadata fixture passes and each meaningful known-bad mutation fails.
-8. The current icon source and derived Google Play icon pass dimension and alpha checks.
+8. The App Store icon remains a 1024 by 1024 no-alpha PNG. The Google Play icon is a 512 by 512 alpha-bearing PNG under 1 MiB whose visible mark remains inside the encoded safe-zone radius.
 9. The launch command center and roadmap can point the owner to one stable packet without duplicating field copy.
 10. Light and dark mode is pinned as an early V1.1 fast follow with System, Light, and Dark choices, persisted explicit preference, token-only implementation, contrast proof, and screenshot invalidation as a release concern.
 11. Writing-style, whitespace, project-memory, store-validator, and focused tests pass locally.
 12. The feature graphic passes exact size and alpha checks and becomes final only after recorded owner visual acceptance.
+13. The native project contains exactly three iPhone-only device-family declarations and no iPad orientation metadata.
+14. iPad support is documented as V1.1 work and is not implied by the V1 App Store packet.
 
 ## Stop conditions
 

@@ -88,8 +88,12 @@ initialize_native_repo() {
     printf '%s\n' \
       '// CocoaPods project' \
       'CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;' \
+      'TARGETED_DEVICE_FAMILY = 1;' \
+      'TARGETED_DEVICE_FAMILY = 1;' \
+      'TARGETED_DEVICE_FAMILY = 1;' \
       >"$repo_path/ios/Runner.xcodeproj/project.pbxproj"
   fi
+  printf '%s\n' '<plist><dict></dict></plist>' >"$repo_path/ios/Runner/Info.plist"
   printf '%s\n' \
     'com.apple.developer.applesignin' \
     'applinks:auth.chantsfc.com' \
@@ -181,6 +185,15 @@ native_clean_repo="$governance_temp_root/native-clean"
 initialize_native_repo "$native_clean_repo"
 "$native_clean_repo/scripts/check-native-project.sh" >/dev/null || \
   fail 'the CocoaPods-native project contract was rejected'
+
+native_ipad_repo="$governance_temp_root/native-ipad"
+initialize_native_repo "$native_ipad_repo"
+sed -i.bak '1,/TARGETED_DEVICE_FAMILY = 1;/s/TARGETED_DEVICE_FAMILY = 1;/TARGETED_DEVICE_FAMILY = "1,2";/' \
+  "$native_ipad_repo/ios/Runner.xcodeproj/project.pbxproj"
+assert_native_failure \
+  "$native_ipad_repo" \
+  'all V1 iOS build configurations must target iPhone only' \
+  'native-ipad'
 
 native_flag_repo="$governance_temp_root/native-flag"
 initialize_native_repo "$native_flag_repo" true

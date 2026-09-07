@@ -8,9 +8,11 @@ This worksheet translates the current Chants behavior and included SDKs into con
 
 ## 1. Product boundary
 
-Current V1 includes Firebase Authentication, App Check, Firestore, Functions, Storage, and Crashlytics. It does not include Firebase Analytics, Firebase Performance Monitoring, advertising SDKs, or a location feature.
+Current V1 includes Firebase Authentication, App Check, Firestore, Functions, Storage, Crashlytics, and the linked Meta login dependency. It does not include Firebase Analytics, Firebase Performance Monitoring, an ad SDK, or a location feature.
 
 Apple, Google, Facebook, phone, and magic-link entry points are disabled unless their explicit release flags and external configuration are approved. Email and password is the current launch path. Reopen this worksheet before enabling another provider.
+
+The iOS dependency lock includes `FBSDKCoreKit` and `FBSDKLoginKit` 18.0.2 through `flutter_facebook_auth`, even though the Facebook button is hidden. The current native project has no Facebook app ID, client token, Facebook Android application metadata, or iOS tracking-usage description. Those absences support the statement that Facebook login is not configured; they do not justify ignoring a linked SDK. Inspect the exact archive privacy report, Play SDK guidance, native manifests, and runtime network behavior before answering either store form. If the exact binary reports Meta collection, disclose it or remove the dependency in a separately approved product change.
 
 Chants does not sell personal data, run targeted advertising, or use data to track people across other companies' apps or websites. Firebase is treated as an infrastructure processor only if the final contracts and configuration satisfy the applicable store service-provider exception. The operator must confirm that statement before selecting `not shared` in Google Play.
 
@@ -98,12 +100,12 @@ The store forms and reviewer notes must match these facts:
 
 ## 6. Conditional provider disclosures
 
-Do not select these data types merely because dormant source exists. Reopen the worksheet when any path is enabled in the exact release candidate.
+Do not select provider data types merely because a dormant entry point exists. A provider SDK linked into the exact binary still requires its own report and runtime review even when its button is hidden. Reopen the worksheet when any path is enabled or any included SDK changes.
 
 | Provider or feature | Additional likely disclosure work |
 |---|---|
 | Apple or Google sign-in | Provider identifiers, email or name returned by the provider, provider privacy review |
-| Facebook sign-in | Provider identifiers, email or name, Facebook SDK behavior and data-use review |
+| Facebook sign-in and linked Meta SDK | Provider identifiers, email or name if enabled; exact-binary Meta SDK collection, sharing, tracking, and purpose review even while disabled |
 | Phone sign-in | Phone number and SMS authentication processing |
 | Magic email link | Email delivery provider and link telemetry |
 | Notifications | Device push token and notification interaction |
@@ -116,7 +118,7 @@ Do not select these data types merely because dormant source exists. Reopen the 
 Before entering either form:
 
 1. Build the exact release binary with the exact provider flags.
-2. Confirm the dependency lockfiles and included native SDKs.
+2. Confirm the dependency lockfiles and included native SDKs, including `FBSDKCoreKit` and `FBSDKLoginKit` in the current iOS graph.
 3. Search source for Analytics, Performance Monitoring, advertising, user-ID attachment to Crashlytics, location APIs, push tokens, and new third-party SDKs.
 4. Read Apple's generated privacy manifest report for the archive.
 5. Read the current Google Play SDK Index and Firebase disclosure guidance for the locked Android dependencies.

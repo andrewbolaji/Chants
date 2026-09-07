@@ -112,6 +112,14 @@
 **Why v1.1:** Confirms the app works end to end on real hardware and OS versions, a check the unit and widget suite cannot give on its own.
 **Trigger:** v1 shipped and stable.
 
+### v1.1: Native iPad support
+
+**The idea:** Re-enable Apple device family 2 only as a complete larger-screen release block. Adapt Stage, Club Signal, Create, Songbook, You, authentication, policy, permission, offline, loading, empty, and recovery surfaces; verify sharing anchors, media, keyboards, orientation, and supported text scaling; then capture and approve the required iPad store presentation.
+
+**Why v1.1:** V1 has current iPhone design and device evidence but no equivalent iPad proof. Shipping iPhone-only keeps the first store claim honest and prevents an untested compatibility setting from creating a late screenshot and review obligation.
+
+**Trigger:** V1 is stable and a separate approved specification covers adaptive layout, representative mockups where needed, automated regressions, physical-device testing, native targeting, and App Store evidence together.
+
 ### v1.1: Golden and visual regression tests
 **The idea:** Golden image and visual regression tests for the key screens, catching unintended visual drift automatically.
 **Why v1.1:** Protects the locked "matchnight, warmed with playful" (Ink and Gold) visual identity once it stops changing.

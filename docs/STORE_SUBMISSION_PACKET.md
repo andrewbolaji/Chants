@@ -18,6 +18,8 @@
 | Support | support@chantsfc.com |
 | iOS bundle ID | com.chants.chants |
 | Android package name | com.chants.chants |
+| Version name and code | 1.0.0 (1) |
+| Apple V1 device support | iPhone only |
 | V1 markets | United States, United Kingdom, Canada |
 | Account minimum age | 17+ |
 
@@ -41,7 +43,9 @@ For every page, verify the visible operator name is exactly `ThunderRiver Tech L
 
 ## 3. Apple App Store Connect
 
-Open the existing Chants FC record. Use locale `English (U.K.)`.
+Open the existing Chants FC record. Use locale `English (U.S.)`.
+
+V1 is packaged for iPhone only. Upload the five iPhone screenshots below. Do not select or advertise iPad compatibility. iPad layout, device testing, screenshot capture, and store support are pinned together for V1.1.
 
 ### App information
 
@@ -89,7 +93,7 @@ STEP ONTO THE STAGE
 Record or upload a video up to 30 seconds. New performances stay private until review. Watch supporter performances, like, comment, share, follow creators, report abuse, and block accounts.
 
 KEEP THE SONGBOOK LIVING
-Suggest a correction, variation, or better evidence when a chant is wrong or dated. An operator reviews suggestions before any catalogue change.
+Suggest a correction, variation, or better evidence when a chant is wrong or dated. An operator reviews suggestions before any catalog change.
 
 Chants FC is an independent supporter service. It is not affiliated with or endorsed by any club, league, player, or music rightsholder. You must be at least 17 to create an account.
 ```
@@ -113,7 +117,7 @@ Create a dedicated reviewer account. Do not put its credentials in Git, a docume
 **Review notes**
 
 ```text
-Chants FC is a supporter songbook and moderated creator platform. Account creation and most interactions require sign-in. Use the dedicated review account supplied privately in App Store Connect. The account must be verified, 17+ confirmed, on current policy v2, and able to browse seeded Premier League content. Performance uploads are limited to 30 seconds and remain private until operator approval. The reviewer can browse Stage, Clubs, Songbook, and You; open chant lyrics; save a local Matchday Songbook; submit feedback; report or block supported content; and request account deletion from You. Public deletion instructions are at https://chantsfc.com/delete-account. Chants is independent and is not affiliated with clubs, leagues, players, or music rightsholders. If production is in maintenance, do not submit the build because review access will fail honestly.
+Chants FC is a supporter songbook and moderated creator platform. Account creation and most interactions require sign-in. Use the dedicated review account supplied privately in App Store Connect. The account must be verified, 17+ confirmed, on current policy v2, and able to browse seeded Premier League content. Performance uploads are limited to 30 seconds and remain private until operator approval. The reviewer can browse Stage, Clubs, Create, Songbook, and You; open chant lyrics; save a local Matchday Songbook; submit feedback; report or block supported content; and request account deletion from You. Public deletion instructions are at https://chantsfc.com/delete-account. Chants is independent and is not affiliated with clubs, leagues, players, or music rightsholders. If production is in maintenance, do not submit the build because review access will fail honestly.
 ```
 
 Before submission, use the exact reviewer credentials on a clean device. Confirm the account is not banned, deletion-pending, policy-stale, unverified, empty, or dependent on an operator role.
@@ -128,7 +132,7 @@ Use `docs/STORE_PRIVACY_WORKSHEET.md`. Reconcile every selection against Apple's
 
 ## 4. Google Play Console
 
-Use default language `English (United Kingdom)` unless the existing record has another approved default.
+Use default language `English (United States)` unless the existing record has another approved default.
 
 ### Main store listing
 
@@ -166,7 +170,7 @@ Step onto the Stage
 Record or upload a video up to 30 seconds. New performances stay private until review. Watch supporter performances, like, comment, share, follow creators, report abuse, and block accounts.
 
 Keep the Songbook living
-Suggest a correction, variation, or better evidence when a chant is wrong or dated. An operator reviews suggestions before any catalogue change.
+Suggest a correction, variation, or better evidence when a chant is wrong or dated. An operator reviews suggestions before any catalog change.
 
 Chants FC is an independent supporter service. It is not affiliated with or endorsed by any club, league, player, or music rightsholder. You must be at least 17 to create an account.
 ```
@@ -176,13 +180,13 @@ Chants FC is an independent supporter service. It is not affiliated with or endo
 Choose that some functionality is restricted. Put credentials only in Play Console.
 
 ```text
-Select that some functionality is restricted. Enter only the dedicated review account credentials in the private Play Console. The account must be verified, 17+ confirmed, on current policy v2, and able to browse seeded Premier League content. Start on Stage, then use Clubs, Songbook, Create, and You. Performance uploads stay private until operator approval. Account deletion is under You and public deletion instructions are at https://chantsfc.com/delete-account. Do not submit while production is in maintenance.
+Select that some functionality is restricted. Enter only the dedicated review account credentials in the private Play Console. The account must be verified, 17+ confirmed, on current policy v2, and able to browse seeded Premier League content. Start on Stage, then use Clubs, Create, Songbook, and You. Performance uploads stay private until operator approval. Account deletion is under You and public deletion instructions are at https://chantsfc.com/delete-account. Do not submit while production is in maintenance.
 ```
 
 ### Google graphics
 
-- App icon: `store/assets/google-play-icon.png`, 512 by 512 PNG, no alpha required by this project even though Google permits it.
-- Approved feature graphic: `store/assets/google-feature-graphic.png`, 1024 by 500 RGB PNG with no alpha. Its reproducible source is `store/assets/google-feature-graphic.html`. It uses the current Stage and Club Signal identity without club crests, player images, fake ratings, awards, rankings, or store badges. Andrew granted visual acceptance on 3 September 2026, so `googleFeatureGraphicFinal` is true.
+- App icon: `store/assets/google-play-icon.png`, 512 by 512 32-bit PNG with alpha, under 1 MiB. Its deterministic source renderer is `scripts/render-google-play-icon.swift`. The visible mark stays inside the validator's conservative safe-zone radius.
+- Feature graphic candidate: `store/assets/google-feature-graphic.png`, 1024 by 500 RGB PNG with no alpha. Its reproducible source is `store/assets/google-feature-graphic.html`. It uses the current Stage and Songbook identity without club crests, player images, fake ratings, awards, rankings, or store badges. The corrected `02 / SONGBOOK` bytes need renewed owner visual acceptance, so `googleFeatureGraphicFinal` remains false.
 - Phone screenshots: use the five 1080 by 1920 paths in the manifest. Capture from the exact release candidate or make a truthful crop only when it preserves the real interface and store rules.
 
 ### Data safety, content rating, and account deletion
@@ -204,7 +208,7 @@ Do not claim or visually imply:
 
 ## 6. Final readiness sequence
 
-Complete these in order and change `store/submission.json` only when evidence exists:
+Complete these as prerequisites. The operational order may vary, but do not mark a gate complete until its evidence exists:
 
 1. Merge and tag the exact release candidate.
 2. Open production under the approved rollout controls and pass the owner walkthrough.
@@ -213,13 +217,15 @@ Complete these in order and change `store/submission.json` only when evidence ex
 5. Create and test the dedicated reviewer account on clean iOS and Android installs.
 6. Verify the iOS distribution archive and Android release app bundle from the same source and configuration.
 7. Capture the five iOS and five Android scenes, inspect every pixel, and mark each manifest scene captured.
-8. Confirm the recorded final Google feature graphic approval. Complete on 3 September 2026.
+8. Inspect the current hashed Google feature graphic and record renewed owner approval.
 9. Enter Apple App Privacy, Google Data safety, and both rating questionnaires from the exact binary.
 10. Enter the metadata and private access instructions in both consoles.
 11. Run `node scripts/check-store-submission.mjs` and the complete clean CI suite.
 12. Review each store preview, then authorize submission separately.
 
 `prepared_not_submitted` is the correct status until every gate above except actual submission is complete.
+
+The machine-readable packet binds the source baseline, the two intentional iPhone-only native changes, store assets, release artifacts, source captures, and framed outputs to exact hashes. A pending item keeps its evidence null. If bytes or release source change, clear the affected gate and recapture or reapprove it.
 
 ## 7. Official references used
 
