@@ -38,6 +38,11 @@ const EXPECTED_ALLOWED_DRIFT = [
   'ios/Runner.xcodeproj/project.pbxproj',
   'ios/Runner/Info.plist',
 ];
+const EXPECTED_FEATURE_GRAPHIC_INPUTS = [
+  'assets/fonts/Anton-Regular.ttf',
+  'assets/fonts/SpaceMono-Bold.ttf',
+  'store/assets/google-play-icon.png',
+];
 const REQUIRED_READINESS = [
   'releaseCandidateMerged',
   'productionOpenAndWalked',
@@ -167,7 +172,7 @@ function samplesPerPixel(colorType) {
   return 0;
 }
 
-export function analyzePngContent(path) {
+function decodePngRows(path) {
   const png = parsePng(path);
   if (png.bitDepth !== 8 || png.interlace !== 0) {
     throw new Error(`${path} must be an 8-bit, non-interlaced PNG for content inspection`);
@@ -185,13 +190,7 @@ export function analyzePngContent(path) {
   if (raw.length !== expectedBytes) throw new Error(`${path} has unexpected decoded PNG length`);
 
   let previous = Buffer.alloc(rowBytes);
-  const colors = new Set();
-  let minChannel = 255;
-  let maxChannel = 0;
-  let opaquePixels = 0;
-  let maxOpaqueRadius = 0;
-  const sampleEvery = Math.max(1, Math.floor((png.width * png.height) / 200000));
-
+  const rows = [];
   for (let y = 0; y < png.height; y += 1) {
     const sourceOffset = y * (rowBytes + 1);
     const filter = raw[sourceOffset];
@@ -208,6 +207,38 @@ export function analyzePngContent(path) {
       else if (filter === 4) row[index] = (source[index] + paeth(left, up, upperLeft)) & 255;
       else throw new Error(`${path} uses unsupported PNG filter ${filter}`);
     }
+    rows.push(row);
+    previous = row;
+  }
+  return { png, bytesPerPixel, rows };
+}
+
+export function inspectPngPixel(path, x, y) {
+  const { png, bytesPerPixel, rows } = decodePngRows(path);
+  if (!Number.isInteger(x) || !Number.isInteger(y) || x < 0 || x >= png.width || y < 0 || y >= png.height) {
+    throw new Error(`${path} pixel coordinate ${x},${y} is outside ${png.width} by ${png.height}`);
+  }
+  const row = rows[y];
+  const index = x * bytesPerPixel;
+  const gray = row[index];
+  const red = png.colorType === 0 || png.colorType === 4 ? gray : row[index];
+  const green = png.colorType === 0 || png.colorType === 4 ? gray : row[index + 1];
+  const blue = png.colorType === 0 || png.colorType === 4 ? gray : row[index + 2];
+  const alpha = png.colorType === 4 ? row[index + 1] : png.colorType === 6 ? row[index + 3] : 255;
+  return [red, green, blue, alpha];
+}
+
+export function analyzePngContent(path) {
+  const { png, bytesPerPixel, rows } = decodePngRows(path);
+  const colors = new Set();
+  let minChannel = 255;
+  let maxChannel = 0;
+  let opaquePixels = 0;
+  let maxOpaqueRadius = 0;
+  const sampleEvery = Math.max(1, Math.floor((png.width * png.height) / 200000));
+
+  for (let y = 0; y < png.height; y += 1) {
+    const row = rows[y];
 
     for (let x = 0; x < png.width; x += 1) {
       const index = x * bytesPerPixel;
@@ -229,7 +260,6 @@ export function analyzePngContent(path) {
         );
       }
     }
-    previous = row;
   }
 
   return {
@@ -389,6 +419,48 @@ function checkAssetEvidence(errors, root, metadata) {
     'Google feature graphic source',
   );
   const graphic = evidence.googleFeatureGraphic ?? {};
+  checkBoundFile(
+    errors,
+    root,
+    graphic && {
+      path: graphic.previewPath,
+      sha256: graphic.previewSha256,
+    },
+    'store/assets/google-feature-graphic.html',
+    'Google feature graphic preview',
+  );
+  const inputs = Array.isArray(graphic.inputs) ? graphic.inputs : [];
+  add(
+    errors,
+    inputs.length === EXPECTED_FEATURE_GRAPHIC_INPUTS.length,
+    'Google feature graphic must bind every renderer input',
+  );
+  for (const expectedPath of EXPECTED_FEATURE_GRAPHIC_INPUTS) {
+    checkBoundFile(
+      errors,
+      root,
+      inputs.find((input) => input?.path === expectedPath),
+      expectedPath,
+      `Google feature graphic input ${expectedPath}`,
+    );
+  }
+
+  const previewPath = resolve(root, 'store/assets/google-feature-graphic.html');
+  if (existsSync(previewPath)) {
+    const preview = readFileSync(previewPath, 'utf8');
+    const images = preview.match(/<img\b/g) ?? [];
+    add(errors, images.length === 1, 'Google feature graphic preview must contain exactly one image');
+    add(
+      errors,
+      /<img\s+src="google-feature-graphic\.png"\s+width="1024"\s+height="500"\s+alt="[^"]+">/.test(preview),
+      'Google feature graphic preview must display the canonical PNG at 1024 by 500',
+    );
+    add(
+      errors,
+      !/<(?:h1|h2|section|p)\b|@font-face|--(?:gold|paper|coral)\b/.test(preview),
+      'Google feature graphic preview must not rebuild the composition',
+    );
+  }
   add(
     errors,
     graphic.ownerApproved === metadata.readiness?.googleFeatureGraphicFinal,
@@ -396,8 +468,14 @@ function checkAssetEvidence(errors, root, metadata) {
   );
   if (graphic.ownerApproved === true) {
     add(errors, /^\d{4}-\d{2}-\d{2}$/.test(graphic.approvedOn ?? ''), 'approved feature graphic requires an approval date');
+    add(errors, SHA256.test(graphic.approvedSha256 ?? ''), 'approved feature graphic requires an approved SHA-256');
+    add(errors, SHA256.test(graphic.approvedSourceSha256 ?? ''), 'approved feature graphic requires an approved source SHA-256');
+    add(errors, graphic.approvedSha256 === graphic.sha256, 'approved feature graphic SHA-256 must match the current asset SHA-256');
+    add(errors, graphic.approvedSourceSha256 === graphic.sourceSha256, 'approved feature graphic source SHA-256 must match the current source SHA-256');
   } else {
     add(errors, graphic.approvedOn === null, 'unapproved feature graphic must not retain an approval date');
+    add(errors, graphic.approvedSha256 === null, 'unapproved feature graphic must not retain an approved SHA-256');
+    add(errors, graphic.approvedSourceSha256 === null, 'unapproved feature graphic must not retain an approved source SHA-256');
   }
 }
 
@@ -475,7 +553,7 @@ export function validateStorePacket({ projectRoot, submission, manifest } = {}) 
   const screenshots = manifest ?? JSON.parse(readFileSync(resolve(root, 'store/screenshots/manifest.json'), 'utf8'));
   const errors = [];
 
-  add(errors, metadata.schemaVersion === 2, 'submission schemaVersion must be 2');
+  add(errors, metadata.schemaVersion === 3, 'submission schemaVersion must be 3');
   add(errors, ['prepared_not_submitted', 'ready_for_submission', 'submitted'].includes(metadata.status), 'submission status is invalid');
   checkSourceBoundary(errors, root, metadata);
 

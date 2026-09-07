@@ -1,10 +1,10 @@
 # Change spec: V1 store submission presentation packet
 
-**Status:** Approved independent-review correction implemented and locally verified on 2026-09-07
+**Status:** Approved final asset approval-integrity and preview-parity correction implemented, owner accepted, and locally verified on 2026-09-07
 
-**Approval:** Andrew approved the original `V1 store submission presentation packet spec` on 2026-09-03, then approved `PR 35 independent review correction spec with iPhone-only V1 and iPad pinned for V1.1` on 2026-09-07. Light and dark appearance also remains pinned for early V1.1.
+**Approval:** Andrew approved the original `V1 store submission presentation packet spec` on 2026-09-03, then approved `PR 35 independent review correction spec with iPhone-only V1 and iPad pinned for V1.1` and `PR 35 final asset approval-integrity and preview-parity correction spec` on 2026-09-07. Light and dark appearance also remains pinned for early V1.1.
 
-**Visual acceptance:** Andrew approved the screenshot storyboard on 3 September 2026 and approved the final simplified Google Play feature graphic bytes on 7 September 2026. This does not approve absent release-candidate screenshots.
+**Visual acceptance:** Andrew approved the screenshot storyboard on 3 September 2026 and approved the corrected canonical Google Play feature graphic PNG on 7 September 2026. The approved asset SHA-256 is `48180a6a23bdff177505fb9c00bac0585146e3f4acd68e1f74e0b4ee35766963`. This does not approve absent release-candidate screenshots.
 
 **Owner:** Andrew, through ThunderRiver Tech LLC
 
@@ -72,6 +72,8 @@ Prepare one copy-pasteable App Store and Google Play submission packet grounded 
 13. A missing release-candidate screenshot remains visibly unpublishable in the presentation frame.
 14. Apple V1 targets only iPhone. No iPad screenshot exemption is inferred while the native target still claims iPad.
 15. Pending evidence fields remain null. A claim becomes valid only when its path, digest, release commit, and prerequisite gate agree.
+16. Feature-graphic owner approval binds separate approved asset and renderer digests to the current evidence. A changed asset or renderer cannot retain a final gate.
+17. The browser preview displays the canonical PNG directly and cannot maintain a second approximation of the composition.
 
 ## Devil's-advocate scenarios
 
@@ -89,6 +91,8 @@ Prepare one copy-pasteable App Store and Google Play submission packet grounded 
 - The binary links a dormant SDK that is omitted from the privacy worksheet because its button is hidden.
 - The public support, privacy, or deletion URL is valid in source but unavailable on the live domain.
 - A future theme change alters screenshots without invalidating the captured-source record.
+- A later editor changes the feature graphic or renderer, refreshes only the live digest, and accidentally retains the previous owner's approval.
+- A browser preview looks approved while the PNG entering Google Play has different color, emphasis, or spacing.
 
 ## Acceptance criteria
 
@@ -106,6 +110,8 @@ Prepare one copy-pasteable App Store and Google Play submission packet grounded 
 12. The feature graphic passes exact size and alpha checks and becomes final only after recorded owner visual acceptance.
 13. The native project contains exactly three iPhone-only device-family declarations and no iPad orientation metadata.
 14. iPad support is documented as V1.1 work and is not implied by the V1 App Store packet.
+15. The feature graphic uses the declared sRGB palette, binds every renderer input, and keeps the final gate false until separate approved digests match the current PNG and renderer.
+16. The local HTML preview displays the canonical PNG at its exact 1024 by 500 canvas instead of rebuilding the artwork in HTML and CSS.
 
 ## Stop conditions
 

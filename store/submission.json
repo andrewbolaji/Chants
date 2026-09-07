@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "status": "prepared_not_submitted",
   "sourceBaseline": {
     "commit": "b952389e20b7c510f204f5cbbeb87af70b4c2574",
@@ -82,11 +82,29 @@
     },
     "googleFeatureGraphic": {
       "path": "store/assets/google-feature-graphic.png",
-      "sha256": "354f06f89ace434fade4f04e3a386e2f62b28a09c4cb4ccc974c78aee699f89f",
+      "sha256": "48180a6a23bdff177505fb9c00bac0585146e3f4acd68e1f74e0b4ee35766963",
       "sourcePath": "scripts/render-google-feature-graphic.swift",
-      "sourceSha256": "140b707cf5203db48cf0afc91b3fdd7f6ef2a8ef12cda3a16f9449f6c05184bd",
+      "sourceSha256": "0582d35fd3f9ec635cdaa2aa811a2d1f4d62e73498f1ec453c101dae0f5f612e",
+      "previewPath": "store/assets/google-feature-graphic.html",
+      "previewSha256": "d008007dfc2c7d800221e0f8ff55b2f2c128a3bf79fd928a7279dca8342c46f8",
+      "inputs": [
+        {
+          "path": "assets/fonts/Anton-Regular.ttf",
+          "sha256": "a4ba3a92350ebb031da0cb47630ac49eb265082ca1bc0450442f4a83ab947cab"
+        },
+        {
+          "path": "assets/fonts/SpaceMono-Bold.ttf",
+          "sha256": "405e73d41afb7e5906efce206a326af5c956f38e255f35421c260e861e599c59"
+        },
+        {
+          "path": "store/assets/google-play-icon.png",
+          "sha256": "419690a747e1905ae7da3013089377be7551341faf956032a9f629c7190235fb"
+        }
+      ],
       "ownerApproved": true,
-      "approvedOn": "2026-09-07"
+      "approvedOn": "2026-09-07",
+      "approvedSha256": "48180a6a23bdff177505fb9c00bac0585146e3f4acd68e1f74e0b4ee35766963",
+      "approvedSourceSha256": "0582d35fd3f9ec635cdaa2aa811a2d1f4d62e73498f1ec453c101dae0f5f612e"
     }
   },
   "apple": {

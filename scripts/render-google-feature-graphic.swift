@@ -39,13 +39,23 @@ func loadImage(_ relativePath: String) -> CGImage {
     return image
 }
 
+guard let sRGB = CGColorSpace(name: CGColorSpace.sRGB) else {
+    fputs("Could not create the sRGB color space\n", stderr)
+    exit(70)
+}
+
 func color(_ hex: UInt32, alpha: CGFloat = 1) -> CGColor {
-    CGColor(
-        red: CGFloat((hex >> 16) & 0xff) / 255,
-        green: CGFloat((hex >> 8) & 0xff) / 255,
-        blue: CGFloat(hex & 0xff) / 255,
-        alpha: alpha
-    )
+    let components = [
+        CGFloat((hex >> 16) & 0xff) / 255,
+        CGFloat((hex >> 8) & 0xff) / 255,
+        CGFloat(hex & 0xff) / 255,
+        alpha,
+    ]
+    guard let value = CGColor(colorSpace: sRGB, components: components) else {
+        fputs("Could not create an sRGB color\n", stderr)
+        exit(70)
+    }
+    return value
 }
 
 let ink = color(0x080806)
@@ -59,7 +69,7 @@ guard let context = CGContext(
     height: canvasHeight,
     bitsPerComponent: 8,
     bytesPerRow: canvasWidth * 4,
-    space: CGColorSpaceCreateDeviceRGB(),
+    space: sRGB,
     bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue
 ) else {
     fputs("Could not create drawing context\n", stderr)

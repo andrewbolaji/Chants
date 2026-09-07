@@ -10,6 +10,7 @@ import {
   analyzePngContent,
   hasPlausibleScreenshotContent,
   inspectPng,
+  inspectPngPixel,
   validatePngFile,
   validateStorePacket,
 } from './check-store-submission.mjs';
@@ -18,6 +19,7 @@ const projectRoot = fileURLToPath(new URL('..', import.meta.url));
 const baselineSubmission = JSON.parse(readFileSync(join(projectRoot, 'store/submission.json'), 'utf8'));
 const baselineManifest = JSON.parse(readFileSync(join(projectRoot, 'store/screenshots/manifest.json'), 'utf8'));
 const screenshotFrame = readFileSync(join(projectRoot, 'store/screenshots/frame.html'), 'utf8');
+const featureGraphicPreview = readFileSync(join(projectRoot, 'store/assets/google-feature-graphic.html'), 'utf8');
 
 function clone(value) {
   return structuredClone(value);
@@ -82,7 +84,7 @@ test('rejects schema, locale, version, and iPad support drift', () => {
   submission.identity.versionCode = 2;
   submission.identity.appleSupportedDevices.push('iPad');
   const errors = validate(submission);
-  assert(errors.includes('submission schemaVersion must be 2'));
+  assert(errors.includes('submission schemaVersion must be 3'));
   assert(errors.includes('Apple locale must be en-US'));
   assert(errors.includes('Google locale must be en-US'));
   assert(errors.includes('versionCode must be 1'));
@@ -144,11 +146,24 @@ test('rejects asset bytes that do not match their evidence digest', () => {
 
 test('rejects stale feature graphic approval claims', () => {
   const submission = clone(baselineSubmission);
-  submission.readiness.googleFeatureGraphicFinal = false;
-  submission.assetEvidence.googleFeatureGraphic.approvedOn = null;
+  submission.readiness.googleFeatureGraphicFinal = true;
+  submission.assetEvidence.googleFeatureGraphic.ownerApproved = true;
+  submission.assetEvidence.googleFeatureGraphic.approvedOn = '2026-09-07';
+  submission.assetEvidence.googleFeatureGraphic.approvedSha256 = '0'.repeat(64);
+  submission.assetEvidence.googleFeatureGraphic.approvedSourceSha256 = '1'.repeat(64);
   const errors = validate(submission);
-  assert(errors.includes('feature graphic approval evidence must match readiness.googleFeatureGraphicFinal'));
-  assert(errors.includes('approved feature graphic requires an approval date'));
+  assert(errors.includes('approved feature graphic SHA-256 must match the current asset SHA-256'));
+  assert(errors.includes('approved feature graphic source SHA-256 must match the current source SHA-256'));
+});
+
+test('rejects retained feature graphic approval fields after the final gate is cleared', () => {
+  const submission = clone(baselineSubmission);
+  submission.readiness.googleFeatureGraphicFinal = false;
+  submission.assetEvidence.googleFeatureGraphic.ownerApproved = false;
+  const errors = validate(submission);
+  assert(errors.includes('unapproved feature graphic must not retain an approval date'));
+  assert(errors.includes('unapproved feature graphic must not retain an approved SHA-256'));
+  assert(errors.includes('unapproved feature graphic must not retain an approved source SHA-256'));
 });
 
 test('rejects ready status while evidence gates remain false', () => {
@@ -157,6 +172,8 @@ test('rejects ready status while evidence gates remain false', () => {
   submission.readiness.googleFeatureGraphicFinal = false;
   submission.assetEvidence.googleFeatureGraphic.ownerApproved = false;
   submission.assetEvidence.googleFeatureGraphic.approvedOn = null;
+  submission.assetEvidence.googleFeatureGraphic.approvedSha256 = null;
+  submission.assetEvidence.googleFeatureGraphic.approvedSourceSha256 = null;
   const errors = validate(submission);
   assert(errors.includes('ready packet requires readiness.releaseCandidateMerged'));
   assert(errors.includes('ready packet requires readiness.reviewAccountVerified'));
@@ -235,6 +252,18 @@ test('current Google feature graphic has exact dimensions, no alpha, and valid s
   const path = join(projectRoot, 'store/assets/google-feature-graphic.png');
   assert.deepEqual(inspectPng(path), { width: 1024, height: 500, hasAlpha: false, colorType: 2 });
   assert(statSync(path).size <= 15 * 1024 * 1024);
+  assert.deepEqual(inspectPngPixel(path, 0, 0), [8, 8, 6, 255]);
+  assert.deepEqual(inspectPngPixel(path, 60, 97), [238, 103, 79, 255]);
+  assert.deepEqual(inspectPngPixel(path, 60, 65), [255, 193, 38, 255]);
+});
+
+test('feature graphic preview displays only the canonical PNG', () => {
+  assert.equal((featureGraphicPreview.match(/<img\b/g) ?? []).length, 1);
+  assert.match(
+    featureGraphicPreview,
+    /<img\s+src="google-feature-graphic\.png"\s+width="1024"\s+height="500"\s+alt="[^"]+">/,
+  );
+  assert.doesNotMatch(featureGraphicPreview, /<(?:h1|h2|section|p)\b|@font-face|--(?:gold|paper|coral)\b/);
 });
 
 test('screenshot frame preserves the five-scene, two-platform, and hold-state contract', () => {
