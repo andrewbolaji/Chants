@@ -103,7 +103,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    for (final label in ['Feed', 'Clubs', 'Create', 'Songbook', 'You']) {
+    for (final label in ['Stage', 'Clubs', 'Create', 'Songbook', 'You']) {
       expect(find.text(label), findsOneWidget);
       expect(find.byKey(ValueKey('primary-nav-$label')), findsOneWidget);
     }
@@ -129,7 +129,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    for (final label in ['Feed', 'Clubs', 'Create', 'Songbook', 'You']) {
+    for (final label in ['Stage', 'Clubs', 'Create', 'Songbook', 'You']) {
       expect(find.byKey(ValueKey('primary-nav-$label')), findsOneWidget);
     }
     expect(tester.takeException(), isNull);

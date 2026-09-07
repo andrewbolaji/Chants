@@ -6,12 +6,14 @@ class BrowseSupportingNotice extends StatelessWidget {
   final String label;
   final String message;
   final IconData icon;
+  final bool signalAppearance;
 
   const BrowseSupportingNotice({
     super.key,
     required this.label,
     required this.message,
     required this.icon,
+    this.signalAppearance = false,
   });
 
   @override
@@ -28,14 +30,22 @@ class BrowseSupportingNotice extends StatelessWidget {
         ),
         padding: const EdgeInsets.all(Spacing.md),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: signalAppearance ? AppColors.signalPaper : AppColors.surface,
           borderRadius: BorderRadius.circular(Radii.sm),
-          border: Border.all(color: AppColors.outline),
+          border: Border.all(
+            color: signalAppearance ? AppColors.signalRule : AppColors.outline,
+          ),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, size: 18, color: AppColors.textMuted),
+            Icon(
+              icon,
+              size: 18,
+              color: signalAppearance
+                  ? AppColors.signalForestMuted
+                  : AppColors.textMuted,
+            ),
             const SizedBox(width: Spacing.sm),
             Expanded(
               child: Column(

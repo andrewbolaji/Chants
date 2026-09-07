@@ -15,8 +15,7 @@ import 'package:chants/presentation/browse/browse_supporting_notice.dart';
 import 'package:chants/presentation/browse/chant_call_up_card.dart';
 import 'package:chants/presentation/browse/chant_lab_view.dart';
 import 'package:chants/presentation/shared/chant_card.dart';
-import 'package:chants/presentation/shared/empty_state.dart';
-import 'package:chants/presentation/shared/error_state.dart';
+import 'package:chants/presentation/shared/club_signal.dart';
 import 'package:chants/presentation/shared/section_eyebrow.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -252,8 +251,10 @@ class _TeamScreenState extends ConsumerState<TeamScreen>
     if (browseSnapshot == null) {
       body = _chantError == null
           ? const Center(child: CircularProgressIndicator())
-          : const ErrorState(
+          : const ClubSignalState(
+              headline: 'Songbook unavailable',
               message: 'Could not load chants. Go back and try again.',
+              icon: Icons.signal_wifi_connected_no_internet_4_outlined,
             );
     } else {
       final projection = projectChants(browseSnapshot.chants);
@@ -284,6 +285,7 @@ class _TeamScreenState extends ConsumerState<TeamScreen>
                                 .id,
                       );
                     },
+              signalAppearance: true,
             );
       final savedClub = savedSongbook?.clubSnapshots[widget.team.id];
       final canSaveForMatchday =
@@ -339,37 +341,59 @@ class _TeamScreenState extends ConsumerState<TeamScreen>
             now: widget.risingEvaluationTime ?? DateTime.now(),
             onChantTap: _openChant,
             onStartChant: _startChant,
+            signalAppearance: true,
           ),
         ],
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.team.name.toUpperCase()),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(text: 'SONGBOOK'),
-            Tab(text: 'CHANT LAB'),
-          ],
-        ),
-      ),
-      floatingActionButton: isSignedIn
-          ? FloatingActionButton.extended(
-              onPressed: _startChant,
-              icon: const Icon(Icons.add_rounded, size: 18),
-              label: const Text(
-                'START A CHANT',
+    return Theme(
+      data: ClubSignalTheme.from(Theme.of(context)),
+      child: Scaffold(
+        appBar: AppBar(
+          toolbarHeight: 68,
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'CLUB SIGNAL',
                 style: TextStyle(
                   fontFamily: 'SpaceMono',
-                  fontSize: 12,
-                  letterSpacing: 1.2,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.signalGold,
+                  letterSpacing: 1.1,
                 ),
               ),
-            )
-          : null,
-      body: body,
+              Text(widget.team.name.toUpperCase()),
+            ],
+          ),
+          bottom: TabBar(
+            controller: _tabController,
+            tabs: const [
+              Tab(text: 'SONGBOOK'),
+              Tab(text: 'CHANT LAB'),
+            ],
+          ),
+        ),
+        floatingActionButton: isSignedIn
+            ? FloatingActionButton.extended(
+                onPressed: _startChant,
+                icon: const Icon(Icons.add_rounded, size: 18),
+                label: const Text(
+                  'START A CHANT',
+                  style: TextStyle(
+                    fontFamily: 'SpaceMono',
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.7,
+                  ),
+                ),
+              )
+            : null,
+        body: body,
+      ),
     );
   }
 }
@@ -445,7 +469,11 @@ class _TeamSongbookView extends StatelessWidget {
           Spacing.lg,
           Spacing.xs,
         ),
-        child: SectionEyebrow(text: 'Terrace Proven', gold: true),
+        child: SectionEyebrow(
+          text: 'Terrace Proven',
+          gold: true,
+          signalAppearance: true,
+        ),
       ),
       const Padding(
         padding: EdgeInsets.symmetric(horizontal: Spacing.lg),
@@ -454,7 +482,7 @@ class _TeamSongbookView extends StatelessWidget {
           style: TextStyle(
             fontFamily: 'Nunito',
             fontSize: 13,
-            color: AppColors.textMuted,
+            color: AppColors.signalTextMuted,
           ),
         ),
       ),
@@ -470,9 +498,9 @@ class _TeamSongbookView extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(Spacing.lg),
             decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(Radii.md),
-              border: Border.all(color: AppColors.divider),
+              color: AppColors.signalPaper,
+              borderRadius: BorderRadius.circular(Radii.sm),
+              border: Border.all(color: AppColors.signalRule),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -481,7 +509,7 @@ class _TeamSongbookView extends StatelessWidget {
                   children: [
                     const Icon(
                       Icons.offline_pin_outlined,
-                      color: AppColors.gold,
+                      color: AppColors.signalGold,
                     ),
                     const SizedBox(width: Spacing.sm),
                     Expanded(
@@ -511,7 +539,7 @@ class _TeamSongbookView extends StatelessWidget {
                         : 'Preparing the latest copy.',
                     style: const TextStyle(
                       fontSize: 12,
-                      color: AppColors.textMuted,
+                      color: AppColors.signalTextMuted,
                     ),
                   ),
                 ],
@@ -546,6 +574,7 @@ class _TeamSongbookView extends StatelessWidget {
           label: 'DEVICE CACHE',
           message: 'These chants are from this device while Chants reconnects.',
           icon: Icons.offline_pin_outlined,
+          signalAppearance: true,
         ),
       if (hasRecoverableError)
         const BrowseSupportingNotice(
@@ -553,12 +582,13 @@ class _TeamSongbookView extends StatelessWidget {
           message:
               'Fresh updates are unavailable. You can still open these chants.',
           icon: Icons.sync_problem_outlined,
+          signalAppearance: true,
         ),
     ];
 
     if (chants.isEmpty) {
       items.add(
-        EmptyState(
+        ClubSignalState(
           headline: 'SONGBOOK IS QUIET',
           message:
               'No Terrace Proven chants yet. Chant Lab is where new ideas begin.',
@@ -575,6 +605,7 @@ class _TeamSongbookView extends StatelessWidget {
             (chant) => ChantCard(
               key: ValueKey('songbook-${chant.id}'),
               chant: chant,
+              signalAppearance: true,
               onTap: () => onOpenChant(chant),
             ),
           ),
@@ -595,7 +626,7 @@ class _TeamSongbookView extends StatelessWidget {
               trailing: const Icon(
                 Icons.chevron_right,
                 size: 20,
-                color: AppColors.textFaint,
+                color: AppColors.signalForestMuted,
               ),
               onTap: () => onOpenPlayer(player),
             ),
@@ -605,6 +636,7 @@ class _TeamSongbookView extends StatelessWidget {
               (chant) => ChantCard(
                 key: ValueKey('songbook-${chant.id}'),
                 chant: chant,
+                signalAppearance: true,
                 onTap: () => onOpenChant(chant),
               ),
             ),
@@ -616,6 +648,7 @@ class _TeamSongbookView extends StatelessWidget {
               (chant) => ChantCard(
                 key: ValueKey('songbook-${chant.id}'),
                 chant: chant,
+                signalAppearance: true,
                 onTap: () => onOpenChant(chant),
               ),
             ),
@@ -630,6 +663,7 @@ class _TeamSongbookView extends StatelessWidget {
           label: 'SQUAD LOADING',
           message: 'Player names and the full squad will appear shortly.',
           icon: Icons.groups_outlined,
+          signalAppearance: true,
         ),
       );
     } else if (playerHasError) {
@@ -638,6 +672,7 @@ class _TeamSongbookView extends StatelessWidget {
           label: 'SQUAD UNAVAILABLE',
           message: 'Chants are still here, but player details could not load.',
           icon: Icons.groups_outlined,
+          signalAppearance: true,
         ),
       );
     } else if (players.isNotEmpty) {
@@ -660,7 +695,7 @@ class _TeamSongbookView extends StatelessWidget {
                 const Spacer(),
                 Icon(
                   showFullSquad ? Icons.expand_less : Icons.expand_more,
-                  color: AppColors.textMuted,
+                  color: AppColors.signalForestMuted,
                   size: 20,
                 ),
               ],
@@ -676,7 +711,7 @@ class _TeamSongbookView extends StatelessWidget {
                 player.name,
                 style: Theme.of(
                   context,
-                ).textTheme.bodyMedium?.copyWith(color: AppColors.textHeadline),
+                ).textTheme.bodyMedium?.copyWith(color: AppColors.signalInk),
               ),
               dense: true,
               onTap: () => onOpenPlayer(player),
@@ -712,7 +747,7 @@ class _SectionHeader extends StatelessWidget {
         horizontal: Spacing.lg,
         vertical: Spacing.sm,
       ),
-      child: SectionEyebrow(text: title),
+      child: SectionEyebrow(text: title, signalAppearance: true),
     );
   }
 }

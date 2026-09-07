@@ -39,11 +39,18 @@ const _villa = Team(
 Widget _wrap(
   _TeamRepository repository, {
   ValueChanged<RouteSettings>? onRoute,
+  double textScale = 1,
 }) {
   return ProviderScope(
     overrides: [teamRepositoryProvider.overrideWithValue(repository)],
     child: MaterialApp(
       theme: ChantTheme.dark,
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(
+          context,
+        ).copyWith(textScaler: TextScaler.linear(textScale)),
+        child: child!,
+      ),
       home: const CompetitionScreen(
         competitionId: 'premier-league',
         competitionName: 'Premier League',
@@ -124,5 +131,30 @@ void main() {
 
     expect(find.text('PREMIER LEAGUE'), findsOneWidget);
     expect(find.text('No clubs yet. Check back soon.'), findsOneWidget);
+  });
+
+  testWidgets('club directory remains usable at 320 wide and 1.8x text', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(320, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final repository = _TeamRepository();
+    addTearDown(repository.controller.close);
+
+    await tester.pumpWidget(_wrap(repository, textScale: 1.8));
+    await tester.pump();
+    repository.controller.add(const [
+      Team(
+        id: 'wolverhampton-wanderers',
+        sportId: 'football',
+        competitionId: 'premier-league',
+        name: 'Wolverhampton Wanderers',
+      ),
+    ]);
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Wolverhampton Wanderers'), findsOneWidget);
+    expect(find.byIcon(Icons.chevron_right), findsOneWidget);
   });
 }

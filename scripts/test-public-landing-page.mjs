@@ -62,13 +62,14 @@ test('root metadata identifies the real Chants product and canonical origin', ()
   assert.doesNotMatch(html, /Thunderriver Tech LLC/);
 });
 
-test('root explains Songbook, Chant Lab, Stage, and trust without collapsing their meaning', () => {
+test('root explains Songbook, Chant Lab, Stage, Club Signal, and trust without collapsing their meaning', () => {
   for (const phrase of [
     'Find your voice in the crowd.',
     'songbook of the terraces',
     'SONGBOOK',
     'CHANT LAB',
     'CHANT STAGE',
+    'CLUB SIGNAL',
     'TERRACE PROVEN',
     'RISING',
     'STAGE POPULARITY',
@@ -108,8 +109,8 @@ test('root carries the approved product-led launch frame without fake social pro
 
 test('illustrative product copy is club-neutral and explicitly allowlisted', () => {
   assert.doesNotMatch(html, seededTeamPattern);
-  assert.match(html, /MATCHDAY SONGBOOK[\s\S]*DEVICE COPY[\s\S]*YOUR SAVED SONGS/);
-  assert.match(html, /Reviewed chants, ready when the signal drops\./);
+  assert.match(html, /CLUB SIGNAL[\s\S]*MATCHDAY SONGBOOK[\s\S]*READY FOR THE GROUND/);
+  assert.match(html, /Saved chants remain available when the signal drops\./);
   assert.match(html, /CHANT LAB[\s\S]*NEW IDEA[\s\S]*WHO IS THIS CHANT FOR\?/);
   assert.match(html, /Your club, your player, or the whole stand\./);
 });
@@ -195,7 +196,7 @@ test('the page keeps accessible and responsive source controls', () => {
 test('illustrations expose one useful label without leaking fake app structure', () => {
   assert.match(
     html,
-    /class="product-stage" role="img" aria-label="Illustration of the Chants Stage and Songbook screens"/,
+    /class="product-stage" role="img" aria-label="Illustration of the Chants Stage and Club Signal screens"/,
   );
   assert.match(html, /class="phone primary-phone" aria-hidden="true"/);
   assert.match(html, /class="product-panel songbook-panel" role="img"/);
@@ -204,7 +205,7 @@ test('illustrations expose one useful label without leaking fake app structure',
   assert.doesNotMatch(html, />For you</i);
   assert.match(
     html,
-    /class="app-tabs">\s*<span class="active">Feed<\/span><span>Clubs<\/span><span>Create<\/span><span>Songbook<\/span><span>You<\/span>/,
+    /class="app-tabs">\s*<span class="active">Stage<\/span><span>Clubs<\/span><span>Create<\/span><span>Songbook<\/span><span>You<\/span>/,
   );
   assert.match(css, /\.dark-eyebrow \{ color: #8a5f00; \}/);
   assert.match(css, /\.lab-prompt \{[^}]*color: #6f6a5e;/);
