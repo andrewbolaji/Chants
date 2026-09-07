@@ -197,7 +197,7 @@ void main() {
     AuthRepository? authRepository,
     AccountDeletionService? accountDeletionService,
     _FakeSavedSongbookRepository? savedSongbookRepository,
-    Duration launchRevealDuration = Duration.zero,
+    Duration? launchRevealDuration = Duration.zero,
   }) {
     final fakeProfileRepo = _FakeProfileRepository()
       ..makeStream = makeProfileStream;
@@ -227,7 +227,9 @@ void main() {
           fakeUser.uid,
         ).overrideWith((ref) => makeProfileStream()),
       ],
-      child: ChantApp(launchRevealDuration: launchRevealDuration),
+      child: launchRevealDuration == null
+          ? const ChantApp()
+          : ChantApp(launchRevealDuration: launchRevealDuration),
     );
   }
 
@@ -258,6 +260,52 @@ void main() {
       expect(find.byType(LaunchRevealScreen), findsOneWidget);
 
       await tester.pump(const Duration(milliseconds: 1));
+      await tester.pump();
+
+      expect(find.byType(LaunchRevealScreen), findsNothing);
+      expect(find.byType(SignInScreen), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('default cold launch reveal holds for a readable beat', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        wrap(
+          authStream: Stream.value(null),
+          makeProfileStream: () => const Stream.empty(),
+          launchRevealDuration: null,
+        ),
+      );
+
+      await tester.pump(const Duration(milliseconds: 2300));
+      expect(find.byType(LaunchRevealScreen), findsOneWidget);
+      expect(find.byType(SignInScreen), findsNothing);
+
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pump();
+
+      expect(find.byType(LaunchRevealScreen), findsNothing);
+      expect(find.byType(SignInScreen), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('default cold launch skips its hold for reduced motion', (
+      tester,
+    ) async {
+      tester.binding.platformDispatcher.accessibilityFeaturesTestValue =
+          const FakeAccessibilityFeatures(disableAnimations: true);
+      addTearDown(
+        tester.binding.platformDispatcher.clearAccessibilityFeaturesTestValue,
+      );
+
+      await tester.pumpWidget(
+        wrap(
+          authStream: Stream.value(null),
+          makeProfileStream: () => const Stream.empty(),
+          launchRevealDuration: null,
+        ),
+      );
       await tester.pump();
 
       expect(find.byType(LaunchRevealScreen), findsNothing);
@@ -389,18 +437,22 @@ void main() {
         await tester.pumpAndSettle();
 
         await tester.scrollUntilVisible(
-          find.text('DELETE ACCOUNT'),
+          find.text('OTHER OPTIONS'),
           100,
           scrollable: find.byType(Scrollable).first,
         );
-        await tester.tap(find.text('DELETE ACCOUNT'));
+        await tester.tap(find.text('OTHER OPTIONS'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Delete account'));
         await tester.pumpAndSettle();
         expect(find.text('Delete your account?'), findsOneWidget);
         await tester.tap(find.text('DELETE MY ACCOUNT'));
         await tester.pumpAndSettle();
         expect(deletionService.calls, 1);
 
-        await tester.tap(find.text('SIGN OUT'));
+        await tester.tap(find.text('OTHER OPTIONS'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Sign out'));
         await tester.pump();
         expect(authRepository.signOutCalls, 1);
       },

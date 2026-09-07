@@ -1,3 +1,7 @@
+import 'dart:async';
+
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chants/app/colors.dart';
@@ -5,9 +9,9 @@ import 'package:chants/app/providers.dart';
 import 'package:chants/app/router.dart';
 import 'package:chants/app/spacing.dart';
 import 'package:chants/app/policy.dart';
-import 'package:chants/presentation/content_policy/content_policy_screen.dart';
 import 'package:chants/presentation/settings/account_deletion_action.dart';
-import 'package:chants/presentation/shared/halftone_painter.dart';
+
+const kPolicyAcceptanceRequestTimeout = Duration(seconds: 15);
 
 /// One-time gate shown before the app is usable, for any signed-in user
 /// whose profile does not show acceptance of the current Terms and Rules
@@ -25,24 +29,79 @@ class PolicyAcceptanceGateScreen extends ConsumerStatefulWidget {
 class _PolicyAcceptanceGateScreenState
     extends ConsumerState<PolicyAcceptanceGateScreen> {
   bool _accepting = false;
+  final ValueNotifier<bool> _acceptingForOtherActions = ValueNotifier(false);
+
+  void _setAccepting(bool value) {
+    _acceptingForOtherActions.value = value;
+    setState(() => _accepting = value);
+  }
+
+  String _acceptanceError(Object error) {
+    if (error is FirebaseFunctionsException) {
+      final details = error.details;
+      final reason = details is Map ? details['reason'] : null;
+      if (reason == 'maintenance') {
+        return 'Chants is temporarily paused. Try again later. Nothing was changed.';
+      }
+      if (error.code == 'unauthenticated') {
+        return 'Sign in again, then accept the updated Terms and Community Rules.';
+      }
+      if (error.code == 'permission-denied') {
+        return 'Verify an email address or phone number, then try again.';
+      }
+      if (error.code == 'failed-precondition') {
+        return 'Your account needs attention before this can be accepted.';
+      }
+      if (error.code == 'not-found') {
+        return 'Your Chants profile is not ready yet. Sign out and sign in again, or contact Support.';
+      }
+      if (error.code == 'internal') {
+        return 'Chants could not save this right now. Try again, or contact Support if it continues.';
+      }
+      if (error.code == 'unavailable' || error.code == 'deadline-exceeded') {
+        return 'Chants could not be reached. Check your connection and try again.';
+      }
+    }
+    return 'Could not save your acceptance. Check your connection and try again.';
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
 
   Future<void> _accept() async {
-    setState(() => _accepting = true);
+    if (_accepting) return;
+    _setAccepting(true);
     try {
-      await ref.read(moderationRepositoryProvider).acceptPolicy();
+      await ref
+          .read(moderationRepositoryProvider)
+          .acceptPolicy()
+          .timeout(kPolicyAcceptanceRequestTimeout);
       // No manual navigation: the app watches the profile stream and
-      // moves on once it sees the acceptance.
+      // moves on once it sees the acceptance. Restore local controls as a
+      // fallback if that stream is delayed or unavailable.
+      if (!mounted) return;
+      _setAccepting(false);
+      _showMessage('Acceptance saved. Finishing setup...');
+    } on TimeoutException {
+      if (!mounted) return;
+      _setAccepting(false);
+      _showMessage(
+        'Chants is taking longer than expected. Try again, or use Other options for help.',
+      );
     } catch (e) {
       if (!mounted) return;
-      setState(() => _accepting = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Could not save your acceptance. Check your connection and try again.',
-          ),
-        ),
-      );
+      _setAccepting(false);
+      _showMessage(_acceptanceError(e));
     }
+  }
+
+  @override
+  void dispose() {
+    _acceptingForOtherActions.dispose();
+    super.dispose();
   }
 
   @override
@@ -92,48 +151,12 @@ class _PolicyAcceptanceGateScreenState
                           Navigator.pushNamed(context, AppRouter.community),
                     ),
                     const SizedBox(height: Spacing.lg),
-                    Container(
-                      padding: const EdgeInsets.all(Spacing.lg),
-                      decoration: const BoxDecoration(
-                        color: AppColors.surface,
-                        border: Border(
-                          left: BorderSide(color: AppColors.chantLab, width: 4),
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'PRIVACY STAYS SEPARATE',
-                            style: Theme.of(context).textTheme.titleSmall,
-                          ),
-                          const SizedBox(height: Spacing.xs),
-                          Text(
-                            'The Privacy Notice explains how information is '
-                            'handled. It is not part of this agreement.',
-                            style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(color: AppColors.textBody),
-                          ),
-                          const SizedBox(height: Spacing.sm),
-                          TextButton(
-                            onPressed: () =>
-                                Navigator.pushNamed(context, AppRouter.privacy),
-                            child: const Text('PRIVACY NOTICE'),
-                          ),
-                        ],
-                      ),
+                    _PrivacyRoute(
+                      onTap: () =>
+                          Navigator.pushNamed(context, AppRouter.privacy),
                     ),
                     const SizedBox(height: Spacing.lg),
-                    _SupportActions(accepting: _accepting),
-                    const SizedBox(height: Spacing.xxxl),
-                    const _SectionRule(
-                      kicker: 'THE RULES, PLAINLY',
-                      title: 'FUNNY BELONGS HERE. HATE DOES NOT.',
-                    ),
-                    const SizedBox(height: Spacing.lg),
-                    const SelectionArea(
-                      child: ContentPolicyBody(showHeader: false),
-                    ),
+                    _OtherActions(accepting: _acceptingForOtherActions),
                   ],
                 ),
               ),
@@ -170,10 +193,24 @@ class _PolicyAcceptanceGateScreenState
                     ),
                   ),
                   child: _accepting
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                      ? Semantics(
+                          excludeSemantics: true,
+                          liveRegion: true,
+                          label: 'Saving policy acceptance',
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                              SizedBox(width: Spacing.sm),
+                              Text('SAVING...'),
+                            ],
+                          ),
                         )
                       : const Text(
                           'AGREE AND CONTINUE',
@@ -195,106 +232,70 @@ class _PolicyGateHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: const HalftonePainter(
-        dotRadius: 1.25,
-        spacing: 10,
-        opacity: 0.065,
+    return Container(
+      padding: const EdgeInsets.fromLTRB(
+        Spacing.lg,
+        Spacing.lg,
+        Spacing.lg,
+        Spacing.xl,
       ),
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(
-          Spacing.xl,
-          Spacing.lg,
-          Spacing.xl,
-          Spacing.xxl,
-        ),
-        decoration: const BoxDecoration(
-          border: Border(
-            top: BorderSide(color: AppColors.gold, width: 5),
-            bottom: BorderSide(color: AppColors.outline),
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Wrap(
-              alignment: WrapAlignment.spaceBetween,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              spacing: Spacing.lg,
-              runSpacing: Spacing.sm,
-              children: [
-                Text(
-                  'ONE QUICK THING',
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: AppColors.gold,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                Text(
-                  'POLICY $kCurrentPolicyVersion',
-                  style: Theme.of(context).textTheme.labelSmall,
-                ),
-              ],
-            ),
-            const SizedBox(height: Spacing.xxl),
-            Semantics(
-              header: true,
-              child: Text(
-                'KEEP THE TERRACE LOUD.\nKEEP IT SAFE.',
-                style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                  fontSize: 46,
-                  height: 0.94,
-                  letterSpacing: 0.2,
-                  shadows: const [
-                    Shadow(color: AppColors.gold, offset: Offset(1.5, 1.5)),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: Spacing.lg),
-            Text(
-              'We updated our Terms and Community Rules. Read them, then '
-              'agree to keep using Chants.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.textBody,
-                fontSize: 16,
-                height: 1.45,
-              ),
-            ),
-            const SizedBox(height: Spacing.sm),
-            Text(
-              'Effective $kPolicyEffectiveDate. Accepted contract version '
-              '$kCurrentPolicyVersion.',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: Spacing.xl),
-            const _TerraceSignal(),
-          ],
+      decoration: const BoxDecoration(
+        border: Border(
+          top: BorderSide(color: AppColors.gold, width: 2),
+          bottom: BorderSide(color: AppColors.outline),
         ),
       ),
-    );
-  }
-}
-
-class _TerraceSignal extends StatelessWidget {
-  const _TerraceSignal();
-
-  @override
-  Widget build(BuildContext context) {
-    const heights = [8.0, 15.0, 25.0, 36.0, 25.0, 15.0, 8.0];
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        for (var index = 0; index < heights.length; index++)
-          Container(
-            width: 5,
-            height: heights[index],
-            margin: const EdgeInsets.only(right: Spacing.xs),
-            color: index == 3 ? AppColors.chantLab : AppColors.gold,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: Spacing.lg,
+            runSpacing: Spacing.sm,
+            children: [
+              Text(
+                'BEFORE YOU CONTINUE',
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: AppColors.gold,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              Text(
+                'POLICY $kCurrentPolicyVersion',
+                style: Theme.of(context).textTheme.labelSmall,
+              ),
+            ],
           ),
-        const SizedBox(width: Spacing.md),
-        Expanded(child: Container(height: 1, color: AppColors.outline)),
-      ],
+          const SizedBox(height: Spacing.xl),
+          Semantics(
+            header: true,
+            child: Text(
+              'A QUICK RULES CHECK.',
+              style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                fontSize: 32,
+                height: 1.05,
+                letterSpacing: 0.1,
+              ),
+            ),
+          ),
+          const SizedBox(height: Spacing.md),
+          Text(
+            'Review the updated Terms and Community Rules, then agree to '
+            'continue.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: AppColors.textBody,
+              fontSize: 16,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: Spacing.sm),
+          Text(
+            'Effective $kPolicyEffectiveDate.',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ],
+      ),
     );
   }
 }
@@ -409,85 +410,175 @@ class _PolicyNumber extends StatelessWidget {
   }
 }
 
-class _SupportActions extends ConsumerWidget {
-  final bool accepting;
+class _PrivacyRoute extends StatelessWidget {
+  final VoidCallback onTap;
 
-  const _SupportActions({required this.accepting});
+  const _PrivacyRoute({required this.onTap});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Wrap(
-          spacing: Spacing.sm,
-          runSpacing: Spacing.sm,
-          children: [
-            OutlinedButton(
-              onPressed: () =>
-                  Navigator.pushNamed(context, AppRouter.policyHub),
-              child: const Text('HELP & POLICIES'),
-            ),
-            OutlinedButton(
-              onPressed: () => Navigator.pushNamed(context, AppRouter.support),
-              child: const Text('SUPPORT'),
-            ),
-          ],
-        ),
-        const SizedBox(height: Spacing.sm),
-        Wrap(
-          spacing: Spacing.sm,
-          runSpacing: Spacing.sm,
-          children: [
-            TextButton(
-              onPressed: accepting
-                  ? null
-                  : () => showDeleteAccountDialog(context, ref),
-              child: const Text(
-                'DELETE ACCOUNT',
-                style: TextStyle(color: AppColors.error),
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label:
+          'Privacy Notice. Explains how Chants handles information. It is not part of this agreement.',
+      onTap: onTap,
+      excludeSemantics: true,
+      child: InkWell(
+        key: const ValueKey('policy-privacy-route'),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: Spacing.md),
+          decoration: const BoxDecoration(
+            border: Border(top: BorderSide(color: AppColors.outline)),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(
+                Icons.privacy_tip_outlined,
+                size: 20,
+                color: AppColors.textMuted,
               ),
-            ),
-            TextButton(
-              onPressed: accepting
-                  ? null
-                  : () => ref.read(authRepositoryProvider).signOut(),
-              child: const Text('SIGN OUT'),
-            ),
-          ],
+              const SizedBox(width: Spacing.sm),
+              Expanded(
+                child: Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(
+                        text: 'PRIVACY NOTICE  ',
+                        style: Theme.of(context).textTheme.labelMedium
+                            ?.copyWith(color: AppColors.textHeadline),
+                      ),
+                      TextSpan(
+                        text:
+                            'How Chants handles information. Not part of this agreement.',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: Spacing.sm),
+              const Icon(
+                Icons.chevron_right,
+                size: 20,
+                color: AppColors.textMuted,
+              ),
+            ],
+          ),
         ),
-      ],
+      ),
     );
   }
 }
 
-class _SectionRule extends StatelessWidget {
-  final String kicker;
-  final String title;
+class _OtherActions extends ConsumerWidget {
+  final ValueListenable<bool> accepting;
 
-  const _SectionRule({required this.kicker, required this.title});
+  const _OtherActions({required this.accepting});
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.only(top: Spacing.lg),
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: AppColors.gold, width: 3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            kicker,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: AppColors.gold,
-              fontWeight: FontWeight.w700,
+  void _openSheet(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (sheetContext) => ValueListenableBuilder<bool>(
+        valueListenable: accepting,
+        builder: (sheetBodyContext, isAccepting, child) => SafeArea(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.sizeOf(sheetContext).height * 0.9,
+            ),
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  Spacing.lg,
+                  Spacing.xs,
+                  Spacing.lg,
+                  Spacing.lg,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'OTHER OPTIONS',
+                      style: Theme.of(sheetBodyContext).textTheme.titleMedium,
+                    ),
+                    if (isAccepting) ...[
+                      const SizedBox(height: Spacing.xs),
+                      Text(
+                        'Help and Support remain available while acceptance is saving.',
+                        style: Theme.of(sheetBodyContext).textTheme.bodySmall,
+                      ),
+                    ],
+                    const SizedBox(height: Spacing.sm),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.policy_outlined),
+                      title: const Text('Help & policies'),
+                      onTap: () {
+                        Navigator.pop(sheetContext);
+                        Navigator.pushNamed(context, AppRouter.policyHub);
+                      },
+                    ),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.support_agent_outlined),
+                      title: const Text('Support'),
+                      onTap: () {
+                        Navigator.pop(sheetContext);
+                        Navigator.pushNamed(context, AppRouter.support);
+                      },
+                    ),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(
+                        Icons.delete_outline,
+                        color: AppColors.error,
+                      ),
+                      title: const Text(
+                        'Delete account',
+                        style: TextStyle(color: AppColors.error),
+                      ),
+                      enabled: !isAccepting,
+                      onTap: isAccepting
+                          ? null
+                          : () {
+                              Navigator.pop(sheetContext);
+                              showDeleteAccountDialog(context, ref);
+                            },
+                    ),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.logout),
+                      title: const Text('Sign out'),
+                      enabled: !isAccepting,
+                      onTap: isAccepting
+                          ? null
+                          : () {
+                              Navigator.pop(sheetContext);
+                              ref.read(authRepositoryProvider).signOut();
+                            },
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
-          const SizedBox(height: Spacing.sm),
-          Text(title, style: Theme.of(context).textTheme.headlineMedium),
-        ],
+        ),
       ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return TextButton.icon(
+      key: const ValueKey('policy-other-options'),
+      onPressed: () => _openSheet(context, ref),
+      icon: const Icon(Icons.more_horiz),
+      label: const Text('OTHER OPTIONS'),
     );
   }
 }

@@ -20,12 +20,14 @@ import 'package:chants/presentation/auth/magic_link_gate.dart';
 import 'package:chants/presentation/auth/launch_reveal_screen.dart';
 import 'package:chants/presentation/shell/app_shell.dart';
 
+const kDefaultLaunchRevealDuration = Duration(milliseconds: 2800);
+
 class ChantApp extends ConsumerStatefulWidget {
   final Duration launchRevealDuration;
 
   const ChantApp({
     super.key,
-    this.launchRevealDuration = const Duration(milliseconds: 1250),
+    this.launchRevealDuration = kDefaultLaunchRevealDuration,
   });
 
   @override
