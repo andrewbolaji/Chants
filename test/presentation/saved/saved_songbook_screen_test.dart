@@ -192,6 +192,34 @@ void main() {
     expect(find.byIcon(Icons.flag_outlined), findsNothing);
   });
 
+  testWidgets('saved detail remains readable at enlarged text on 320 width', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(320, 780));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      _wrap(
+        const SavedChantDetailScreen(
+          uid: _uid,
+          chantId: 'north-london-forever',
+          teamId: 'arsenal',
+        ),
+        textScale: 1.8,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('NORTH LONDON FOREVER'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('AWAY VERSION'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(tester.takeException(), isNull);
+    expect(find.text('AWAY VERSION'), findsOneWidget);
+  });
+
   testWidgets('failed club refresh keeps the complete local copy visible', (
     tester,
   ) async {

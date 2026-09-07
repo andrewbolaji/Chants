@@ -88,10 +88,18 @@ class ChantsBottomNavigation extends StatelessWidget {
   });
 
   static const _items = [
-    (label: 'Feed', icon: Icons.home_outlined, selected: Icons.home),
-    (label: 'Clubs', icon: Icons.flag_outlined, selected: Icons.flag),
+    (
+      label: 'Stage',
+      icon: Icons.play_circle_outline,
+      selected: Icons.play_circle,
+    ),
+    (label: 'Clubs', icon: Icons.shield_outlined, selected: Icons.shield),
     (label: 'Create', icon: Icons.add, selected: Icons.add),
-    (label: 'Songbook', icon: Icons.bookmark_outline, selected: Icons.bookmark),
+    (
+      label: 'Songbook',
+      icon: Icons.menu_book_outlined,
+      selected: Icons.menu_book,
+    ),
     (label: 'You', icon: Icons.person_outline, selected: Icons.person),
   ];
 
@@ -99,8 +107,8 @@ class ChantsBottomNavigation extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: const BoxDecoration(
-        color: AppColors.surface,
-        border: Border(top: BorderSide(color: AppColors.outline, width: 0.5)),
+        color: AppColors.stageChrome,
+        border: Border(top: BorderSide(color: AppColors.stageRule, width: 0.5)),
       ),
       child: SafeArea(
         top: false,
@@ -122,47 +130,75 @@ class ChantsBottomNavigation extends StatelessWidget {
                     containedInkWell: true,
                     highlightShape: BoxShape.rectangle,
                     child: ExcludeSemantics(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      child: Stack(
+                        alignment: Alignment.center,
                         children: [
-                          if (index == 2)
-                            Container(
-                              width: 44,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: AppColors.gold,
-                                borderRadius: BorderRadius.circular(Radii.md),
-                              ),
-                              child: const Icon(
-                                Icons.add,
-                                color: AppColors.goldOnDark,
-                                size: 28,
-                              ),
-                            )
-                          else
-                            SizedBox(
-                              height: 40,
-                              child: Icon(
-                                selected ? item.selected : item.icon,
-                                color: selected
-                                    ? AppColors.gold
-                                    : AppColors.textMuted,
+                          if (selected)
+                            const Positioned(
+                              top: 0,
+                              left: 14,
+                              right: 14,
+                              child: SizedBox(
+                                height: 2,
+                                child: ColoredBox(color: AppColors.gold),
                               ),
                             ),
-                          const SizedBox(height: 2),
-                          Text(
-                            item.label,
-                            maxLines: 1,
-                            overflow: TextOverflow.fade,
-                            softWrap: false,
-                            style: TextStyle(
-                              fontFamily: 'Nunito',
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              color: selected
-                                  ? AppColors.gold
-                                  : AppColors.textMuted,
-                            ),
+                          Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SizedBox(
+                                height: 34,
+                                child: index == 2
+                                    ? DecoratedBox(
+                                        decoration: BoxDecoration(
+                                          color: selected
+                                              ? AppColors.gold
+                                              : Colors.transparent,
+                                          border: Border.all(
+                                            color: selected
+                                                ? AppColors.gold
+                                                : AppColors.textFaint,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            Radii.sm,
+                                          ),
+                                        ),
+                                        child: SizedBox(
+                                          width: 36,
+                                          child: Icon(
+                                            Icons.add,
+                                            color: selected
+                                                ? AppColors.goldOnDark
+                                                : AppColors.textBody,
+                                            size: 24,
+                                          ),
+                                        ),
+                                      )
+                                    : Icon(
+                                        selected ? item.selected : item.icon,
+                                        color: selected
+                                            ? AppColors.gold
+                                            : AppColors.textMuted,
+                                        size: 22,
+                                      ),
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                item.label,
+                                maxLines: 1,
+                                overflow: TextOverflow.fade,
+                                softWrap: false,
+                                style: TextStyle(
+                                  fontFamily: 'SpaceMono',
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: -0.2,
+                                  color: selected
+                                      ? AppColors.textHeadline
+                                      : AppColors.textMuted,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
