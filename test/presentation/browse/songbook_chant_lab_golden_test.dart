@@ -170,11 +170,18 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await tester.runAsync(() async {
+      await precacheImage(
+        const AssetImage('assets/clubs/crests/arsenal.png'),
+        tester.element(find.byType(TeamScreen)),
+      );
+    });
+    await tester.pumpAndSettle();
 
     expect(find.text('CHANT CALL-UP'), findsOneWidget);
     expect(find.text('DECLAN RICE'), findsOneWidget);
     expect(
-      find.textContaining('No chant for them at Arsenal in Chants yet.'),
+      find.textContaining('No chant for Declan Rice at Arsenal in Chants yet.'),
       findsOneWidget,
     );
     await expectLater(
@@ -190,7 +197,7 @@ void main() {
     expect(find.text('CHANT CALL-UP'), findsOneWidget);
     expect(find.text('DECLAN RICE'), findsOneWidget);
     expect(
-      find.textContaining('No chant for them at Arsenal in Chants yet.'),
+      find.textContaining('No chant for Declan Rice at Arsenal in Chants yet.'),
       findsOneWidget,
     );
     await expectLater(

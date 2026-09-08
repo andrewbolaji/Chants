@@ -127,6 +127,53 @@ class _VoteControlsState extends ConsumerState<VoteControls> {
         chantId == widget.chant.id;
   }
 
+  String get _visibleVoteStatus => switch (_vote.userVote) {
+    1 => 'YOUR VOTE  UP',
+    -1 => 'YOUR VOTE  DOWN',
+    _ => 'NO VOTE',
+  };
+
+  String _voteButtonHint(int value) {
+    if (_vote.userVote == value) {
+      return 'Selected. Tap to remove vote.';
+    }
+    if (_vote.userVote != null) {
+      return 'Tap to change your vote.';
+    }
+    return 'Tap to vote.';
+  }
+
+  void _showVoteConfirmation(int? previousVote, int? currentVote) {
+    if (!mounted) return;
+    final action = currentVote == null
+        ? 'Vote removed.'
+        : previousVote != null && previousVote != currentVote
+        ? currentVote == 1
+              ? 'Changed to upvote.'
+              : 'Changed to downvote.'
+        : currentVote == 1
+        ? 'Upvote added.'
+        : 'Downvote added.';
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        duration: const Duration(seconds: 2),
+        content: Text('$action Score ${_vote.displayScore}.'),
+      ),
+    );
+  }
+
+  void _showVoteFailure(Object error) {
+    if (!mounted) return;
+    final message = error.toString().contains('PERMISSION_DENIED')
+        ? 'Your account cannot vote right now. If you think this is wrong, use the suggestion box.'
+        : 'Could not update your vote. Your previous vote was restored.';
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
   Future<void> _loadUserVote(int generation, String chantId) async {
     final user = ref.read(authStateProvider).valueOrNull;
     if (user == null) {
@@ -208,15 +255,7 @@ class _VoteControlsState extends ConsumerState<VoteControls> {
       if (!mounted || !_isCurrentOperation(generation, chantId)) return;
       setState(() => voteState.revertWrite(previousVote, previousConfirmed));
       _hasPendingChange = false;
-      if (e.toString().contains('PERMISSION_DENIED')) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Your account cannot vote right now. If you think this is wrong, use the suggestion box.',
-            ),
-          ),
-        );
-      }
+      _showVoteFailure(e);
       return;
     }
 
@@ -237,6 +276,8 @@ class _VoteControlsState extends ConsumerState<VoteControls> {
           voteState,
         );
       }
+    } else {
+      _showVoteConfirmation(previousVote, newVote);
     }
   }
 
@@ -274,6 +315,7 @@ class _VoteControlsState extends ConsumerState<VoteControls> {
         () => voteState.revertWrite(fallbackVote, voteState.confirmedVote),
       );
       _hasPendingChange = false;
+      _showVoteFailure(e);
       return;
     }
 
@@ -291,6 +333,8 @@ class _VoteControlsState extends ConsumerState<VoteControls> {
           voteState,
         );
       }
+    } else {
+      _showVoteConfirmation(fallbackVote, settledVote);
     }
   }
 
@@ -310,61 +354,95 @@ class _VoteControlsState extends ConsumerState<VoteControls> {
         borderRadius: BorderRadius.circular(Radii.sm),
         border: Border.all(color: AppColors.outline, width: 0.5),
       ),
-      padding: EdgeInsets.symmetric(horizontal: widget.compact ? 0 : 2),
-      child: Row(
+      padding: EdgeInsets.fromLTRB(widget.compact ? 0 : 2, 5, 2, 2),
+      child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Upvote
           Semantics(
-            label: 'Upvote',
-            button: true,
-            child: SizedBox(
-              width: buttonSize,
-              height: buttonSize,
-              child: IconButton(
-                icon: Icon(Icons.arrow_drop_up, size: iconSize + 6),
-                color: _vote.userVote == 1
-                    ? AppColors.gold
-                    : AppColors.textMuted,
-                onPressed: widget.enabled ? () => _onVote(1) : null,
-                tooltip: 'Upvote',
-                padding: EdgeInsets.zero,
+            liveRegion: true,
+            label: '$_visibleVoteStatus. Score $score.',
+            child: ExcludeSemantics(
+              child: Text(
+                _visibleVoteStatus,
+                key: const ValueKey('vote-status'),
+                maxLines: 1,
+                style: TextStyle(
+                  fontFamily: 'SpaceMono',
+                  fontSize: widget.compact ? 8 : 9,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.5,
+                  color: _vote.userVote == 1
+                      ? AppColors.gold
+                      : _vote.userVote == -1
+                      ? AppColors.error
+                      : AppColors.textMuted,
+                ),
               ),
             ),
           ),
-
-          // Score: Space Mono stamped number
-          SizedBox(
-            width: scoreWidth,
-            child: Text(
-              score.toString(),
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: 'SpaceMono',
-                fontWeight: FontWeight.w700,
-                fontSize: fontSize,
-                color: score > 0 ? AppColors.textHeadline : AppColors.textMuted,
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Upvote
+              Semantics(
+                label: 'Upvote',
+                hint: _voteButtonHint(1),
+                button: true,
+                selected: _vote.userVote == 1,
+                child: SizedBox(
+                  width: buttonSize,
+                  height: buttonSize,
+                  child: IconButton(
+                    icon: Icon(Icons.arrow_drop_up, size: iconSize + 6),
+                    color: _vote.userVote == 1
+                        ? AppColors.gold
+                        : AppColors.textMuted,
+                    onPressed: widget.enabled ? () => _onVote(1) : null,
+                    tooltip: 'Upvote',
+                    padding: EdgeInsets.zero,
+                  ),
+                ),
               ),
-            ),
-          ),
 
-          // Downvote
-          Semantics(
-            label: 'Downvote',
-            button: true,
-            child: SizedBox(
-              width: buttonSize,
-              height: buttonSize,
-              child: IconButton(
-                icon: Icon(Icons.arrow_drop_down, size: iconSize + 6),
-                color: _vote.userVote == -1
-                    ? AppColors.error
-                    : AppColors.textMuted,
-                onPressed: widget.enabled ? () => _onVote(-1) : null,
-                tooltip: 'Downvote',
-                padding: EdgeInsets.zero,
+              // Score: Space Mono stamped number
+              SizedBox(
+                width: scoreWidth,
+                child: Text(
+                  score.toString(),
+                  key: const ValueKey('vote-score'),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'SpaceMono',
+                    fontWeight: FontWeight.w700,
+                    fontSize: fontSize,
+                    color: score > 0
+                        ? AppColors.textHeadline
+                        : AppColors.textMuted,
+                  ),
+                ),
               ),
-            ),
+
+              // Downvote
+              Semantics(
+                label: 'Downvote',
+                hint: _voteButtonHint(-1),
+                button: true,
+                selected: _vote.userVote == -1,
+                child: SizedBox(
+                  width: buttonSize,
+                  height: buttonSize,
+                  child: IconButton(
+                    icon: Icon(Icons.arrow_drop_down, size: iconSize + 6),
+                    color: _vote.userVote == -1
+                        ? AppColors.error
+                        : AppColors.textMuted,
+                    onPressed: widget.enabled ? () => _onVote(-1) : null,
+                    tooltip: 'Downvote',
+                    padding: EdgeInsets.zero,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),

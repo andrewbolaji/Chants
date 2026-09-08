@@ -164,6 +164,22 @@ describe("V1 Premier League catalogue", () => {
 
   it("preserves the settled inclusions and exclusions", () => {
     const clubs = loadClubs();
+    const arsenal = findClub(clubs, "arsenal");
+    const northLondonForever = findChant(arsenal, "North London Forever");
+    assert.equal(northLondonForever.id, "arsenal-north-london-forever");
+    assert.equal(
+      northLondonForever.lyrics,
+      "North London forever\nWhatever the weather\nThese streets are our own"
+    );
+    assert.equal(northLondonForever.tuneName, "The Angel (Louis Dunford)");
+    assert.equal(northLondonForever.era, "evergreen");
+    assert.equal(northLondonForever.ownerVerified, true);
+    assert.equal(northLondonForever.reviewedAsOf, "2026-09-07");
+    assert.deepEqual(northLondonForever.sources, [
+      "https://www.arsenal.com/news/new-north-london-forever-range-launched-a81B92L6ZMSd",
+      "https://www.shazam.com/en-gb/song/1609653538/the-angel-north-london-forever",
+    ]);
+
     const liverpool = findClub(clubs, "liverpool");
     const salah = findChant(liverpool, "Salah");
     assert.equal(salah.era, "historic");

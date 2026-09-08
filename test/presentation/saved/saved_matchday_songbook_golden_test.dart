@@ -139,6 +139,13 @@ void main() {
 
     await tester.pumpWidget(_wrap(const SavedSongbookScreen(uid: _uid)));
     await tester.pumpAndSettle();
+    await tester.runAsync(() async {
+      await precacheImage(
+        const AssetImage('assets/clubs/crests/arsenal.png'),
+        tester.element(find.byType(SavedSongbookScreen)),
+      );
+    });
+    await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
     await expectLater(
       find.byType(MaterialApp),

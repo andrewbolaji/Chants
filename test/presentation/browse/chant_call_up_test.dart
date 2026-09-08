@@ -221,11 +221,12 @@ void main() {
       expect(find.text('ALEX MORGAN'), findsOneWidget);
       expect(
         find.text(
-          'No chant for them at Test United in Chants yet. '
+          'No chant for Alex Morgan at Test United in Chants yet. '
           'Funny or full of heart, start with the words.',
         ),
         findsOneWidget,
       );
+      expect(find.text("Who's got a song for Alex Morgan?"), findsOneWidget);
       expect(find.text('TERRACE PROVEN'), findsOneWidget);
       h.players.listed = [
         const Player(id: 'aaron', teamId: 'test-club', name: 'Aaron Test'),
@@ -240,6 +241,7 @@ void main() {
       await tester.tap(find.byKey(const Key('call-up-next')));
       await tester.pumpAndSettle();
       expect(find.text('JAMIE TAYLOR'), findsOneWidget);
+      expect(find.text("Who's got a song for Jamie Taylor?"), findsOneWidget);
       await tester.tap(find.text('CHANT LAB'));
       await tester.pumpAndSettle();
       expect(find.text('JAMIE TAYLOR'), findsOneWidget);

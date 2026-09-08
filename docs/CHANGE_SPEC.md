@@ -1,120 +1,59 @@
-# Change spec: V1 store submission presentation packet
+# Change spec: V1 final candidate closeout and player Call-Up copy correction
 
-**Status:** Approved final asset approval-integrity and preview-parity correction implemented, owner accepted, and locally verified on 2026-09-07
+**Status:** Approved on 2026-09-08; implementation and verification in progress
 
-**Approval:** Andrew approved the original `V1 store submission presentation packet spec` on 2026-09-03, then approved `PR 35 independent review correction spec with iPhone-only V1 and iPad pinned for V1.1` and `PR 35 final asset approval-integrity and preview-parity correction spec` on 2026-09-07. Light and dark appearance also remains pinned for early V1.1.
-
-**Visual acceptance:** Andrew approved the screenshot storyboard on 3 September 2026 and approved the corrected canonical Google Play feature graphic PNG on 7 September 2026. The approved asset SHA-256 is `48180a6a23bdff177505fb9c00bac0585146e3f4acd68e1f74e0b4ee35766963`. This does not approve absent release-candidate screenshots.
+**Approval phrase:** `approved V1 final candidate closeout and player call-up copy correction`
 
 **Owner:** Andrew, through ThunderRiver Tech LLC
 
-**Lane:** 2, public claims, store disclosure, and release-presentation evidence
+**Lane:** 2, bounded release-candidate presentation correction and evidence closeout
 
-**Source baseline:** PR 34 exact green head `b952389e20b7c510f204f5cbbeb87af70b4c2574`, stacked above PR 33 and `main` at `88ce483f1ea18df6a7a2b4e790803773164ac9a5`
+**Baseline:** Clean reviewed PR 37 head `f4b3891a68eefdd3d006d7947589efe71f0c6564`, after the successful exact North London Forever production seed, paired-iPhone walkthrough, 30-minute observation, and generation-13 maintenance closure.
 
 ## Outcome
 
-Prepare one copy-pasteable App Store and Google Play submission packet grounded in the actual V1 app. The packet must state what can be entered now, what still requires owner or exact-binary evidence, what screenshots to capture, and which claims must stay out. It must not imply that an app, site, provider, production system, or store listing is live when it is not.
+Make the Chant Call-Up invitation address its selected player by name, preserve the existing eligibility and submission behavior, record sanitized receipts from the completed live walkthrough, package one amended candidate, and prove it with replacement exact-head CI and a short paired-iPhone presentation check.
 
 ## Included
 
-1. Canonical US English name, subtitle or short description, promotional text, long descriptions, keywords, categories, URLs, review notes, and release boundaries for both stores.
-2. A source-backed Apple App Privacy and Google Play Data safety worksheet that includes Firebase SDK collection and separates current launch behavior from disabled provider paths.
-3. A five-scene screenshot plan for iOS and Android, with truthful content, exact target files, device requirements, caption copy, and a clean-capture checklist.
-4. A machine-readable metadata file and screenshot manifest.
-5. A local validator for store field limits, identity, URLs, screenshot inventory, PNG dimensions, alpha restrictions, and honest readiness state.
-6. Known-good and known-bad tests for the validator, integrated into the existing governance job.
-7. A deterministic 512 by 512 Google Play icon with alpha, derived from the current no-alpha 1024 App Store icon and kept inside a conservative keyline safe zone.
-8. Durable rationale, execution evidence, roadmap status, and an early V1.1 light and dark theme commitment.
-9. A reproducible, owner-approved 1024 by 500 Google feature graphic and one reusable, exact-size presentation frame for all ten final screenshot outputs.
-10. An iPhone-only Apple V1 package and screenshot boundary. iPad support and its full interface, device, screenshot, and submission proof are pinned for V1.1.
-11. SHA-256 bindings for mutable assets, source captures, framed outputs, intentional native drift, and future release artifacts, plus local Git ancestry and product-drift checks.
+1. Replace generic pronouns in the Call-Up question and absence explanation with the already displayed `playerName`, for example `Who's got a song for Ben White?` and `No chant for Ben White at Arsenal in Chants yet.`
+2. Preserve the current club name, player selection, eligibility, sign-in, submission, navigation, and accessibility behavior.
+3. Update focused semantic assertions and the affected macOS and Linux golden references using rendered evidence. Keep existing comparison tolerances unchanged.
+4. Record only sanitized production receipts: the exact target match, 193 total chants, 13 Arsenal chants, restored three-vote baseline, empty local Songbook, clean 30-minute observation, and generation 13 `maintenance` with destructive workers false.
+5. Update the launch command center, execution trail, interface contract, roadmap status, and store packet source binding for the amended presentation source.
+6. Run focused Flutter tests, inspect the affected renders, run the full Flutter suite and analysis, governance and store checks, package and push the amended PR 37 head, and require replacement exact-head CI.
+7. Build, install, and launch the amended signed iPhone candidate when the paired phone remains available. The owner check is limited to the changed Call-Up wording and surrounding layout.
 
 ## Excluded
 
-- Capturing or publishing final screenshots before the redesigned release candidate passes its device walkthrough.
-- Entering, submitting, releasing, or changing anything in App Store Connect or Google Play Console.
-- Creating or storing review-account credentials in the repository.
-- Changing the app's 17+ account rule or guessing either store's questionnaire-derived rating.
-- Enabling Apple, Google, Facebook, magic-link, or phone authentication.
-- Deploying Hosting, Firebase, production data, App Check enforcement, DNS, IAM, signing, or binaries.
-- Claiming club, league, player, music-rightsholder, or supporter-group affiliation.
-- Promising autoplay, live scores, fixtures, chat, notifications, licensed music, karaoke generation, or any future feature.
-- Building light or dark mode in V1.
-
-## Source facts that control the packet
-
-1. The product name is `Chants FC`; the installed display name remains `Chants`; bundle and package identity are `com.chants.chants`.
-2. ThunderRiver Tech LLC operates Chants. Public support is `support@chantsfc.com`.
-3. The approved first markets are the United States, United Kingdom, and Canada.
-4. Chants includes Premier League club and player songbooks, community chant submission, optional evidence, one-level replies, voting, creator profiles and follows, short reviewed performance video, blocking, reporting, sharing, and device-local saved Songbooks.
-5. Performance video is at most 30 seconds and stays private until operator approval.
-6. A chant can become Terrace Proven only through current operator-reviewed evidence. Popularity never proves provenance.
-7. The current binary uses Firebase Authentication, App Check, Firestore, Functions, Storage, and Crashlytics. It does not include Firebase Analytics or Performance Monitoring.
-8. Apple, Google, Facebook, magic-link, and phone entry points are compile-time disabled unless explicitly configured. The Meta login package and native SDKs are still linked into the current dependency graph, so the exact-binary privacy review must account for their presence even though no Facebook app configuration or entry point is enabled.
-9. Public trust routes exist in source at `chantsfc.com`, but publication and signed-out readback remain separate gates.
-10. Production remains closed until a separately approved opening and walkthrough. Store assets cannot portray a maintenance denial as a working journey.
-
-## Invariants
-
-1. Every store claim maps to current source behavior or is labelled pending evidence.
-2. Store copy uses no profanity, rankings, testimonials, invented metrics, or unsupported availability language.
-3. The listing does not imply official affiliation or rights clearance.
-4. Privacy answers cover the app and included SDKs, not only fields typed by a user.
-5. Disabled authentication providers remain excluded from launch claims and conditional in disclosure notes.
-6. Final screenshots come from release-mode iOS and Android builds at the exact submitted source and configuration.
-7. Screenshots contain no debug banner, external-app return affordance, personal account detail, transient error, fake engagement, copyrighted broadcast footage, club crest, or player photo.
-8. App Store screenshots use an accepted size, contain no alpha, and show the actual interface.
-9. Review credentials stay out of Git and are entered only in the private store consoles.
-10. The app's 17+ account rule is unchanged. Store rating forms are answered from actual content and are not pre-decided here.
-11. `prepared_not_submitted` cannot become `ready_for_submission` while any required capture, URL, form, review-access, signing, or exact-binary gate remains false.
-12. No authored file contains an em dash.
-13. A missing release-candidate screenshot remains visibly unpublishable in the presentation frame.
-14. Apple V1 targets only iPhone. No iPad screenshot exemption is inferred while the native target still claims iPad.
-15. Pending evidence fields remain null. A claim becomes valid only when its path, digest, release commit, and prerequisite gate agree.
-16. Feature-graphic owner approval binds separate approved asset and renderer digests to the current evidence. A changed asset or renderer cannot retain a final gate.
-17. The browser preview displays the canonical PNG directly and cannot maintain a second approximation of the composition.
-
-## Devil's-advocate scenarios
-
-- A hurried operator copies the wrong platform's short description or exceeds a field limit.
-- An old screenshot survives the redesign and looks plausible despite having the wrong dimensions and navigation.
-- A screenshot includes a debug ribbon, Instagram return bar, owner email, moderation controls, unavailable action, or maintenance message.
-- A store reviewer cannot enter because production is closed or the supplied account expires, is unverified, is policy-stale, or lacks useful seeded content.
-- The listing promises Apple, Google, Facebook, phone, or magic-link sign-in although that exact binary disables it.
-- The privacy form omits Crashlytics installation identifiers, crash data, recorded audio inside a video, or public user content.
-- A later editor marks the packet ready by changing one status string while required evidence is still missing.
-- A PNG has accepted width and height but contains alpha, or an Android image is silently reused as iOS evidence.
-- A correctly sized solid-color hold image is renamed as a finished screenshot.
-- A capture status changes without source bytes, framed bytes, release commit, archive digest, or matching SHA-256 evidence.
-- A later product commit drifts away from the named baseline while an unbound baseline string still looks plausible.
-- The binary links a dormant SDK that is omitted from the privacy worksheet because its button is hidden.
-- The public support, privacy, or deletion URL is valid in source but unavailable on the live domain.
-- A future theme change alters screenshots without invalidating the captured-source record.
-- A later editor changes the feature graphic or renderer, refreshes only the live digest, and accidentally retains the previous owner's approval.
-- A browser preview looks approved while the PNG entering Google Play has different color, emphasis, or spacing.
+- Any Firebase, production-data, operational-control, Hosting, DNS, IAM, App Check, provider, authentication, media, worker, schedule, or store-console change.
+- Any new chant, lyrics, seed command, vote mutation, save mutation, account change, recording, upload, moderation, deletion, or public-content action.
+- A second core opening, destructive workers, or any use of the production credential.
+- PR merge, tag, release archive, TestFlight, Play testing, store submission, or public launch.
+- Any unrelated interface, copy, feature, dependency, native-project, backend, rules, index, or asset change.
 
 ## Acceptance criteria
 
-1. `store/submission.json` parses and every Apple and Google text field passes the official limit encoded by the validator.
-2. The packet identifies Sports as the primary category, recommends Social Networking only as Apple's secondary category, and explains the choice.
-3. Privacy and Data safety answers cover email, public creator and user content, video and recorded audio, identifiers, product interaction, crash data, and device information with conservative linked, purpose, and sharing notes.
-4. The screenshot manifest has five distinct scenes per platform, exact paths, captions, content requirements, and pending states until real captures exist.
-5. Existing 1320 by 2663 documentation screenshots are explicitly rejected as pre-redesign and not App Store-ready.
-6. The validator rejects over-limit copy, identity drift, locale or version drift, non-HTTPS or off-domain trust URLs, missing screenshot scenes, invalid PNG dimensions, alpha-bearing iOS PNGs, blank or placeholder-like captures, stale hashes, unbound source drift, and false readiness.
-7. A known-good metadata fixture passes and each meaningful known-bad mutation fails.
-8. The App Store icon remains a 1024 by 1024 no-alpha PNG. The Google Play icon is a 512 by 512 alpha-bearing PNG under 1 MiB whose visible mark remains inside the encoded safe-zone radius.
-9. The launch command center and roadmap can point the owner to one stable packet without duplicating field copy.
-10. Light and dark mode is pinned as an early V1.1 fast follow with System, Light, and Dark choices, persisted explicit preference, token-only implementation, contrast proof, and screenshot invalidation as a release concern.
-11. Writing-style, whitespace, project-memory, store-validator, and focused tests pass locally.
-12. The feature graphic passes exact size and alpha checks and becomes final only after recorded owner visual acceptance.
-13. The native project contains exactly three iPhone-only device-family declarations and no iPad orientation metadata.
-14. iPad support is documented as V1.1 work and is not implied by the V1 App Store packet.
-15. The feature graphic uses the declared sRGB palette, binds every renderer input, and keeps the final gate false until separate approved digests match the current PNG and renderer.
-16. The local HTML preview displays the canonical PNG at its exact 1024 by 500 canvas instead of rebuilding the artwork in HTML and CSS.
+1. Every visible Call-Up question and absence explanation names the selected player and club without a generic pronoun.
+2. Focused tests prove the copy changes when the selected player changes, the two relevant main-club views carry the selected name, and enlarged text remains operable.
+3. Updated goldens are rendered and inspected on their actual platform evidence path; no tolerance is widened.
+4. The command center and execution record accurately close the generation-12 walkthrough and generation-13 maintenance receipts without credentials, account identifiers, raw logs, or user content.
+5. The store packet permits and hash-binds the amended Call-Up source while remaining honestly `prepared_not_submitted` with all release screenshots pending.
+6. The complete local verification matrix and replacement exact-head CI are green on one clean pushed head.
+7. The paired-iPhone spot check shows the named-player wording without clipping or navigation regression, or is explicitly retained as the only pending owner presentation check.
 
 ## Stop conditions
 
-Stop and correct if source behavior cannot support a claim, a disclosure depends on an unverified SDK assumption, a screenshot requires fabricated data or rights-sensitive media, a real URL is not live, or final readiness would depend on a secret stored in Git.
+- The change requires a schema, query, eligibility, route, backend, production, or store-console mutation.
+- The selected player name is unavailable, stale, unsafe to display, or differs from the existing card heading.
+- Normal or enlarged text clips controls, hides the club qualification, or requires a broad visual redesign.
+- A focused, full-suite, governance, store, or CI failure cannot be explained and corrected within this exact presentation boundary.
+- The worktree contains unrelated user changes or the remote PR head changes unexpectedly.
 
-Commit, push, PR, independent review, clean-runner CI, live URL verification, screenshot capture, console entry, signing, submission, and release remain separate owner-authorized actions.
+## Recovery
+
+Keep production closed at generation 13 maintenance with destructive workers false. Revert only this unmerged local correction if its presentation cannot be made safe. Do not compensate through production data, another operational opening, or a wider product change.
+
+## Approval boundary
+
+Andrew's exact approval authorizes this bounded named-player copy correction, its focused visual evidence, sanitized live-walk documentation closeout, store source binding, one amended commit and push to PR 37, replacement exact-head CI, and the limited paired-iPhone spot check. It does not authorize any excluded action, PR merge, tag, store action, submission, or release.

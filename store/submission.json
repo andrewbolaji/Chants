@@ -4,6 +4,7 @@
   "sourceBaseline": {
     "commit": "b952389e20b7c510f204f5cbbeb87af70b4c2574",
     "trackedPaths": [
+      "assets/clubs/crests",
       "lib",
       "functions",
       "firestore.rules",
@@ -19,10 +20,129 @@
       "android"
     ],
     "allowedDrift": [
+      "assets/clubs/crests/arsenal.png",
+      "assets/clubs/crests/aston-villa.png",
+      "assets/clubs/crests/bournemouth.png",
+      "assets/clubs/crests/brentford.png",
+      "assets/clubs/crests/brighton-hove-albion.png",
+      "assets/clubs/crests/chelsea.png",
+      "assets/clubs/crests/coventry-city.png",
+      "assets/clubs/crests/crystal-palace.png",
+      "assets/clubs/crests/everton.png",
+      "assets/clubs/crests/fulham.png",
+      "assets/clubs/crests/hull-city.png",
+      "assets/clubs/crests/ipswich-town.png",
+      "assets/clubs/crests/leeds-united.png",
+      "assets/clubs/crests/liverpool.png",
+      "assets/clubs/crests/manchester-city.png",
+      "assets/clubs/crests/manchester-united.png",
+      "assets/clubs/crests/newcastle-united.png",
+      "assets/clubs/crests/nottingham-forest.png",
+      "assets/clubs/crests/provenance.json",
+      "assets/clubs/crests/sunderland.png",
+      "assets/clubs/crests/tottenham-hotspur.png",
       "ios/Runner.xcodeproj/project.pbxproj",
-      "ios/Runner/Info.plist"
+      "ios/Runner/Info.plist",
+      "lib/app/colors.dart",
+      "lib/presentation/browse/chant_call_up_card.dart",
+      "lib/presentation/browse/competition_screen.dart",
+      "lib/presentation/browse/team_screen.dart",
+      "lib/presentation/saved/saved_songbook_screen.dart",
+      "lib/presentation/shared/club_crest.dart",
+      "lib/presentation/shared/vote_controls.dart",
+      "pubspec.yaml",
+      "seed/catalogue_content.test.ts",
+      "seed/exact_chant_seed.test.ts",
+      "seed/exact_chant_seed.ts",
+      "seed/exact_chant_seed_cli.ts",
+      "seed/package.json",
+      "seed_data/clubs/arsenal.json"
     ],
     "boundFiles": [
+      {
+        "path": "assets/clubs/crests/arsenal.png",
+        "sha256": "ba273b85e8fe0043c3dad252bf5f782e67e1f2b43c8339f6393e4020cb4b7123"
+      },
+      {
+        "path": "assets/clubs/crests/aston-villa.png",
+        "sha256": "15f20ce5969bfbd5092053b0226a2fbd8bfaaa7fad468338dec0197ef4e73f31"
+      },
+      {
+        "path": "assets/clubs/crests/bournemouth.png",
+        "sha256": "e668d998ce23dc34648ce4c7f19d289d0fbb567383bf06b0263761c7c16afb6d"
+      },
+      {
+        "path": "assets/clubs/crests/brentford.png",
+        "sha256": "69278a7461b24c3b245ee99477a81ab5f6b979e3dc82d39ba4770d3f53ec18d5"
+      },
+      {
+        "path": "assets/clubs/crests/brighton-hove-albion.png",
+        "sha256": "d9b536ef13f9edd1cb77b0fa716738a7f375df733544ce872be8a7478ef19aa0"
+      },
+      {
+        "path": "assets/clubs/crests/chelsea.png",
+        "sha256": "a4353df0d45673ae0685be75ad1345ad25b4786d92775932761d45bd21175e47"
+      },
+      {
+        "path": "assets/clubs/crests/coventry-city.png",
+        "sha256": "3064f92b849ddff90d1ddca45e62ec198dd8596cb137f7a0296a9378a79078ad"
+      },
+      {
+        "path": "assets/clubs/crests/crystal-palace.png",
+        "sha256": "3a5b60eb010b7050d5b622165ff70468e9ddf5a5af48e1141d239b81e7570149"
+      },
+      {
+        "path": "assets/clubs/crests/everton.png",
+        "sha256": "7d798d13ebff5244e99e72736e80fb8e3ef272842d4bb7586fe259588b76f35e"
+      },
+      {
+        "path": "assets/clubs/crests/fulham.png",
+        "sha256": "3735bd31a6c7cabcb3ed9307583d4b1e8525709a440fac95397996e339ec16ae"
+      },
+      {
+        "path": "assets/clubs/crests/hull-city.png",
+        "sha256": "e5825be5ee171e9a84fccec0b64e5f49b7a7ad3f188b880eb915500ea463667b"
+      },
+      {
+        "path": "assets/clubs/crests/ipswich-town.png",
+        "sha256": "1362c589ddf705e428984f8c6d4816ca5bd690377411f371dabbfb3ea6273d2f"
+      },
+      {
+        "path": "assets/clubs/crests/leeds-united.png",
+        "sha256": "9f58f9f706d4adab425001292d9d0554fed85a3263dc4c1c667985c106c5a571"
+      },
+      {
+        "path": "assets/clubs/crests/liverpool.png",
+        "sha256": "c3b13021c1abfb8231f1feb277501dfcf6649047e84e16c98e4b50cd77350330"
+      },
+      {
+        "path": "assets/clubs/crests/manchester-city.png",
+        "sha256": "090f6609ab46ca56313d8ddf62ef2185fed4846b2271b77f5f5f95af5cda24dc"
+      },
+      {
+        "path": "assets/clubs/crests/manchester-united.png",
+        "sha256": "6dff7e1a3d7d7a3748edf8ca55fefa00aa169a47f1933b62eb42d2f9cfcf3b2e"
+      },
+      {
+        "path": "assets/clubs/crests/newcastle-united.png",
+        "sha256": "2cdfd5d4d0e6d97f3b452a10e648a1bbdc6d3ca34c8609457d25ef732eb029b1"
+      },
+      {
+        "path": "assets/clubs/crests/nottingham-forest.png",
+        "sha256": "9c96cd68509bba022adb3f5c20f1cda097de98a25053e151eb1964f6a6fbdb40"
+      },
+      {
+        "path": "assets/clubs/crests/provenance.json",
+        "sha256": "557ee0b6a995ca47490db6ea9d6b5ba88fb1d804570d70998a47911d6c676007"
+      },
+      {
+        "path": "assets/clubs/crests/sunderland.png",
+        "sha256": "4ebea02c35734d78ac44b5d4421778169c334d3296c65207d1e3deec76fda5c8"
+      },
+      {
+        "path": "assets/clubs/crests/tottenham-hotspur.png",
+        "sha256": "ce51d50ba9dbf5fa1d22a3229f7b59cd775a184bd06321c683c7c30c15d6c862"
+      },
       {
         "path": "ios/Runner.xcodeproj/project.pbxproj",
         "sha256": "76f45c719f5f59fc1ae2ea88d738e5063e70ed1c6dfa75f2dca59eb638af7cb8"
@@ -30,6 +150,62 @@
       {
         "path": "ios/Runner/Info.plist",
         "sha256": "e62e918382d1588ec9415e0605a783f70809d2983df92ac8e23a394fe72eabe6"
+      },
+      {
+        "path": "lib/app/colors.dart",
+        "sha256": "e624d9d4e5db2ee0eb497fa8284cab03acbbd742573397a4891ccd6db2bf6b2e"
+      },
+      {
+        "path": "lib/presentation/browse/chant_call_up_card.dart",
+        "sha256": "dda43421ced09fc0ffba018d87295efb4036742f43d26b77d4655a25b40f4064"
+      },
+      {
+        "path": "lib/presentation/browse/competition_screen.dart",
+        "sha256": "4ddf411ba883a9e1eadaa19d24354ef58690f878770c5eaa66272f4aaaea43ad"
+      },
+      {
+        "path": "lib/presentation/browse/team_screen.dart",
+        "sha256": "1efb3158e030dd674933ffdbd75882669f3873ff1a59b40d86ca0a80c71bb6ce"
+      },
+      {
+        "path": "lib/presentation/saved/saved_songbook_screen.dart",
+        "sha256": "5c96248d96d3132f66673996a0920c6fcb7ee5522394c2399c28872f81238144"
+      },
+      {
+        "path": "lib/presentation/shared/club_crest.dart",
+        "sha256": "33ee97b746838dbe7c025d4d83c035484fd51d1be2e39fc796b0b90197aad6af"
+      },
+      {
+        "path": "lib/presentation/shared/vote_controls.dart",
+        "sha256": "1ffe96bccdbcfaf14f14d9e885f49edfc98293a7108d6926b5c510f0ec71e4db"
+      },
+      {
+        "path": "pubspec.yaml",
+        "sha256": "7e43cac6378954fc5a70fd48576a0a647be9447247d5244e2abeaa1742706c61"
+      },
+      {
+        "path": "seed/catalogue_content.test.ts",
+        "sha256": "56933363a8c9aaa87aca957641a9bf086f12b1defb3afffd9c7edba90c54ad1e"
+      },
+      {
+        "path": "seed/exact_chant_seed.test.ts",
+        "sha256": "32d36f4bb9ab7ec88caf9e80e9df151d3a0302d611d4b00f4ed2bd339e9c6e11"
+      },
+      {
+        "path": "seed/exact_chant_seed.ts",
+        "sha256": "fcce14c98567204275783317dc690ee75308362c2cbcdba46072ff860912bf1e"
+      },
+      {
+        "path": "seed/exact_chant_seed_cli.ts",
+        "sha256": "a48d0ed36e4bd783c9795d25a899e4365fa0252c49b932679dad58931a289f89"
+      },
+      {
+        "path": "seed/package.json",
+        "sha256": "dc5f06f958b84260023c87af819aad3f4bd32349281218ba86f4561dd933386d"
+      },
+      {
+        "path": "seed_data/clubs/arsenal.json",
+        "sha256": "8e6ce70470deaf985b4390866a6b957e6e94d91ab62cde5b3495ec1eb6877cc3"
       }
     ]
   },

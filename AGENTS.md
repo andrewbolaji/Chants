@@ -17,7 +17,7 @@ flutter test                              # models, services, widgets. Needs no 
 
 # Backend suites, each self-contained. Use the package's runtime:
 cd functions && npm ci && npm run build && npm test  # Node 22, 230 unit tests; 24 emulator-only cases skip here
-cd seed && npm install && npm test        # Node 20, seed and rollout controls, 74 tests
+cd seed && npm install && npm test        # Node 20, seed and rollout controls, 87 tests
 
 # Firestore rules tests need Java plus firebase-tools:
 npm --prefix test_rules install
@@ -33,6 +33,7 @@ flutter run
 ./scripts/check-writing-style.sh
 node scripts/check-launch-services.mjs
 node scripts/test-launch-services-check.mjs
+node --test scripts/test-api-football-crests.mjs
 node scripts/check-device-readiness.mjs --platform ios  # passive local inventory, no config reads
 node --test scripts/test-device-readiness.mjs scripts/test-launch-guide.mjs
 

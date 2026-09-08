@@ -6,7 +6,7 @@
 
 **Use this packet for:** App Store Connect and Google Play Console preparation for Chants FC V1.
 
-**Do not submit yet.** Final screenshots, public URL readback, review access, release signing, exact-binary checks, store questionnaires, and the open-production walkthrough are still gates. The machine-readable source for the copy below is `store/submission.json`.
+**Do not submit yet.** The guarded production walkthrough is complete and production is safely closed. The named-player Call-Up correction still needs its exact-candidate phone spot check and merge authority; final screenshots, public URL readback, review access, release signing, exact-binary checks, store questionnaires, console entry, and submission remain later gates. The machine-readable source for the copy below is `store/submission.json`.
 
 **Store creative status:** The screenshot storyboard retains owner visual acceptance. Andrew approved the corrected canonical explicit-sRGB Google Play feature graphic PNG on 7 September 2026, and its separate approved digests match the current asset and renderer.
 
@@ -227,7 +227,7 @@ Complete these as prerequisites. The operational order may vary, but do not mark
 
 `prepared_not_submitted` is the correct status until every gate above except actual submission is complete.
 
-The machine-readable packet binds the source baseline, the two intentional iPhone-only native changes, store assets, release artifacts, source captures, and framed outputs to exact hashes. A pending item keeps its evidence null. If bytes or release source change, clear the affected gate and recapture or reapprove it.
+The machine-readable packet binds the source baseline, every approved release-candidate source difference, store assets, release artifacts, source captures, and framed outputs to exact hashes. That boundary includes all 20 shipped crest binaries and their provenance record. A pending item keeps its evidence null. If bytes or release source change, clear the affected gate and recapture or reapprove it. The current bound differences include the iPhone-only native correction, Club Signal identity and vote clarity, the reviewed Arsenal source addition, and its exact-target seed guard; all ten screenshots remain pending until they are captured from the final release artifact.
 
 ## 7. Official references used
 

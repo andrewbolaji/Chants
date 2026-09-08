@@ -38,7 +38,7 @@
       "id": "02-clubs",
       "headline": "Find your club's songs.",
       "purpose": "Show the calm Club Signal directory and Premier League scope.",
-      "mustShow": ["Premier League heading", "search or browse affordance", "club-neutral source-owned marks only", "no unsupported crest or partnership"],
+      "mustShow": ["Premier League heading", "search or browse affordance", "only reviewed club crests already rendered by the exact app candidate", "no crest added by the frame and no partnership claim"],
       "iosPath": "store/screenshots/ios/02-clubs.png",
       "androidPath": "store/screenshots/android/02-clubs.png",
       "iosSourcePath": "store/screenshots/source/ios/02-clubs.png",

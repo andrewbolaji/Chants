@@ -16,16 +16,19 @@ class AppColors extends ThemeExtension<AppColors> {
   static const stageRule = Color(0xFF2A2924);
   static const stageScrim = Color(0xD9000000);
 
-  // Club Signal: calm, club-neutral matchday utility surfaces.
-  static const signalCanvas = Color(0xFFE9EBEA);
-  static const signalPaper = Color(0xFFF7F5EE);
-  static const signalPaperMuted = Color(0xFFDEE1DE);
-  static const signalInk = Color(0xFF101714);
-  static const signalForest = Color(0xFF10231A);
-  static const signalForestMuted = Color(0xFF5F6F65);
-  static const signalTextMuted = Color(0xFF626A65);
-  static const signalRule = Color(0xFFC9CECA);
-  static const signalGold = Color(0xFFC99512);
+  // Club Signal: the calm, light half of the same Chants matchnight system.
+  static const signalCanvas = Color(0xFFF0EEE8);
+  static const signalPaper = Color(0xFFFFFCF4);
+  static const signalPaperMuted = Color(0xFFE6E1D7);
+  static const signalInk = Color(0xFF0A0A08);
+  static const signalTextMuted = Color(0xFF676157);
+  static const signalRule = Color(0xFFD0C9BC);
+  static const signalGold = Color(0xFFA76F00);
+
+  // Compatibility names for existing Club Signal components. These now map
+  // to Chants ink and warm neutral, not to a second green product palette.
+  static const signalForest = signalInk;
+  static const signalForestMuted = Color(0xFF70685B);
 
   // Text hierarchy: softened off pure white for comfort
   static const textHeadline = Color(0xFFE9E0CE); // titles, headlines

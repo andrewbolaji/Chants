@@ -5,6 +5,7 @@ import 'package:chants/app/spacing.dart';
 import 'package:chants/data/models/saved_songbook.dart';
 import 'package:chants/data/services/saved_songbook_service.dart';
 import 'package:chants/presentation/saved/saved_songbook_widgets.dart';
+import 'package:chants/presentation/shared/club_crest.dart';
 import 'package:chants/presentation/shared/club_signal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -118,24 +119,10 @@ class SavedSongbookScreen extends ConsumerWidget {
                   Card(
                     child: ListTile(
                       minTileHeight: 72,
-                      leading: Container(
-                        width: 40,
-                        height: 40,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: AppColors.signalForest,
-                          borderRadius: BorderRadius.circular(Radii.sm),
-                        ),
-                        child: Text(
-                          club.team.name.trim().isEmpty
-                              ? '?'
-                              : club.team.name.trim()[0].toUpperCase(),
-                          style: const TextStyle(
-                            fontFamily: 'Anton',
-                            fontSize: 17,
-                            color: AppColors.signalPaper,
-                          ),
-                        ),
+                      leading: ClubCrest(
+                        teamId: club.team.id,
+                        clubName: club.team.name,
+                        size: 40,
                       ),
                       title: Text(
                         club.team.name.toUpperCase(),
