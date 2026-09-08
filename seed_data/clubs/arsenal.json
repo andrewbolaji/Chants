@@ -91,6 +91,24 @@
   ],
   "chants": [
     {
+      "id": "arsenal-north-london-forever",
+      "title": "North London Forever",
+      "subjectTag": "club",
+      "playerName": null,
+      "lyrics": "North London forever\nWhatever the weather\nThese streets are our own",
+      "tuneName": "The Angel (Louis Dunford)",
+      "contextNotes": "Supporters sing this refrain before Arsenal home matches.",
+      "chantType": "sincere",
+      "mediaType": "none",
+      "era": "evergreen",
+      "reviewedAsOf": "2026-09-07",
+      "ownerVerified": true,
+      "sources": [
+        "https://www.arsenal.com/news/new-north-london-forever-range-launched-a81B92L6ZMSd",
+        "https://www.shazam.com/en-gb/song/1609653538/the-angel-north-london-forever"
+      ]
+    },
+    {
       "id": "arsenal-one-nil-to-the-arsenal",
       "title": "One Nil to the Arsenal",
       "subjectTag": "club",

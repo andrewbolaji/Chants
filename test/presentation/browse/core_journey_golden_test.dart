@@ -115,7 +115,7 @@ const _teams = [
     name: 'Aston Villa',
   ),
   Team(
-    id: 'brighton',
+    id: 'brighton-hove-albion',
     sportId: 'football',
     competitionId: 'premier-league',
     name: 'Brighton & Hove Albion',
@@ -606,11 +606,21 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    final competitionChevrons = find.byIcon(Icons.chevron_right);
-    expect(competitionChevrons, findsNWidgets(4));
-    final trailingX = tester.getTopLeft(competitionChevrons.first).dx;
+    await tester.runAsync(() async {
+      final context = tester.element(find.byType(CompetitionScreen));
+      for (final team in _teams) {
+        await precacheImage(
+          AssetImage('assets/clubs/crests/${team.id}.png'),
+          context,
+        );
+      }
+    });
+    await tester.pumpAndSettle();
+    final competitionArrows = find.byIcon(Icons.arrow_forward_rounded);
+    expect(competitionArrows, findsNWidgets(4));
+    final trailingX = tester.getTopLeft(competitionArrows.first).dx;
     for (var index = 1; index < 4; index++) {
-      expect(tester.getTopLeft(competitionChevrons.at(index)).dx, trailingX);
+      expect(tester.getTopLeft(competitionArrows.at(index)).dx, trailingX);
     }
     await expectLater(
       find.byType(MaterialApp),

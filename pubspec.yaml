@@ -81,6 +81,7 @@ flutter:
   uses-material-design: true
 
   assets:
+    - assets/clubs/crests/
     - assets/icon/splash.png
 
   fonts:

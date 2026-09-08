@@ -108,13 +108,7 @@ void main() {
 
   /// Reads the rendered score text from the real widget tree.
   String renderedScore(WidgetTester tester) {
-    // The score is the Text widget inside the middle SizedBox of the Row,
-    // with SpaceMono font. Find by the style to be precise.
-    final textWidgets = tester.widgetList<Text>(find.byType(Text));
-    for (final tw in textWidgets) {
-      if (tw.style?.fontFamily == 'SpaceMono') return tw.data!;
-    }
-    fail('Could not find the SpaceMono score Text in the widget tree');
+    return tester.widget<Text>(find.byKey(const ValueKey('vote-score'))).data!;
   }
 
   group('VoteControls widget', () {
@@ -127,11 +121,13 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(renderedScore(tester), '5', reason: 'initial score');
+      expect(find.text('NO VOTE'), findsOneWidget);
 
       // Tap Upvote
       await tester.tap(find.bySemanticsLabel('Upvote'));
       await tester.pump(); // optimistic update
       expect(renderedScore(tester), '6', reason: 'optimistic +1');
+      expect(find.text('YOUR VOTE  UP'), findsOneWidget);
 
       // Let the async castVote future complete (confirmWrite fires)
       await tester.pumpAndSettle();
@@ -244,6 +240,8 @@ void main() {
         '4',
         reason: 'up then down is net one below start',
       );
+      expect(find.text('YOUR VOTE  DOWN'), findsOneWidget);
+      expect(find.text('Changed to downvote. Score 4.'), findsOneWidget);
 
       // Down arrow should show the error/red active color.
       // The IconButton applies color to the icon; read it from the
@@ -259,6 +257,13 @@ void main() {
         AppColors.error,
         reason: 'down arrow must show red active state',
       );
+
+      // Tapping the selected direction removes the vote and restores neutral.
+      await tester.tap(find.bySemanticsLabel('Downvote'));
+      await tester.pumpAndSettle();
+      expect(renderedScore(tester), '5');
+      expect(find.text('NO VOTE'), findsOneWidget);
+      expect(find.text('Vote removed. Score 5.'), findsOneWidget);
     });
   });
 

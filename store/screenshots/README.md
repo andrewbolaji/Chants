@@ -7,7 +7,7 @@ The manifest in this directory is the authority for scenes, captions, paths, siz
 1. Confirm the exact Git SHA and release configuration. Put that full SHA in `store/submission.json` under `releaseEvidence.commit` only after `releaseCandidateMerged` is true.
 2. Use a dedicated clean account with no personal email, phone number, moderation role, draft text, or private report visible.
 3. Prepare truthful content with real counts. Do not invent likes, views, comments, followers, ratings, or testimonials.
-4. Use only original or cleared chant text and supporter-created media. Do not show broadcast footage, club crests, player photos, copyrighted album art, or another app.
+4. Use only original or cleared chant text and supporter-created media. Do not show broadcast footage, player photos, copyrighted album art, or another app. A release-candidate capture may show the reviewed provider-sourced club crest that the app already uses for descriptive club identification, but the presentation frame must never add, enlarge, isolate, or decorate with a crest or imply club sponsorship.
 5. Remove the Flutter debug banner and any Instagram or X return affordance.
 6. Confirm production is open and every pictured control works.
 7. Set the device clock, battery, network, text size, and appearance to an intentional, consistent state.
@@ -18,7 +18,7 @@ The manifest in this directory is the authority for scenes, captions, paths, siz
 V1 supports iPhone only. Use the connected iPhone's native 1320 by 2868 portrait screenshots. Keep PNG output and no alpha. Do not create iPad captures for this release; iPad support and its screenshot set are pinned together for V1.1.
 
 1. `ios/01-stage.png`: Stage feed with one approved performance, creator identity, chant context, honest trust label and counts, plus the five labelled destinations.
-2. `ios/02-clubs.png`: Club Signal with Premier League scope, search or browse, and no unsupported marks.
+2. `ios/02-clubs.png`: Club Signal with Premier League scope, search or browse, and only the reviewed club crests already rendered by the exact app candidate. Do not add a crest in the frame or imply a partnership.
 3. `ios/03-chant.png`: Readable chant detail with origin or provenance label, context, and Save.
 4. `ios/04-create.png`: Creation choice showing Already sung and I made this, with evidence clearly optional.
 5. `ios/05-songbook.png`: Saved Matchday Songbook with real saved content and honest device-local wording.

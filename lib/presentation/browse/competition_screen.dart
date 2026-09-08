@@ -5,6 +5,7 @@ import 'package:chants/app/providers.dart';
 import 'package:chants/app/router.dart';
 import 'package:chants/app/spacing.dart';
 import 'package:chants/data/models/team.dart';
+import 'package:chants/presentation/shared/club_crest.dart';
 import 'package:chants/presentation/shared/club_signal.dart';
 
 class CompetitionScreen extends ConsumerWidget {
@@ -37,7 +38,7 @@ class CompetitionScreen extends ConsumerWidget {
                   fontFamily: 'SpaceMono',
                   fontSize: 9,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.signalGold,
+                  color: AppColors.gold,
                   letterSpacing: 1.1,
                 ),
               ),
@@ -87,7 +88,7 @@ class CompetitionScreen extends ConsumerWidget {
                   sliver: SliverList.separated(
                     itemCount: teams.length,
                     separatorBuilder: (_, _) =>
-                        const SizedBox(height: Spacing.xs),
+                        const Divider(indent: 60, color: AppColors.signalRule),
                     itemBuilder: (context, index) {
                       final team = teams[index];
                       return _ClubSignalRow(
@@ -119,24 +120,20 @@ class _ClubSignalRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.signalPaper,
-      shape: RoundedRectangleBorder(
-        side: const BorderSide(color: AppColors.signalRule, width: 0.5),
-        borderRadius: BorderRadius.circular(Radii.sm),
-      ),
-      clipBehavior: Clip.antiAlias,
+      color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
+        borderRadius: BorderRadius.circular(Radii.sm),
         child: ConstrainedBox(
           constraints: const BoxConstraints(minHeight: 64),
           child: Padding(
             padding: const EdgeInsets.symmetric(
-              horizontal: Spacing.md,
+              horizontal: Spacing.sm,
               vertical: Spacing.sm,
             ),
             child: Row(
               children: [
-                _ClubMark(name: team.name),
+                ClubCrest(teamId: team.id, clubName: team.name, size: 44),
                 const SizedBox(width: Spacing.md),
                 Expanded(
                   child: Text(
@@ -150,53 +147,14 @@ class _ClubSignalRow extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: Spacing.sm),
-                const Text(
-                  'OPEN',
-                  style: TextStyle(
-                    fontFamily: 'SpaceMono',
-                    fontWeight: FontWeight.w700,
-                    fontSize: 9,
-                    color: AppColors.signalForestMuted,
-                    letterSpacing: 0.8,
-                  ),
-                ),
-                const SizedBox(width: Spacing.xs),
                 const Icon(
-                  Icons.chevron_right,
+                  Icons.arrow_forward_rounded,
                   color: AppColors.signalForestMuted,
-                  size: 20,
+                  size: 19,
                 ),
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ClubMark extends StatelessWidget {
-  final String name;
-
-  const _ClubMark({required this.name});
-
-  @override
-  Widget build(BuildContext context) {
-    final initial = name.trim().isEmpty ? '?' : name.trim()[0].toUpperCase();
-    return Container(
-      width: 40,
-      height: 40,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: AppColors.signalForest,
-        borderRadius: BorderRadius.circular(Radii.sm),
-      ),
-      child: Text(
-        initial,
-        style: const TextStyle(
-          fontFamily: 'Anton',
-          fontSize: 17,
-          color: AppColors.signalPaper,
         ),
       ),
     );

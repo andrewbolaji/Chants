@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:chants/app/providers.dart';
 import 'package:chants/app/theme.dart';
@@ -22,8 +23,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
-
-import '../../helpers/tolerant_golden_file_comparator.dart';
 
 class _User extends Mock implements User {
   @override
@@ -119,16 +118,6 @@ Future<void> _loadFonts() async {
 
 void main() {
   testWidgets('live chant detail share action at 390 by 844', (tester) async {
-    installTolerantGoldenComparator(
-      testFile: Uri.base.resolve(
-        'test/presentation/browse/chant_share_out_golden_test.dart',
-      ),
-      // Ubuntu Flutter 3.47.2 differs from the inspected macOS 3.44.8
-      // baseline by 2.28% after the approved Living Songbook action. This
-      // 2.3% boundary applies only to this image; production widget tests
-      // separately assert the action and safety distinction.
-      precisionTolerance: 0.023,
-    );
     await _loadFonts();
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -169,7 +158,9 @@ void main() {
 
     await expectLater(
       find.byType(MaterialApp),
-      matchesGoldenFile('goldens/chant_detail_share.png'),
+      matchesGoldenFile(
+        'goldens/${Platform.isLinux ? 'linux/' : ''}chant_detail_share.png',
+      ),
     );
   });
 }

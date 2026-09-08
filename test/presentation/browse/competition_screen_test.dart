@@ -6,6 +6,7 @@ import 'package:chants/app/theme.dart';
 import 'package:chants/data/models/team.dart';
 import 'package:chants/data/repositories/team_repository.dart';
 import 'package:chants/presentation/browse/competition_screen.dart';
+import 'package:chants/presentation/shared/club_crest.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -83,11 +84,11 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
-    final chevrons = find.byIcon(Icons.chevron_right);
-    expect(chevrons, findsNWidgets(2));
+    final arrows = find.byIcon(Icons.arrow_forward_rounded);
+    expect(arrows, findsNWidgets(2));
     expect(
-      tester.getTopLeft(chevrons.at(0)).dx,
-      tester.getTopLeft(chevrons.at(1)).dx,
+      tester.getTopLeft(arrows.at(0)).dx,
+      tester.getTopLeft(arrows.at(1)).dx,
     );
     expect(
       tester.getTopLeft(find.text('Arsenal')).dy,
@@ -155,6 +156,8 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.text('Wolverhampton Wanderers'), findsOneWidget);
-    expect(find.byIcon(Icons.chevron_right), findsOneWidget);
+    expect(find.byIcon(Icons.arrow_forward_rounded), findsOneWidget);
+    expect(find.byType(ClubCrest), findsOneWidget);
+    expect(find.byKey(const ValueKey('club-crest-fallback')), findsOneWidget);
   });
 }

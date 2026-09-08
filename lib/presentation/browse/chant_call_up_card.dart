@@ -73,13 +73,13 @@ class ChantCallUpCard extends StatelessWidget {
             ),
             const SizedBox(height: Spacing.sm),
             Text(
-              "Who's got a song for them?",
+              "Who's got a song for $playerName?",
               style: text.titleMedium?.copyWith(color: headlineColor),
             ),
             const SizedBox(height: Spacing.xs),
             Text(
-              'No chant for them at $clubName in Chants yet. Funny or full of heart, '
-              'start with the words.',
+              'No chant for $playerName at $clubName in Chants yet. '
+              'Funny or full of heart, start with the words.',
               style: text.bodyMedium?.copyWith(color: bodyColor),
             ),
             const SizedBox(height: Spacing.lg),

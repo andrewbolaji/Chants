@@ -133,6 +133,31 @@ test('rejects an invalid or unbound source baseline', () => {
   assert(errors.some((error) => error.includes('SHA-256 does not match')));
 });
 
+test('binds the shipped crest directory and every reviewed crest file', () => {
+  const provenance = JSON.parse(
+    readFileSync(join(projectRoot, 'assets/clubs/crests/provenance.json'), 'utf8'),
+  );
+  const expected = [
+    ...provenance.assets.map((asset) => asset.localFile),
+    'assets/clubs/crests/provenance.json',
+  ].sort();
+  const allowed = baselineSubmission.sourceBaseline.allowedDrift
+    .filter((path) => path.startsWith('assets/clubs/crests/'))
+    .sort();
+  const bound = baselineSubmission.sourceBaseline.boundFiles
+    .map((entry) => entry.path)
+    .filter((path) => path.startsWith('assets/clubs/crests/'))
+    .sort();
+
+  assert(
+    baselineSubmission.sourceBaseline.trackedPaths.includes(
+      'assets/clubs/crests',
+    ),
+  );
+  assert.deepEqual(allowed, expected);
+  assert.deepEqual(bound, expected);
+});
+
 test('rejects asset bytes that do not match their evidence digest', () => {
   const submission = clone(baselineSubmission);
   submission.assetEvidence.googlePlayIcon.sha256 = '0'.repeat(64);

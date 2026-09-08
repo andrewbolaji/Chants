@@ -15,6 +15,7 @@ import 'package:chants/presentation/browse/browse_supporting_notice.dart';
 import 'package:chants/presentation/browse/chant_call_up_card.dart';
 import 'package:chants/presentation/browse/chant_lab_view.dart';
 import 'package:chants/presentation/shared/chant_card.dart';
+import 'package:chants/presentation/shared/club_crest.dart';
 import 'package:chants/presentation/shared/club_signal.dart';
 import 'package:chants/presentation/shared/section_eyebrow.dart';
 import 'package:flutter/material.dart';
@@ -351,22 +352,38 @@ class _TeamScreenState extends ConsumerState<TeamScreen>
       data: ClubSignalTheme.from(Theme.of(context)),
       child: Scaffold(
         appBar: AppBar(
-          toolbarHeight: 68,
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
+          toolbarHeight: 76,
+          title: Row(
             children: [
-              const Text(
-                'CLUB SIGNAL',
-                style: TextStyle(
-                  fontFamily: 'SpaceMono',
-                  fontSize: 9,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.signalGold,
-                  letterSpacing: 1.1,
+              ClubCrest(
+                teamId: widget.team.id,
+                clubName: widget.team.name,
+                size: 40,
+              ),
+              const SizedBox(width: Spacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'CLUB SIGNAL',
+                      style: TextStyle(
+                        fontFamily: 'SpaceMono',
+                        fontSize: 9,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.gold,
+                        letterSpacing: 1.1,
+                      ),
+                    ),
+                    Text(
+                      widget.team.name.toUpperCase(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
               ),
-              Text(widget.team.name.toUpperCase()),
             ],
           ),
           bottom: TabBar(
@@ -688,11 +705,12 @@ class _TeamSongbookView extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Text(
-                  'Full squad (${players.length})',
-                  style: Theme.of(context).textTheme.labelMedium,
+                Expanded(
+                  child: Text(
+                    'Full squad (${players.length})',
+                    style: Theme.of(context).textTheme.labelMedium,
+                  ),
                 ),
-                const Spacer(),
                 Icon(
                   showFullSquad ? Icons.expand_less : Icons.expand_more,
                   color: AppColors.signalForestMuted,
