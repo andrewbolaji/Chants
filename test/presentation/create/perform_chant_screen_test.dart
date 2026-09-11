@@ -129,6 +129,7 @@ PerformanceDraftRepository _repository({
   Future<bool> Function()? onCancel,
   Future<void>? submissionBarrier,
   Future<void>? cancellationBarrier,
+  Object? cancellationFailure,
   void Function(PerformanceDraftTicket, SelectedPerformanceMedia, String)?
   onUpload,
 }) {
@@ -147,8 +148,9 @@ PerformanceDraftRepository _repository({
         if (submissionBarrier != null) await submissionBarrier;
         if (submissionFailure != null) throw submissionFailure;
       }
-      if (callable == 'cancelPerformanceDraft' && cancellationBarrier != null) {
-        await cancellationBarrier;
+      if (callable == 'cancelPerformanceDraft') {
+        if (cancellationBarrier != null) await cancellationBarrier;
+        if (cancellationFailure != null) throw cancellationFailure;
       }
       return const {};
     },
@@ -202,13 +204,13 @@ void main() {
             uploadProgress: progress.stream,
             onCancel: () async {
               cancelled = true;
+              final cancellationError = FirebaseException(
+                plugin: 'firebase_storage',
+                code: 'canceled',
+              );
+              progress.addError(cancellationError);
               if (!uploadCompletion.isCompleted) {
-                uploadCompletion.completeError(
-                  FirebaseException(
-                    plugin: 'firebase_storage',
-                    code: 'canceled',
-                  ),
-                );
+                uploadCompletion.completeError(cancellationError);
               }
               await cancellation.future;
               return true;
@@ -274,6 +276,107 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets('cancel wins a race with transfer completion', (tester) async {
+    final selector = _Selector()
+      ..selected = const SelectedPerformanceMedia(
+        filePath: '/tmp/take.mp4',
+        fileName: 'take.mp4',
+        contentType: 'video/mp4',
+        sizeBytes: 1024,
+        durationMs: 12500,
+      );
+    final calls = <(String, Map<String, Object>)>[];
+    final uploadCompletion = Completer<void>();
+    final cancelRelease = Completer<void>();
+
+    await tester.pumpWidget(
+      _wrap(
+        selector: selector,
+        creator: _creator(),
+        repository: _repository(
+          calls: calls,
+          uploadCompletion: uploadCompletion.future,
+          uploadProgress: const Stream.empty(),
+          onCancel: () async {
+            uploadCompletion.complete();
+            await cancelRelease.future;
+            return true;
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('CHOOSE A VIDEO'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('SEND FOR REVIEW'));
+    await tester.pump();
+    await tester.tap(find.text('CANCEL UPLOAD'));
+    await tester.pump();
+
+    expect(find.text('CANCELLING UPLOAD'), findsOneWidget);
+    expect(calls.where((call) => call.$1 == 'submitPerformanceDraft'), isEmpty);
+
+    cancelRelease.complete();
+    await tester.pumpAndSettle();
+
+    expect(find.text('UPLOAD CANCELLED'), findsOneWidget);
+    expect(calls.where((call) => call.$1 == 'submitPerformanceDraft'), isEmpty);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('callable cancellation failure restores recovery actions', (
+    tester,
+  ) async {
+    final selector = _Selector()
+      ..selected = const SelectedPerformanceMedia(
+        filePath: '/tmp/take.mp4',
+        fileName: 'take.mp4',
+        contentType: 'video/mp4',
+        sizeBytes: 1024,
+        durationMs: 12500,
+      );
+    final uploadCompletion = Completer<void>();
+
+    await tester.pumpWidget(
+      _wrap(
+        selector: selector,
+        creator: _creator(),
+        repository: _repository(
+          calls: [],
+          uploadCompletion: uploadCompletion.future,
+          uploadProgress: const Stream.empty(),
+          onCancel: () async {
+            uploadCompletion.completeError(
+              FirebaseException(plugin: 'firebase_storage', code: 'canceled'),
+            );
+            return true;
+          },
+          cancellationFailure: FirebaseFunctionsException(
+            code: 'unavailable',
+            message: 'Synthetic cancellation failure.',
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('CHOOSE A VIDEO'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('SEND FOR REVIEW'));
+    await tester.pump();
+    await tester.tap(find.text('CANCEL UPLOAD'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Cancellation could not be confirmed. Try again.'),
+      findsOneWidget,
+    );
+    expect(find.text('TRY AGAIN'), findsOneWidget);
+    expect(find.text('CANCEL UPLOAD'), findsOneWidget);
+    expect(find.byKey(const Key('performance-upload-panel')), findsNothing);
+    expect(find.text('UPLOAD CANCELLED'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets(
     'cancel during draft admission waits for the ticket and skips upload',

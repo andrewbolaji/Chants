@@ -170,9 +170,14 @@ class _PerformChantScreenState extends ConsumerState<PerformChantScreen> {
         );
         _upload = upload;
         await _progressSubscription?.cancel();
-        _progressSubscription = upload.progress.listen((progress) {
-          if (mounted) setState(() => _progress = progress.clamp(0, 1));
-        });
+        _progressSubscription = upload.progress.listen(
+          (progress) {
+            if (mounted) setState(() => _progress = progress.clamp(0, 1));
+          },
+          // The completion future is the authoritative upload result and is
+          // handled below. Storage also emits that same failure here.
+          onError: (_) {},
+        );
         await upload.completion;
         if (!mounted) return;
         setState(() {
@@ -432,13 +437,7 @@ class _PerformChantScreenState extends ConsumerState<PerformChantScreen> {
               ],
             ),
             if (operationInProgress) ...[
-              ModalBarrier(
-                dismissible: false,
-                color: AppColors.stageScrim,
-                semanticsLabel: _cancelling
-                    ? 'Performance upload cancellation in progress'
-                    : 'Performance upload in progress',
-              ),
+              ModalBarrier(dismissible: false, color: AppColors.stageScrim),
               Positioned.fill(
                 child: SafeArea(
                   minimum: const EdgeInsets.all(Spacing.lg),

@@ -12,6 +12,16 @@ This is durable, evidence-backed project memory. It prevents the same failure or
 
 ## Entries
 
+### 2026-09-11T13:53:16Z One upload needs one authoritative error channel
+
+- **Status:** applied
+- **Scope:** Upload APIs that expose both an observational progress stream and a terminal completion future.
+- **Observed:** Firebase Storage emitted the same cancellation or network failure on its snapshot stream and its completion future. The screen handled the future for written recovery, but the stream had no error listener, so the duplicate asynchronous error could escape to the root Crashlytics fatal handler.
+- **Evidence:** The final exact-head review identified the missing stream error boundary. A replacement widget regression emits one `FirebaseException` through both channels and proves deliberate cancellation reaches its acknowledged cancelled state without an escaped asynchronous error. The focused set passes 32 tests and the complete suite passes 567 tests.
+- **Rule:** Choose one terminal result as the authority for UI state and telemetry. Treat progress as observation, consume its duplicate errors deliberately, and never let two channels independently report the same transfer failure.
+- **Applied control:** Perform a Chant listens to progress values but consumes progress-stream errors. The upload completion future remains the single path for failure mapping, cancellation acknowledgement, retry state, and telemetry.
+- **Revisit:** Background uploads, resumable sessions, another Storage SDK, progress persistence, or any API that exposes both event and terminal error channels.
+
 ### 2026-09-11T03:20:00Z Cancellation intent must survive admission and stop before final handoff
 
 - **Status:** applied

@@ -356,7 +356,7 @@ class _SubmitChantScreenState extends ConsumerState<SubmitChantScreen> {
                       ),
                       const SizedBox(width: Spacing.md),
                       Text(
-                        '${value.text.length}/5000',
+                        '${value.text.characters.length}/5000',
                         key: const Key('chant-lyrics-count'),
                         style: textTheme.bodySmall,
                       ),
@@ -544,7 +544,6 @@ class _SubmitChantScreenState extends ConsumerState<SubmitChantScreen> {
                                                     player == null) {
                                                   return;
                                                 }
-                                                field.didChange(player.id);
                                                 setState(() {
                                                   _selectedPlayerId = player.id;
                                                   _playerSelectionNotice = null;

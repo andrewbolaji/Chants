@@ -2,6 +2,8 @@
 
 These five synthetic screenshots are byte-exact test images from Flutter on Linux. The chant-detail image was regenerated and strictly rerun on 2026-09-10 in an amd64 Debian Bookworm container with Flutter 3.47.2 from the current final-review correction worktree based on `b3e65636dd50e72f87685289a75b43585a206522`. The two named-player Call-Up images came from run [34268596203](https://github.com/andrewbolaji/Chants/actions/runs/34268596203), source head `966017f5b0e71ca425836c8bbe8625e6df43b8f9`, artifact `10072958024`. The two team images came from run [34269648962](https://github.com/andrewbolaji/Chants/actions/runs/34269648962), source head `3b30ac8bb4714eee6f1de635e67139c97242b968`, artifact `10073373473`.
 
+The CI workflow pins Flutter 3.47.3. Exact-head run [34598537127](https://github.com/andrewbolaji/Chants/actions/runs/34598537127) proved these retained browse references remain byte-compatible with that pinned toolchain.
+
 All five rendered images and their isolated or masked differences were inspected on 2026-09-08. They match the approved Chants palette, Club Signal crest treatment, North London Forever fixture, vote clarity, named-player Call-Up hierarchy, enlarged text, and chant-detail controls. The two correction runs intentionally compared changed renders with stale or cross-platform references to obtain actual Linux output. The first exposed only the normal and enlarged Call-Ups; the second proved those replacements and exposed only the two larger team references. Neither revealed a behavior or layout regression.
 
 | File | SHA-256 |

@@ -320,6 +320,56 @@ void main() {
     expect(lyricsField.maxLines, 10);
     expect(find.text('Use a new line for each sung line.'), findsOneWidget);
     expect(find.byKey(const Key('chant-lyrics-count')), findsOneWidget);
+
+    await tester.enterText(
+      find.byKey(const Key('chant-lyrics-field')),
+      '👨‍👩‍👧‍👦',
+    );
+    await tester.pump();
+    expect(find.text('1/5000'), findsOneWidget);
+  });
+
+  testWidgets('player choice survives a squad update while the sheet is open', (
+    tester,
+  ) async {
+    final players = StreamController<List<Player>>();
+    addTearDown(players.close);
+    await tester.pumpWidget(
+      _wrap(_FakeChantRepository(), players: players.stream),
+    );
+    players.add(const [
+      Player(id: 'ben', teamId: 'arsenal', name: 'Ben White'),
+      Player(id: 'bukayo', teamId: 'arsenal', name: 'Bukayo Saka'),
+    ]);
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Player'),
+      400,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Player'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('player-picker-field')),
+      400,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.byKey(const Key('player-picker-field')));
+    await tester.pumpAndSettle();
+
+    players.add(const [
+      Player(id: 'ben', teamId: 'arsenal', name: 'Ben White'),
+      Player(id: 'bukayo', teamId: 'arsenal', name: 'Bukayo Saka'),
+      Player(id: 'declan', teamId: 'arsenal', name: 'Declan Rice'),
+    ]);
+    await tester.pump();
+    await tester.tap(find.text('Bukayo Saka'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('CHOOSE A PLAYER'), findsNothing);
+    expect(find.text('Bukayo Saka'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('player picker is searchable and can close without a choice', (

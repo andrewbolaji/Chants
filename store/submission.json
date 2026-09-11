@@ -223,7 +223,7 @@
       },
       {
         "path": "lib/presentation/create/perform_chant_screen.dart",
-        "sha256": "cce9cb3481309e38a11dceba2f74bf60be3e6ca94520d8dcf192f0c9e6790c50"
+        "sha256": "d8ec2541a96f046d5dc31742ba8520828cbbf55db2e279415c949287d66cc73b"
       },
       {
         "path": "lib/presentation/feed/chant_stage_screen.dart",
@@ -243,7 +243,7 @@
       },
       {
         "path": "lib/presentation/submit/submit_chant_screen.dart",
-        "sha256": "339d8da394c57d8e3bd975842103d64909827cf747ad18a6cd553d28c21198b6"
+        "sha256": "9051781a09cbd13e470287a42da7424d6c34b35f0e32ba4107520e913626a1b4"
       },
       {
         "path": "pubspec.lock",
