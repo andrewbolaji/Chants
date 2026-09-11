@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:chants/app/providers.dart';
 import 'package:chants/app/theme.dart';
 import 'package:chants/data/models/chant.dart';
@@ -9,9 +11,12 @@ import 'package:chants/presentation/create/perform_chant_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
+
+import '../../helpers/tolerant_golden_file_comparator.dart';
 
 class _User extends Mock implements User {
   @override
@@ -21,6 +26,7 @@ class _User extends Mock implements User {
 class _Selector extends PerformanceMediaSelector {
   SelectedPerformanceMedia? selected;
   PerformanceMediaSelectionException? failure;
+  Object? platformFailure;
 
   @override
   Future<SelectedPerformanceMedia?> recoverInterruptedSelection() async => null;
@@ -32,6 +38,8 @@ class _Selector extends PerformanceMediaSelector {
   Future<SelectedPerformanceMedia?> chooseFromLibrary() => _select();
 
   Future<SelectedPerformanceMedia?> _select() async {
+    final platformError = platformFailure;
+    if (platformError != null) throw platformError;
     final error = failure;
     if (error != null) throw error;
     return selected;
@@ -91,16 +99,36 @@ Widget _wrap({
       performanceDraftRepositoryProvider.overrideWithValue(repository),
     ],
     child: MaterialApp(
+      debugShowCheckedModeBanner: false,
       theme: ChantTheme.dark,
       home: PerformChantScreen(chant: _chant),
     ),
   );
 }
 
+Future<void> _loadFonts() async {
+  final fonts = {
+    'Nunito': 'assets/fonts/Nunito-Variable.ttf',
+    'Anton': 'assets/fonts/Anton-Regular.ttf',
+    'SpaceMono': 'assets/fonts/SpaceMono-Regular.ttf',
+    'MaterialIcons': 'fonts/MaterialIcons-Regular.otf',
+  };
+  for (final entry in fonts.entries) {
+    final loader = FontLoader(entry.key)..addFont(rootBundle.load(entry.value));
+    await loader.load();
+  }
+}
+
 PerformanceDraftRepository _repository({
   required List<(String, Map<String, Object>)> calls,
   Object? creationFailure,
   Object? submissionFailure,
+  Future<void>? creationBarrier,
+  Future<void>? uploadCompletion,
+  Stream<double>? uploadProgress,
+  Future<bool> Function()? onCancel,
+  Future<void>? submissionBarrier,
+  Future<void>? cancellationBarrier,
   void Function(PerformanceDraftTicket, SelectedPerformanceMedia, String)?
   onUpload,
 }) {
@@ -108,23 +136,28 @@ PerformanceDraftRepository _repository({
     invoker: (callable, payload) async {
       calls.add((callable, payload));
       if (callable == 'createPerformanceDraft') {
+        if (creationBarrier != null) await creationBarrier;
         if (creationFailure != null) throw creationFailure;
         return {
           'draftId': 'draft-1',
           'uploadPath': 'performance-staging/fan/draft-1/source',
         };
       }
-      if (callable == 'submitPerformanceDraft' && submissionFailure != null) {
-        throw submissionFailure;
+      if (callable == 'submitPerformanceDraft') {
+        if (submissionBarrier != null) await submissionBarrier;
+        if (submissionFailure != null) throw submissionFailure;
+      }
+      if (callable == 'cancelPerformanceDraft' && cancellationBarrier != null) {
+        await cancellationBarrier;
       }
       return const {};
     },
     uploader: ({required ticket, required media, required ownerId}) {
       onUpload?.call(ticket, media, ownerId);
       return PerformanceUploadHandle(
-        completion: Future.value(),
-        progress: Stream.value(1),
-        cancel: () async => true,
+        completion: uploadCompletion ?? Future.value(),
+        progress: uploadProgress ?? Stream.value(1),
+        cancel: onCancel ?? () async => true,
       );
     },
     ownerDraftsLoader: (_) => Stream.value(const []),
@@ -133,6 +166,319 @@ PerformanceDraftRepository _repository({
 }
 
 void main() {
+  testWidgets(
+    'active upload blocks navigation and gives progress plus deliberate cancel',
+    (tester) async {
+      installTolerantGoldenComparator(
+        testFile: Uri.base.resolve(
+          'test/presentation/create/perform_chant_screen_test.dart',
+        ),
+      );
+      await _loadFonts();
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final selector = _Selector()
+        ..selected = const SelectedPerformanceMedia(
+          filePath: '/tmp/take.mp4',
+          fileName: 'take.mp4',
+          contentType: 'video/mp4',
+          sizeBytes: 1024,
+          durationMs: 12500,
+        );
+      final calls = <(String, Map<String, Object>)>[];
+      final uploadCompletion = Completer<void>();
+      final progress = StreamController<double>();
+      final cancellation = Completer<void>();
+      var cancelled = false;
+      addTearDown(progress.close);
+
+      await tester.pumpWidget(
+        _wrap(
+          selector: selector,
+          creator: _creator(),
+          repository: _repository(
+            calls: calls,
+            uploadCompletion: uploadCompletion.future,
+            uploadProgress: progress.stream,
+            onCancel: () async {
+              cancelled = true;
+              if (!uploadCompletion.isCompleted) {
+                uploadCompletion.completeError(
+                  FirebaseException(
+                    plugin: 'firebase_storage',
+                    code: 'canceled',
+                  ),
+                );
+              }
+              await cancellation.future;
+              return true;
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('CHOOSE A VIDEO'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('SEND FOR REVIEW'));
+      await tester.pump();
+
+      expect(find.byKey(const Key('performance-upload-panel')), findsOneWidget);
+      expect(find.text('UPLOADING YOUR TAKE'), findsOneWidget);
+      expect(find.textContaining('Keep Chants open'), findsOneWidget);
+      expect(tester.widget<PopScope>(find.byType(PopScope)).canPop, isFalse);
+      expect(
+        tester.widget<AppBar>(find.byType(AppBar)).automaticallyImplyLeading,
+        isFalse,
+      );
+      expect(
+        tester.getSemantics(
+          find.widgetWithText(OutlinedButton, 'CANCEL UPLOAD'),
+        ),
+        matchesSemantics(
+          label: 'CANCEL UPLOAD',
+          isButton: true,
+          isFocusable: true,
+          hasEnabledState: true,
+          isEnabled: true,
+          hasTapAction: true,
+          hasFocusAction: true,
+        ),
+      );
+
+      progress.add(0.42);
+      await tester.pump();
+      expect(find.text('UPLOADING 42%'), findsOneWidget);
+      await expectLater(
+        find.byType(MaterialApp),
+        matchesGoldenFile('goldens/perform_chant_upload.png'),
+      );
+
+      await tester.tap(find.text('CANCEL UPLOAD'));
+      await tester.pump();
+      expect(find.text('CANCELLING UPLOAD'), findsOneWidget);
+      expect(find.text('CONFIRMING CANCELLATION'), findsOneWidget);
+      expect(
+        find.textContaining('safely close this private draft'),
+        findsOneWidget,
+      );
+      expect(find.text('CANCEL UPLOAD'), findsNothing);
+      expect(tester.widget<PopScope>(find.byType(PopScope)).canPop, isFalse);
+
+      cancellation.complete();
+      await tester.pumpAndSettle();
+      expect(cancelled, isTrue);
+      expect(calls.last.$1, 'cancelPerformanceDraft');
+      expect(find.text('UPLOAD CANCELLED'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'cancel during draft admission waits for the ticket and skips upload',
+    (tester) async {
+      final selector = _Selector()
+        ..selected = const SelectedPerformanceMedia(
+          filePath: '/tmp/take.mp4',
+          fileName: 'take.mp4',
+          contentType: 'video/mp4',
+          sizeBytes: 1024,
+          durationMs: 12500,
+        );
+      final creation = Completer<void>();
+      final calls = <(String, Map<String, Object>)>[];
+      var uploads = 0;
+
+      await tester.pumpWidget(
+        _wrap(
+          selector: selector,
+          creator: _creator(),
+          repository: _repository(
+            calls: calls,
+            creationBarrier: creation.future,
+            onUpload: (_, _, _) => uploads++,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('CHOOSE A VIDEO'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('SEND FOR REVIEW'));
+      await tester.pump();
+      await tester.tap(find.text('CANCEL UPLOAD'));
+      await tester.pump();
+
+      expect(find.text('CANCELLING UPLOAD'), findsOneWidget);
+      expect(find.text('UPLOAD CANCELLED'), findsNothing);
+
+      creation.complete();
+      await tester.pumpAndSettle();
+
+      expect(uploads, 0);
+      expect(calls.map((call) => call.$1), [
+        'createPerformanceDraft',
+        'cancelPerformanceDraft',
+      ]);
+      expect(find.text('UPLOAD CANCELLED'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'failed draft admission resolves a pending cancellation with a next action',
+    (tester) async {
+      final selector = _Selector()
+        ..selected = const SelectedPerformanceMedia(
+          filePath: '/tmp/take.mp4',
+          fileName: 'take.mp4',
+          contentType: 'video/mp4',
+          sizeBytes: 1024,
+          durationMs: 12500,
+        );
+      final creation = Completer<void>();
+      var uploads = 0;
+
+      await tester.pumpWidget(
+        _wrap(
+          selector: selector,
+          creator: _creator(),
+          repository: _repository(
+            calls: [],
+            creationBarrier: creation.future,
+            creationFailure: Exception('Synthetic admission failure.'),
+            onUpload: (_, _, _) => uploads++,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('CHOOSE A VIDEO'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('SEND FOR REVIEW'));
+      await tester.pump();
+      await tester.tap(find.text('CANCEL UPLOAD'));
+      await tester.pump();
+
+      expect(find.text('CANCELLING UPLOAD'), findsOneWidget);
+      creation.complete();
+      await tester.pumpAndSettle();
+
+      expect(uploads, 0);
+      expect(find.text('UPLOAD CANCELLED'), findsNothing);
+      expect(
+        find.textContaining(
+          'Cancellation could not be confirmed because upload setup did not finish',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('SEND FOR REVIEW'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'failed upload gives immediate blocking feedback while cancellation settles',
+    (tester) async {
+      final selector = _Selector()
+        ..selected = const SelectedPerformanceMedia(
+          filePath: '/tmp/take.mp4',
+          fileName: 'take.mp4',
+          contentType: 'video/mp4',
+          sizeBytes: 1024,
+          durationMs: 12500,
+        );
+      final cancellation = Completer<void>();
+      final upload = Completer<void>();
+      final calls = <(String, Map<String, Object>)>[];
+
+      await tester.pumpWidget(
+        _wrap(
+          selector: selector,
+          creator: _creator(),
+          repository: _repository(
+            calls: calls,
+            uploadCompletion: upload.future,
+            cancellationBarrier: cancellation.future,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('CHOOSE A VIDEO'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('SEND FOR REVIEW'));
+      await tester.pump();
+      upload.completeError(
+        FirebaseException(plugin: 'firebase_storage', code: 'object-not-found'),
+      );
+      await tester.pumpAndSettle();
+
+      final cancel = find.text('CANCEL UPLOAD').hitTestable();
+      for (
+        var attempt = 0;
+        cancel.evaluate().isEmpty && attempt < 6;
+        attempt++
+      ) {
+        await tester.dragFrom(const Offset(12, 520), const Offset(0, -120));
+        await tester.pumpAndSettle();
+      }
+      expect(cancel, findsOneWidget);
+      await tester.tap(cancel);
+      await tester.pump();
+
+      expect(find.text('CANCELLING UPLOAD'), findsOneWidget);
+      expect(find.text('CONFIRMING CANCELLATION'), findsOneWidget);
+      expect(find.text('CANCEL UPLOAD'), findsNothing);
+      expect(tester.widget<PopScope>(find.byType(PopScope)).canPop, isFalse);
+      expect(
+        calls.where((call) => call.$1 == 'cancelPerformanceDraft'),
+        hasLength(1),
+      );
+
+      cancellation.complete();
+      await tester.pumpAndSettle();
+      expect(find.text('UPLOAD CANCELLED'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('upload panel names the private review handoff phase', (
+    tester,
+  ) async {
+    final selector = _Selector()
+      ..selected = const SelectedPerformanceMedia(
+        filePath: '/tmp/take.mp4',
+        fileName: 'take.mp4',
+        contentType: 'video/mp4',
+        sizeBytes: 1024,
+        durationMs: 12500,
+      );
+    final submission = Completer<void>();
+
+    await tester.pumpWidget(
+      _wrap(
+        selector: selector,
+        creator: _creator(),
+        repository: _repository(
+          calls: [],
+          submissionBarrier: submission.future,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('CHOOSE A VIDEO'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('SEND FOR REVIEW'));
+    await tester.pump();
+
+    expect(find.text('ADDING TO REVIEW QUEUE'), findsOneWidget);
+    expect(find.text('UPLOAD COMPLETE · FINAL CHECK'), findsOneWidget);
+    expect(find.textContaining('private review queue'), findsOneWidget);
+    expect(find.text('CANCEL UPLOAD'), findsNothing);
+
+    submission.complete();
+    await tester.pumpAndSettle();
+    expect(find.text('IN THE REVIEW QUEUE'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   for (final reason in [
     'maintenance',
     'upload-in-progress',
@@ -184,17 +530,19 @@ void main() {
           findsOneWidget,
         );
         if (reason == 'upload-expired') {
-          await tester.scrollUntilVisible(
-            find.text('CANCEL UPLOAD'),
-            160,
-            scrollable: find
-                .descendant(
-                  of: find.byType(ListView),
-                  matching: find.byType(Scrollable),
-                )
-                .first,
-          );
-          await tester.tap(find.text('CANCEL UPLOAD'));
+          final cancel = find.text('CANCEL UPLOAD').hitTestable();
+          for (
+            var attempt = 0;
+            cancel.evaluate().isEmpty && attempt < 6;
+            attempt++
+          ) {
+            // Drag the page gutter so a nested text-field scrollable cannot
+            // absorb the recovery gesture on a compact test viewport.
+            await tester.dragFrom(const Offset(12, 520), const Offset(0, -120));
+            await tester.pumpAndSettle();
+          }
+          expect(cancel, findsOneWidget);
+          await tester.tap(cancel);
           await tester.pumpAndSettle();
           expect(calls.last.$1, 'cancelPerformanceDraft');
           expect(find.text('UPLOAD CANCELLED'), findsOneWidget);
@@ -289,14 +637,15 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('POSTING AS @northbankleo'), findsOneWidget);
+    expect(find.text('POSTING AS'), findsOneWidget);
+    expect(find.text('@northbankleo'), findsOneWidget);
     await tester.tap(find.text('CHOOSE A VIDEO'));
     await tester.pumpAndSettle();
     expect(find.text('take.mp4'), findsOneWidget);
     expect(find.textContaining('12.5 seconds'), findsOneWidget);
 
     await tester.enterText(
-      find.widgetWithText(TextField, 'Caption (optional)'),
+      find.byKey(const Key('performance-caption')),
       'First take.',
     );
     await tester.tap(find.text('SEND FOR REVIEW'));
@@ -334,6 +683,42 @@ void main() {
     );
   });
 
+  for (final permissionCase in [
+    (
+      button: 'RECORD A TAKE',
+      code: 'camera_access_denied',
+      copy: 'Open Settings and allow camera access for Chants, then try again.',
+    ),
+    (
+      button: 'CHOOSE A VIDEO',
+      code: 'photo_access_denied',
+      copy:
+          'Open Settings and allow photo and video access for Chants, then try again.',
+    ),
+  ]) {
+    testWidgets(
+      '${permissionCase.button} denial gives a Settings next action',
+      (tester) async {
+        final selector = _Selector()
+          ..platformFailure = PlatformException(code: permissionCase.code);
+        await tester.pumpWidget(
+          _wrap(
+            selector: selector,
+            creator: _creator(),
+            repository: _repository(calls: []),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text(permissionCase.button));
+        await tester.pumpAndSettle();
+
+        expect(find.text(permissionCase.copy), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
   testWidgets('public creator identity is required before upload', (
     tester,
   ) async {
@@ -350,5 +735,36 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('SEND FOR REVIEW'), findsNothing);
+  });
+
+  testWidgets('creator posting identity is visually distinct', (tester) async {
+    installTolerantGoldenComparator(
+      testFile: Uri.base.resolve(
+        'test/presentation/create/perform_chant_screen_test.dart',
+      ),
+    );
+    await _loadFonts();
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      _wrap(
+        selector: _Selector(),
+        creator: _creator(),
+        repository: _repository(calls: []),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('POSTING AS'), findsOneWidget);
+    expect(find.text('@northbankleo'), findsOneWidget);
+    expect(
+      tester.getSize(find.byKey(const Key('performance-posting-handle'))).width,
+      greaterThan(100),
+    );
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('goldens/perform_chant_entry.png'),
+    );
   });
 }

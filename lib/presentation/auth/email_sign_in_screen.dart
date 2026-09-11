@@ -82,6 +82,9 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
               const SizedBox(height: Spacing.xl),
               TextFormField(
                 controller: _emailController,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(fontSize: 16),
                 decoration: const InputDecoration(labelText: 'Email'),
                 keyboardType: TextInputType.emailAddress,
                 autofillHints: const [AutofillHints.email],
@@ -97,6 +100,9 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
               const SizedBox(height: Spacing.md),
               TextFormField(
                 controller: _passwordController,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(fontSize: 16),
                 decoration: InputDecoration(
                   labelText: 'Password',
                   suffixIcon: IconButton(

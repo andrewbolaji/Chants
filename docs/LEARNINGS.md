@@ -12,6 +12,36 @@ This is durable, evidence-backed project memory. It prevents the same failure or
 
 ## Entries
 
+### 2026-09-11T03:20:00Z Cancellation intent must survive admission and stop before final handoff
+
+- **Status:** applied
+- **Scope:** Multi-step uploads whose cancellable phase begins before a server ticket exists and ends before a terminal review handoff.
+- **Observed:** A user could request cancellation while draft admission was still in flight. The client immediately displayed a cancelled outcome, then accepted the late ticket and uploaded anyway. At the opposite boundary, keeping Cancel visible during the final review callable allowed submission and cancellation to race toward contradictory terminal states.
+- **Evidence:** The independent review reproduced both state-machine gaps. Replacement widget regressions hold admission and review handoff behind separate barriers. They prove that early cancellation waits for the exact ticket, cancels the exact draft, never starts transfer, and reports setup failure truthfully; they also prove that Cancel is absent once final handoff starts. The corrected focused set passes 43 tests and the complete Flutter suite passes 563 tests.
+- **Rule:** Treat cancellation as durable intent across asynchronous admission, not as a terminal UI flag. Expose cancellation only while the server operation remains cancellable, keep its control accessible, and choose the final screen from acknowledged authority rather than call completion order.
+- **Applied control:** Perform a Chant records pre-ticket cancellation intent, resolves it against the admitted draft, blocks transfer, preserves the semantic Cancel button, removes inert route actions during operation, and removes cancellation before review submission.
+- **Revisit:** Any resumable upload, background transfer, multi-device draft ownership, changed draft lifecycle, or new terminal handoff.
+
+### 2026-09-09T22:00:47Z Store declarations require a fresh merged manifest
+
+- **Status:** applied
+- **Scope:** Android release declarations affected by permissions contributed by transitive SDK manifests.
+- **Observed:** The app does not contain ads, but Facebook Core 18.1.3 contributed Advertising ID and four Privacy Sandbox ad-services permissions to the merged release manifest.
+- **Evidence:** The app manifest now rejects all five permissions and disables automatic Meta app-event logging and advertiser-ID collection. A fresh `processReleaseMainManifest` build marks all five dependency entries `REJECTED`, and its exact merged output contains no matching permission. A similarly named older Gradle output still contained the former permissions, proving that an unverified path can report stale policy state.
+- **Rule:** Do not answer a permission-sensitive store declaration from product intent or source inspection alone. Rebuild the exact release merge, identify the output produced by that task, inspect the merger report, and reject unneeded transitive permissions explicitly.
+- **Applied control:** The Android source uses `tools:node="remove"` for all five permissions, launch-services checks pin those removals and both Meta flags, and the store packet hash-binds the manifest.
+- **Revisit:** Any Android dependency, manifest, provider configuration, Facebook SDK, build variant, application ID, or release-bundle change.
+
+### 2026-09-09T17:50:12Z Editorial line rhythm must be source-owned
+
+- **Status:** applied
+- **Scope:** Large public-site promises whose approved composition depends on specific phrase grouping.
+- **Observed:** The hero sentence appeared as three balanced phrase lines in one reviewed desktop viewport, but a wider owner-browser presentation allowed the same natural text run to collapse into mostly one-word lines.
+- **Evidence:** The corrected page exposes three block-level phrase nodes. Browser checks at 1280 by 900, 1000 by 800, 390 by 844, and 320 by 780 report those exact three lines, `white-space: nowrap` on each phrase, and no document overflow. The public-landing contract fails if the structure or no-wrap control disappears.
+- **Rule:** When line rhythm is part of the approved identity, encode meaningful phrase groups in the markup and protect each group from internal wrapping. Font size and container width alone do not make editorial line breaks deterministic across browser widths and zoom levels.
+- **Applied control:** The public hero owns `Every chant`, `starts with`, and `one voice.` as three responsive phrase lines with a focused contract test.
+- **Revisit:** Hero-copy changes, localization, a font-family change, or a supported width below 320 CSS pixels.
+
 ### 2026-09-01T17:55:17Z Responsive regressions must intersect state, viewport, and text scale
 
 - **Status:** promoted

@@ -37,9 +37,14 @@ class PerformanceMediaSelector {
   static const maximumDuration = Duration(seconds: 30);
 
   final ImagePicker _picker;
+  final bool _supportsLostDataRecovery;
 
-  PerformanceMediaSelector({ImagePicker? picker})
-    : _picker = picker ?? ImagePicker();
+  PerformanceMediaSelector({
+    ImagePicker? picker,
+    bool? supportsLostDataRecovery,
+  }) : _picker = picker ?? ImagePicker(),
+       _supportsLostDataRecovery =
+           supportsLostDataRecovery ?? Platform.isAndroid;
 
   Future<SelectedPerformanceMedia?> record() async {
     final file = await _picker.pickVideo(
@@ -55,6 +60,9 @@ class PerformanceMediaSelector {
   }
 
   Future<SelectedPerformanceMedia?> recoverInterruptedSelection() async {
+    // image_picker's lost-data recovery is an Android process-death API.
+    // Calling it on iOS throws even when the user has not started a selection.
+    if (!_supportsLostDataRecovery) return null;
     final response = await _picker.retrieveLostData();
     if (response.isEmpty) return null;
     if (response.exception != null || response.files?.length != 1) {

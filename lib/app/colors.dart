@@ -39,9 +39,9 @@ class AppColors extends ThemeExtension<AppColors> {
   // Legacy alias so existing code compiles during migration
   static const textPrimary = textHeadline;
 
-  // The single accent: trophy gold (Ink and Gold, punchier).
-  static const gold = Color(0xFFFFC02E);
-  static const goldBright = Color(0xFFFFD04D);
+  // The single accent: supporter gold, vivid without reading as neon.
+  static const gold = Color(0xFFF2AE2E);
+  static const goldBright = Color(0xFFFFC94D);
   static const goldOnDark = Color(0xFF060606);
 
   // A restrained secondary accent for community creativity on Home.
@@ -49,8 +49,8 @@ class AppColors extends ThemeExtension<AppColors> {
   static const chantLab = Color(0xFFE35A45);
 
   // Gold foil gradient for the verified sticker
-  static const goldFoilStart = Color(0xFFFFC02E);
-  static const goldFoilEnd = Color(0xFFFFD04D);
+  static const goldFoilStart = gold;
+  static const goldFoilEnd = goldBright;
 
   // Semantic
   static const error = Color(0xFFEF6461);
@@ -61,7 +61,7 @@ class AppColors extends ThemeExtension<AppColors> {
   static const outline = Color(0xFF2B2B28);
 
   // Floodlight glow (detail hero)
-  static const glowGold = Color(0x0FFFC02E); // gold at ~6%
+  static const glowGold = Color(0x0FF2AE2E); // supporter gold at ~6%
 
   // Instance fields for ThemeExtension
   final Color accentColor;

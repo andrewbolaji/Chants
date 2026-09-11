@@ -20,6 +20,8 @@
       "android"
     ],
     "allowedDrift": [
+      "android/app/src/main/AndroidManifest.xml",
+      "android/gradle.properties",
       "assets/clubs/crests/arsenal.png",
       "assets/clubs/crests/aston-villa.png",
       "assets/clubs/crests/bournemouth.png",
@@ -41,15 +43,27 @@
       "assets/clubs/crests/provenance.json",
       "assets/clubs/crests/sunderland.png",
       "assets/clubs/crests/tottenham-hotspur.png",
+      "hosting/index.html",
+      "hosting/site.css",
       "ios/Runner.xcodeproj/project.pbxproj",
       "ios/Runner/Info.plist",
       "lib/app/colors.dart",
+      "lib/data/services/performance_media_selection.dart",
+      "lib/presentation/auth/email_sign_in_screen.dart",
+      "lib/presentation/auth/launch_reveal_screen.dart",
+      "lib/presentation/auth/onboarding_screen.dart",
+      "lib/presentation/auth/sign_in_screen.dart",
+      "lib/presentation/auth/sign_up_screen.dart",
       "lib/presentation/browse/chant_call_up_card.dart",
       "lib/presentation/browse/competition_screen.dart",
       "lib/presentation/browse/team_screen.dart",
+      "lib/presentation/create/perform_chant_screen.dart",
+      "lib/presentation/feed/chant_stage_screen.dart",
       "lib/presentation/saved/saved_songbook_screen.dart",
       "lib/presentation/shared/club_crest.dart",
       "lib/presentation/shared/vote_controls.dart",
+      "lib/presentation/submit/submit_chant_screen.dart",
+      "pubspec.lock",
       "pubspec.yaml",
       "seed/catalogue_content.test.ts",
       "seed/exact_chant_seed.test.ts",
@@ -59,6 +73,14 @@
       "seed_data/clubs/arsenal.json"
     ],
     "boundFiles": [
+      {
+        "path": "android/app/src/main/AndroidManifest.xml",
+        "sha256": "167330bc1b74b82f480dee433f4259a99f8e0ac04cde0922bb98383ff97ff5d3"
+      },
+      {
+        "path": "android/gradle.properties",
+        "sha256": "4922e39cd2ea910bd97156fd4320b0be9217df262fc45435ce408bad534a20d0"
+      },
       {
         "path": "assets/clubs/crests/arsenal.png",
         "sha256": "ba273b85e8fe0043c3dad252bf5f782e67e1f2b43c8339f6393e4020cb4b7123"
@@ -144,6 +166,14 @@
         "sha256": "ce51d50ba9dbf5fa1d22a3229f7b59cd775a184bd06321c683c7c30c15d6c862"
       },
       {
+        "path": "hosting/index.html",
+        "sha256": "c951e6ebd495c6b97aec4b018b37553020bd8a3d9aef317b3a8c77149beadd04"
+      },
+      {
+        "path": "hosting/site.css",
+        "sha256": "e5211beba4cfdbbfbf85fa2c8be01dc33d6e102bb47b8aace6b98fa4a777685a"
+      },
+      {
         "path": "ios/Runner.xcodeproj/project.pbxproj",
         "sha256": "76f45c719f5f59fc1ae2ea88d738e5063e70ed1c6dfa75f2dca59eb638af7cb8"
       },
@@ -153,7 +183,31 @@
       },
       {
         "path": "lib/app/colors.dart",
-        "sha256": "e624d9d4e5db2ee0eb497fa8284cab03acbbd742573397a4891ccd6db2bf6b2e"
+        "sha256": "2a2b7a4003ed388296e9b0c3d3183a714b28eb2da92c4dbae690b134e43aa981"
+      },
+      {
+        "path": "lib/data/services/performance_media_selection.dart",
+        "sha256": "66d97c8b64b7f63402a6fe21812c603dcb21b3b845edc61afa0e38b043d30a0d"
+      },
+      {
+        "path": "lib/presentation/auth/email_sign_in_screen.dart",
+        "sha256": "0ceb4c0eff32a5e750becb8f5022345032df2119ffead3404153544d5bdcfd2b"
+      },
+      {
+        "path": "lib/presentation/auth/launch_reveal_screen.dart",
+        "sha256": "9c8d811ad4c00d4eb2ee015dab7ff0a383810395eea478a2942927e86945bb63"
+      },
+      {
+        "path": "lib/presentation/auth/onboarding_screen.dart",
+        "sha256": "5e70a0a604c70476dfbb2e1f49f962acff2572c670543f9541e190d9fdfd6158"
+      },
+      {
+        "path": "lib/presentation/auth/sign_in_screen.dart",
+        "sha256": "cb6d861c9eb61e42e907da6f30eee3dd453ce68a421aa7b3abd235387bb64163"
+      },
+      {
+        "path": "lib/presentation/auth/sign_up_screen.dart",
+        "sha256": "257b8b3a0df0b162443209f550cf6d0a53735ef836036e497ce3c7e7a4cc847b"
       },
       {
         "path": "lib/presentation/browse/chant_call_up_card.dart",
@@ -161,11 +215,19 @@
       },
       {
         "path": "lib/presentation/browse/competition_screen.dart",
-        "sha256": "4ddf411ba883a9e1eadaa19d24354ef58690f878770c5eaa66272f4aaaea43ad"
+        "sha256": "23fc4e2dd5369cac39f2b9e0a878402bd84c9d8fcc6d2106fc69f89a2c981cc8"
       },
       {
         "path": "lib/presentation/browse/team_screen.dart",
         "sha256": "1efb3158e030dd674933ffdbd75882669f3873ff1a59b40d86ca0a80c71bb6ce"
+      },
+      {
+        "path": "lib/presentation/create/perform_chant_screen.dart",
+        "sha256": "cce9cb3481309e38a11dceba2f74bf60be3e6ca94520d8dcf192f0c9e6790c50"
+      },
+      {
+        "path": "lib/presentation/feed/chant_stage_screen.dart",
+        "sha256": "f9a92586804d0a4a9a9b8e6ce02a4e25693d43379995f4271406721c3fdfc877"
       },
       {
         "path": "lib/presentation/saved/saved_songbook_screen.dart",
@@ -173,15 +235,23 @@
       },
       {
         "path": "lib/presentation/shared/club_crest.dart",
-        "sha256": "33ee97b746838dbe7c025d4d83c035484fd51d1be2e39fc796b0b90197aad6af"
+        "sha256": "63952a4ffbdc6fe2b8781257199274e6758c1efaa9496a52ce352d7a603ba106"
       },
       {
         "path": "lib/presentation/shared/vote_controls.dart",
         "sha256": "1ffe96bccdbcfaf14f14d9e885f49edfc98293a7108d6926b5c510f0ec71e4db"
       },
       {
+        "path": "lib/presentation/submit/submit_chant_screen.dart",
+        "sha256": "339d8da394c57d8e3bd975842103d64909827cf747ad18a6cd553d28c21198b6"
+      },
+      {
+        "path": "pubspec.lock",
+        "sha256": "7c7a4b8b58601f5087b3fdc777c85bd9c2c262de674dbba6d642468276d820df"
+      },
+      {
         "path": "pubspec.yaml",
-        "sha256": "7e43cac6378954fc5a70fd48576a0a647be9447247d5244e2abeaa1742706c61"
+        "sha256": "c5efd3a4495cf4875427ff515013479598b60d879f76ae4efa79d097ae4d7f04"
       },
       {
         "path": "seed/catalogue_content.test.ts",
@@ -213,6 +283,7 @@
     "productName": "Chants FC",
     "installedDisplayName": "Chants",
     "operator": "ThunderRiver Tech LLC",
+    "googleDeveloperName": "ThunderRiverTech",
     "supportEmail": "support@chantsfc.com",
     "iosBundleId": "com.chants.chants",
     "androidPackageName": "com.chants.chants",
@@ -300,6 +371,13 @@
     "title": "Chants FC",
     "shortDescription": "Learn football chants, save a matchday songbook, and share your own take.",
     "category": "Sports",
+    "tags": [
+      "Lyrics",
+      "Social",
+      "Sports"
+    ],
+    "contactEmail": "play@thunderrivertech.com",
+    "website": "https://chantsfc.com",
     "featureGraphicPath": "store/assets/google-feature-graphic.png",
     "fullDescription": "Football sounds better together.\n\nChants FC brings the supporter songbook and the workshop for what gets sung next into one place.\n\nLearn the Songbook\nBrowse Premier League clubs and players, read clear chant lyrics, see which songs are Terrace Proven, and keep community ideas separate in Chant Lab.\n\nTake it to matchday\nSave one chant or a club's Songbook to your device before you leave. Open those saved lyrics again when stadium connectivity lets you down.\n\nBuild what gets sung next\nSubmit a chant as something already sung or something you made. Evidence is optional when you post, but only current real-world evidence and operator review can make a chant Terrace Proven.\n\nStep onto the Stage\nRecord or upload a video up to 30 seconds. New performances stay private until review. Watch supporter performances, like, comment, share, follow creators, report abuse, and block accounts.\n\nKeep the Songbook living\nSuggest a correction, variation, or better evidence when a chant is wrong or dated. An operator reviews suggestions before any catalog change.\n\nChants FC is an independent supporter service. It is not affiliated with or endorsed by any club, league, player, or music rightsholder. You must be at least 17 to create an account.",
     "appAccessInstructions": "Select that some functionality is restricted. Enter only the dedicated review account credentials in the private Play Console. The account must be verified, 17+ confirmed, on current policy v2, and able to browse seeded Premier League content. Start on Stage, then use Clubs, Create, Songbook, and You. Performance uploads stay private until operator approval. Account deletion is under You and public deletion instructions are at https://chantsfc.com/delete-account. Do not submit while production is in maintenance."

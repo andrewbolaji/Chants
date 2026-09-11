@@ -109,6 +109,31 @@ export function collectLaunchServiceErrors(root = defaultRoot) {
     'android:pathPrefix="/performances/"',
     'android:pathPrefix="/creators/"',
   ]) expectIncludes(manifest, manifestPart, `Missing Android route ${manifestPart}`, errors);
+  for (const permission of [
+    'com.google.android.gms.permission.AD_ID',
+    'android.permission.ACCESS_ADSERVICES_ATTRIBUTION',
+    'android.permission.ACCESS_ADSERVICES_AD_ID',
+    'android.permission.ACCESS_ADSERVICES_CUSTOM_AUDIENCE',
+    'android.permission.ACCESS_ADSERVICES_TOPICS',
+  ]) {
+    const removal = new RegExp(
+      `<uses-permission\\s+android:name="${permission.replaceAll('.', '\\.')}"\\s+tools:node="remove"\\s*/>`,
+    );
+    if (!removal.test(manifest)) {
+      errors.push(`Android release does not remove transitive permission ${permission}`);
+    }
+  }
+  for (const metadata of [
+    'com.facebook.sdk.AutoLogAppEventsEnabled',
+    'com.facebook.sdk.AdvertiserIDCollectionEnabled',
+  ]) {
+    const disabled = new RegExp(
+      `<meta-data\\s+android:name="${metadata.replaceAll('.', '\\.')}"\\s+android:value="false"\\s*/>`,
+    );
+    if (!disabled.test(manifest)) {
+      errors.push(`Android release does not disable ${metadata}`);
+    }
+  }
 
   expectIncludes(
     settings,

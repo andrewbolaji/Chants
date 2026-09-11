@@ -44,3 +44,7 @@ Deterministic Node tests cover root metadata, exact operator spelling, each prod
 The existing square `og-default.png` remains the social-preview source because it is already the app identity asset and introduces no new rights boundary. Its centered scarf/supporter mark survives common center crops. A purpose-built, owned landscape preview should replace it when one is approved and verified across the major preview surfaces.
 
 Revisit when verified public store URLs exist; social ownership is confirmed; a translated page needs a different layout; a real release screenshot is more accurate than the source composition; a measured acquisition need justifies a separately approved signup system; or Hosting architecture and public-route ownership change.
+
+## 2026-09-10 launch-reveal amendment
+
+Andrew's physical iPhone inspection found that the two broad floodlight wedges and curved echo line combined into a tuxedo-like background shape rather than clear stadium atmosphere. The Flutter reveal now keeps the supporter-and-scarf shield, `CHANTS`, one divider, tagline, small sound bars, and restrained crowd dots, while removing both wedges, the curved echo arc, and the redundant background horizon. This is a presentation simplification only. Reveal timing, semantics, reduced motion, loading behavior, account resolution, the native splash boundary, and the shield asset remain unchanged. Focused tests, scoped analysis, and an inspected 390 by 844 golden verify the local source; the current-source physical-device check waits for the next approved rebuild.

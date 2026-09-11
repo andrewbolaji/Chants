@@ -6,6 +6,12 @@ const root = new URL('../', import.meta.url);
 const read = path => readFileSync(new URL(path, root), 'utf8');
 const html = read('hosting/index.html');
 const css = read('hosting/site.css');
+const pageText = html
+  .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+  .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+  .replace(/<[^>]+>/g, ' ')
+  .replace(/\s+/g, ' ')
+  .trim();
 const rosterCurrentness = read('seed/roster_currentness.ts');
 const firebase = JSON.parse(read('firebase.json'));
 const trustRoutes = [
@@ -93,7 +99,6 @@ test('root carries the approved product-led launch frame without fake social pro
     'secondary-phone',
     'performance-card',
     'product-showcase',
-    'Every chant starts with',
     'LEARN IT',
     'MAKE IT',
     'SING IT',
@@ -101,14 +106,51 @@ test('root carries the approved product-led launch frame without fake social pro
   ]) {
     assert.match(html, new RegExp(marker, 'i'), `missing design marker: ${marker}`);
   }
+  assert.match(pageText, /Every chant starts with one voice\./i);
   assert.match(html, /class="phone primary-phone"/);
   assert.match(html, /class="phone secondary-phone"/);
   assert.doesNotMatch(html, fabricatedMetricPattern);
   assert.doesNotMatch(html, stadiumProofPattern);
 });
 
+test('typography separates loud matchnight moments from calm reading sections', () => {
+  assert.match(html, /site\.css\?v=hero-balance/);
+  assert.match(
+    css,
+    /\.hero h1\s*\{[^}]*font-family: "Oswald"[^}]*font-size: clamp\(4\.15rem, 5\.2vw, 5\.9rem\)[^}]*line-height: 0\.92[^}]*text-transform: uppercase;/,
+  );
+  assert.match(
+    css,
+    /\.product-intro h2,\s*\.showcase-copy h2,\s*\.matchday-copy h2\s*\{[^}]*font-variation-settings: "wght" 760;/,
+  );
+  assert.match(
+    css,
+    /\.trust-heading h2\s*\{[^}]*font-family: "Oswald"[^}]*font-size: clamp\(3\.7rem, 5\.7vw, 6\.1rem\)/,
+  );
+  assert.match(
+    css,
+    /\.showcase-copy h2\s*\{[^}]*font-size: clamp\(2\.9rem, 4\.1vw, 4\.45rem\);/,
+  );
+});
+
+test('hero headline keeps the approved three phrase lines at every viewport', () => {
+  assert.match(
+    html,
+    /<h1 id="hero-title">\s*<span>Every chant<\/span>\s*<span>starts with<\/span>\s*<em>one voice\.<\/em>\s*<\/h1>/,
+  );
+  assert.match(
+    css,
+    /\.hero h1 span,\s*\.hero h1 em\s*\{[^}]*display: block;[^}]*width: max-content;[^}]*max-width: 100%;[^}]*white-space: nowrap;/,
+  );
+});
+
 test('illustrative product copy is club-neutral and explicitly allowlisted', () => {
   assert.doesNotMatch(html, seededTeamPattern);
+  assert.doesNotMatch(html, /Club A|Club B|Club C/);
+  assert.match(
+    html,
+    /Choose your club[\s\S]*Learn the songs[\s\S]*Save for matchday/,
+  );
   assert.match(html, /CLUB SIGNAL[\s\S]*MATCHDAY SONGBOOK[\s\S]*READY FOR THE GROUND/);
   assert.match(html, /Saved chants remain available when the signal drops\./);
   assert.match(html, /CHANT LAB[\s\S]*NEW IDEA[\s\S]*WHO IS THIS CHANT FOR\?/);
@@ -171,6 +213,10 @@ test('the page keeps accessible and responsive source controls', () => {
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
   assert.match(css, /@media \(max-width: 900px\)/);
   assert.match(css, /@media \(max-width: 580px\)/);
+  assert.match(
+    css,
+    /\.header-nav a,\s*\.header-link\s*\{[^}]*font-size: 0\.8rem;[^}]*font-weight: 800;/,
+  );
   assert.match(css, /\.hero\s*\{[\s\S]*?overflow: hidden;/);
   const sharedLinkTargetRule = css.match(
     /\.header-nav a,\s*\.header-link,\s*\.primary-action,\s*\.site-footer a\s*\{([\s\S]*?)\}/,

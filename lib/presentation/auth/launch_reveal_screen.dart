@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:chants/app/colors.dart';
 
@@ -81,7 +79,7 @@ class _LaunchRevealScreenState extends State<LaunchRevealScreen>
                           constraints.maxWidth > constraints.maxHeight;
                       final mark = _LaunchMark(
                         progress: progress,
-                        size: compact ? 124 : 172,
+                        size: compact ? 116 : 148,
                       );
                       final details = _LaunchDetails(
                         progress: progress,
@@ -177,8 +175,8 @@ class _LaunchDetails extends StatelessWidget {
             widthFactor: _interval(progress, 0.44, 0.86),
             child: const Divider(
               color: AppColors.gold,
-              thickness: 4,
-              height: 4,
+              thickness: 2,
+              height: 2,
             ),
           ),
         ),
@@ -189,7 +187,7 @@ class _LaunchDetails extends StatelessWidget {
             'FIND YOUR VOICE IN THE CROWD',
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: AppColors.textMuted,
+              color: AppColors.textBody,
               fontFamily: 'SpaceMono',
               fontSize: 10,
               fontWeight: FontWeight.w700,
@@ -264,15 +262,9 @@ class _WordReveal extends StatelessWidget {
                       style: const TextStyle(
                         color: AppColors.textHeadline,
                         fontFamily: 'Anton',
-                        fontSize: 74,
+                        fontSize: 64,
                         height: 0.9,
                         letterSpacing: 1.5,
-                        shadows: [
-                          Shadow(
-                            color: AppColors.gold,
-                            offset: Offset(1.5, 1.5),
-                          ),
-                        ],
                       ),
                     ),
                   ),
@@ -292,7 +284,7 @@ class _SoundBars extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const heights = [8.0, 16.0, 28.0, 42.0, 28.0, 16.0, 8.0];
+    const heights = [6.0, 12.0, 20.0, 30.0, 20.0, 12.0, 6.0];
     return Opacity(
       opacity: _interval(progress, 0.52, 0.9),
       child: Row(
@@ -301,13 +293,13 @@ class _SoundBars extends StatelessWidget {
         children: [
           for (var index = 0; index < heights.length; index++)
             Container(
-              width: 4,
+              width: 3,
               height:
                   4 +
                   ((heights[index] - 4) *
                       _interval(progress, 0.48 + index * 0.035, 0.82)),
-              margin: const EdgeInsets.symmetric(horizontal: 3),
-              color: index == 3 ? AppColors.chantLab : AppColors.gold,
+              margin: const EdgeInsets.symmetric(horizontal: 2.5),
+              color: AppColors.gold,
             ),
         ],
       ),
@@ -322,22 +314,8 @@ class _LaunchAtmospherePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final gold = Paint()..color = AppColors.gold.withValues(alpha: 0.07);
     final faint = Paint()
       ..color = AppColors.textHeadline.withValues(alpha: 0.035);
-
-    final leftFloodlight = Path()
-      ..moveTo(size.width * 0.06, 0)
-      ..lineTo(size.width * 0.47, size.height * 0.74)
-      ..lineTo(size.width * 0.21, size.height * 0.74)
-      ..close();
-    final rightFloodlight = Path()
-      ..moveTo(size.width * 0.94, 0)
-      ..lineTo(size.width * 0.79, size.height * 0.74)
-      ..lineTo(size.width * 0.53, size.height * 0.74)
-      ..close();
-    canvas.drawPath(leftFloodlight, gold);
-    canvas.drawPath(rightFloodlight, gold);
 
     final dotProgress = Curves.easeOut.transform(
       _interval(progress, 0.08, 0.72),
@@ -349,28 +327,6 @@ class _LaunchAtmospherePainter extends CustomPainter {
         canvas.drawCircle(Offset(x, y), 1.4 * dotProgress, faint);
       }
     }
-
-    final line = Paint()
-      ..color = AppColors.gold.withValues(alpha: 0.26 * progress)
-      ..strokeWidth = 1;
-    final horizon = size.height * 0.665;
-    canvas.drawLine(Offset(0, horizon), Offset(size.width, horizon), line);
-
-    final echo = Paint()
-      ..color = AppColors.chantLab.withValues(alpha: 0.11 * progress)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
-    canvas.drawArc(
-      Rect.fromCenter(
-        center: Offset(size.width / 2, size.height * 0.4),
-        width: math.min(size.width * 1.4, 520),
-        height: math.min(size.width * 0.62, 250),
-      ),
-      math.pi * 0.08,
-      math.pi * 0.84,
-      false,
-      echo,
-    );
   }
 
   @override

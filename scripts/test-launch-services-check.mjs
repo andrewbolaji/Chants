@@ -64,6 +64,25 @@ try {
   ));
   cpSync(join(root, "android/settings.gradle.kts"), settingsPath);
 
+  const manifestPath = join(
+    tempRoot,
+    "android/app/src/main/AndroidManifest.xml",
+  );
+  writeFileSync(
+    manifestPath,
+    readFileSync(manifestPath, "utf8").replace(
+      'android:name="com.google.android.gms.permission.AD_ID"\n        tools:node="remove"',
+      'android:name="com.google.android.gms.permission.AD_ID"',
+    ),
+  );
+  assert.ok(collectLaunchServiceErrors(tempRoot).some((error) =>
+    error.includes("com.google.android.gms.permission.AD_ID")
+  ));
+  cpSync(
+    join(root, "android/app/src/main/AndroidManifest.xml"),
+    manifestPath,
+  );
+
   const invalidAssetLinks = join(
     tempRoot,
     "hosting/.well-known/assetlinks.json",

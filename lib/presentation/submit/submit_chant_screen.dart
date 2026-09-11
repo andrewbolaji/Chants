@@ -10,6 +10,18 @@ import 'package:chants/data/services/chant_evidence.dart';
 import 'package:chants/data/services/chant_matcher.dart';
 import 'package:chants/presentation/shared/chant_provenance_label.dart';
 
+const _formInputStyle = TextStyle(
+  fontFamily: 'Nunito',
+  fontSize: 17,
+  height: 1.35,
+);
+
+const _lyricsInputStyle = TextStyle(
+  fontFamily: 'Fraunces',
+  fontSize: 18,
+  height: 1.4,
+);
+
 class SubmitChantScreen extends ConsumerStatefulWidget {
   final String teamId;
   final String sportId;
@@ -75,6 +87,30 @@ class _SubmitChantScreenState extends ConsumerState<SubmitChantScreen> {
             'or choose a different subject.';
       });
     });
+  }
+
+  Future<Player?> _showPlayerPicker(
+    List<Player> players,
+    String? selectedPlayerId,
+  ) {
+    FocusManager.instance.primaryFocus?.unfocus();
+    return showModalBottomSheet<Player>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.viewInsetsOf(context).bottom,
+        ),
+        child: FractionallySizedBox(
+          heightFactor: 0.78,
+          child: _PlayerPickerSheet(
+            players: players,
+            selectedPlayerId: selectedPlayerId,
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _submit() async {
@@ -201,6 +237,9 @@ class _SubmitChantScreenState extends ConsumerState<SubmitChantScreen> {
         .watch(playerRepositoryProvider)
         .playersForTeamStream(teamId: widget.teamId);
     final textTheme = Theme.of(context).textTheme;
+    final inputScrollPadding = EdgeInsets.only(
+      bottom: MediaQuery.viewInsetsOf(context).bottom + Spacing.xxxl,
+    );
 
     return Scaffold(
       appBar: AppBar(title: const Text('ADD A CHANT')),
@@ -264,11 +303,16 @@ class _SubmitChantScreenState extends ConsumerState<SubmitChantScreen> {
                   },
                 ),
                 const SizedBox(height: Spacing.xl),
+                Text('Title', style: textTheme.labelMedium),
+                const SizedBox(height: Spacing.sm),
                 TextFormField(
                   key: const Key('chant-title-field'),
                   controller: _titleController,
+                  style: _formInputStyle,
+                  scrollPadding: inputScrollPadding,
+                  textCapitalization: TextCapitalization.sentences,
+                  textInputAction: TextInputAction.next,
                   decoration: const InputDecoration(
-                    labelText: 'Title',
                     hintText: 'What is this chant called?',
                   ),
                   maxLength: 200,
@@ -277,26 +321,59 @@ class _SubmitChantScreenState extends ConsumerState<SubmitChantScreen> {
                       : null,
                 ),
                 const SizedBox(height: Spacing.md),
+                Text('Lyrics', style: textTheme.labelMedium),
+                const SizedBox(height: Spacing.sm),
                 TextFormField(
                   key: const Key('chant-lyrics-field'),
                   controller: _lyricsController,
+                  style: _lyricsInputStyle,
+                  scrollPadding: inputScrollPadding,
+                  textCapitalization: TextCapitalization.sentences,
+                  keyboardType: TextInputType.multiline,
                   decoration: const InputDecoration(
-                    labelText: 'Lyrics',
-                    hintText: 'Write the words here.',
+                    hintText: 'Write the words as supporters sing them.',
+                    counterText: '',
                     alignLabelWithHint: true,
                   ),
                   maxLength: 5000,
-                  maxLines: 8,
+                  minLines: 5,
+                  maxLines: 10,
                   validator: (value) => value == null || value.trim().isEmpty
                       ? 'Add the lyrics.'
                       : null,
                 ),
+                const SizedBox(height: Spacing.xs),
+                ValueListenableBuilder<TextEditingValue>(
+                  valueListenable: _lyricsController,
+                  builder: (context, value, _) => Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Use a new line for each sung line.',
+                          style: textTheme.bodySmall,
+                        ),
+                      ),
+                      const SizedBox(width: Spacing.md),
+                      Text(
+                        '${value.text.length}/5000',
+                        key: const Key('chant-lyrics-count'),
+                        style: textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                ),
                 const SizedBox(height: Spacing.md),
+                Text('Tune', style: textTheme.labelMedium),
+                const SizedBox(height: Spacing.sm),
                 TextFormField(
                   key: const Key('chant-tune-field'),
                   controller: _tuneNameController,
+                  style: _formInputStyle,
+                  scrollPadding: inputScrollPadding,
+                  textCapitalization: TextCapitalization.words,
+                  textInputAction: TextInputAction.next,
                   decoration: const InputDecoration(
-                    labelText: 'Tune',
                     hintText: 'What tune is it set to? (or "Original")',
                   ),
                   maxLength: 200,
@@ -305,23 +382,33 @@ class _SubmitChantScreenState extends ConsumerState<SubmitChantScreen> {
                       : null,
                 ),
                 const SizedBox(height: Spacing.md),
+                Text('Context (optional)', style: textTheme.labelMedium),
+                const SizedBox(height: Spacing.sm),
                 TextFormField(
                   controller: _contextController,
+                  style: _formInputStyle,
+                  scrollPadding: inputScrollPadding,
+                  textCapitalization: TextCapitalization.sentences,
+                  keyboardType: TextInputType.multiline,
                   decoration: const InputDecoration(
-                    labelText: 'Context (optional)',
                     hintText: 'When is it sung? Any background?',
                   ),
                   maxLength: 500,
-                  maxLines: 3,
+                  minLines: 2,
+                  maxLines: 4,
                 ),
                 const SizedBox(height: Spacing.md),
+                Text('Evidence link (optional)', style: textTheme.labelMedium),
+                const SizedBox(height: Spacing.sm),
                 TextFormField(
                   key: const Key('chant-evidence-field'),
                   controller: _evidenceController,
+                  style: _formInputStyle,
+                  scrollPadding: inputScrollPadding,
                   keyboardType: TextInputType.url,
+                  textInputAction: TextInputAction.done,
                   autocorrect: false,
                   decoration: const InputDecoration(
-                    labelText: 'Evidence link (optional)',
                     hintText: 'YouTube or X link',
                     helperText:
                         'Opens outside Chants. We do not host the video.',
@@ -402,30 +489,124 @@ class _SubmitChantScreenState extends ConsumerState<SubmitChantScreen> {
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          DropdownButtonFormField<String>(
+                          FormField<String>(
                             key: ValueKey(
-                              'player-dropdown-$playerSetKey-'
+                              'player-picker-$playerSetKey-'
                               '${selectedPlayerId ?? 'none'}',
                             ),
                             initialValue: selectedPlayerId,
-                            decoration: const InputDecoration(
-                              labelText: 'Which player?',
-                            ),
-                            items: players
-                                .map(
-                                  (player) => DropdownMenuItem(
-                                    value: player.id,
-                                    child: Text(player.name),
-                                  ),
-                                )
-                                .toList(),
-                            onChanged: (value) => setState(() {
-                              _selectedPlayerId = value;
-                              _playerSelectionNotice = null;
-                            }),
                             validator: (value) => value == null
                                 ? 'Pick which player this chant is for.'
                                 : null,
+                            builder: (field) {
+                              final selectedPlayer = players
+                                  .where((player) => player.id == field.value)
+                                  .firstOrNull;
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Which player?',
+                                    style: textTheme.labelMedium,
+                                  ),
+                                  const SizedBox(height: Spacing.sm),
+                                  Semantics(
+                                    button: true,
+                                    label: selectedPlayer == null
+                                        ? 'Choose a player'
+                                        : 'Selected player '
+                                              '${selectedPlayer.name}',
+                                    child: Material(
+                                      color: AppColors.surface,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          Radii.sm,
+                                        ),
+                                        side: BorderSide(
+                                          color: field.hasError
+                                              ? AppColors.error
+                                              : AppColors.outline,
+                                          width: field.hasError ? 1 : 0.5,
+                                        ),
+                                      ),
+                                      clipBehavior: Clip.antiAlias,
+                                      child: InkWell(
+                                        key: const Key('player-picker-field'),
+                                        onTap: players.isEmpty
+                                            ? null
+                                            : () async {
+                                                final player =
+                                                    await _showPlayerPicker(
+                                                      players,
+                                                      field.value,
+                                                    );
+                                                if (!mounted ||
+                                                    player == null) {
+                                                  return;
+                                                }
+                                                field.didChange(player.id);
+                                                setState(() {
+                                                  _selectedPlayerId = player.id;
+                                                  _playerSelectionNotice = null;
+                                                });
+                                              },
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: Spacing.lg,
+                                            vertical: Spacing.md,
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  selectedPlayer?.name ??
+                                                      (players.isEmpty
+                                                          ? 'No players '
+                                                                'available'
+                                                          : 'Choose a player'),
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: _formInputStyle
+                                                      .copyWith(
+                                                        color:
+                                                            selectedPlayer ==
+                                                                null
+                                                            ? AppColors
+                                                                  .textFaint
+                                                            : AppColors
+                                                                  .textHeadline,
+                                                      ),
+                                                ),
+                                              ),
+                                              const SizedBox(width: Spacing.sm),
+                                              const Icon(
+                                                Icons.expand_more_rounded,
+                                                color: AppColors.textMuted,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  if (field.errorText != null) ...[
+                                    const SizedBox(height: Spacing.xs),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: Spacing.lg,
+                                      ),
+                                      child: Text(
+                                        field.errorText!,
+                                        style: textTheme.bodySmall?.copyWith(
+                                          color: AppColors.error,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              );
+                            },
                           ),
                           if (_playerSelectionNotice != null) ...[
                             const SizedBox(height: Spacing.xs),
@@ -478,6 +659,141 @@ class _SubmitChantScreenState extends ConsumerState<SubmitChantScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _PlayerPickerSheet extends StatefulWidget {
+  final List<Player> players;
+  final String? selectedPlayerId;
+
+  const _PlayerPickerSheet({
+    required this.players,
+    required this.selectedPlayerId,
+  });
+
+  @override
+  State<_PlayerPickerSheet> createState() => _PlayerPickerSheetState();
+}
+
+class _PlayerPickerSheetState extends State<_PlayerPickerSheet> {
+  final _searchController = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final normalizedQuery = _query.trim().toLowerCase();
+    final visiblePlayers = normalizedQuery.isEmpty
+        ? widget.players
+        : widget.players
+              .where(
+                (player) => player.name.toLowerCase().contains(normalizedQuery),
+              )
+              .toList();
+
+    return Material(
+      color: AppColors.surface,
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(Radii.lg)),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              Spacing.xl,
+              Spacing.lg,
+              Spacing.sm,
+              Spacing.sm,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'CHOOSE A PLAYER',
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                ),
+                IconButton(
+                  key: const Key('player-picker-close'),
+                  tooltip: 'Close player list',
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close_rounded),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              Spacing.xl,
+              0,
+              Spacing.xl,
+              Spacing.md,
+            ),
+            child: TextField(
+              key: const Key('player-picker-search'),
+              controller: _searchController,
+              style: _formInputStyle,
+              textInputAction: TextInputAction.search,
+              decoration: const InputDecoration(
+                hintText: 'Search the squad',
+                prefixIcon: Icon(Icons.search_rounded),
+              ),
+              onChanged: (value) => setState(() => _query = value),
+            ),
+          ),
+          const Divider(),
+          Expanded(
+            child: visiblePlayers.isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(Spacing.xl),
+                      child: Text(
+                        'No player matches that search.',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ),
+                  )
+                : ListView.separated(
+                    key: const Key('player-picker-list'),
+                    padding: const EdgeInsets.only(bottom: Spacing.xl),
+                    itemCount: visiblePlayers.length,
+                    separatorBuilder: (_, _) => const Divider(
+                      indent: Spacing.xl,
+                      endIndent: Spacing.xl,
+                    ),
+                    itemBuilder: (context, index) {
+                      final player = visiblePlayers[index];
+                      final selected = player.id == widget.selectedPlayerId;
+                      return ListTile(
+                        minTileHeight: 56,
+                        title: Text(
+                          player.name,
+                          style: _formInputStyle.copyWith(
+                            color: AppColors.textHeadline,
+                            fontWeight: selected
+                                ? FontWeight.w700
+                                : FontWeight.w400,
+                          ),
+                        ),
+                        trailing: selected
+                            ? const Icon(
+                                Icons.check_rounded,
+                                color: AppColors.gold,
+                              )
+                            : null,
+                        onTap: () => Navigator.pop(context, player),
+                      );
+                    },
+                  ),
+          ),
+        ],
       ),
     );
   }
