@@ -44,6 +44,20 @@ This is the current design contract and decision history for Chants. Read the re
 
 ## Decision log
 
+### 2026-09-11T00:06:33Z Adapt computational editorial ambition through football culture
+
+- **Status:** active
+- **Surface and user problem:** Future Chants concepts need a higher visual ambition ceiling without making Songbook, creation, policy or account work slower or less readable.
+- **Decision:** Allow one large explanatory or performance-led visual system, sparse chrome, disciplined negative space, semantic color and subtle tactile texture on expressive surfaces when they reveal chant structure, matchday momentum, club archives or collective participation. Preserve Matchnight and Club Signal as the product identity.
+- **Why:** Andrew identified an editorial, computational interactive reference as a strong example of modern interface craft. Its value is the fusion of narrative, computation and human texture, not its brand or palette.
+- **Alternatives considered:** Copy the reference's grid and pastel colors, rejected as derivative and detached from football culture; make every screen experimental, rejected because high-frequency and trust-sensitive tasks need calm; ignore the reference, rejected because it captures a durable ambition preference.
+- **Required states:** Expressive surfaces still need loading, unavailable-media, reduced-motion, narrow, enlarged-text and long-content behavior. Task and recovery surfaces retain their direct hierarchy.
+- **Accessibility/responsive impact:** Explanatory visuals require written summaries, sufficient contrast, responsive recomposition and reduced-motion parity. Lyrics remain sacred and never become visual texture at the cost of reading.
+- **Implementation evidence:** `docs/DESIGN_DIRECTION.md` and the six user-supplied reference screenshots from September 10, 2026. No runtime UI changed in this documentation block.
+- **Reference interpretation:** Adopted explanatory scale, sparse controls, grid discipline and hand-textured data marks. Deliberately excluded Anthropic branding, assets, exact palette, composition and artwork.
+- **Revisit when:** The treatment weakens football identity, task speed, lyric readability or accessibility, or product evidence supports a different signature moment.
+- **Related:** `docs/DESIGN_DIRECTION.md`
+
 ### 2026-09-08T17:36:45Z Address each Chant Call-Up to its player
 
 - **Surface and user problem:** The Call-Up heading named Ben White while its next line asked who had a song for “them.” The neutral pronoun was grammatical, but beside one named player it felt impersonal and left the user wondering whether the invitation referred to the player, the club, or a group.

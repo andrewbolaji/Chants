@@ -37,6 +37,14 @@ Subtle print grain over surfaces, a floodlight glow behind the hero on the detai
 - Chant card: a collectible warm card (rounded, lifted surface), NOT a flat hairline-separated row. A bold condensed title, the tune named in small caps, a gold foil verified mark, and the score as a bold condensed numeral. Feels like something you collect.
 - Chant detail: the hero. A floodlight glow, a big bold condensed title, lyrics large and warm as the centerpiece, the tune named, bold tactile gold vote controls, and the foil verified mark.
 
+## Design ambition ceiling: computational editorial
+
+For future concept work, Andrew prefers interfaces that feel cutting edge, highly composed and explanatory rather than conventionally app-like. The useful reference qualities are a large calm visual field, strong grid logic, sparse controls, editorial type, restrained semantic color, subtle human texture and one visual system that makes a complex system understandable.
+
+Translate that preference through football culture. Chant structure, call and response, matchday momentum, club archives and collective participation can become authored visual systems or progressive stories when they improve understanding. Preserve Matchnight, Club Signal, supporter gold, readable lyrics and football-specific texture. Do not import another company's research-lab palette, assets, exact layout or abstract data language.
+
+Use this as an ambition ceiling for Stage, public storytelling and special explanatory moments. Songbook, browse, creation, policy, account and recovery surfaces stay fast, calm and legible. One signature performance or explanatory field is stronger than distributing spectacle across every screen.
+
 ## What stays (the discipline, unchanged)
 
 - Tokens, not magic numbers. Every color, size, space, and radius from a defined scale.
