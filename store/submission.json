@@ -47,9 +47,13 @@
       "hosting/site.css",
       "ios/Runner.xcodeproj/project.pbxproj",
       "ios/Runner/Info.plist",
+      "lib/app/app.dart",
       "lib/app/colors.dart",
+      "lib/app/providers.dart",
+      "lib/data/repositories/first_run_orientation_repository.dart",
       "lib/data/services/performance_media_selection.dart",
       "lib/presentation/auth/email_sign_in_screen.dart",
+      "lib/presentation/auth/first_run_orientation_screen.dart",
       "lib/presentation/auth/launch_reveal_screen.dart",
       "lib/presentation/auth/onboarding_screen.dart",
       "lib/presentation/auth/sign_in_screen.dart",
@@ -182,8 +186,20 @@
         "sha256": "e62e918382d1588ec9415e0605a783f70809d2983df92ac8e23a394fe72eabe6"
       },
       {
+        "path": "lib/app/app.dart",
+        "sha256": "439c8cbd2ceaddc36ce82d8328f70c7429c6e2ed87234a5c4f2d228f581b1d4a"
+      },
+      {
         "path": "lib/app/colors.dart",
         "sha256": "2a2b7a4003ed388296e9b0c3d3183a714b28eb2da92c4dbae690b134e43aa981"
+      },
+      {
+        "path": "lib/app/providers.dart",
+        "sha256": "b845095746d19e10d1356ae0491094168d40141c8b46d7eb3b809c65c15dd59b"
+      },
+      {
+        "path": "lib/data/repositories/first_run_orientation_repository.dart",
+        "sha256": "c47d610dfa3db39fb7e19c164a904f0ef70e755135930a8b534877ab0a8a5a7c"
       },
       {
         "path": "lib/data/services/performance_media_selection.dart",
@@ -192,6 +208,10 @@
       {
         "path": "lib/presentation/auth/email_sign_in_screen.dart",
         "sha256": "0ceb4c0eff32a5e750becb8f5022345032df2119ffead3404153544d5bdcfd2b"
+      },
+      {
+        "path": "lib/presentation/auth/first_run_orientation_screen.dart",
+        "sha256": "146456f00bbd7393cf6d1d1ba2b5c2760bfe47ac03959183615898b7f78b676d"
       },
       {
         "path": "lib/presentation/auth/launch_reveal_screen.dart",

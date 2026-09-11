@@ -1,8 +1,10 @@
 # Change spec: Final candidate freeze, native rebuild, and consolidated review
 
-**Status:** Pull request 38 open; final independent-review corrections and replacement native artifacts pass locally, with replacement exact-head CI pending on 2026-09-11
+**Status:** Approved; pull request 38 is extended on 2026-09-11 with a bounded first-run orientation before merge consideration
 
 **Owner approval:** Andrew replied `ok next phase` after the phase was defined as freezing the exact source, rebuilding Android and iOS, running the consolidated review, resolving accepted findings, and completing exact-head verification.
+
+**Extension approval:** After exact-head pull-request CI passed, Andrew asked for a light, logical, beautiful, skippable V1 onboarding that can jump directly to account creation and approved adding it to pull request 38 before merge.
 
 **Owner:** Andrew, through ThunderRiver Tech LLC
 
@@ -17,6 +19,7 @@
 3. Rebuild Android and iOS from that exact source boundary, then bind each artifact to source, version, identity, signing state, and a SHA-256 receipt.
 4. Run one consolidated review of the direct tree difference from Claude-reviewed PR 37 pre-correction tree `5a95c93d0749796af65dc6c9a43707944dc66855` through the frozen candidate.
 5. Resolve accepted in-scope findings, rerun the complete local verification matrix, and leave the reviewed candidate ready for an explicitly authorized commit, push, and clean-runner CI gate.
+6. Add one device-local first-run orientation that teaches only Songbook, Chant Lab, and Stage, can be skipped from every step, links directly to account creation, and never changes authentication or account authority.
 
 ## Included
 
@@ -31,10 +34,13 @@
 9. Give the consolidated reviewer the exact base, candidate boundary, included subsystems, known older-installed-build distinction, production exclusions, and verification commands. Record findings by severity with evidence and disposition.
 10. Correct only reproduced, accepted findings that remain within this phase. A finding that requires a new product decision, production mutation, dependency migration, or materially broader architecture stops for a new approval.
 11. Update `docs/EXECUTION.md`, `docs/INTERFACE.md`, `docs/ROADMAP.md`, the command center, the completed-change rationale, and the repository rationale only where the frozen candidate makes their current-state statements stale.
+12. Show the orientation only to a signed-out installation that has not completed or skipped its versioned V1 guide. Keep the existing sign-in welcome as the destination after Skip or Continue, and keep the verified-account profile setup as a separate required gate.
+13. Persist completion locally with a versioned, nonidentifying flag. If that local read fails, fail open to sign-in. If the completion write fails, let the current session continue so orientation storage cannot trap a supporter.
+14. Keep Skip, Next, Continue to Sign In, and Create Account written and reachable. Give each step a semantic heading, position announcement, concise product truth, and a layout that scrolls safely at narrow widths and enlarged text.
 
 ## Excluded
 
-- Commit, push, pull request, merge, tag, GitHub Actions dispatch, or remote branch mutation without a further explicit owner instruction.
+- Merge, tag, GitHub Actions dispatch, a new pull request, or remote mutation beyond the focused orientation extension to the existing pull request 38 branch without a further explicit owner instruction. Andrew's extension request authorizes the focused commit and push needed to put this work into pull request 38, but it does not authorize merge.
 - Store upload, TestFlight upload, Play upload, store submission, store review request, managed publishing change, or public release.
 - Production mode, worker, IAM, rule, Function, Hosting, DNS, App Check, provider, data, canary, moderation, publication, playback, deletion, or object change.
 - Another performance upload or reuse, review, preview, download, moderation, publication, or deletion of the private canary.
@@ -53,7 +59,10 @@
 7. The consolidated review covers the entire direct range from `5a95c93d0749796af65dc6c9a43707944dc66855`, distinguishes older installed-device evidence from rebuilt artifacts, and reports no unresolved high or medium finding before handoff.
 8. Every accepted finding has a reproduced boundary, focused regression where behavior changed, recorded correction, and replacement verification.
 9. Production remains generation 35 maintenance with destructive workers false by prior receipt. This phase performs no production read or write merely to refresh elapsed-time evidence.
-10. The resulting staged candidate is ready for a separately explicit commit and push instruction. Clean-runner exact-head CI remains pending until such a remote boundary exists.
+10. The resulting staged candidate is committed and pushed only as the focused orientation extension Andrew requested for pull request 38. Clean-runner exact-head CI passes before merge consideration. Merge remains a separate explicit gate.
+11. A fresh signed-out installation reaches the three-step orientation after the launch reveal. Skip works from every step, Create Account reaches the existing signup route, Continue reaches the existing sign-in welcome, and all three exits mark the V1 guide complete for later launches.
+12. Signed-in users, verified-account profile onboarding, policy admission, deletion recovery, provider configuration, and server authority remain unchanged. Local preference read or write failure cannot block sign-in.
+13. Focused tests cover first install, repeat launch, every exit, storage failure, reduced motion, semantics, 390 by 844 presentation, 320-pixel width, and enlarged text. The full Flutter suite and exact-head CI pass after the extension.
 
 ## Recovery
 
@@ -67,7 +76,7 @@ If the reviewer cannot run or reaches a usage or environment limit, preserve the
 
 ## Next gate
 
-After the staged candidate, rebuilt artifacts, consolidated review, accepted-finding closure, and local verification are complete, Andrew may separately authorize the exact commit and push needed for clean-runner CI. Store upload and submission remain later, separately approved gates.
+After the staged orientation extension, rebuilt artifacts, and local verification are complete, use Andrew's pull request 38 extension authority for one focused commit and push, then require exact-head clean-runner CI. A rebuilt-phone presentation check and a separate explicit merge instruction remain before merge. Store upload and submission remain later, separately approved gates.
 
 ## Completion receipt
 
@@ -84,3 +93,6 @@ After the staged candidate, rebuilt artifacts, consolidated review, accepted-fin
 - Andrew supplied a final exact-head Claude Code review. Its one P2, two P3, and two P4 findings were reproduced and accepted: duplicate Storage progress-stream errors, a disposed player-field callback, unpinned CI Flutter, dead modal semantics, and UTF-16 lyric counting.
 - The corrections deliberately consume observational progress-stream errors while the upload completion future remains authoritative, remove the stale field callback, count user-perceived lyric characters, pin all CI jobs to Flutter 3.47.3, and remove the dead semantics label. Focused coverage passes 32 tests, the complete Flutter suite passes 567 tests, and scoped analysis reports no issue.
 - The previous signed Android and iOS receipts remain valid only for their recorded source boundary. Fresh corrected candidates replace them: Android AAB SHA-256 `ac60bb412d2c668e61410d03f3dd69a4bffff7126ce44df6ffe83fdb6717b4c6`, Android APK SHA-256 `291a062dbe11ef070d0e220947a3d404bd648811572e7079cdaf72bc34b641b7`, iOS archive content-tree SHA-256 `ccb5b26b69fac3c9a36a372210a1a0b03c450ae959b3bdb06110917671adf074`, and iOS IPA SHA-256 `8e645f704685754e8dc547d447efd9082f0d7a54e60a8101ce01978751a9408e`. Replacement exact-head CI remains required before merge consideration.
+- The first-run orientation extension passes 45 focused repository, interaction, gate, failure, timeout, reduced-motion, semantics, responsive, and golden tests. All three 390 by 844 references were inspected. The complete Flutter suite passes 588 tests and scoped analysis reports no issue.
+- Fresh orientation-source Android artifacts replace the prior Android receipts: AAB 65,358,385 bytes, SHA-256 `97d28f20e1862ea27e71fb5bdcd6bf63861b6d2c8e2e055401e71dca0bc07fc3`; APK 64,078,519 bytes, SHA-256 `83f49ef7c6f8eb5f7062791cd0e222512263884b07fc56022dfe69bdb1f2c700`. Identity, version, SDK, architecture, merged permissions, AAB JAR signature, APK v2 signature, and upload-certificate continuity pass.
+- Fresh orientation-source iOS artifacts replace the prior iOS receipts: archive 537,710,592 allocated bytes with content-tree SHA-256 `9181dc16e379716053e3d7fb695e111d59e44e9ab29845471231846c037ab7d7`; IPA 51,686,765 bytes with SHA-256 `7c2e1dc8311f7c1061956d21992bbeac18784c3a5f4dd53ddc38f1c1b144b483`. ZIP integrity and strict deep-signature verification pass with the approved Apple Distribution identity, team, profile, and entitlements. Temporary verification files and keychain were removed.

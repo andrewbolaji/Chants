@@ -27,6 +27,7 @@ import 'package:chants/data/repositories/block_repository.dart';
 import 'package:chants/data/repositories/moderation_repository.dart';
 import 'package:chants/data/repositories/onboarding_repository.dart';
 import 'package:chants/data/repositories/magic_link_store.dart';
+import 'package:chants/data/repositories/first_run_orientation_repository.dart';
 import 'package:chants/data/repositories/safety_submission_repository.dart';
 import 'package:chants/data/repositories/chant_update_repository.dart';
 import 'package:chants/data/repositories/saved_songbook_repository.dart';
@@ -49,6 +50,11 @@ final authFeatureConfigProvider = Provider<AuthFeatureConfig>(
 final magicLinkStoreProvider = Provider<MagicLinkStore>(
   (ref) => MagicLinkStore(),
 );
+
+final firstRunOrientationRepositoryProvider =
+    Provider<FirstRunOrientationRepository>(
+      (ref) => FirstRunOrientationRepository(),
+    );
 
 final magicLinkCoordinatorProvider = Provider<MagicLinkCoordinator>(
   (ref) => MagicLinkCoordinator(),

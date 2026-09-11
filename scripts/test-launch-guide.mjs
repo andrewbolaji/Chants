@@ -19,17 +19,17 @@ test('HTML has unique IDs, valid local anchors/copy targets and labeled static f
 test('guide states the current release candidate status, physical-phone boundary and six exact walk steps', () => {
   assert.match(html, /PR 37 merged/);
   assert.match(html, /1482e1f/);
-  assert.match(html, /b3e6563/);
-  assert.match(html, /North London Forever live/);
+  assert.match(html, /3ddcad2/);
+  assert.match(html, /PR 38 open/);
+  assert.match(html, /First-run guide locally green/);
   assert.match(html, /Private media canary passed/);
   assert.match(html, /Production closed at generation 35/);
-  assert.match(html, /Independent review closed/);
-  assert.match(html, /Replacement artifacts rebuilt/);
-  assert.match(html, /exact corrected candidate is staged but not committed/i);
+  assert.match(html, /Fresh signed artifacts rebuilt/);
+  assert.match(html, /bounded orientation extension is locally complete/i);
   assert.match(html, /Fresh corrected signed release AAB and APK artifacts were rebuilt/);
   assert.match(html, /fresh corrected App Store-signed IPA was rebuilt/i);
-  assert.match(html, /2c847a1bf33ce5b3b3c7dca7eeb4740624e8e9c8fdc17b0049ebd0c9b9950102/);
-  assert.match(html, /7d2a586fb49c72e288f077a1dd153a7ec327f47623db6e154f36b0270f95b4d5/);
+  assert.match(html, /97d28f20e1862ea27e71fb5bdcd6bf63861b6d2c8e2e055401e71dca0bc07fc3/);
+  assert.match(html, /7c2e1dc8311f7c1061956d21992bbeac18784c3a5f4dd53ddc38f1c1b144b483/);
   assert.match(html, /one physical iPhone and one physical Android phone/);
   assert.match(html, /locally exported IPA does not count as TestFlight proof/);
   assert.match(html, /Play Integrity and App Attest evidence must come from valid signed store traffic/);
@@ -38,9 +38,9 @@ test('guide states the current release candidate status, physical-phone boundary
   assert.match(html, /generation 35 in maintenance mode, with destructive workers false/);
   assert.match(html, /one private canary object and matching pending-review draft remain/i);
   assert.match(html, /The consolidated independent review is complete/);
-  assert.match(html, /two P1, two P2, and four P3 findings/);
+  assert.match(html, /45 focused tests and three inspected references/);
   assert.match(html, /No accepted finding remains unresolved/);
-  assert.match(html, /exact-head clean-runner CI cannot run until the corrected handoff is explicitly committed and pushed/);
+  assert.match(html, /exact-head replacement CI remains required/);
   assert.doesNotMatch(html, /Claude review sign-in needed|local CLI is signed out|No independent review result is claimed/);
   assert.match(html, /REMOVE FROM DEVICE/);
   assert.match(html, /It should not say “them” or “him.”/);

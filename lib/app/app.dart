@@ -18,9 +18,11 @@ import 'package:chants/presentation/auth/account_deletion_pending_screen.dart';
 import 'package:chants/presentation/auth/sign_in_screen.dart';
 import 'package:chants/presentation/auth/magic_link_gate.dart';
 import 'package:chants/presentation/auth/launch_reveal_screen.dart';
+import 'package:chants/presentation/auth/first_run_orientation_screen.dart';
 import 'package:chants/presentation/shell/app_shell.dart';
 
 const kDefaultLaunchRevealDuration = Duration(milliseconds: 2800);
+const kFirstRunOrientationWriteTimeout = Duration(seconds: 2);
 
 class ChantApp extends ConsumerStatefulWidget {
   final Duration launchRevealDuration;
@@ -86,13 +88,81 @@ class _ChantAppState extends ConsumerState<ChantApp> {
           : authState.when(
               data: (user) => user != null
                   ? _SignedInGate(key: ValueKey(user.uid), uid: user.uid)
-                  : const SignInScreen(),
+                  : const _SignedOutGate(),
               loading: () => const LaunchRevealScreen(
                 animationDuration: Duration.zero,
                 showProgress: true,
               ),
               error: (_, _) => const SignInScreen(),
             ),
+    );
+  }
+}
+
+/// Shows the versioned product orientation only on the first signed-out run.
+///
+/// Preference failures never become an account gate. A failed read goes
+/// directly to sign-in, and a failed completion write still lets this session
+/// continue.
+class _SignedOutGate extends ConsumerStatefulWidget {
+  const _SignedOutGate();
+
+  @override
+  ConsumerState<_SignedOutGate> createState() => _SignedOutGateState();
+}
+
+class _SignedOutGateState extends ConsumerState<_SignedOutGate> {
+  late final Future<bool> _completionRead;
+  bool _completeForSession = false;
+  bool _exitInFlight = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _completionRead = ref
+        .read(firstRunOrientationRepositoryProvider)
+        .isComplete();
+  }
+
+  Future<void> _finish({required bool createAccount}) async {
+    if (_exitInFlight) return;
+    _exitInFlight = true;
+    try {
+      await ref
+          .read(firstRunOrientationRepositoryProvider)
+          .markComplete()
+          .timeout(kFirstRunOrientationWriteTimeout);
+    } catch (error) {
+      debugPrint('[FirstRunOrientation] Completion write failed: $error');
+    }
+    if (!mounted) return;
+    setState(() => _completeForSession = true);
+    if (createAccount) {
+      await Navigator.pushNamed(context, AppRouter.signUp);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_completeForSession) return const SignInScreen();
+    return FutureBuilder<bool>(
+      future: _completionRead,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const LaunchRevealScreen(
+            animationDuration: Duration.zero,
+            showProgress: true,
+          );
+        }
+        if (snapshot.hasError || snapshot.data == true) {
+          return const SignInScreen();
+        }
+        return FirstRunOrientationScreen(
+          onSkip: () => _finish(createAccount: false),
+          onContinue: () => _finish(createAccount: false),
+          onCreateAccount: () => _finish(createAccount: true),
+        );
+      },
     );
   }
 }

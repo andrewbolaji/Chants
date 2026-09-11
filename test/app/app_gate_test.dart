@@ -5,12 +5,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mockito/mockito.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:chants/app/app.dart';
 import 'package:chants/app/policy.dart';
 import 'package:chants/app/providers.dart';
 import 'package:chants/data/models/user_profile.dart';
 import 'package:chants/data/repositories/auth_repository.dart';
 import 'package:chants/data/repositories/creator_profile_repository.dart';
+import 'package:chants/data/repositories/first_run_orientation_repository.dart';
 import 'package:chants/data/repositories/performance_repository.dart';
 import 'package:chants/data/repositories/performance_draft_repository.dart';
 import 'package:chants/data/repositories/profile_repository.dart';
@@ -23,7 +25,9 @@ import 'package:chants/presentation/auth/policy_acceptance_gate_screen.dart';
 import 'package:chants/presentation/auth/launch_reveal_screen.dart';
 import 'package:chants/presentation/auth/sign_in_screen.dart';
 import 'package:chants/presentation/auth/email_verification_screen.dart';
+import 'package:chants/presentation/auth/first_run_orientation_screen.dart';
 import 'package:chants/presentation/auth/onboarding_screen.dart';
+import 'package:chants/presentation/auth/sign_up_screen.dart';
 import 'package:chants/presentation/profile/creator_profile_screen.dart';
 import 'package:chants/presentation/shell/app_shell.dart';
 
@@ -170,6 +174,36 @@ class _FakePerformanceDraftRepository extends PerformanceDraftRepository {
       );
 }
 
+class _FakeFirstRunOrientationRepository extends FirstRunOrientationRepository {
+  bool complete;
+  Object? readError;
+  Object? writeError;
+  Completer<void>? pendingWrite;
+  int writeCalls = 0;
+
+  _FakeFirstRunOrientationRepository({this.complete = true})
+    : super(preferences: _UnusedPreferences());
+
+  @override
+  Future<bool> isComplete() async {
+    if (readError != null) throw readError!;
+    return complete;
+  }
+
+  @override
+  Future<void> markComplete() async {
+    writeCalls += 1;
+    if (pendingWrite != null) await pendingWrite!.future;
+    if (writeError != null) throw writeError!;
+    complete = true;
+  }
+}
+
+class _UnusedPreferences implements SharedPreferencesAsync {
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
 UserProfile _makeProfile({
   String? acceptedPolicyVersion,
   bool deletionPending = false,
@@ -197,6 +231,7 @@ void main() {
     AuthRepository? authRepository,
     AccountDeletionService? accountDeletionService,
     _FakeSavedSongbookRepository? savedSongbookRepository,
+    _FakeFirstRunOrientationRepository? firstRunOrientationRepository,
     Duration? launchRevealDuration = Duration.zero,
   }) {
     final fakeProfileRepo = _FakeProfileRepository()
@@ -219,6 +254,9 @@ void main() {
         ),
         savedSongbookRepositoryProvider.overrideWithValue(fakeSavedRepository),
         authRepositoryProvider.overrideWithValue(fakeAuthRepository),
+        firstRunOrientationRepositoryProvider.overrideWithValue(
+          firstRunOrientationRepository ?? _FakeFirstRunOrientationRepository(),
+        ),
         if (accountDeletionService != null)
           accountDeletionServiceProvider.overrideWithValue(
             accountDeletionService,
@@ -260,7 +298,7 @@ void main() {
       expect(find.byType(LaunchRevealScreen), findsOneWidget);
 
       await tester.pump(const Duration(milliseconds: 1));
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       expect(find.byType(LaunchRevealScreen), findsNothing);
       expect(find.byType(SignInScreen), findsOneWidget);
@@ -283,7 +321,7 @@ void main() {
       expect(find.byType(SignInScreen), findsNothing);
 
       await tester.pump(const Duration(milliseconds: 500));
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       expect(find.byType(LaunchRevealScreen), findsNothing);
       expect(find.byType(SignInScreen), findsOneWidget);
@@ -306,7 +344,7 @@ void main() {
           launchRevealDuration: null,
         ),
       );
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       expect(find.byType(LaunchRevealScreen), findsNothing);
       expect(find.byType(SignInScreen), findsOneWidget);
@@ -320,8 +358,132 @@ void main() {
           makeProfileStream: () => const Stream.empty(),
         ),
       );
-      await tester.pump();
+      await tester.pumpAndSettle();
 
+      expect(find.byType(SignInScreen), findsOneWidget);
+    });
+
+    testWidgets('first signed-out run shows product orientation', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        wrap(
+          authStream: Stream.value(null),
+          makeProfileStream: () => const Stream.empty(),
+          firstRunOrientationRepository: _FakeFirstRunOrientationRepository(
+            complete: false,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(FirstRunOrientationScreen), findsOneWidget);
+      expect(find.byType(SignInScreen), findsNothing);
+    });
+
+    testWidgets('orientation skip records completion and reaches sign in', (
+      tester,
+    ) async {
+      final orientation = _FakeFirstRunOrientationRepository(complete: false);
+      await tester.pumpWidget(
+        wrap(
+          authStream: Stream.value(null),
+          makeProfileStream: () => const Stream.empty(),
+          firstRunOrientationRepository: orientation,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('first-run-skip')));
+      await tester.pumpAndSettle();
+
+      expect(orientation.writeCalls, 1);
+      expect(orientation.complete, isTrue);
+      expect(find.byType(SignInScreen), findsOneWidget);
+    });
+
+    testWidgets(
+      'orientation account action records completion and opens signup',
+      (tester) async {
+        final orientation = _FakeFirstRunOrientationRepository(complete: false);
+        await tester.pumpWidget(
+          wrap(
+            authStream: Stream.value(null),
+            makeProfileStream: () => const Stream.empty(),
+            firstRunOrientationRepository: orientation,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byKey(const Key('first-run-create-account')));
+        await tester.pumpAndSettle();
+
+        expect(orientation.writeCalls, 1);
+        expect(find.byType(SignUpScreen), findsOneWidget);
+      },
+    );
+
+    testWidgets('orientation read failure fails open to sign in', (
+      tester,
+    ) async {
+      final orientation = _FakeFirstRunOrientationRepository(complete: false)
+        ..readError = StateError('preferences unavailable');
+      await tester.pumpWidget(
+        wrap(
+          authStream: Stream.value(null),
+          makeProfileStream: () => const Stream.empty(),
+          firstRunOrientationRepository: orientation,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(SignInScreen), findsOneWidget);
+      expect(find.byType(FirstRunOrientationScreen), findsNothing);
+    });
+
+    testWidgets('orientation write failure cannot block sign in', (
+      tester,
+    ) async {
+      final orientation = _FakeFirstRunOrientationRepository(complete: false)
+        ..writeError = StateError('preferences unavailable');
+      await tester.pumpWidget(
+        wrap(
+          authStream: Stream.value(null),
+          makeProfileStream: () => const Stream.empty(),
+          firstRunOrientationRepository: orientation,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('first-run-skip')));
+      await tester.pumpAndSettle();
+
+      expect(orientation.writeCalls, 1);
+      expect(find.byType(SignInScreen), findsOneWidget);
+    });
+
+    testWidgets('stalled orientation write times out and reaches sign in', (
+      tester,
+    ) async {
+      final orientation = _FakeFirstRunOrientationRepository(complete: false)
+        ..pendingWrite = Completer<void>();
+      await tester.pumpWidget(
+        wrap(
+          authStream: Stream.value(null),
+          makeProfileStream: () => const Stream.empty(),
+          firstRunOrientationRepository: orientation,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('first-run-skip')));
+      await tester.pump();
+      expect(find.text('CONTINUING TO SIGN IN'), findsOneWidget);
+
+      await tester.pump(kFirstRunOrientationWriteTimeout);
+      await tester.pumpAndSettle();
+
+      expect(orientation.writeCalls, 1);
       expect(find.byType(SignInScreen), findsOneWidget);
     });
 
