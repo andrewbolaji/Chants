@@ -47,3 +47,15 @@ void installTolerantGoldenComparator({
   );
   addTearDown(() => goldenFileComparator = previousComparator);
 }
+
+/// Selects a Linux-specific reference when clean-runner rendering differs from
+/// the locally inspected reference without changing the visual contract.
+String platformGoldenPath(String goldenPath) {
+  if (defaultTargetPlatform != TargetPlatform.linux) return goldenPath;
+
+  final separator = goldenPath.lastIndexOf('/');
+  if (separator < 0) return 'linux/$goldenPath';
+
+  return '${goldenPath.substring(0, separator)}/linux/'
+      '${goldenPath.substring(separator + 1)}';
+}

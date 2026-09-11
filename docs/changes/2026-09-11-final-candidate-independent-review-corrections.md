@@ -2,7 +2,7 @@
 
 ## Outcome
 
-The complete staged release-candidate range received the planned independent Claude Code review. All eight findings were accepted, reproduced, corrected within the approved Lane 2 boundary, and covered by replacement local evidence. Fresh corrected native artifacts are verified. The candidate is ready for the separately authorized commit, push, and clean-runner CI gate.
+The complete staged release-candidate range received the planned independent Claude Code review. All eight findings were accepted, reproduced, corrected within the approved Lane 2 boundary, and covered by replacement local evidence. Fresh corrected native artifacts are verified. Andrew authorized the exact commit and push, then separately authorized pull request 38 into `main`. Its first clean runner exposed one bounded cross-platform golden-reference issue, and replacement exact-head CI is pending after the evidence-backed correction.
 
 ## Authority and boundary
 
@@ -48,5 +48,8 @@ The complete staged release-candidate range received the planned independent Cla
 ## Residual gates
 
 - Fresh replacement Android and iOS receipts are recorded in `docs/EXECUTION.md`; neither artifact has been uploaded or installed through a store.
-- The exact corrected handoff remains uncommitted and unpushed until Andrew separately authorizes that mutation.
-- Clean-runner exact-head CI, physical Android installation, TestFlight upload and iPhone walk, provider and public-site evidence, store submission, and release remain separate gates.
+- Commit `f2e405f92f5ac0592e5c5c959f3b1a9d68e4aea7` was pushed to `codex/android-v1-release-bundle`, and pull request 38 targets `main`. No merge is authorized.
+- The first pull-request clean runner passed project governance, analysis, Functions, seed, and rules. Flutter passed 559 cases and failed four tests containing five screenshot assertions. Retained output showed 1.54 to 1.89 percent Linux edge antialiasing drift, with no layout, copy, color, or state difference.
+- Linux-only references now preserve those exact clean-runner renders for the two creation and three submission screenshots. The other platform references and shared 1.5 percent comparator ceiling are unchanged. Replacement exact-head CI must pass before merge consideration.
+- The focused comparator, creation, and submission set passes 20 tests. The complete Flutter suite passes 564 tests, and `flutter analyze --no-pub lib test` reports no issue after the correction.
+- Physical Android installation, TestFlight upload and iPhone walk, provider and public-site evidence, store submission, and release remain separate gates.

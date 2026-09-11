@@ -250,7 +250,9 @@ void main() {
       expect(find.text('UPLOADING 42%'), findsOneWidget);
       await expectLater(
         find.byType(MaterialApp),
-        matchesGoldenFile('goldens/perform_chant_upload.png'),
+        matchesGoldenFile(
+          platformGoldenPath('goldens/perform_chant_upload.png'),
+        ),
       );
 
       await tester.tap(find.text('CANCEL UPLOAD'));
@@ -764,7 +766,7 @@ void main() {
     );
     await expectLater(
       find.byType(MaterialApp),
-      matchesGoldenFile('goldens/perform_chant_entry.png'),
+      matchesGoldenFile(platformGoldenPath('goldens/perform_chant_entry.png')),
     );
   });
 }

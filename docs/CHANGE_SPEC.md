@@ -1,6 +1,6 @@
 # Change spec: Final candidate freeze, native rebuild, and consolidated review
 
-**Status:** Completed locally on 2026-09-11; exact-head remote CI remains the next gate
+**Status:** Pull request 38 open; bounded clean-runner golden correction in progress on 2026-09-11
 
 **Owner approval:** Andrew replied `ok next phase` after the phase was defined as freezing the exact source, rebuilding Android and iOS, running the consolidated review, resolving accepted findings, and completing exact-head verification.
 
@@ -77,3 +77,5 @@ After the staged candidate, rebuilt artifacts, consolidated review, accepted-fin
 - Fresh corrected Android AAB and APK artifacts and an App Store-signed iOS archive and IPA were rebuilt and inspected. Their final hashes and signing receipts are recorded in `docs/EXECUTION.md` and the command center.
 - Project memory, writing, governance, native-project, store-packet, launch-service, public-site, guide, source-contract, staged whitespace, and bounded staged credential-value checks pass at final staging.
 - No production, canary, provider, Hosting, DNS, store, release, commit, push, merge, or signing-material mutation occurred in this correction and packaging phase.
+- Andrew later authorized the exact staged commit and push, then separately authorized opening the release-candidate pull request into `main`. Commit `f2e405f92f5ac0592e5c5c959f3b1a9d68e4aea7` is the initial head of pull request 38.
+- The first pull-request clean runner passed every completed non-Flutter job and all 559 nonfailing Flutter cases. It found five Linux screenshot differences between 1.54 and 1.89 percent, all confined to glyph, icon, and border-edge antialiasing after retained artifact inspection. The bounded correction adds Linux-only references from that exact runner and does not raise the shared 1.5 percent tolerance. The focused 20-test set, complete 564-test Flutter suite, and scoped analysis pass locally. Replacement exact-head CI is required.
