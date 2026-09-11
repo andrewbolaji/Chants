@@ -39,17 +39,18 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   test('platform golden path selects only the Linux reference', () {
-    addTearDown(() => debugDefaultTargetPlatformOverride = null);
-
-    debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
-    expect(platformGoldenPath('goldens/example.png'), 'goldens/example.png');
-
-    debugDefaultTargetPlatformOverride = TargetPlatform.linux;
     expect(
-      platformGoldenPath('goldens/example.png'),
+      platformGoldenPath('goldens/example.png', isLinux: false),
+      'goldens/example.png',
+    );
+    expect(
+      platformGoldenPath('goldens/example.png', isLinux: true),
       'goldens/linux/example.png',
     );
-    expect(platformGoldenPath('example.png'), 'linux/example.png');
+    expect(
+      platformGoldenPath('example.png', isLinux: true),
+      'linux/example.png',
+    );
   });
 
   test(
