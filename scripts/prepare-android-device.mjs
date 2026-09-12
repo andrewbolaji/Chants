@@ -2,7 +2,7 @@
 // Exact-candidate Android preflight and opt-in physical-device installer.
 import { createHash } from 'node:crypto';
 import { accessSync, constants, existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
-import { delimiter, dirname, join } from 'node:path';
+import { delimiter, dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
@@ -85,7 +85,22 @@ function javaHome(environment) {
 
 function invoke(run, command, args, environment) {
   const result = run(command, args, { ...commandOptions, env: environment });
-  if (result.error || result.signal || result.status !== 0) throw new Error('Command failed');
+  if (result.error || result.signal || result.status !== 0) {
+    const boundedOutput = `${result.stdout || ''}\n${result.stderr || ''}`;
+    if (boundedOutput.includes('INSTALL_FAILED_UPDATE_INCOMPATIBLE')) {
+      throw new Error(
+        'Existing Chants installation has a different signature; uninstall '
+        + 'com.chants.chants first, which removes its local app data, then retry',
+      );
+    }
+    if (boundedOutput.includes('INSTALL_FAILED_USER_RESTRICTED')) {
+      throw new Error(
+        'Android blocked USB installation; allow installs via USB in Developer '
+        + 'options, unlock the phone, then retry',
+      );
+    }
+    throw new Error('Command failed');
+  }
   return result.stdout || '';
 }
 
@@ -115,21 +130,25 @@ function parseCertificate(output) {
 export function inspectCandidate({
   root = repoRoot,
   expected = candidate,
+  apkPath = expected.apkPath,
   environment = process.env,
   run = spawnSync,
   locate = (name) => findOnPath(name, environment),
   locateBuildTool = (name) => latestBuildTool(name, environment),
   locateJavaHome = () => javaHome(environment),
 } = {}) {
-  const apk = join(root, expected.apkPath);
+  const apk = resolve(root, apkPath);
   if (!existsSync(apk) || !statSync(apk).isFile()) throw new Error('Candidate APK is missing');
   const digest = createHash('sha256').update(readFileSync(apk)).digest('hex');
   if (digest !== expected.apkSha256) throw new Error('Candidate APK hash does not match');
 
   const aapt = locateBuildTool('aapt');
   const apksigner = locateBuildTool('apksigner');
+  const zipalign = locateBuildTool('zipalign');
   const selectedJavaHome = locateJavaHome();
-  if (!aapt || !apksigner || !selectedJavaHome) throw new Error('Android verification tools are unavailable');
+  if (!aapt || !apksigner || !zipalign || !selectedJavaHome) {
+    throw new Error('Android verification tools are unavailable');
+  }
   const toolEnvironment = { ...environment, JAVA_HOME: selectedJavaHome };
   const metadata = parseBadging(invoke(run, aapt, ['dump', 'badging', apk], toolEnvironment));
   if (metadata.packageName !== expected.packageName
@@ -151,10 +170,13 @@ export function inspectCandidate({
   if (parseCertificate(signerOutput) !== expected.certificateSha256) {
     throw new Error('Candidate APK certificate does not match');
   }
+  invoke(run, zipalign, ['-c', '-P', '16', '-v', '4', apk], toolEnvironment);
   return {
     ready: true,
     sourceAnchor: expected.sourceAnchor,
-    artifact: expected.apkPath,
+    artifact: apkPath === expected.apkPath
+      ? expected.apkPath
+      : 'explicit hash-bound APK',
     sha256: digest,
     packageName: metadata.packageName,
     versionName: metadata.versionName,
@@ -162,7 +184,9 @@ export function inspectCandidate({
     minSdk: metadata.minSdk,
     targetSdk: metadata.targetSdk,
     certificateSha256: expected.certificateSha256,
+    mergedPermissions: [...metadata.permissions].sort(),
     rejectedAdvertisingPermissions: 0,
+    pageAlignment16KiB: true,
     adbAvailable: Boolean(locate('adb')),
   };
 }
@@ -184,15 +208,47 @@ function selectPhysicalDevice(output) {
 
 export function installCandidate({
   root = repoRoot,
+  apkPath = candidate.apkPath,
   environment = process.env,
   run = spawnSync,
   locate = (name) => findOnPath(name, environment),
   inspection,
 } = {}) {
-  const verified = inspection ?? inspectCandidate({ root, environment, run, locate });
+  const verified = inspection ?? inspectCandidate({
+    root,
+    apkPath,
+    environment,
+    run,
+    locate,
+  });
+  const apk = resolve(root, apkPath);
+  if (verified.sha256) {
+    if (!existsSync(apk) || !statSync(apk).isFile()) {
+      throw new Error('Candidate APK is missing');
+    }
+    const installDigest = createHash('sha256').update(readFileSync(apk)).digest('hex');
+    if (installDigest !== verified.sha256) {
+      throw new Error('Candidate APK changed after verification');
+    }
+  }
   const adb = locate('adb');
   if (!adb) throw new Error('ADB is unavailable');
   const serial = selectPhysicalDevice(invoke(run, adb, ['devices', '-l'], environment));
+  const qemu = invoke(
+    run,
+    adb,
+    ['-s', serial, 'shell', 'getprop', 'ro.kernel.qemu'],
+    environment,
+  ).trim();
+  const hardware = invoke(
+    run,
+    adb,
+    ['-s', serial, 'shell', 'getprop', 'ro.hardware'],
+    environment,
+  ).trim();
+  if (qemu === '1' || /(?:goldfish|ranchu|vbox|nox|qemu)/i.test(hardware)) {
+    throw new Error('Connected Android target is an emulator');
+  }
   const deviceSdkText = invoke(
     run,
     adb,
@@ -203,7 +259,6 @@ export function installCandidate({
   if (!Number.isInteger(deviceSdk) || deviceSdk < candidate.minSdk) {
     throw new Error('Android device does not meet the minimum SDK');
   }
-  const apk = join(root, candidate.apkPath);
   const installOutput = invoke(run, adb, ['-s', serial, 'install', '-r', apk], environment);
   if (!/^Success\s*$/m.test(installOutput)) throw new Error('ADB did not confirm installation');
   const packageOutput = invoke(
@@ -231,14 +286,21 @@ export function installCandidate({
 }
 
 export function parseArgs(args) {
-  const options = { install: false, json: false, help: false };
+  const options = { install: false, json: false, help: false, apkPath: candidate.apkPath };
   const seen = new Set();
-  for (const arg of args) {
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
     if (seen.has(arg)) throw new Error('Duplicate option');
     seen.add(arg);
     if (arg === '--install') options.install = true;
     else if (arg === '--json') options.json = true;
     else if (arg === '--help') options.help = true;
+    else if (arg === '--apk') {
+      const value = args[index + 1];
+      if (!value || value.startsWith('--')) throw new Error('Missing APK path');
+      options.apkPath = value;
+      index += 1;
+    }
     else throw new Error('Unknown option');
   }
   return options;
@@ -248,16 +310,18 @@ export function main(args = process.argv.slice(2)) {
   let options;
   try { options = parseArgs(args); }
   catch {
-    console.error('Usage: node scripts/prepare-android-device.mjs [--install] [--json]');
+    console.error('Usage: node scripts/prepare-android-device.mjs [--apk PATH] [--install] [--json]');
     return 2;
   }
   if (options.help) {
-    console.log('Validates the fixed signed release APK. --install requires exactly one authorized physical Android device, preserves app data, installs the verified APK, and launches Chants. No device identifier or raw SDK output is printed.');
+    console.log('Validates the fixed signed release APK from the build output or --apk PATH. --install requires exactly one authorized physical Android device, preserves app data when signatures match, installs the verified APK, and launches Chants. No device identifier or raw SDK output is printed.');
     return 0;
   }
   try {
-    const inspection = inspectCandidate();
-    const report = options.install ? installCandidate({ inspection }) : inspection;
+    const inspection = inspectCandidate({ apkPath: options.apkPath });
+    const report = options.install
+      ? installCandidate({ inspection, apkPath: options.apkPath })
+      : inspection;
     console.log(options.json ? JSON.stringify(report, null, 2) : [
       'Chants Android candidate is verified.',
       `Package: ${report.packageName}`,

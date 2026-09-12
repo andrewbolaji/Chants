@@ -174,6 +174,7 @@ class MediaHarness implements PerformanceMediaGateway {
   copied: Array<[string, string]> = [];
   removed: string[] = [];
   signed: Array<[string, number]> = [];
+  removeError: Error | undefined;
 
   async inspect(_path: string): Promise<StagedMediaMetadata> {
     this.inspectCalls++;
@@ -186,6 +187,7 @@ class MediaHarness implements PerformanceMediaGateway {
 
   async remove(path: string): Promise<void> {
     this.removed.push(path);
+    if (this.removeError) throw this.removeError;
   }
 
   async signReadUrl(path: string, expiresAtMs: number): Promise<string> {
@@ -604,6 +606,44 @@ describe("performance admission", () => {
     assert.strictEqual(projection.publicationState, "approved");
     assert.strictEqual(projection.chantStatus, "community");
     assert.strictEqual(db.get("performanceDrafts", "draft-1")?.state, "approved");
+  });
+
+  it("removes copied media when approval validation fails", async () => {
+    db.set("profiles", "operator", activeAccount({ role: "operator" }));
+    db.set("creatorProfiles", "fan", visibleCreator({ hidden: true }));
+    db.set("performanceDrafts", "draft-1", awaitingDraft({ state: "pending_review" }));
+
+    await assert.rejects(handleModeratePerformance({
+      actorUid: "operator",
+      data: { draftId: "draft-1", action: "approve", reason: "" },
+      firestore: db.firestore,
+      media,
+      now: () => NOW,
+    }), (error: { code?: string }) => error.code === "failed-precondition");
+
+    assert.deepStrictEqual(media.copied, [[
+      "performance-staging/fan/draft-1/source",
+      "performance-media/draft-1/source",
+    ]]);
+    assert.deepStrictEqual(media.removed, ["performance-media/draft-1/source"]);
+    assert.strictEqual(db.get("performances", "draft-1"), undefined);
+    assert.strictEqual(db.get("performanceDrafts", "draft-1")?.state, "pending_review");
+  });
+
+  it("keeps the original approval error when copied-media cleanup fails", async () => {
+    db.set("profiles", "operator", activeAccount({ role: "operator" }));
+    db.set("creatorProfiles", "fan", visibleCreator({ hidden: true }));
+    db.set("performanceDrafts", "draft-1", awaitingDraft({ state: "pending_review" }));
+    media.removeError = new Error("storage unavailable");
+
+    await assert.rejects(handleModeratePerformance({
+      actorUid: "operator",
+      data: { draftId: "draft-1", action: "approve", reason: "" },
+      firestore: db.firestore,
+      media,
+      now: () => NOW,
+    }), (error: { code?: string }) => error.code === "failed-precondition");
+    assert.deepStrictEqual(media.removed, ["performance-media/draft-1/source"]);
   });
 
   it("requires a rejection reason and never publishes a rejected draft", async () => {

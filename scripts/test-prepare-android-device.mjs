@@ -70,6 +70,23 @@ test('candidate inspection accepts the exact identity, signature and permission 
   } finally { rmSync(prepared.root, { recursive: true, force: true }); }
 });
 
+test('candidate inspection accepts an explicit durable handoff path only when its hash matches', () => {
+  const prepared = prepareFixture();
+  const explicitApk = join(prepared.root, 'durable', 'chants-release.apk');
+  mkdirSync(dirname(explicitApk), { recursive: true });
+  writeFileSync(explicitApk, Buffer.from('candidate bytes'));
+  try {
+    const expected = { ...candidate, apkSha256: prepared.sha };
+    const result = inspectCandidate({
+      ...inspectOptions(prepared, {}, expected),
+      apkPath: explicitApk,
+    });
+    assert.equal(result.ready, true);
+    assert.equal(result.artifact, 'explicit hash-bound APK');
+    assert.equal(result.pageAlignment16KiB, true);
+  } finally { rmSync(prepared.root, { recursive: true, force: true }); }
+});
+
 test('candidate inspection rejects stale bytes, wrong identity, ad permission, signer or v2 state', () => {
   const prepared = prepareFixture();
   try {
@@ -94,7 +111,11 @@ test('explicit install uses one physical device, preserves data and never report
       root: prepared.root,
       environment: { PATH: '/tools' },
       locate: () => '/tools/adb',
-      inspection: { ready: true, packageName: candidate.packageName },
+      inspection: {
+        ready: true,
+        packageName: candidate.packageName,
+        sha256: prepared.sha,
+      },
       run: (_command, args) => {
         calls.push(args);
         if (args[0] === 'devices') return { status: 0, stdout: 'List of devices attached\nPRIVATE-SERIAL device product:test\n' };
@@ -147,9 +168,104 @@ test('install rejects emulator, ambiguous, unauthorized and unsupported devices 
   } finally { rmSync(prepared.root, { recursive: true, force: true }); }
 });
 
+test('install rejects a TCP-attached emulator from device properties', () => {
+  const prepared = prepareFixture();
+  let installAttempted = false;
+  try {
+    assert.throws(() => installCandidate({
+      root: prepared.root,
+      environment: { PATH: '/tools' },
+      locate: () => '/tools/adb',
+      inspection: { ready: true, packageName: candidate.packageName },
+      run: (_command, args) => {
+        if (args[0] === 'devices') {
+          return { status: 0, stdout: 'List of devices attached\n127.0.0.1:5555 device product:test\n' };
+        }
+        if (args.at(-1) === 'ro.kernel.qemu') return { status: 0, stdout: '1\n' };
+        if (args.includes('install')) installAttempted = true;
+        return { status: 0, stdout: 'ranchu\n' };
+      },
+    }), /emulator/);
+    assert.equal(installAttempted, false);
+  } finally { rmSync(prepared.root, { recursive: true, force: true }); }
+});
+
+test('install refuses APK bytes changed after candidate verification', () => {
+  const prepared = prepareFixture();
+  const substitutedApk = join(prepared.root, 'durable', 'substituted.apk');
+  mkdirSync(dirname(substitutedApk), { recursive: true });
+  writeFileSync(substitutedApk, Buffer.from('different bytes'));
+  let adbCalled = false;
+  try {
+    assert.throws(() => installCandidate({
+      root: prepared.root,
+      apkPath: substitutedApk,
+      environment: { PATH: '/tools' },
+      locate: () => '/tools/adb',
+      inspection: {
+        ready: true,
+        packageName: candidate.packageName,
+        sha256: prepared.sha,
+      },
+      run: () => {
+        adbCalled = true;
+        return { status: 0, stdout: '' };
+      },
+    }), /changed after verification/);
+    assert.equal(adbCalled, false);
+  } finally { rmSync(prepared.root, { recursive: true, force: true }); }
+});
+
+test('install maps common ADB failures without exposing raw device output', () => {
+  const prepared = prepareFixture();
+  try {
+    for (const [rawFailure, expectedReason] of [
+      ['INSTALL_FAILED_UPDATE_INCOMPATIBLE PRIVATE-SERIAL', /different signature/],
+      ['INSTALL_FAILED_USER_RESTRICTED PRIVATE-SERIAL', /allow installs via USB/],
+    ]) {
+      assert.throws(() => installCandidate({
+        root: prepared.root,
+        environment: { PATH: '/tools' },
+        locate: () => '/tools/adb',
+        inspection: {
+          ready: true,
+          packageName: candidate.packageName,
+          sha256: prepared.sha,
+        },
+        run: (_command, args) => {
+          if (args[0] === 'devices') {
+            return { status: 0, stdout: 'List of devices attached\nPRIVATE-SERIAL device product:test\n' };
+          }
+          if (args.at(-1) === 'ro.kernel.qemu') return { status: 0, stdout: '0\n' };
+          if (args.at(-1) === 'ro.hardware') return { status: 0, stdout: 'tensor\n' };
+          if (args.at(-1) === 'ro.build.version.sdk') return { status: 0, stdout: '35\n' };
+          if (args.includes('install')) return { status: 1, stderr: rawFailure };
+          return { status: 0, stdout: '' };
+        },
+      }), expectedReason);
+    }
+  } finally { rmSync(prepared.root, { recursive: true, force: true }); }
+});
+
+test('argument parser accepts one explicit APK and rejects incomplete or duplicate options', () => {
+  assert.deepStrictEqual(parseArgs(['--apk', '/tmp/chants.apk', '--install', '--json']), {
+    install: true,
+    json: true,
+    help: false,
+    apkPath: '/tmp/chants.apk',
+  });
+  assert.throws(() => parseArgs(['--apk']), /Missing APK path/);
+  assert.throws(() => parseArgs(['--apk', 'one.apk', '--apk', 'two.apk']), /Duplicate/);
+});
+
 test('CLI arguments remain bounded and unknown values are not echoed', () => {
-  assert.deepEqual(parseArgs(['--install', '--json']), { install: true, json: true, help: false });
-  for (const args of [['--install', '--install'], ['--device', 'PRIVATE-ID'], ['--apk', '/tmp/other']]) {
+  assert.deepEqual(parseArgs(['--install', '--json']), {
+    install: true,
+    json: true,
+    help: false,
+    apkPath: candidate.apkPath,
+  });
+  for (const args of [['--install', '--install'], ['--device', 'PRIVATE-ID']]) {
     assert.throws(() => parseArgs(args));
   }
   const script = new URL('./prepare-android-device.mjs', import.meta.url);

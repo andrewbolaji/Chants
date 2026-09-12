@@ -24,9 +24,22 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
   bool _loading = false;
   bool _obscurePassword = true;
   String? _error;
+  StreamSubscription<User?>? _authSubscription;
+  bool _awaitingLateAuthentication = false;
+
+  Future<void> _cancelAuthSubscription() async {
+    final subscription = _authSubscription;
+    _authSubscription = null;
+    try {
+      await subscription?.cancel();
+    } catch (_) {
+      // Listener cleanup must not replace the sign-in result.
+    }
+  }
 
   @override
   void dispose() {
+    unawaited(_cancelAuthSubscription());
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -34,11 +47,13 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
 
   Future<void> _signIn() async {
     if (!_formKey.currentState!.validate()) return;
+    await _cancelAuthSubscription();
+    if (!mounted) return;
+    _awaitingLateAuthentication = false;
     setState(() {
       _loading = true;
       _error = null;
     });
-    StreamSubscription<User?>? authSubscription;
     try {
       final repository = ref.read(authRepositoryProvider);
       if (repository.currentUser != null) {
@@ -47,10 +62,15 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
         return;
       }
       final authStateAccepted = Completer<void>();
-      authSubscription = repository.authStateChanges.listen(
+      _authSubscription = repository.authStateChanges.listen(
         (user) {
           if (user != null && !authStateAccepted.isCompleted) {
             authStateAccepted.complete();
+          }
+          if (user != null && _awaitingLateAuthentication && mounted) {
+            _awaitingLateAuthentication = false;
+            Navigator.of(context).popUntil((route) => route.isFirst);
+            unawaited(_cancelAuthSubscription());
           }
         },
         onError: (Object _, StackTrace _) {
@@ -71,6 +91,7 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
       Navigator.of(context).popUntil((route) => route.isFirst);
     } on TimeoutException {
       if (!mounted) return;
+      _awaitingLateAuthentication = true;
       setState(() {
         _error =
             'Sign in is taking too long. Check your connection and try again.';
@@ -87,11 +108,7 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
         _loading = false;
       });
     } finally {
-      try {
-        await authSubscription?.cancel();
-      } catch (_) {
-        // Subscription cleanup must not replace the sign-in result.
-      }
+      if (!_awaitingLateAuthentication) await _cancelAuthSubscription();
     }
   }
 

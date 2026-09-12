@@ -48,6 +48,7 @@ export function collectLaunchServiceErrors(root = defaultRoot) {
   const appGradle = read(root, "android/app/build.gradle.kts", errors);
   const xcodeProject = read(root, "ios/Runner.xcodeproj/project.pbxproj", errors);
   const entitlements = read(root, "ios/Runner/Runner.entitlements", errors);
+  const infoPlist = read(root, "ios/Runner/Info.plist", errors);
   const manifest = read(root, "android/app/src/main/AndroidManifest.xml", errors);
   const main = read(root, "lib/main.dart", errors);
   const functionsIndex = read(root, "functions/src/index.ts", errors);
@@ -132,6 +133,15 @@ export function collectLaunchServiceErrors(root = defaultRoot) {
     );
     if (!disabled.test(manifest)) {
       errors.push(`Android release does not disable ${metadata}`);
+    }
+  }
+  for (const key of [
+    'FacebookAutoLogAppEventsEnabled',
+    'FacebookAdvertiserIDCollectionEnabled',
+  ]) {
+    const disabled = new RegExp(`<key>${key}</key>\\s*<false\\s*/>`);
+    if (!disabled.test(infoPlist)) {
+      errors.push(`iOS release does not disable ${key}`);
     }
   }
 

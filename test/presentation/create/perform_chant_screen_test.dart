@@ -430,7 +430,7 @@ void main() {
   );
 
   testWidgets(
-    'failed draft admission resolves a pending cancellation with a next action',
+    'failed draft admission preserves its error when cancellation was pending',
     (tester) async {
       final selector = _Selector()
         ..selected = const SelectedPerformanceMedia(
@@ -469,12 +469,7 @@ void main() {
 
       expect(uploads, 0);
       expect(find.text('UPLOAD CANCELLED'), findsNothing);
-      expect(
-        find.textContaining(
-          'Cancellation could not be confirmed because upload setup did not finish',
-        ),
-        findsOneWidget,
-      );
+      expect(find.textContaining('The upload did not finish'), findsOneWidget);
       expect(find.text('SEND FOR REVIEW'), findsOneWidget);
       expect(tester.takeException(), isNull);
     },

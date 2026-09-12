@@ -13,9 +13,9 @@ The Android workstation and fixed release candidate are prepared so the physical
 ## Android preparation
 
 - Android platform-tools 37.0.1 are installed locally. Android build-tools 36 and OpenJDK 21 are available.
-- `scripts/prepare-android-device.mjs` passively verifies the exact APK hash, package, version, code, minimum and target SDK, rejected advertising-permission boundary, APK v2 signature, and expected upload certificate.
-- Only explicit `--install` mode may touch a device. It requires exactly one authorized physical Android phone, rejects emulators and ambiguous, offline, unauthorized, or unsupported targets before installation, preserves app data, confirms the installed package, launches Chants, and never emits a device identifier or raw tool output.
-- Tests cover the exact pass, every receipt mismatch, rejected permissions, missing v2, wrong certificate, emulator and multi-device rejection, authorization and OS failures, the app-data-preserving install, launch, and bounded arguments.
+- `scripts/prepare-android-device.mjs` passively verifies the exact APK hash, package, version, code, minimum and target SDK, complete merged permission inventory, rejected advertising-permission boundary, 16 KB ZIP alignment, APK v2 signature, and expected upload certificate. It accepts the checkout build output or one explicit durable APK path, but never relaxes the receipt.
+- Only explicit `--install` mode may touch a device. It requires exactly one authorized physical Android phone, rejects emulator serials and runtime properties plus ambiguous, offline, unauthorized, or unsupported targets before installation, confirms the installed package, launches Chants, and never emits a device identifier or raw tool output. Replacement installation preserves data only when signatures match. Incompatible-signature recovery requires a separately chosen uninstall that deletes local app data.
+- Tests cover the exact pass, durable-path pass, every receipt mismatch, rejected permissions, missing v2, wrong certificate, serial and runtime emulator rejection, multi-device rejection, authorization and OS failures, classified restricted and incompatible installation failures, the app-data-preserving compatible install, launch, and bounded arguments.
 
 ## Signed artifact receipts
 
@@ -40,6 +40,6 @@ The APK, AAB, and IPA are copied to the sibling local folder `../Chants-v1-relea
 
 ## Remaining gates
 
-- Android phone day: enable Developer options and USB debugging, connect and unlock one phone, approve this Mac, run `node scripts/prepare-android-device.mjs --install --json`, then complete the six-step walk.
+- Android phone day: enable Developer options and USB debugging, connect and unlock one phone, approve this Mac, run `node scripts/prepare-android-device.mjs --apk ../Chants-v1-release-handoff/Chants-1.0.0-1-release.apk --install --json`, then complete the six-step walk.
 - The existing app source already contains Apple, Google, Facebook, passwordless email, and email-password paths behind fail-closed configuration. Provider dashboard credentials, callbacks, domains, and configured-device proof remain open.
 - Public routes, final store captures, questionnaires and metadata, TestFlight and Play upload, store-installed beta walks, submission, merge, production changes, and public release remain separately gated.

@@ -741,76 +741,84 @@ export async function handleModeratePerformance(params: {
 
   const mediaPath = `performance-media/${input.draftId}/source`;
   await params.media.copy(initialDraft.uploadPath as string, mediaPath);
-  await params.firestore.runTransaction(async (transaction) => {
-    const [draftSnapshot, accountSnapshot, deletionSnapshot, creatorSnapshot, chantSnapshot] =
-      await Promise.all([
-        transaction.get(draftRef),
-        transaction.get(params.firestore.collection("profiles").doc(initialDraft.ownerId as string)),
-        transaction.get(params.firestore.collection("accountDeletionJobs").doc(initialDraft.ownerId as string)),
-        transaction.get(params.firestore.collection("creatorProfiles").doc(initialDraft.ownerId as string)),
-        transaction.get(params.firestore.collection("chants").doc(initialDraft.chantId as string)),
-      ]);
-    const draft = draftSnapshot.data();
-    if (!draft) throw new HttpsError("not-found", "Performance draft not found.");
-    if (draft.state === "approved") return;
-    if (draft.state !== "pending_review") {
-      throw new HttpsError("failed-precondition", "This draft changed during review.");
-    }
-    requireActiveAccount(accountSnapshot.data(), deletionSnapshot.exists);
-    const creator = creatorSnapshot.data();
-    const chant = chantSnapshot.data();
-    requireVisibleCreator(creator);
-    requireVisibleChant(chant);
-    if (chant.teamId !== draft.teamId) {
-      throw new HttpsError("failed-precondition", "The chant changed during review.");
-    }
+  try {
+    await params.firestore.runTransaction(async (transaction) => {
+      const [draftSnapshot, accountSnapshot, deletionSnapshot, creatorSnapshot, chantSnapshot] =
+        await Promise.all([
+          transaction.get(draftRef),
+          transaction.get(params.firestore.collection("profiles").doc(initialDraft.ownerId as string)),
+          transaction.get(params.firestore.collection("accountDeletionJobs").doc(initialDraft.ownerId as string)),
+          transaction.get(params.firestore.collection("creatorProfiles").doc(initialDraft.ownerId as string)),
+          transaction.get(params.firestore.collection("chants").doc(initialDraft.chantId as string)),
+        ]);
+      const draft = draftSnapshot.data();
+      if (!draft) throw new HttpsError("not-found", "Performance draft not found.");
+      if (draft.state === "approved") return;
+      if (draft.state !== "pending_review") {
+        throw new HttpsError("failed-precondition", "This draft changed during review.");
+      }
+      requireActiveAccount(accountSnapshot.data(), deletionSnapshot.exists);
+      const creator = creatorSnapshot.data();
+      const chant = chantSnapshot.data();
+      requireVisibleCreator(creator);
+      requireVisibleChant(chant);
+      if (chant.teamId !== draft.teamId) {
+        throw new HttpsError("failed-precondition", "The chant changed during review.");
+      }
 
-    transaction.create(params.firestore.collection("performances").doc(input.draftId), {
-      schemaVersion: PERFORMANCE_SCHEMA_VERSION,
-      chantId: draft.chantId,
-      chantTitle: chant.title,
-      teamId: draft.teamId,
-      teamName: draft.teamName,
-      playerName: draft.playerName,
-      chantStatus: chant.status,
-      creatorId: draft.ownerId,
-      creatorHandle: creator.handle,
-      creatorDisplayName: creator.displayName,
-      caption: draft.caption,
-      mediaPath,
-      durationMs: draft.claimedDurationMs,
-      publicationState: "approved",
-      viewCount: 0,
-      likeCount: 0,
-      commentCount: 0,
-      shareCount: 0,
-      uniqueSharerCount: 0,
-      weeklyUniqueSharerCount: 0,
-      weeklyLikeCount: 0,
-      weeklyQualifiedViewCount: 0,
-      rankingWeek: performanceRankingWeek(timestamp),
-      hidden: false,
-      removed: false,
-      sourceChantVisible: true,
-      sourceCreatorVisible: true,
-      createdAt: draft.createdAt,
-      approvedAt: timestamp,
-      updatedAt: timestamp,
+      transaction.create(params.firestore.collection("performances").doc(input.draftId), {
+        schemaVersion: PERFORMANCE_SCHEMA_VERSION,
+        chantId: draft.chantId,
+        chantTitle: chant.title,
+        teamId: draft.teamId,
+        teamName: draft.teamName,
+        playerName: draft.playerName,
+        chantStatus: chant.status,
+        creatorId: draft.ownerId,
+        creatorHandle: creator.handle,
+        creatorDisplayName: creator.displayName,
+        caption: draft.caption,
+        mediaPath,
+        durationMs: draft.claimedDurationMs,
+        publicationState: "approved",
+        viewCount: 0,
+        likeCount: 0,
+        commentCount: 0,
+        shareCount: 0,
+        uniqueSharerCount: 0,
+        weeklyUniqueSharerCount: 0,
+        weeklyLikeCount: 0,
+        weeklyQualifiedViewCount: 0,
+        rankingWeek: performanceRankingWeek(timestamp),
+        hidden: false,
+        removed: false,
+        sourceChantVisible: true,
+        sourceCreatorVisible: true,
+        createdAt: draft.createdAt,
+        approvedAt: timestamp,
+        updatedAt: timestamp,
+      });
+      clearMatchingUploadGrant(transaction, accountSnapshot, input.draftId);
+      transaction.update(draftRef, {
+        state: "approved",
+        moderationReason: null,
+        mediaPath,
+        reviewedBy: params.actorUid,
+        reviewedAt: timestamp,
+        updatedAt: timestamp,
+      });
+      transaction.update(creatorSnapshot.ref, {
+        performanceCount: admin.firestore.FieldValue.increment(1),
+        updatedAt: timestamp,
+      });
     });
-    clearMatchingUploadGrant(transaction, accountSnapshot, input.draftId);
-    transaction.update(draftRef, {
-      state: "approved",
-      moderationReason: null,
-      mediaPath,
-      reviewedBy: params.actorUid,
-      reviewedAt: timestamp,
-      updatedAt: timestamp,
-    });
-    transaction.update(creatorSnapshot.ref, {
-      performanceCount: admin.firestore.FieldValue.increment(1),
-      updatedAt: timestamp,
-    });
-  });
+  } catch (error) {
+    // A validation or transaction failure after the copy must not strand the
+    // user's video at the published-media path. Suppress cleanup failure so
+    // the original moderation error remains authoritative to the operator.
+    await params.media.remove(mediaPath).catch(() => undefined);
+    throw error;
+  }
   await params.media.remove(initialDraft.uploadPath as string).catch(() => undefined);
   return { state: "approved", performanceId: input.draftId };
 }

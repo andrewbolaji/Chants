@@ -13,6 +13,14 @@ This is the chronological evidence trail for substantial engineering work. It re
 
 ## Entries
 
+### 2026-09-12T06:35:00Z Correct final independent-review findings and rebuild pull request 38
+
+- **Status:** In progress. Source corrections and the prepackaging verification matrix pass; replacement native artifacts, final staging, push, and exact-head CI remain.
+- **Authority:** Andrew supplied the final independent Claude review and instructed Codex to apply its fixes, rebuild, and run CI. This authorizes the bounded source, test, privacy-default, Android-handoff, documentation, local artifact, commit, push-to-PR-38, and exact-head CI work. It does not authorize provider activation, production mutation, upload, merge, submission, or release.
+- **Source correction:** The app retains neutral loading during a slow profile retry, avoids a hidden second retry, keeps late email authentication authoritative after its written timeout, and preserves the real upload-admission failure during early cancellation. Performance approval removes its exact canonical media copy if publication fails and preserves the original moderation error if cleanup also fails. iOS now disables Facebook automatic event logging and advertiser identifier collection. The Android helper accepts one explicit hash-bound APK, verifies full merged permissions and 16 KB ZIP alignment, rejects emulator runtime properties, and maps common ADB failures without exposing device output. Store evidence and toolchain documentation are updated for the approved source.
+- **Prepackaging verification:** The focused Flutter set passes 80 tests. The complete Flutter suite passes 599 tests and `flutter analyze lib test` reports no issue. Functions compile and report 232 passing unit tests with 24 emulator-only cases pending in that process. The dedicated real-Firestore suite passes 24 cases. Firestore and Storage rules pass all 174 assertions on the local Java 21 emulators. Seed reports 87 passing and TypeScript reports no issue. All 50 helper, guide, policy, launch-service, and public-site regressions pass. The honest prepared and not-submitted store packet and all 20 store regressions pass. Native-project, launch-services, plist syntax, and diff checks pass.
+- **Next:** Freeze the corrected runtime source in a local commit, rebuild and inspect Android and iOS distribution candidates without upload, bind the Android helper and durable handoff to the new receipts, complete staged governance, push both focused commits to pull request 38, and require all exact-head CI jobs to pass.
+
 ### 2026-09-12T03:01:40Z Prepare Android handoff and current iOS distribution artifacts
 
 - **Status:** Completed locally at 2026-09-12T04:54:10Z. Android is reduced to connection, authorization, one guarded install command, and the physical walk. The current App Store archive and IPA are built, inspected, and preserved without upload.

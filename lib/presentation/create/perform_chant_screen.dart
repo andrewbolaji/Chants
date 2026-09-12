@@ -233,9 +233,6 @@ class _PerformChantScreenState extends ConsumerState<PerformChantScreen> {
           _sending = false;
           if (_cancelling && _ticket == null) {
             _cancelling = false;
-            _error =
-                'Cancellation could not be confirmed because upload setup did '
-                'not finish. Try again when you are connected.';
           }
         });
       }

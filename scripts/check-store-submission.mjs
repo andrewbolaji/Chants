@@ -59,6 +59,8 @@ const EXPECTED_ALLOWED_DRIFT = [
   'assets/clubs/crests/provenance.json',
   'assets/clubs/crests/sunderland.png',
   'assets/clubs/crests/tottenham-hotspur.png',
+  'functions/src/performance.ts',
+  'functions/test/performance.test.ts',
   'hosting/index.html',
   'hosting/site.css',
   'ios/Runner.xcodeproj/project.pbxproj',

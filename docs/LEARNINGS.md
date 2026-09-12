@@ -12,6 +12,26 @@ This is durable, evidence-backed project memory. It prevents the same failure or
 
 ## Entries
 
+### 2026-09-12T06:35:00Z Refresh state must remain authoritative through recovery
+
+- **Status:** applied
+- **Scope:** Riverpod-backed launch gates and authentication routes that can resolve after a written timeout.
+- **Observed:** A manual profile retry could expose the prior error while the refreshed stream was still loading, and the email route stopped listening when its 15-second timeout appeared even though Firebase could authenticate afterward.
+- **Evidence:** Focused regressions hold the profile refresh beyond 650 milliseconds and deliver authentication after the timeout. They prove the launch gate remains neutral during refresh, a manual retry is not restarted by the fallback timer, and late authentication dismisses the stale email route. The complete Flutter suite passes 599 tests.
+- **Rule:** Treat refresh-in-progress and late authoritative success as live states, not as expired UI attempts. A written timeout must restore control without disconnecting the authority signal that can still complete the operation.
+- **Applied control:** The signed-in gate checks loading before exposing recovery and marks manual retry ownership. The email screen retains one bounded auth-state subscription until success, another attempt, or disposal.
+- **Revisit:** A provider SDK with different completion semantics, a cancellable authentication API, a router migration, or a new account-bootstrap source.
+
+### 2026-09-12T06:35:00Z Cross-service publication needs compensation before visibility
+
+- **Status:** applied
+- **Scope:** Workflows that copy private media before a database transaction makes it public.
+- **Observed:** Performance approval copied the staged object to its canonical path before the Firestore publication transaction. A validation or transaction failure could leave an unreferenced canonical object.
+- **Evidence:** Functions regressions force the post-copy publication failure and prove the exact destination is removed. A second regression forces cleanup failure and proves the original moderation error is preserved. The complete Functions unit suite passes 232 tests with 24 emulator-only cases pending in that process.
+- **Rule:** When an external media mutation must precede a database commit, define exact compensation for the uncommitted destination and keep the original authority failure as the caller-visible result.
+- **Applied control:** Performance approval removes only `performance-media/{draftId}/source` when the publication transaction fails. Cleanup failure is contained without replacing the moderation error.
+- **Revisit:** Resumable approval, multi-object media, cross-region replication, background compensation, or any workflow where post-commit acknowledgement can be ambiguous.
+
 ### 2026-09-11T13:53:16Z One upload needs one authoritative error channel
 
 - **Status:** applied

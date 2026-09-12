@@ -956,6 +956,86 @@ void main() {
       },
     );
 
+    testWidgets(
+      'a slow profile retry remains loading until its current result settles',
+      (tester) async {
+        final retryStream = StreamController<UserProfile?>();
+        addTearDown(retryStream.close);
+        var profileListens = 0;
+        await tester.pumpWidget(
+          wrap(
+            authStream: Stream.value(fakeUser as User?),
+            makeProfileStream: () {
+              profileListens += 1;
+              return profileListens == 1
+                  ? Stream.error('initial read failure')
+                  : retryStream.stream;
+            },
+          ),
+        );
+        await tester.pump();
+        await tester.pump();
+
+        await tester.pump(kSignedInProfileRetryDelay);
+        await tester.pump();
+        expect(profileListens, 2);
+        expect(find.byType(LaunchRevealScreen), findsOneWidget);
+        expect(
+          find.byKey(const Key('signed-in-loading-recovery')),
+          findsNothing,
+        );
+
+        await tester.pump(const Duration(seconds: 1));
+        expect(profileListens, 2);
+        expect(find.byType(LaunchRevealScreen), findsOneWidget);
+
+        retryStream.addError('retry failed');
+        await tester.pump();
+        await tester.pump();
+        expect(
+          find.byKey(const Key('signed-in-loading-recovery')),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets('manual profile retry is not restarted after 650 ms', (
+      tester,
+    ) async {
+      final manualRetry = StreamController<UserProfile?>();
+      addTearDown(manualRetry.close);
+      var profileListens = 0;
+      await tester.pumpWidget(
+        wrap(
+          authStream: Stream.value(fakeUser as User?),
+          makeProfileStream: () {
+            profileListens += 1;
+            if (profileListens <= 2) {
+              return Stream.error('read failure');
+            }
+            return manualRetry.stream;
+          },
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+      await tester.pump(kSignedInProfileRetryDelay);
+      await tester.pump();
+      await tester.pump();
+      expect(profileListens, 2);
+      expect(find.text('TRY AGAIN'), findsOneWidget);
+
+      await tester.tap(find.text('TRY AGAIN'));
+      await tester.pump();
+      expect(profileListens, 3);
+      expect(find.byType(LaunchRevealScreen), findsOneWidget);
+
+      await tester.pump(kSignedInProfileRetryDelay);
+      await tester.pump();
+      expect(profileListens, 3);
+      expect(find.byType(LaunchRevealScreen), findsOneWidget);
+    });
+
     testWidgets('a later stream error keeps the last verified active gate', (
       tester,
     ) async {

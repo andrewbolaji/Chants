@@ -10,6 +10,8 @@
 
 **Physical-device correction approval:** After completing the rebuilt-phone walk, Andrew approved the proposed onboarding polish and asked to begin the pinned release fixes. The observed scope is the stalled successful email sign-in route, the later stalled signed-in account gate, calmer onboarding panels, one clear supporter mark on the sign-in welcome, dark Club Signal continuity, a smaller inline posting identity, and a compact Terrace Proven badge with plain-language meaning.
 
+**Independent-review follow-up approval:** After pull request 38 reached exact head `bb15ca62e4a169b52a4413e68a5d52bc48f3faab` with clean-runner CI passing, Andrew supplied the final Claude Code report and instructed Codex to apply the reported fixes, rebuild both platforms, and run CI. This approval covers the reproduced signed-in retry, late authentication, cancellation copy, failed-approval media cleanup, native privacy opt-out, bounded Android handoff, and receipt-accuracy corrections. It does not enable providers, mutate production, upload artifacts, merge, or release.
+
 **Owner:** Andrew, through ThunderRiver Tech LLC
 
 **Lane:** 2, local release packaging, artifact verification, and review closure
@@ -48,6 +50,13 @@
 18. Move Club Signal's in-app club and Songbook surfaces from warm paper to the shared dark Chants canvas while preserving crest-led identification, hierarchy, rows, routes, data, and recovery behavior. The public site and historical store evidence remain unchanged until their separately scoped refresh.
 19. Render the performance posting identity as a content-sized inline chip. Replace the rotated gold Terrace Proven strip with a compact level badge and explain it in plain language as verified evidence that the chant has been sung at matches. A performance never changes that trust state.
 20. Bound the signed-in root gate while it waits for the first verified profile and saved-deletion-state result. After 15 seconds, remain outside the product shell and present written Try Again and Sign Out actions. Retry must reload both account sources and sign out must retain its own bounded failure recovery.
+21. Keep a retried profile stream in the neutral loading boundary while Riverpod reports refresh in progress. Show profile recovery immediately only after the retry has produced a current error, and cover the slow-retry boundary with a regression.
+22. Keep listening for a late authenticated user after the email route's 15-second written timeout so a successful result dismisses the stale form. Preserve the timeout's retryable state when no user arrives.
+23. Preserve the original upload-admission failure when cancellation was requested before any draft existed. A missing draft is not a failed cancellation and must not replace maintenance, quota, or grant copy with a connectivity claim.
+24. If approved-media copying succeeds but the approval transaction fails, remove the exact copied destination before returning the failure. Preserve the original moderation error if cleanup also fails, keep media private, and cover the failure path with a Functions regression.
+25. Set the iOS Facebook automatic event logging and advertiser identifier collection flags to false, matching Android's fail-closed native defaults without enabling Facebook authentication.
+26. Let the Android helper accept one explicit APK path while retaining the fixed hash, package, version, SDK, permission, signature, and certificate checks. Reject emulators through both ADB serial shape and bounded device properties, classify common installation failures without reporting device identifiers, and document destructive uninstall recovery as an explicit last resort.
+27. Correct the CI toolchain description and extend the Android receipt with the complete merged permission inventory and the verified 16 KB ZIP-alignment result.
 
 ## Excluded
 
@@ -79,6 +88,13 @@
 15. Email sign-in tests prove immediate success, delayed auth-state success, timeout recovery, invalid credentials, and post-success root-route dismissal without trapping the fan behind a spinner.
 16. Representative Club Signal goldens use the shared dark canvas and remain readable at 390 by 844, 320-pixel width, and enlarged text. Route, query, crest, save, and vote behavior is unchanged.
 17. The posting identity stays content sized, the Terrace Proven badge is unrotated, and adjacent copy says what the trust state means without implying club endorsement, correctness, or automatic promotion.
+18. A slow profile retry remains on the neutral reveal until it resolves, fails, or reaches the 15-second boundary. Repeated Try Again actions do not prematurely show recovery while a refreshed stream is loading.
+19. A late email authentication result dismisses the timed-out route, while a genuinely unresolved attempt remains written and retryable.
+20. A cancellation request made before admission cannot overwrite the specific admission failure, and no nonexistent draft is presented as requiring cancellation.
+21. Every moderation approval path that copied destination media and then failed removes that exact destination. Cleanup failure cannot replace the original moderation error or make the object public.
+22. iOS and Android both explicitly disable Facebook automatic event logging and advertiser identifier collection in their native source defaults.
+23. Android helper tests cover the durable handoff path, property-detected emulators, incompatible signatures, OEM install restriction copy, and continued identifier redaction. The handoff documentation distinguishes data-preserving replacement from destructive uninstall recovery.
+24. Project and release receipts name CI Flutter 3.47.3 accurately and record the complete merged Android permission and 16 KB alignment evidence for the rebuilt exact candidate.
 
 ## Recovery
 

@@ -219,7 +219,9 @@ class _SignedInGateState extends ConsumerState<_SignedInGate> {
   void _retryGate(SongbookDeletionGateInput deletionInput) {
     _profileRetryTimer?.cancel();
     _profileRetryScheduled = false;
-    _profileRetryAttempted = false;
+    // A written retry is itself the retry attempt. Mark it before invalidation
+    // so the automatic 650 ms retry does not restart a slow, healthy stream.
+    _profileRetryAttempted = true;
     ref.invalidate(userProfileProvider(widget.uid));
     ref.invalidate(savedSongbookDeletionStateProvider(deletionInput));
   }
@@ -333,7 +335,8 @@ class _SignedInGateState extends ConsumerState<_SignedInGate> {
           return _loadingBoundary(
             deletionInput,
             phase: _SignedInGatePhase.profile,
-            recoverImmediately: _profileRetryAttempted,
+            recoverImmediately:
+                _profileRetryAttempted && !profileAsync.isLoading,
           );
         }
         return _screenFor(

@@ -43,6 +43,8 @@
       "assets/clubs/crests/provenance.json",
       "assets/clubs/crests/sunderland.png",
       "assets/clubs/crests/tottenham-hotspur.png",
+      "functions/src/performance.ts",
+      "functions/test/performance.test.ts",
       "hosting/index.html",
       "hosting/site.css",
       "ios/Runner.xcodeproj/project.pbxproj",
@@ -172,6 +174,14 @@
         "sha256": "ce51d50ba9dbf5fa1d22a3229f7b59cd775a184bd06321c683c7c30c15d6c862"
       },
       {
+        "path": "functions/src/performance.ts",
+        "sha256": "6d40c570cd6bba4489f133714386afb067a79b8626d2794008eae2228c60d877"
+      },
+      {
+        "path": "functions/test/performance.test.ts",
+        "sha256": "19ac92f0b3f966698df24c4b30ac1b5aed5cbd218d8ef9263234cca444706f67"
+      },
+      {
         "path": "hosting/index.html",
         "sha256": "c951e6ebd495c6b97aec4b018b37553020bd8a3d9aef317b3a8c77149beadd04"
       },
@@ -185,11 +195,11 @@
       },
       {
         "path": "ios/Runner/Info.plist",
-        "sha256": "e62e918382d1588ec9415e0605a783f70809d2983df92ac8e23a394fe72eabe6"
+        "sha256": "065345eb39d68eb65d669cbafdd9a4efa2a602df1c563ce23c415842228f7fd5"
       },
       {
         "path": "lib/app/app.dart",
-        "sha256": "9a626598b7cd809ac2a7e631a68ab4c1525c0a95423c1a19fe5934e9724cd04e"
+        "sha256": "4bb352ab7225d8393d0736c9e69c0d0edcd026a5c685126f09b831d6fe141ebf"
       },
       {
         "path": "lib/app/colors.dart",
@@ -209,7 +219,7 @@
       },
       {
         "path": "lib/presentation/auth/email_sign_in_screen.dart",
-        "sha256": "c070e83d289eb21691a1eef71dbbb3f702686a4d7b4dedaf748ed16a30447389"
+        "sha256": "b8bad6729c6156aeb02140e81b11b75dd91702238118fb6dfe3bf8737a81f346"
       },
       {
         "path": "lib/presentation/auth/first_run_orientation_screen.dart",
@@ -245,7 +255,7 @@
       },
       {
         "path": "lib/presentation/create/perform_chant_screen.dart",
-        "sha256": "862e584b992578532d0b46091b6e85b455cb82975f9ec8e1caff1d552256f811"
+        "sha256": "1eb5a04ceb7bc9054391b5cacc4e1c2d561bfaa6e86428360d64a72cef9c5da5"
       },
       {
         "path": "lib/presentation/feed/chant_stage_screen.dart",

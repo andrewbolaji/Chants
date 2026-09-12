@@ -272,6 +272,32 @@ void main() {
     expect(find.textContaining('taking too long'), findsOneWidget);
   });
 
+  testWidgets('late authentication dismisses a timed-out email route', (
+    tester,
+  ) async {
+    final repository = _UiAuthRepository()
+      ..signInCompleter = Completer<UserCredential>();
+    addTearDown(repository.authController.close);
+    await tester.pumpWidget(
+      wrap(const _EmailRouteHost(), repository: repository),
+    );
+
+    await tester.tap(find.text('OPEN EMAIL SIGN IN'));
+    await tester.pumpAndSettle();
+    await enterEmailCredentials(tester);
+    await tester.tap(find.text('SIGN IN'));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 16));
+    expect(find.textContaining('taking too long'), findsOneWidget);
+
+    repository.user = _UiUser();
+    repository.authController.add(repository.user);
+    await tester.pumpAndSettle();
+
+    expect(find.text('OPEN EMAIL SIGN IN'), findsOneWidget);
+    expect(find.text('WELCOME BACK'), findsNothing);
+  });
+
   testWidgets('rejected email credential restores the form', (tester) async {
     final repository = _UiAuthRepository()
       ..signInError = FirebaseAuthException(code: 'wrong-password');

@@ -24,6 +24,7 @@ const paths = [
   "android/app/src/main/AndroidManifest.xml",
   "ios/Runner.xcodeproj/project.pbxproj",
   "ios/Runner/Runner.entitlements",
+  "ios/Runner/Info.plist",
   "lib/main.dart",
   "functions/src/index.ts",
   "functions/src/operations.ts",
@@ -82,6 +83,19 @@ try {
     join(root, "android/app/src/main/AndroidManifest.xml"),
     manifestPath,
   );
+
+  const infoPlistPath = join(tempRoot, "ios/Runner/Info.plist");
+  writeFileSync(
+    infoPlistPath,
+    readFileSync(infoPlistPath, "utf8").replace(
+      "<key>FacebookAutoLogAppEventsEnabled</key>",
+      "<key>FacebookAutoLogAppEventsMissing</key>",
+    ),
+  );
+  assert.ok(collectLaunchServiceErrors(tempRoot).some((error) =>
+    error.includes("FacebookAutoLogAppEventsEnabled")
+  ));
+  cpSync(join(root, "ios/Runner/Info.plist"), infoPlistPath);
 
   const invalidAssetLinks = join(
     tempRoot,
