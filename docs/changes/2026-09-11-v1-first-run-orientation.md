@@ -49,6 +49,6 @@ These receipts remain valid only for their recorded source boundary. The replace
 
 ## Residual gates
 
-- The exact 43-path extension is staged and passes repository governance. Push one focused commit to pull request 38.
-- Require exact-head clean-runner CI for that commit.
+- The exact 43-path extension passed repository governance and was pushed as `7c86ca9`. Its first exact-head run found only stale Linux platform-specific references after the intentional cross-platform visual change. Push the inspected nine-path Linux-reference correction.
+- Require replacement exact-head clean-runner CI for that correction.
 - The approved refinement and retained-account path are now inspected on the physical iPhone. Physical Android, TestFlight, Play, store submission, merge, production changes, and public release remain separate gates.
