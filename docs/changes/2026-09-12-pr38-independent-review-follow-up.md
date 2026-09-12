@@ -37,3 +37,16 @@ No provider was enabled. No production, store, signing, deployment, merge, or re
 ## Remaining gates
 
 The final staged packet passes governance checks. The focused commits may now be pushed to pull request 38, where exact-head CI must pass. A new physical iPhone or Android walkthrough is not part of this source-only correction and remains required for the rebuilt candidate where applicable.
+
+## Second closure review
+
+The first follow-up was pushed as commits `fedfe2cc2ea0d5cf2da26b3525fd15961a2ac248` and `6d004d3b00024cab568d1835a932f20de8e356b7`. All eight exact-head clean-runner jobs passed at `6d004d3b00024cab568d1835a932f20de8e356b7`.
+
+Claude then completed a narrow closure review of `bb15ca62e4a169b52a4413e68a5d52bc48f3faab..6d004d3b00024cab568d1835a932f20de8e356b7`. It reported no release-blocking defect and four low-severity edge cases. Andrew approved closing all four:
+
+- Sign-in now closes re-entry before asynchronous subscription cancellation, so a rapid second press cannot start a concurrent request or replace its listener.
+- Signed-in recovery tracks local-safety and profile retries independently, so retrying one phase does not consume the other phase's automatic recovery.
+- Performance approval reconciles a reported transaction failure with a fresh authoritative draft read before cleanup. A committed approval completes idempotently, a proven unapproved draft is compensated, and unknown commit state retains canonical media.
+- The Android preparation helper resolves an explicit relative APK from the operator's current working directory, matching use from the durable handoff directory.
+
+Focused regressions cover every corrected boundary. The complete Flutter suite passes 601 tests, scoped analysis reports no issue, Functions compile and report 234 passing tests with 24 emulator-only cases pending in that process, the Java 21 rules suite passes 174 assertions, the real-Firestore suite passes 24 cases, and seed passes 87 tests plus TypeScript. Replacement native artifacts, their final receipts, and replacement exact-head CI remain before closure.

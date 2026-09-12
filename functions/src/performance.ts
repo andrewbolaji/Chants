@@ -813,10 +813,29 @@ export async function handleModeratePerformance(params: {
       });
     });
   } catch (error) {
-    // A validation or transaction failure after the copy must not strand the
-    // user's video at the published-media path. Suppress cleanup failure so
-    // the original moderation error remains authoritative to the operator.
-    await params.media.remove(mediaPath).catch(() => undefined);
+    // A validation failure after the copy may be compensated only when a
+    // fresh authoritative read proves the approval did not commit. A failed
+    // read leaves the canonical object in place because a reported
+    // transaction failure can still hide a committed write.
+    let cleanupProvenSafe = false;
+    try {
+      const reconciledDraft = (await draftRef.get()).data();
+      if (reconciledDraft?.state === "approved") {
+        if (reconciledDraft.mediaPath === mediaPath) {
+          await params.media.remove(initialDraft.uploadPath as string).catch(() => undefined);
+          return { state: "approved", performanceId: input.draftId };
+        }
+      } else {
+        cleanupProvenSafe = true;
+      }
+    } catch {
+      // Unknown commit state must retain media for later reconciliation.
+    }
+    if (cleanupProvenSafe) {
+      // Suppress cleanup failure so the original moderation error remains
+      // authoritative to the operator.
+      await params.media.remove(mediaPath).catch(() => undefined);
+    }
     throw error;
   }
   await params.media.remove(initialDraft.uploadPath as string).catch(() => undefined);

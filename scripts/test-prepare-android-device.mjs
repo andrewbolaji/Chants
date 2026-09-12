@@ -2,7 +2,7 @@ import { strict as assert } from 'node:assert';
 import { createHash } from 'node:crypto';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { test } from 'node:test';
 import {
@@ -254,6 +254,10 @@ test('argument parser accepts one explicit APK and rejects incomplete or duplica
     help: false,
     apkPath: '/tmp/chants.apk',
   });
+  assert.equal(
+    parseArgs(['--apk', 'Chants-1.0.0-1-release.apk']).apkPath,
+    resolve('Chants-1.0.0-1-release.apk'),
+  );
   assert.throws(() => parseArgs(['--apk']), /Missing APK path/);
   assert.throws(() => parseArgs(['--apk', 'one.apk', '--apk', 'two.apk']), /Duplicate/);
 });

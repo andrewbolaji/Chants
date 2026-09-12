@@ -101,6 +101,7 @@ class _FakeAccountDeletionService extends Mock
 class _FakeSavedSongbookRepository extends Mock
     implements SavedSongbookRepository {
   SongbookAccountDeletionState state = SongbookAccountDeletionState.none;
+  Future<SongbookAccountDeletionState> Function()? stateLoader;
   Object? stateError;
   Object? recoveryError;
   int stateCalls = 0;
@@ -110,6 +111,8 @@ class _FakeSavedSongbookRepository extends Mock
   @override
   Future<SongbookAccountDeletionState> accountDeletionState(String uid) async {
     stateCalls += 1;
+    final loader = stateLoader;
+    if (loader != null) return loader();
     if (stateError != null) throw stateError!;
     return state;
   }
@@ -1035,6 +1038,59 @@ void main() {
       expect(profileListens, 3);
       expect(find.byType(LaunchRevealScreen), findsOneWidget);
     });
+
+    testWidgets(
+      'local safety retry preserves the unused automatic profile retry',
+      (tester) async {
+        final initialSafety = Completer<SongbookAccountDeletionState>();
+        final retriedSafety = Completer<SongbookAccountDeletionState>();
+        var safetyLoads = 0;
+        final savedRepository = _FakeSavedSongbookRepository()
+          ..stateLoader = () {
+            safetyLoads += 1;
+            return safetyLoads == 1
+                ? initialSafety.future
+                : retriedSafety.future;
+          };
+        var profileListens = 0;
+
+        await tester.pumpWidget(
+          wrap(
+            authStream: Stream.value(fakeUser as User?),
+            makeProfileStream: () {
+              profileListens += 1;
+              return Stream<UserProfile?>.error('profile read failure');
+            },
+            savedSongbookRepository: savedRepository,
+          ),
+        );
+        await tester.pump();
+        await tester.pump();
+        expect(profileListens, 1);
+
+        await tester.pump(kSignedInGateWaitTimeout);
+        await tester.pump();
+        expect(find.text('ACCOUNT CHECK IS TAKING TOO LONG'), findsOneWidget);
+
+        await tester.tap(find.text('TRY AGAIN'));
+        await tester.pump();
+        expect(safetyLoads, 2);
+        expect(profileListens, 1);
+
+        retriedSafety.complete(SongbookAccountDeletionState.none);
+        await tester.pump();
+        await tester.pump();
+        expect(profileListens, 1);
+        expect(
+          find.byKey(const Key('signed-in-loading-recovery')),
+          findsNothing,
+        );
+
+        await tester.pump(kSignedInProfileRetryDelay);
+        await tester.pump();
+        expect(profileListens, 2);
+      },
+    );
 
     testWidgets('a later stream error keeps the last verified active gate', (
       tester,

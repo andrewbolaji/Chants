@@ -298,7 +298,7 @@ export function parseArgs(args) {
     else if (arg === '--apk') {
       const value = args[index + 1];
       if (!value || value.startsWith('--')) throw new Error('Missing APK path');
-      options.apkPath = value;
+      options.apkPath = resolve(value);
       index += 1;
     }
     else throw new Error('Unknown option');
@@ -314,7 +314,7 @@ export function main(args = process.argv.slice(2)) {
     return 2;
   }
   if (options.help) {
-    console.log('Validates the fixed signed release APK from the build output or --apk PATH. --install requires exactly one authorized physical Android device, preserves app data when signatures match, installs the verified APK, and launches Chants. No device identifier or raw SDK output is printed.');
+    console.log('Validates the fixed signed release APK from the build output or --apk PATH. A relative --apk PATH is resolved from the current working directory. --install requires exactly one authorized physical Android device, preserves app data when signatures match, installs the verified APK, and launches Chants. No device identifier or raw SDK output is printed.');
     return 0;
   }
   try {

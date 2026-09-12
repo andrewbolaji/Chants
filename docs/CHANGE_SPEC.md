@@ -12,6 +12,8 @@
 
 **Independent-review follow-up approval:** After pull request 38 reached exact head `bb15ca62e4a169b52a4413e68a5d52bc48f3faab` with clean-runner CI passing, Andrew supplied the final Claude Code report and instructed Codex to apply the reported fixes, rebuild both platforms, and run CI. This approval covers the reproduced signed-in retry, late authentication, cancellation copy, failed-approval media cleanup, native privacy opt-out, bounded Android handoff, and receipt-accuracy corrections. It does not enable providers, mutate production, upload artifacts, merge, or release.
 
+**Closure-review follow-up approval:** After the first follow-up reached exact head `6d004d3b00024cab568d1835a932f20de8e356b7` with all eight clean-runner jobs passing, Andrew supplied the narrow Claude closure review and approved applying its four findings, rebuilding, and rerunning CI. This covers immediate sign-in re-entry protection, phase-scoped signed-in recovery, approval reconciliation after an ambiguous transaction result, and current-working-directory resolution for an explicit Android APK. It retains the same no-production, no-provider, no-upload, no-merge, and no-release boundary.
+
 **Owner:** Andrew, through ThunderRiver Tech LLC
 
 **Lane:** 2, local release packaging, artifact verification, and review closure
@@ -57,6 +59,10 @@
 25. Set the iOS Facebook automatic event logging and advertiser identifier collection flags to false, matching Android's fail-closed native defaults without enabling Facebook authentication.
 26. Let the Android helper accept one explicit APK path while retaining the fixed hash, package, version, SDK, permission, signature, and certificate checks. Reject emulators through both ADB serial shape and bounded device properties, classify common installation failures without reporting device identifiers, and document destructive uninstall recovery as an explicit last resort.
 27. Correct the CI toolchain description and extend the Android receipt with the complete merged permission inventory and the verified 16 KB ZIP-alignment result.
+28. Close sign-in re-entry before awaiting subscription cancellation so a rapid second press cannot start a second authentication operation or replace the first listener.
+29. Keep local-safety recovery and profile recovery as separate retry phases. A local-safety retry must not consume the profile phase's one automatic retry.
+30. Reconcile a reported approval-transaction failure through a fresh authoritative draft read. Remove canonical media only when the draft is proven unapproved, retain it when commit state is unknown, and complete successfully when the approved projection already names that media.
+31. Resolve an explicitly supplied relative Android APK path from the operator's current working directory while preserving all identity, hash, permission, signing, alignment, and physical-device checks.
 
 ## Excluded
 
@@ -95,6 +101,10 @@
 22. iOS and Android both explicitly disable Facebook automatic event logging and advertiser identifier collection in their native source defaults.
 23. Android helper tests cover the durable handoff path, property-detected emulators, incompatible signatures, OEM install restriction copy, and continued identifier redaction. The handoff documentation distinguishes data-preserving replacement from destructive uninstall recovery.
 24. Project and release receipts name CI Flutter 3.47.3 accurately and record the complete merged Android permission and 16 KB alignment evidence for the rebuilt exact candidate.
+25. Rapid repeated sign-in presses still start exactly one authentication request and retain exactly one authoritative authentication listener.
+26. Retrying the local-safety phase does not suppress the profile phase's first bounded automatic retry.
+27. Approval reconciliation tests cover a committed-but-reported-failed transaction and an unreadable post-failure draft. The former returns approved and removes only staging media; the latter preserves canonical media and the original error.
+28. Android helper coverage proves that a relative explicit APK path works when the helper is launched from the artifact handoff directory.
 
 ## Recovery
 
@@ -134,3 +144,5 @@ After the staged orientation extension, rebuilt artifacts, and local verificatio
 - Claude Code independently reviewed exact head `bb15ca62e4a169b52a4413e68a5d52bc48f3faab` and reported no P0 or P1 findings, one P2 finding, and nine P3 findings. Every accepted finding is corrected at runtime source commit `fedfe2cc2ea0d5cf2da26b3525fd15961a2ac248` with focused regressions or exact release evidence. The follow-up record is `docs/changes/2026-09-12-pr38-independent-review-follow-up.md`.
 - The replacement verification matrix passes 80 focused and 599 complete Flutter tests, scoped analysis, 232 Functions unit tests, 24 real-Firestore cases, 174 Firestore and Storage rules assertions, 87 seed tests and typecheck, 50 helper and guide regressions, the prepared store packet and 20 regressions, native checks, privacy defaults, and staged-source checks.
 - Fresh corrected artifacts replace every prior candidate in the durable local handoff. The Android AAB SHA-256 is `b19015b6572629177d22f46ca4074474ddd2c2b18a19dbfc82de084eb5765b1f`; the APK SHA-256 is `b5eb1cca78069f25574aec4b9f6d1b659a68698775451bc07ca7adef58f14151`; the iOS archive content-tree SHA-256 is `131450bdeff907730948815c8803a69cf1d3ec56e527f18e1917b16a9b4c565c`; and the IPA SHA-256 is `9a2ebb076df62d7abded2002f20d31eddeb35096ee54a2559bb7e0545aa47d9a`. Artifact identity, version, signatures, certificates, permissions, alignment, profile, privacy flags, and entitlements pass. Exact-head CI remains the final gate for this follow-up.
+- Commits `fedfe2cc2ea0d5cf2da26b3525fd15961a2ac248` and `6d004d3b00024cab568d1835a932f20de8e356b7` were pushed to pull request 38. All eight exact-head jobs passed at `6d004d3b00024cab568d1835a932f20de8e356b7` before the closure review began.
+- The narrow closure review reported four low-severity edge cases and no release-blocking defect. Andrew accepted all four. The double-submit guard, retry-phase ownership, ambiguous-commit reconciliation, and current-directory APK behavior are implemented with focused regressions. Replacement native receipts and replacement exact-head CI are still required for this new source boundary.

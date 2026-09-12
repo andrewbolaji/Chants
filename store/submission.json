@@ -175,11 +175,11 @@
       },
       {
         "path": "functions/src/performance.ts",
-        "sha256": "6d40c570cd6bba4489f133714386afb067a79b8626d2794008eae2228c60d877"
+        "sha256": "c192aa12dab9922e954476449adce5475240c4e401e0f4cb5e0d313ba9d70805"
       },
       {
         "path": "functions/test/performance.test.ts",
-        "sha256": "19ac92f0b3f966698df24c4b30ac1b5aed5cbd218d8ef9263234cca444706f67"
+        "sha256": "e010c368db035ab2c12d260bf7c6923125da6fe221143209d8207f784810ea76"
       },
       {
         "path": "hosting/index.html",
@@ -199,7 +199,7 @@
       },
       {
         "path": "lib/app/app.dart",
-        "sha256": "4bb352ab7225d8393d0736c9e69c0d0edcd026a5c685126f09b831d6fe141ebf"
+        "sha256": "342e6af3d20d11c56803357b4ac88729b80f7e4f6006e4b4cee32c4aa5e7f7ec"
       },
       {
         "path": "lib/app/colors.dart",
@@ -219,7 +219,7 @@
       },
       {
         "path": "lib/presentation/auth/email_sign_in_screen.dart",
-        "sha256": "b8bad6729c6156aeb02140e81b11b75dd91702238118fb6dfe3bf8737a81f346"
+        "sha256": "5cb8ea4d22ecdea0cc8270a934226c17310c438a93493f27de896c85b78f7bf4"
       },
       {
         "path": "lib/presentation/auth/first_run_orientation_screen.dart",

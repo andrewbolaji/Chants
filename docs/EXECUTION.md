@@ -13,6 +13,19 @@ This is the chronological evidence trail for substantial engineering work. It re
 
 ## Entries
 
+### 2026-09-12T13:40:36Z Close narrow review edge cases and renew pull request 38 artifacts
+
+- **Status:** In progress. All four accepted closure-review findings are corrected and the main local verification matrix passes. Final staging, replacement Android and iOS artifacts, durable receipts, push, and exact-head CI remain.
+- **Authority:** After Claude's narrow closure review reported four low-severity findings and no release-blocking defect, Andrew replied `approved,ggo on`. This authorizes the bounded source, test, documentation, native rebuild, local handoff, commit, push-to-PR-38, and exact-head CI work. It does not authorize provider activation, production mutation, upload, merge, submission, or release.
+- **Source correction:** Email sign-in closes re-entry before awaiting listener cancellation. The signed-in gate scopes retry ownership to local-safety or profile recovery instead of sharing one flag across phases. Performance approval reconciles a reported transaction failure through a fresh authoritative draft read before deciding whether canonical-media compensation is safe. The Android helper resolves an explicit relative APK from the operator's current working directory.
+- **Verification so far:** The complete Flutter suite passes 601 tests and scoped analysis reports no issue. Functions compile and report 234 passing tests with 24 emulator-only cases pending in that process. The Java 21 Firestore and Storage rules suite passes 174 assertions, the real-Firestore suite passes 24 cases, and seed passes 87 tests plus TypeScript. The focused Android helper passes 10 tests. Store, native, governance, replacement artifact, staged, and exact-head checks remain.
+- **Boundary:** No production, provider, Hosting, DNS, account, content, media, worker, store, signing configuration, upload, submission, merge, or release state changed.
+- **Next:** Complete the staged gates, commit the runtime source boundary, rebuild and inspect both platforms from that exact commit, update durable receipts, push the receipt commit to pull request 38, and require every exact-head job to pass.
+
+### 2026-09-12T13:40:36Z Correct the preceding pull request 38 follow-up status
+
+- **Correction:** The 2026-09-12T06:35:00Z entry below remained marked in progress after its work completed. Commits `fedfe2cc2ea0d5cf2da26b3525fd15961a2ac248` and `6d004d3b00024cab568d1835a932f20de8e356b7` were pushed to pull request 38, and all eight exact-head jobs passed at `6d004d3b00024cab568d1835a932f20de8e356b7`. Its recorded replacement artifacts and durable handoff completed before the later narrow closure review opened this new entry.
+
 ### 2026-09-12T06:35:00Z Correct final independent-review findings and rebuild pull request 38
 
 - **Status:** In progress. Source corrections, the verification matrix, replacement native artifacts, durable checksums, and final staging pass; push and exact-head CI remain.

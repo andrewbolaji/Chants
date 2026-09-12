@@ -211,12 +211,19 @@ class _SignedInGateState extends ConsumerState<_SignedInGate> {
       key: ValueKey('signed-in-loading-${widget.uid}'),
       phase: phase,
       recoverImmediately: recoverImmediately,
-      onRetry: () => _retryGate(deletionInput),
+      onRetry: () => _retryGate(deletionInput, phase),
       onSignOut: ref.read(authRepositoryProvider).signOut,
     );
   }
 
-  void _retryGate(SongbookDeletionGateInput deletionInput) {
+  void _retryGate(
+    SongbookDeletionGateInput deletionInput,
+    _SignedInGatePhase phase,
+  ) {
+    if (phase == _SignedInGatePhase.localSafety) {
+      ref.invalidate(savedSongbookDeletionStateProvider(deletionInput));
+      return;
+    }
     _profileRetryTimer?.cancel();
     _profileRetryScheduled = false;
     // A written retry is itself the retry attempt. Mark it before invalidation

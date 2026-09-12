@@ -46,14 +46,15 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
   }
 
   Future<void> _signIn() async {
+    if (_loading) return;
     if (!_formKey.currentState!.validate()) return;
-    await _cancelAuthSubscription();
-    if (!mounted) return;
     _awaitingLateAuthentication = false;
     setState(() {
       _loading = true;
       _error = null;
     });
+    await _cancelAuthSubscription();
+    if (!mounted) return;
     try {
       final repository = ref.read(authRepositoryProvider);
       if (repository.currentUser != null) {

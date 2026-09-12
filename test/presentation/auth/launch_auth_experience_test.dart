@@ -298,6 +298,37 @@ void main() {
     expect(find.text('WELCOME BACK'), findsNothing);
   });
 
+  testWidgets(
+    'a timed-out retry cannot start two credential requests while cleanup yields',
+    (tester) async {
+      final repository = _UiAuthRepository()
+        ..signInCompleter = Completer<UserCredential>();
+      addTearDown(repository.authController.close);
+      await tester.pumpWidget(
+        wrap(const EmailSignInScreen(), repository: repository),
+      );
+
+      await enterEmailCredentials(tester);
+      await tester.tap(find.text('SIGN IN'));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 16));
+      expect(repository.signInCalls, 1);
+
+      await tester.tap(find.text('SIGN IN'));
+      await tester.tap(find.text('SIGN IN'));
+      expect(repository.signInCalls, 1);
+      await tester.runAsync(() => Future<void>.delayed(Duration.zero));
+      await tester.pump();
+
+      expect(repository.signInCalls, 2);
+      expect(find.text('SIGNING IN'), findsOneWidget);
+
+      repository.authController.add(_UiUser());
+      await tester.runAsync(() => Future<void>.delayed(Duration.zero));
+      await tester.pump();
+    },
+  );
+
   testWidgets('rejected email credential restores the form', (tester) async {
     final repository = _UiAuthRepository()
       ..signInError = FirebaseAuthException(code: 'wrong-password');
