@@ -37,7 +37,7 @@ jobs:
       - name: Test club crest provenance and binaries
         run: node --test scripts/test-api-football-crests.mjs
       - name: Test local device preparation and walkthrough guide
-        run: node --test scripts/test-device-readiness.mjs scripts/test-launch-guide.mjs scripts/test-launch-policy.mjs scripts/test-public-landing-page.mjs
+        run: node --test scripts/test-device-readiness.mjs scripts/test-prepare-android-device.mjs scripts/test-launch-guide.mjs scripts/test-launch-policy.mjs scripts/test-public-landing-page.mjs
 
   flutter-test:
     runs-on: ubuntu-latest
