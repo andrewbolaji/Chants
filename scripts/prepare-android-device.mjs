@@ -8,9 +8,9 @@ import { spawnSync } from 'node:child_process';
 
 const repoRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 export const candidate = Object.freeze({
-  sourceAnchor: '7c86ca9713a2beea208110d705fd86fbd6dce1b5',
+  sourceAnchor: 'fedfe2cc2ea0d5cf2da26b3525fd15961a2ac248',
   apkPath: 'build/app/outputs/flutter-apk/app-release.apk',
-  apkSha256: 'f30c55a408bc0fadc5c2cbb90975005e2ea3fd470b408e6e71393031a88a3cc9',
+  apkSha256: 'b5eb1cca78069f25574aec4b9f6d1b659a68698775451bc07ca7adef58f14151',
   packageName: 'com.chants.chants',
   versionName: '1.0.0',
   versionCode: '1',

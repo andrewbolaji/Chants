@@ -28,6 +28,12 @@ No provider was enabled. No production, store, signing, deployment, merge, or re
 - The store packet passes in honest prepared and not-submitted state, and all 20 store regressions pass.
 - Native-project and launch-services checks pass. The iOS plist is syntactically valid.
 
+## Replacement release artifacts
+
+- Runtime source commit `fedfe2cc2ea0d5cf2da26b3525fd15961a2ac248` produced a 65,374,710-byte signed Android AAB with SHA-256 `b19015b6572629177d22f46ca4074474ddd2c2b18a19dbfc82de084eb5765b1f` and a 64,095,075-byte signed APK with SHA-256 `b5eb1cca78069f25574aec4b9f6d1b659a68698775451bc07ca7adef58f14151`. Package, version, SDK, complete permissions, upload certificate, AAB JAR signature, APK v2 signature, and 16 KB ZIP alignment checks pass.
+- The same source produced a 537,714,688-allocated-byte iOS archive with content-tree SHA-256 `131450bdeff907730948815c8803a69cf1d3ec56e527f18e1917b16a9b4c565c` and a 51,695,398-byte App Store IPA with SHA-256 `9a2ebb076df62d7abded2002f20d31eddeb35096ee54a2559bb7e0545aa47d9a`. ZIP integrity, strict deep signature, arm64, identity, version, minimum OS, distribution profile, privacy flags, and exact entitlement checks pass.
+- Hash-verified copies of the APK, AAB, and IPA replace the older files in the sibling `Chants-v1-release-handoff` directory. Nothing was uploaded or submitted.
+
 ## Remaining gates
 
-Fresh Android APK and AAB artifacts and a fresh App Store-signed iOS archive and IPA must be built from the corrected source, inspected, and copied into the durable local handoff with replacement receipts. The final staged packet must pass governance checks, then the focused commits may be pushed to pull request 38 and exact-head CI must pass. A new physical iPhone or Android walkthrough is not part of this source-only correction and remains required for the rebuilt candidate where applicable.
+The final staged packet passes governance checks. The focused commits may now be pushed to pull request 38, where exact-head CI must pass. A new physical iPhone or Android walkthrough is not part of this source-only correction and remains required for the rebuilt candidate where applicable.

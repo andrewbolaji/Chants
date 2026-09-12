@@ -22,6 +22,7 @@ test('guide states the current release candidate status, physical-phone boundary
   assert.match(html, /3066474/);
   assert.match(html, /34667543812/);
   assert.match(html, /PR 38 exact-head CI passed/);
+  assert.match(html, /Follow-up CI required before merge/);
   assert.match(html, /iPhone walk passed/);
   assert.match(html, /Android install preflight ready/);
   assert.match(html, /Private media canary passed/);
@@ -29,11 +30,11 @@ test('guide states the current release candidate status, physical-phone boundary
   assert.match(html, /Fresh signed artifacts rebuilt/);
   assert.match(html, /Fresh corrected signed release AAB and APK artifacts were rebuilt/);
   assert.match(html, /fresh corrected App Store-signed IPA was rebuilt/i);
-  assert.match(html, /bf937418a468cafe4ecc0b20f6fa8be2e20069a63bb1cd4d9479eff57f705502/);
-  assert.match(html, /f30c55a408bc0fadc5c2cbb90975005e2ea3fd470b408e6e71393031a88a3cc9/);
-  assert.match(html, /prepare-android-device\.mjs --install --json/);
-  assert.match(html, /3976481a00273d1e45d905aec4be30864f317162ea7e06b559f7f0edabca1fb4/);
-  assert.match(html, /84cdf14451e8695f6a27ae97598b0d7ceaf67821237e12365074ba9f92b20741/);
+  assert.match(html, /b19015b6572629177d22f46ca4074474ddd2c2b18a19dbfc82de084eb5765b1f/);
+  assert.match(html, /b5eb1cca78069f25574aec4b9f6d1b659a68698775451bc07ca7adef58f14151/);
+  assert.match(html, /prepare-android-device\.mjs --apk \.\.\/Chants-v1-release-handoff\/Chants-1\.0\.0-1-release\.apk --install --json/);
+  assert.match(html, /9a2ebb076df62d7abded2002f20d31eddeb35096ee54a2559bb7e0545aa47d9a/);
+  assert.match(html, /131450bdeff907730948815c8803a69cf1d3ec56e527f18e1917b16a9b4c565c/);
   assert.match(html, /one physical iPhone and one physical Android phone/);
   assert.match(html, /locally exported IPA does not count as TestFlight proof/);
   assert.match(html, /Play Integrity and App Attest evidence must come from valid signed store traffic/);
@@ -42,7 +43,7 @@ test('guide states the current release candidate status, physical-phone boundary
   assert.match(html, /generation 35 in maintenance mode, with destructive workers false/);
   assert.match(html, /one private canary object and matching pending-review draft remain/i);
   assert.match(html, /The consolidated independent review is complete/);
-  assert.match(html, /complete local Flutter suite passes 596 tests/);
+  assert.match(html, /complete local Flutter suite passes 599 tests/);
   assert.match(html, /No accepted finding remains unresolved/);
   assert.doesNotMatch(html, /exact-head replacement CI remains required/);
   assert.doesNotMatch(html, /Claude review sign-in needed|local CLI is signed out|No independent review result is claimed/);
