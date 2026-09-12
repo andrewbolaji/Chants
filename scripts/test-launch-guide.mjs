@@ -30,11 +30,11 @@ test('guide states the current release candidate status, physical-phone boundary
   assert.match(html, /Fresh signed artifacts rebuilt/);
   assert.match(html, /Fresh corrected signed release AAB and APK artifacts were rebuilt/);
   assert.match(html, /fresh corrected App Store-signed IPA was rebuilt/i);
-  assert.match(html, /b19015b6572629177d22f46ca4074474ddd2c2b18a19dbfc82de084eb5765b1f/);
-  assert.match(html, /b5eb1cca78069f25574aec4b9f6d1b659a68698775451bc07ca7adef58f14151/);
+  assert.match(html, /1dd1baa6406f8976d46e03c6036b03c21c2b5f24933358ba8570dd8c76956a44/);
+  assert.match(html, /cf6bada848fc759df9e2e5ef3114e96d6f444819bd41274668cb24fea6a1a985/);
   assert.match(html, /prepare-android-device\.mjs --apk \.\.\/Chants-v1-release-handoff\/Chants-1\.0\.0-1-release\.apk --install --json/);
-  assert.match(html, /9a2ebb076df62d7abded2002f20d31eddeb35096ee54a2559bb7e0545aa47d9a/);
-  assert.match(html, /131450bdeff907730948815c8803a69cf1d3ec56e527f18e1917b16a9b4c565c/);
+  assert.match(html, /9104f1e62b80a95466587abb2b33b23af91f0830ef127e15fd94351cfe5901dd/);
+  assert.match(html, /c5d1c6260d5812ad9ee7705aedf378f199e5b13e95e4af081782402dccb8c2c4/);
   assert.match(html, /one physical iPhone and one physical Android phone/);
   assert.match(html, /locally exported IPA does not count as TestFlight proof/);
   assert.match(html, /Play Integrity and App Attest evidence must come from valid signed store traffic/);
@@ -42,8 +42,8 @@ test('guide states the current release candidate status, physical-phone boundary
   assert.match(html, /recorded as <strong>Blocked<\/strong>/);
   assert.match(html, /generation 35 in maintenance mode, with destructive workers false/);
   assert.match(html, /one private canary object and matching pending-review draft remain/i);
-  assert.match(html, /The consolidated independent review is complete/);
-  assert.match(html, /complete local Flutter suite passes 599 tests/);
+  assert.match(html, /The consolidated independent review and narrow closure review are complete/);
+  assert.match(html, /complete local Flutter suite passes 601 tests/);
   assert.match(html, /No accepted finding remains unresolved/);
   assert.doesNotMatch(html, /exact-head replacement CI remains required/);
   assert.doesNotMatch(html, /Claude review sign-in needed|local CLI is signed out|No independent review result is claimed/);

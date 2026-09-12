@@ -14,6 +14,8 @@
 
 **Closure-review follow-up approval:** After the first follow-up reached exact head `6d004d3b00024cab568d1835a932f20de8e356b7` with all eight clean-runner jobs passing, Andrew supplied the narrow Claude closure review and approved applying its four findings, rebuilding, and rerunning CI. This covers immediate sign-in re-entry protection, phase-scoped signed-in recovery, approval reconciliation after an ambiguous transaction result, and current-working-directory resolution for an explicit Android APK. It retains the same no-production, no-provider, no-upload, no-merge, and no-release boundary.
 
+**Closure packaging receipt:** Runtime source `02179bbb879d525403ba25679fb1545201ecedab` passes the full local matrix and produced fresh signed Android and App Store artifacts. The release records bind the exact sizes and SHA-256 values to that source. A receipt-only commit, push to pull request 38, and exact-head CI remain required before merge consideration.
+
 **Owner:** Andrew, through ThunderRiver Tech LLC
 
 **Lane:** 2, local release packaging, artifact verification, and review closure
