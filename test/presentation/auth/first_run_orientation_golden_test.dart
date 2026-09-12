@@ -45,6 +45,13 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await tester.runAsync(
+      () => precacheImage(
+        const AssetImage('assets/icon/splash.png'),
+        tester.element(find.byType(FirstRunOrientationScreen)),
+      ),
+    );
+    await tester.pumpAndSettle();
 
     await expectLater(
       find.byType(MaterialApp),

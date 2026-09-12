@@ -29,6 +29,13 @@ class _UiAuthRepository extends Mock implements AuthRepository {
   User? user;
   int reloadCalls = 0;
   int phoneSendCalls = 0;
+  int signInCalls = 0;
+  Object? signInError;
+  Completer<UserCredential>? signInCompleter;
+  final authController = StreamController<User?>.broadcast();
+
+  @override
+  Stream<User?> get authStateChanges => authController.stream;
 
   @override
   User? get currentUser => user;
@@ -46,6 +53,17 @@ class _UiAuthRepository extends Mock implements AuthRepository {
 
   @override
   Future<bool> sendEmailVerification() async => verificationRequested;
+
+  @override
+  Future<UserCredential> signIn({
+    required String email,
+    required String password,
+  }) {
+    signInCalls += 1;
+    final error = signInError;
+    if (error != null) return Future.error(error);
+    return signInCompleter?.future ?? Future.value(_UiUserCredential());
+  }
 
   @override
   Future<void> sendMagicLink({
@@ -86,6 +104,26 @@ class _UiUser extends Mock implements User {
   final bool emailVerified = false;
   @override
   final List<UserInfo> providerData = const [];
+}
+
+class _UiUserCredential extends Mock implements UserCredential {}
+
+class _EmailRouteHost extends StatelessWidget {
+  const _EmailRouteHost();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: TextButton(
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(builder: (_) => const EmailSignInScreen()),
+          ),
+          child: const Text('OPEN EMAIL SIGN IN'),
+        ),
+      ),
+    );
+  }
 }
 
 class _UnusedPreferences implements SharedPreferencesAsync {
@@ -145,6 +183,7 @@ void main() {
   testWidgets('welcome keeps unconfigured providers invisible', (tester) async {
     await tester.pumpWidget(wrap(const SignInScreen()));
 
+    expect(find.byKey(const Key('sign-in-supporter-mark')), findsOneWidget);
     expect(find.text('CONTINUE WITH EMAIL'), findsOneWidget);
     expect(find.text('CREATE ACCOUNT'), findsOneWidget);
     expect(find.text('CONTINUE WITH APPLE'), findsNothing);
@@ -155,6 +194,98 @@ void main() {
     expect(find.text('COMMUNITY'), findsOneWidget);
     expect(find.text('SUPPORT'), findsOneWidget);
     expect(find.text('HELP & POLICIES'), findsOneWidget);
+  });
+
+  Future<void> enterEmailCredentials(WidgetTester tester) async {
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Email'),
+      'fan@example.com',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Password'),
+      'right-password',
+    );
+  }
+
+  testWidgets('accepted email credential dismisses its pushed route', (
+    tester,
+  ) async {
+    final repository = _UiAuthRepository();
+    addTearDown(repository.authController.close);
+    await tester.pumpWidget(
+      wrap(const _EmailRouteHost(), repository: repository),
+    );
+
+    await tester.tap(find.text('OPEN EMAIL SIGN IN'));
+    await tester.pumpAndSettle();
+    await enterEmailCredentials(tester);
+    await tester.tap(find.text('SIGN IN'));
+    await tester.pumpAndSettle();
+
+    expect(repository.signInCalls, 1);
+    expect(find.text('OPEN EMAIL SIGN IN'), findsOneWidget);
+    expect(find.text('WELCOME BACK'), findsNothing);
+  });
+
+  testWidgets('auth-state acceptance releases a delayed email sign-in', (
+    tester,
+  ) async {
+    final repository = _UiAuthRepository()
+      ..signInCompleter = Completer<UserCredential>();
+    addTearDown(repository.authController.close);
+    await tester.pumpWidget(
+      wrap(const _EmailRouteHost(), repository: repository),
+    );
+
+    await tester.tap(find.text('OPEN EMAIL SIGN IN'));
+    await tester.pumpAndSettle();
+    await enterEmailCredentials(tester);
+    await tester.tap(find.text('SIGN IN'));
+    await tester.pump();
+    expect(find.text('SIGNING IN'), findsOneWidget);
+
+    repository.authController.add(_UiUser());
+    await tester.pumpAndSettle();
+
+    expect(find.text('OPEN EMAIL SIGN IN'), findsOneWidget);
+    expect(find.text('SIGNING IN'), findsNothing);
+  });
+
+  testWidgets('stalled email sign-in restores a written retry state', (
+    tester,
+  ) async {
+    final repository = _UiAuthRepository()
+      ..signInCompleter = Completer<UserCredential>();
+    addTearDown(repository.authController.close);
+    await tester.pumpWidget(
+      wrap(const EmailSignInScreen(), repository: repository),
+    );
+
+    await enterEmailCredentials(tester);
+    await tester.tap(find.text('SIGN IN'));
+    await tester.pump();
+    expect(find.text('SIGNING IN'), findsOneWidget);
+
+    await tester.pump(const Duration(seconds: 16));
+
+    expect(find.text('SIGN IN'), findsOneWidget);
+    expect(find.textContaining('taking too long'), findsOneWidget);
+  });
+
+  testWidgets('rejected email credential restores the form', (tester) async {
+    final repository = _UiAuthRepository()
+      ..signInError = FirebaseAuthException(code: 'wrong-password');
+    addTearDown(repository.authController.close);
+    await tester.pumpWidget(
+      wrap(const EmailSignInScreen(), repository: repository),
+    );
+
+    await enterEmailCredentials(tester);
+    await tester.tap(find.text('SIGN IN'));
+    await tester.pump();
+
+    expect(find.text('SIGN IN'), findsOneWidget);
+    expect(find.textContaining('Wrong email or password'), findsOneWidget);
   });
 
   testWidgets('signed-out welcome reaches all six launch documents', (

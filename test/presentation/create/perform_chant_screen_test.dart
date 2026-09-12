@@ -88,6 +88,7 @@ Widget _wrap({
   required _Selector selector,
   required PerformanceDraftRepository repository,
   CreatorProfile? creator,
+  Chant? chant,
 }) {
   return ProviderScope(
     overrides: [
@@ -101,7 +102,7 @@ Widget _wrap({
     child: MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ChantTheme.dark,
-      home: PerformChantScreen(chant: _chant),
+      home: PerformChantScreen(chant: chant ?? _chant),
     ),
   );
 }
@@ -857,16 +858,23 @@ void main() {
         selector: _Selector(),
         creator: _creator(),
         repository: _repository(calls: []),
+        chant: _chant.copyWith(status: 'canonical'),
       ),
     );
     await tester.pumpAndSettle();
 
     expect(find.text('POSTING AS'), findsOneWidget);
     expect(find.text('@northbankleo'), findsOneWidget);
-    expect(
-      tester.getSize(find.byKey(const Key('performance-posting-handle'))).width,
-      greaterThan(100),
+    final handleSize = tester.getSize(
+      find.byKey(const Key('performance-posting-handle')),
     );
+    final chipSize = tester.getSize(
+      find.byKey(const Key('performance-posting-handle-chip')),
+    );
+    expect(chipSize.width, lessThan(handleSize.width + 24));
+    expect(chipSize.height, lessThanOrEqualTo(34));
+    expect(find.textContaining('Verified as sung at matches'), findsOneWidget);
+    expect(find.byIcon(Icons.verified_outlined), findsOneWidget);
     await expectLater(
       find.byType(MaterialApp),
       matchesGoldenFile(platformGoldenPath('goldens/perform_chant_entry.png')),

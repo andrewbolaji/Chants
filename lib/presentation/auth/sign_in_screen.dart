@@ -228,31 +228,27 @@ class _WelcomeMark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      crossAxisAlignment: WrapCrossAlignment.center,
-      spacing: Spacing.md,
-      runSpacing: Spacing.sm,
+    return Row(
       children: [
-        Container(
-          width: 42,
-          height: 42,
-          decoration: BoxDecoration(
-            color: AppColors.gold,
-            borderRadius: BorderRadius.circular(Radii.md),
-          ),
-          child: const Icon(
-            Icons.graphic_eq,
-            color: AppColors.goldOnDark,
-            size: 26,
+        ExcludeSemantics(
+          child: Image.asset(
+            'assets/icon/splash.png',
+            key: const Key('sign-in-supporter-mark'),
+            width: 44,
+            height: 44,
+            fit: BoxFit.contain,
           ),
         ),
-        const Text(
-          'CHANTS',
-          style: TextStyle(
-            fontFamily: 'Anton',
-            fontSize: 26,
-            color: AppColors.textHeadline,
-            letterSpacing: 1.5,
+        const SizedBox(width: Spacing.md),
+        const Expanded(
+          child: Text(
+            'CHANTS',
+            style: TextStyle(
+              fontFamily: 'Anton',
+              fontSize: 26,
+              color: AppColors.textHeadline,
+              letterSpacing: 1.5,
+            ),
           ),
         ),
       ],

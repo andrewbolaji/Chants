@@ -65,6 +65,8 @@
       "lib/presentation/feed/chant_stage_screen.dart",
       "lib/presentation/saved/saved_songbook_screen.dart",
       "lib/presentation/shared/club_crest.dart",
+      "lib/presentation/shared/club_signal.dart",
+      "lib/presentation/shared/gold_foil_badge.dart",
       "lib/presentation/shared/vote_controls.dart",
       "lib/presentation/submit/submit_chant_screen.dart",
       "pubspec.lock",
@@ -187,11 +189,11 @@
       },
       {
         "path": "lib/app/app.dart",
-        "sha256": "439c8cbd2ceaddc36ce82d8328f70c7429c6e2ed87234a5c4f2d228f581b1d4a"
+        "sha256": "9a626598b7cd809ac2a7e631a68ab4c1525c0a95423c1a19fe5934e9724cd04e"
       },
       {
         "path": "lib/app/colors.dart",
-        "sha256": "2a2b7a4003ed388296e9b0c3d3183a714b28eb2da92c4dbae690b134e43aa981"
+        "sha256": "27853e0667844e82aae602a94ec9f6d8bfe220e356b5fd8a72c278d72244719c"
       },
       {
         "path": "lib/app/providers.dart",
@@ -207,11 +209,11 @@
       },
       {
         "path": "lib/presentation/auth/email_sign_in_screen.dart",
-        "sha256": "0ceb4c0eff32a5e750becb8f5022345032df2119ffead3404153544d5bdcfd2b"
+        "sha256": "c070e83d289eb21691a1eef71dbbb3f702686a4d7b4dedaf748ed16a30447389"
       },
       {
         "path": "lib/presentation/auth/first_run_orientation_screen.dart",
-        "sha256": "146456f00bbd7393cf6d1d1ba2b5c2760bfe47ac03959183615898b7f78b676d"
+        "sha256": "a9eb858777580bf09e4665b119d28914f49a36a943611567f379c98d0c15290d"
       },
       {
         "path": "lib/presentation/auth/launch_reveal_screen.dart",
@@ -223,7 +225,7 @@
       },
       {
         "path": "lib/presentation/auth/sign_in_screen.dart",
-        "sha256": "cb6d861c9eb61e42e907da6f30eee3dd453ce68a421aa7b3abd235387bb64163"
+        "sha256": "0fc560c257cb8d40a025c48ca1bb2bbf57c25a978f866bf018b9bf0e6d2ce1c0"
       },
       {
         "path": "lib/presentation/auth/sign_up_screen.dart",
@@ -231,19 +233,19 @@
       },
       {
         "path": "lib/presentation/browse/chant_call_up_card.dart",
-        "sha256": "dda43421ced09fc0ffba018d87295efb4036742f43d26b77d4655a25b40f4064"
+        "sha256": "6aed2ded59c0511cc9c563ab994c37869f3ce5cec949ec4129afa468c57c7488"
       },
       {
         "path": "lib/presentation/browse/competition_screen.dart",
-        "sha256": "23fc4e2dd5369cac39f2b9e0a878402bd84c9d8fcc6d2106fc69f89a2c981cc8"
+        "sha256": "30e432e266e87d9b09cec29257325b34cd2a7565c998eb847807f333aa272fac"
       },
       {
         "path": "lib/presentation/browse/team_screen.dart",
-        "sha256": "1efb3158e030dd674933ffdbd75882669f3873ff1a59b40d86ca0a80c71bb6ce"
+        "sha256": "ff4d44b71625167e0c33b424e8f89620a097a4f2011b986b93a49c5b46422895"
       },
       {
         "path": "lib/presentation/create/perform_chant_screen.dart",
-        "sha256": "d8ec2541a96f046d5dc31742ba8520828cbbf55db2e279415c949287d66cc73b"
+        "sha256": "862e584b992578532d0b46091b6e85b455cb82975f9ec8e1caff1d552256f811"
       },
       {
         "path": "lib/presentation/feed/chant_stage_screen.dart",
@@ -256,6 +258,14 @@
       {
         "path": "lib/presentation/shared/club_crest.dart",
         "sha256": "63952a4ffbdc6fe2b8781257199274e6758c1efaa9496a52ce352d7a603ba106"
+      },
+      {
+        "path": "lib/presentation/shared/club_signal.dart",
+        "sha256": "bf88789506c67448be22c51f576fa6ecd416bc714a17c50c6fda4b60300f70bc"
+      },
+      {
+        "path": "lib/presentation/shared/gold_foil_badge.dart",
+        "sha256": "a1eee91a24f77ca361392301f1f18f31b9e66f5ab117144749b9176bb7dd8375"
       },
       {
         "path": "lib/presentation/shared/vote_controls.dart",

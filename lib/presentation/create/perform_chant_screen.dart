@@ -315,9 +315,9 @@ class _PerformChantScreenState extends ConsumerState<PerformChantScreen> {
                 ChantProvenanceLabel(chant: widget.chant),
                 const SizedBox(height: Spacing.sm),
                 const Text(
-                  'Performing it does not make it Terrace Proven. That trust '
-                  'label still comes from real-world evidence and operator '
-                  'review.',
+                  'Verified as sung at matches through accepted evidence and '
+                  'operator review. Your performance here does not change '
+                  'that status.',
                   style: TextStyle(color: AppColors.textMuted),
                 ),
                 const SizedBox(height: Spacing.xl),
@@ -341,13 +341,14 @@ class _PerformChantScreenState extends ConsumerState<PerformChantScreen> {
                             ),
                           ),
                           Container(
+                            key: const Key('performance-posting-handle-chip'),
                             padding: const EdgeInsets.symmetric(
-                              horizontal: Spacing.md,
-                              vertical: Spacing.sm,
+                              horizontal: 10,
+                              vertical: 5,
                             ),
                             decoration: BoxDecoration(
                               color: AppColors.surface,
-                              borderRadius: BorderRadius.circular(Radii.sm),
+                              borderRadius: BorderRadius.circular(10),
                               border: Border.all(
                                 color: AppColors.gold,
                                 width: 0.5,
@@ -358,7 +359,7 @@ class _PerformChantScreenState extends ConsumerState<PerformChantScreen> {
                               key: const Key('performance-posting-handle'),
                               style: const TextStyle(
                                 fontFamily: 'Nunito',
-                                fontSize: 16,
+                                fontSize: 15,
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.textHeadline,
                               ),

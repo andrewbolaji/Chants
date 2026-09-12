@@ -1,0 +1,33 @@
+# Physical-device walk corrections
+
+## Outcome
+
+The completed iPhone release-candidate walk now has a bounded correction pass for the issues Andrew observed in hand: calmer first-run panels, official supporter-shield branding on the signed-out welcome, specific fail-closed recovery after authentication, dark Club Signal continuity, a content-sized posting identity, and a compact Terrace Proven badge with plain-language meaning.
+
+## Owner observations and decisions
+
+- The three-step orientation worked after a clean start and horizontal swiping was accepted, but the translucent controls and step-three color treatment felt visually synthetic. The panels now use one solid charcoal surface, a flat gold icon, a quiet written step cue, and a softly faded full-panel dot field derived from the launch atmosphere. Each short action phrase is anchored near the panel base so the three cards share one deliberate visual rhythm.
+- The official supporter shield remains in the orientation header and is now the signed-out welcome's single left-hand brand mark beside written `CHANTS`. The temporary waveform tile and duplicate far-edge shield are removed.
+- The first correction stopped a credential request from spinning forever on the email form. The confirmation walk then proved a second wait could remain indefinite after the accepted account reached the root profile and deletion-state gate. A production read-only inspection found the test account enabled and its profile structurally coherent. Current source therefore treats a first profile-listener failure as a likely transient: it retries that source once after 650 milliseconds, then immediately presents profile-specific Try Again and Sign Out recovery if the retry fails. A silent profile or device-safety read still waits at most 15 seconds before presenting phase-specific recovery. Deletion safety remains first, the gate remains fail-closed, and no unresolved account reaches the product shell.
+- Clubs looked disconnected from the rest of the release candidate on a warm paper field. In-app Club Signal now uses the shared black canvas and charcoal reading surfaces while preserving the calmer utility hierarchy and club crests.
+- The `@handle` identity chip was larger than its job. It is now content sized and aligned with `POSTING AS`.
+- The diagonal Terrace Proven strip competed with the screen and the label needed an explanation. It is now a compact unrotated verified badge, followed by copy that explains it as accepted evidence the chant has been sung at matches. The branded label remains useful, but it no longer has to explain itself.
+
+## Boundary
+
+No provider, Firebase console, backend, production, moderation, private media, public site, store, release, identifier, dependency, or native capability changed. Apple, Google, Facebook, passwordless email, and email-password release enablement remain a later provider gate. A V1.1 roadmap item now evaluates an optional operating-system biometric or device-credential unlock around a securely retained session, with normal sign-in and recovery retained; it does not create an app PIN or store passwords or biometric data. The public site's older light Club Signal illustration is not current-app evidence and needs a separate refresh before final store or launch presentation.
+
+## Verification contract
+
+- Authentication regressions cover ordinary credential success, an authentication-state event arriving before a delayed credential future, timeout recovery, credential rejection, root-route dismissal, a stalled signed-in account gate, the single automatic profile retry, immediate profile-specific recovery after its failure, provider reload, and sign out from recovery.
+- Representative orientation, sign-in, Clubs, club detail, saved Songbook, and performance screens have current 390 by 844 references.
+- Dark Club Signal, the content-sized handle, the unrotated badge, and the plain trust explanation have focused widget assertions in addition to visual references.
+- The latest changed onboarding and signed-in gate set passes 45 tests, the complete Flutter suite passes all 596 tests, scoped analysis reports no issue, and the live store validator plus all 20 store regressions pass.
+- The replacement Android AAB is 65,372,439 bytes with SHA-256 `bf937418a468cafe4ecc0b20f6fa8be2e20069a63bb1cd4d9479eff57f705502`. The replacement APK is 64,095,075 bytes with SHA-256 `f30c55a408bc0fadc5c2cbb90975005e2ea3fd470b408e6e71393031a88a3cc9`. ZIP integrity passes for both artifacts. The APK reports `com.chants.chants`, version `1.0.0`, code `1`, minimum SDK 24, and target SDK 36. APK v2 and AAB JAR verification pass with the existing upload-certificate SHA-256 `8277987e342dc5a2de3f2a96c36ce11efe5c33a66582cfd2f00953a0daf2fc55`. No Advertising ID or Privacy Sandbox ad-services permission is present.
+- The previously recorded 67.2 MB iOS release-mode `Runner.app` with content-tree SHA-256 `140783c2b7cfe5069719b47376e92794ce18f3adc39ab67fcb51f097781e192a` likewise predates this correction. A replacement device build, installation over the existing app, and visible result are required before closure.
+- The replacement 67.3 MB arm64 iOS release-mode `Runner.app` reports `com.chants.chants`, version `1.0.0`, build `1`, and content-tree SHA-256 `ca14df6eb0225f8bf2590339cf3e430f4e51ed7d08b77c2985a91e3eaf81cf11`. It was installed over the existing phone copy to preserve account state and launched successfully. Andrew confirmed the retained signed-in account entered Chants quickly, without another spinner or recovery screen.
+- The exact 43-path staged boundary passes project memory, writing style, governance regressions, native-project, iOS startup, launch-services, device-readiness, store-packet, store-regression, and whitespace checks. The authorized focused push and exact-head clean-runner CI remain the completion gates for this source change. Physical Android proof remains a separate device gate.
+
+## Authority
+
+Andrew completed the device walk, approved all proposed visual corrections, and asked to start fixing the pinned notes. Pull request 38 may receive the bounded extension already authorized, but merge, provider activation, store upload, submission, production mutation, and release remain separate gates.

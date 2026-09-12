@@ -1,10 +1,14 @@
 # Change spec: Final candidate freeze, native rebuild, and consolidated review
 
-**Status:** Approved; pull request 38 is extended on 2026-09-11 with a bounded first-run orientation before merge consideration
+**Status:** Approved; pull request 38 is extended on 2026-09-11 with the bounded first-run orientation and physical-device correction pass before merge consideration
 
 **Owner approval:** Andrew replied `ok next phase` after the phase was defined as freezing the exact source, rebuilding Android and iOS, running the consolidated review, resolving accepted findings, and completing exact-head verification.
 
 **Extension approval:** After exact-head pull-request CI passed, Andrew asked for a light, logical, beautiful, skippable V1 onboarding that can jump directly to account creation and approved adding it to pull request 38 before merge.
+
+**Presentation refinement approval:** After inspecting the first rebuilt-phone orientation, Andrew approved horizontal drag navigation, the official supporter-shield mark in the header, quieter secondary action treatment, tighter copy, and a calmer, more refined visual hierarchy before repeating the device walk.
+
+**Physical-device correction approval:** After completing the rebuilt-phone walk, Andrew approved the proposed onboarding polish and asked to begin the pinned release fixes. The observed scope is the stalled successful email sign-in route, the later stalled signed-in account gate, calmer onboarding panels, one clear supporter mark on the sign-in welcome, dark Club Signal continuity, a smaller inline posting identity, and a compact Terrace Proven badge with plain-language meaning.
 
 **Owner:** Andrew, through ThunderRiver Tech LLC
 
@@ -20,6 +24,7 @@
 4. Run one consolidated review of the direct tree difference from Claude-reviewed PR 37 pre-correction tree `5a95c93d0749796af65dc6c9a43707944dc66855` through the frozen candidate.
 5. Resolve accepted in-scope findings, rerun the complete local verification matrix, and leave the reviewed candidate ready for an explicitly authorized commit, push, and clean-runner CI gate.
 6. Add one device-local first-run orientation that teaches only Songbook, Chant Lab, and Stage, can be skipped from every step, links directly to account creation, and never changes authentication or account authority.
+7. Resolve the bounded presentation and route-completion defects reproduced during the physical iPhone walk without changing provider, backend, production, or moderation authority.
 
 ## Included
 
@@ -36,7 +41,13 @@
 11. Update `docs/EXECUTION.md`, `docs/INTERFACE.md`, `docs/ROADMAP.md`, the command center, the completed-change rationale, and the repository rationale only where the frozen candidate makes their current-state statements stale.
 12. Show the orientation only to a signed-out installation that has not completed or skipped its versioned V1 guide. Keep the existing sign-in welcome as the destination after Skip or Continue, and keep the verified-account profile setup as a separate required gate.
 13. Persist completion locally with a versioned, nonidentifying flag. If that local read fails, fail open to sign-in. If the completion write fails, let the current session continue so orientation storage cannot trap a supporter.
-14. Keep Skip, Next, Continue to Sign In, and Create Account written and reachable. Give each step a semantic heading, position announcement, concise product truth, and a layout that scrolls safely at narrow widths and enlarged text.
+14. Keep Skip, Next, Continue to Sign In, and Create Account written and reachable. Give each step a semantic heading, position announcement, concise product truth, horizontal swipe navigation, and its own vertical overflow path at narrow widths and enlarged text. Keep the official supporter-shield mark visible beside `CHANTS`, preserve `SKIP` at the opposite edge, and keep the primary and account actions anchored while page content moves.
+15. Replace the onboarding panel's ghost numerals, translucent accent fills, and outlined micro-cards with one solid charcoal panel, one flat icon treatment, one quiet written cue, one restrained lower dot field derived from the launch atmosphere, and one consistent supporter-gold accent. Keep the official supporter shield and all established navigation behavior.
+16. Use the small supporter shield as the sign-in welcome's single left-hand brand mark beside written `CHANTS`. Remove the temporary waveform tile and duplicate far-edge shield without weakening method hierarchy or narrow-width wrapping.
+17. Treat a successful email and password authentication as route completion. Dismiss the pushed email route to the root account gate, tolerate an authentication state that arrives before a delayed repository future, and restore a written retry state on timeout or failure.
+18. Move Club Signal's in-app club and Songbook surfaces from warm paper to the shared dark Chants canvas while preserving crest-led identification, hierarchy, rows, routes, data, and recovery behavior. The public site and historical store evidence remain unchanged until their separately scoped refresh.
+19. Render the performance posting identity as a content-sized inline chip. Replace the rotated gold Terrace Proven strip with a compact level badge and explain it in plain language as verified evidence that the chant has been sung at matches. A performance never changes that trust state.
+20. Bound the signed-in root gate while it waits for the first verified profile and saved-deletion-state result. After 15 seconds, remain outside the product shell and present written Try Again and Sign Out actions. Retry must reload both account sources and sign out must retain its own bounded failure recovery.
 
 ## Excluded
 
@@ -46,6 +57,7 @@
 - Another performance upload or reuse, review, preview, download, moderation, publication, or deletion of the private canary.
 - Dependency upgrades, CocoaPods-to-SwiftPM migration, Gradle migration, identifier change, version or build-number change, new permission, signing-material change, or new native capability unless a reproduced release blocker receives separate approval.
 - Implementation of the supporter timeline, text posts, reposts, ranking, new feed schemas, new social graph behavior, or related moderation systems.
+- Enabling Apple, Google, Facebook, magic-link, phone, or any other Firebase provider; changing provider console, entitlement, URL-scheme, callback, secret, key, or production configuration. The already requested Apple, Google, Facebook, magic-link, and email-password release setup remains a later independent gate.
 - Rewriting unrelated user work, deleting ignored local state, bulk formatting, or normalizing goldens without a reproduced visual reason.
 
 ## Acceptance criteria
@@ -62,7 +74,11 @@
 10. The resulting staged candidate is committed and pushed only as the focused orientation extension Andrew requested for pull request 38. Clean-runner exact-head CI passes before merge consideration. Merge remains a separate explicit gate.
 11. A fresh signed-out installation reaches the three-step orientation after the launch reveal. Skip works from every step, Create Account reaches the existing signup route, Continue reaches the existing sign-in welcome, and all three exits mark the V1 guide complete for later launches.
 12. Signed-in users, verified-account profile onboarding, policy admission, deletion recovery, provider configuration, and server authority remain unchanged. Local preference read or write failure cannot block sign-in.
-13. Focused tests cover first install, repeat launch, every exit, storage failure, reduced motion, semantics, 390 by 844 presentation, 320-pixel width, and enlarged text. The full Flutter suite and exact-head CI pass after the extension.
+13. Focused tests cover first install, repeat launch, every exit, storage failure, reduced motion, semantics, horizontal swipe in both directions, official brand-asset use, 390 by 844 presentation, 320-pixel width, vertical overflow, and enlarged text. The full Flutter suite and exact-head CI pass after the extension.
+14. The refined orientation goldens contain no ghost step numeral or coral panel, and the sign-in welcome contains the supporter-shield mark at representative and narrow phone widths.
+15. Email sign-in tests prove immediate success, delayed auth-state success, timeout recovery, invalid credentials, and post-success root-route dismissal without trapping the fan behind a spinner.
+16. Representative Club Signal goldens use the shared dark canvas and remain readable at 390 by 844, 320-pixel width, and enlarged text. Route, query, crest, save, and vote behavior is unchanged.
+17. The posting identity stays content sized, the Terrace Proven badge is unrotated, and adjacent copy says what the trust state means without implying club endorsement, correctness, or automatic promotion.
 
 ## Recovery
 
@@ -96,3 +112,6 @@ After the staged orientation extension, rebuilt artifacts, and local verificatio
 - The first-run orientation extension passes 45 focused repository, interaction, gate, failure, timeout, reduced-motion, semantics, responsive, and golden tests. All three 390 by 844 references were inspected. The complete Flutter suite passes 588 tests and scoped analysis reports no issue.
 - Fresh orientation-source Android artifacts replace the prior Android receipts: AAB 65,358,385 bytes, SHA-256 `97d28f20e1862ea27e71fb5bdcd6bf63861b6d2c8e2e055401e71dca0bc07fc3`; APK 64,078,519 bytes, SHA-256 `83f49ef7c6f8eb5f7062791cd0e222512263884b07fc56022dfe69bdb1f2c700`. Identity, version, SDK, architecture, merged permissions, AAB JAR signature, APK v2 signature, and upload-certificate continuity pass.
 - Fresh orientation-source iOS artifacts replace the prior iOS receipts: archive 537,710,592 allocated bytes with content-tree SHA-256 `9181dc16e379716053e3d7fb695e111d59e44e9ab29845471231846c037ab7d7`; IPA 51,686,765 bytes with SHA-256 `7c2e1dc8311f7c1061956d21992bbeac18784c3a5f4dd53ddc38f1c1b144b483`. ZIP integrity and strict deep-signature verification pass with the approved Apple Distribution identity, team, profile, and entitlements. Temporary verification files and keychain were removed.
+- The first rebuilt-phone presentation exposed no structural onboarding failure, but Andrew requested one approved polish pass before accepting the walk. The refined source supports horizontal swipes, uses the official supporter shield, tightens the three product truths, reduces visual weight, and keeps each page vertically scrollable beneath anchored actions. Its focused set passes 46 tests, the complete Flutter suite passes 589 tests, scoped analysis reports no issue, and all three refreshed 390 by 844 references were inspected. The preceding signed receipts are now historical for their exact source and must be replaced before final candidate closure.
+- Andrew completed the rest of the iPhone presentation walk and approved the observed correction set. The source now gives email sign-in a bounded route-completion path, uses dark in-app Club Signal surfaces, keeps the posting identity content sized, and replaces the diagonal Terrace Proven strip with a compact badge plus plain match-use meaning. Seventy-four focused cases and all 594 Flutter tests pass, scoped analysis reports no issue, the source-bound prepared store packet and all 20 regressions pass, and every changed representative reference was inspected. Staged governance and replacement Android and iOS device-artifact gates pass; the corrected iOS build is installed and running. The short visible confirmation, focused push, and exact-head CI remain before merge consideration.
+- The short confirmation accepted the refined onboarding composition and exposed a distinct post-authentication root-gate stall on `GETTING THINGS READY`. The current source adds a restrained lower dot field to all three panels, makes the shield the signed-out welcome's single left-hand brand mark, and replaces that unbounded root wait with fail-closed retry and sign-out recovery after 15 seconds. The new 72-case focused onboarding and authentication group passes. Complete matrix, replacement native artifacts, phone confirmation, focused push, and exact-head CI must be renewed for this latest source boundary.

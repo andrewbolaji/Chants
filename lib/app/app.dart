@@ -1,10 +1,12 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chants/app/policy.dart';
 import 'package:chants/app/router.dart';
+import 'package:chants/app/spacing.dart';
 import 'package:chants/app/theme.dart';
 import 'package:chants/app/colors.dart';
 import 'package:chants/app/providers.dart';
@@ -23,6 +25,8 @@ import 'package:chants/presentation/shell/app_shell.dart';
 
 const kDefaultLaunchRevealDuration = Duration(milliseconds: 2800);
 const kFirstRunOrientationWriteTimeout = Duration(seconds: 2);
+const kSignedInGateWaitTimeout = Duration(seconds: 15);
+const kSignedInProfileRetryDelay = Duration(milliseconds: 650);
 
 class ChantApp extends ConsumerStatefulWidget {
   final Duration launchRevealDuration;
@@ -189,15 +193,65 @@ class _SignedInGateState extends ConsumerState<_SignedInGate> {
   UserProfile? _lastVerifiedProfile;
   bool _hasVerifiedProfileSnapshot = false;
   int _initialShellIndex = 0;
+  Timer? _profileRetryTimer;
+  bool _profileRetryScheduled = false;
+  bool _profileRetryAttempted = false;
+
+  void _debugGateFailure(String source, Object error) {
+    if (!kDebugMode) return;
+    debugPrint('Signed-in $source gate failed: ${error.runtimeType}');
+  }
+
+  Widget _loadingBoundary(
+    SongbookDeletionGateInput deletionInput, {
+    required _SignedInGatePhase phase,
+    bool recoverImmediately = false,
+  }) {
+    return _SignedInLoadingBoundary(
+      key: ValueKey('signed-in-loading-${widget.uid}'),
+      phase: phase,
+      recoverImmediately: recoverImmediately,
+      onRetry: () => _retryGate(deletionInput),
+      onSignOut: ref.read(authRepositoryProvider).signOut,
+    );
+  }
+
+  void _retryGate(SongbookDeletionGateInput deletionInput) {
+    _profileRetryTimer?.cancel();
+    _profileRetryScheduled = false;
+    _profileRetryAttempted = false;
+    ref.invalidate(userProfileProvider(widget.uid));
+    ref.invalidate(savedSongbookDeletionStateProvider(deletionInput));
+  }
+
+  void _scheduleInitialProfileRetry() {
+    if (_profileRetryScheduled || _profileRetryAttempted) return;
+    _profileRetryScheduled = true;
+    _profileRetryTimer = Timer(kSignedInProfileRetryDelay, () {
+      if (!mounted) return;
+      _profileRetryScheduled = false;
+      _profileRetryAttempted = true;
+      ref.invalidate(userProfileProvider(widget.uid));
+    });
+  }
 
   @override
   void didUpdateWidget(covariant _SignedInGate oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.uid != widget.uid) {
+      _profileRetryTimer?.cancel();
+      _profileRetryScheduled = false;
+      _profileRetryAttempted = false;
       _lastVerifiedProfile = null;
       _hasVerifiedProfileSnapshot = false;
       _initialShellIndex = 0;
     }
+  }
+
+  @override
+  void dispose() {
+    _profileRetryTimer?.cancel();
+    super.dispose();
   }
 
   Widget _screenFor({
@@ -231,10 +285,7 @@ class _SignedInGateState extends ConsumerState<_SignedInGate> {
       );
     }
     if (!profileSnapshotAvailable) {
-      return const LaunchRevealScreen(
-        animationDuration: Duration.zero,
-        showProgress: true,
-      );
+      return _loadingBoundary(deletionInput, phase: _SignedInGatePhase.profile);
     }
     if (!contactVerified) return EmailVerificationScreen(email: email);
     if (profile == null) {
@@ -261,7 +312,10 @@ class _SignedInGateState extends ConsumerState<_SignedInGate> {
         return profile;
       },
       loading: () => null,
-      error: (_, _) => _lastVerifiedProfile,
+      error: (error, _) {
+        _debugGateFailure('profile', error);
+        return _lastVerifiedProfile;
+      },
     );
     final deletionInput = (
       uid: widget.uid,
@@ -271,26 +325,216 @@ class _SignedInGateState extends ConsumerState<_SignedInGate> {
       savedSongbookDeletionStateProvider(deletionInput),
     );
     return localState.when(
-      data: (state) => _screenFor(
-        profile: profile,
-        profileSnapshotAvailable: _hasVerifiedProfileSnapshot,
-        contactVerified:
-            user != null &&
-            ref.read(authRepositoryProvider).isContactVerified(user),
-        email: user?.email,
-        localState: state,
-        deletionInput: deletionInput,
+      data: (state) {
+        if (state == SongbookAccountDeletionState.none &&
+            profileAsync.hasError &&
+            !_hasVerifiedProfileSnapshot) {
+          _scheduleInitialProfileRetry();
+          return _loadingBoundary(
+            deletionInput,
+            phase: _SignedInGatePhase.profile,
+            recoverImmediately: _profileRetryAttempted,
+          );
+        }
+        return _screenFor(
+          profile: profile,
+          profileSnapshotAvailable: _hasVerifiedProfileSnapshot,
+          contactVerified:
+              user != null &&
+              ref.read(authRepositoryProvider).isContactVerified(user),
+          email: user?.email,
+          localState: state,
+          deletionInput: deletionInput,
+        );
+      },
+      loading: () => _loadingBoundary(
+        deletionInput,
+        phase: _SignedInGatePhase.localSafety,
       ),
-      loading: () => const LaunchRevealScreen(
+      error: (error, _) {
+        _debugGateFailure('local deletion-safety', error);
+        return AccountDeletionRecoveryScreen(
+          statusCheckFailed: true,
+          onRetry: () async {
+            ref.invalidate(savedSongbookDeletionStateProvider(deletionInput));
+          },
+          onSignOut: ref.read(authRepositoryProvider).signOut,
+        );
+      },
+    );
+  }
+}
+
+enum _SignedInGatePhase { profile, localSafety }
+
+class _SignedInLoadingBoundary extends StatefulWidget {
+  final _SignedInGatePhase phase;
+  final bool recoverImmediately;
+  final VoidCallback onRetry;
+  final Future<void> Function() onSignOut;
+
+  const _SignedInLoadingBoundary({
+    super.key,
+    required this.phase,
+    required this.recoverImmediately,
+    required this.onRetry,
+    required this.onSignOut,
+  });
+
+  @override
+  State<_SignedInLoadingBoundary> createState() =>
+      _SignedInLoadingBoundaryState();
+}
+
+class _SignedInLoadingBoundaryState extends State<_SignedInLoadingBoundary> {
+  Timer? _waitTimer;
+  late bool _timedOut;
+  bool _signingOut = false;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _timedOut = widget.recoverImmediately;
+    if (!_timedOut) _startWait();
+  }
+
+  @override
+  void didUpdateWidget(covariant _SignedInLoadingBoundary oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.recoverImmediately && !oldWidget.recoverImmediately) {
+      _waitTimer?.cancel();
+      _timedOut = true;
+    }
+  }
+
+  void _startWait() {
+    _waitTimer?.cancel();
+    _waitTimer = Timer(kSignedInGateWaitTimeout, () {
+      if (mounted) setState(() => _timedOut = true);
+    });
+  }
+
+  void _retry() {
+    if (_signingOut) return;
+    widget.onRetry();
+    setState(() {
+      _timedOut = false;
+      _error = null;
+    });
+    _startWait();
+  }
+
+  Future<void> _signOut() async {
+    if (_signingOut) return;
+    setState(() {
+      _signingOut = true;
+      _error = null;
+    });
+    try {
+      await widget.onSignOut().timeout(kSignedInGateWaitTimeout);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _signingOut = false;
+        _error = 'Could not sign out. Check your connection and try again.';
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _waitTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_timedOut) {
+      return const LaunchRevealScreen(
         animationDuration: Duration.zero,
         showProgress: true,
-      ),
-      error: (_, _) => AccountDeletionRecoveryScreen(
-        statusCheckFailed: true,
-        onRetry: () async {
-          ref.invalidate(savedSongbookDeletionStateProvider(deletionInput));
-        },
-        onSignOut: ref.read(authRepositoryProvider).signOut,
+      );
+    }
+    return Scaffold(
+      key: const Key('signed-in-loading-recovery'),
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(Spacing.xl),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 520),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: ExcludeSemantics(
+                      child: Image.asset(
+                        'assets/icon/splash.png',
+                        width: 58,
+                        height: 58,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: Spacing.xl),
+                  Semantics(
+                    header: true,
+                    child: Text(
+                      widget.phase == _SignedInGatePhase.profile
+                          ? 'PROFILE COULD NOT LOAD'
+                          : 'ACCOUNT CHECK IS TAKING TOO LONG',
+                      style: Theme.of(context).textTheme.headlineLarge
+                          ?.copyWith(
+                            color: AppColors.textHeadline,
+                            fontSize: 30,
+                            height: 1.05,
+                          ),
+                    ),
+                  ),
+                  const SizedBox(height: Spacing.md),
+                  Text(
+                    widget.phase == _SignedInGatePhase.profile
+                        ? 'Your sign-in worked, but Chants could not securely load your profile. Check your connection, then try again or sign out.'
+                        : 'Your sign-in worked, but Chants could not finish its on-device account safety check. Try again or sign out.',
+                    style: const TextStyle(
+                      color: AppColors.textBody,
+                      fontSize: 16,
+                      height: 1.45,
+                    ),
+                  ),
+                  if (_error != null) ...[
+                    const SizedBox(height: Spacing.md),
+                    Semantics(
+                      liveRegion: true,
+                      child: Text(
+                        _error!,
+                        style: const TextStyle(color: AppColors.error),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: Spacing.xl),
+                  FilledButton.icon(
+                    key: const Key('signed-in-loading-retry'),
+                    onPressed: _signingOut ? null : _retry,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('TRY AGAIN'),
+                  ),
+                  const SizedBox(height: Spacing.sm),
+                  TextButton(
+                    key: const Key('signed-in-loading-sign-out'),
+                    onPressed: _signingOut ? null : _signOut,
+                    child: _signingOut
+                        ? const Text('SIGNING OUT')
+                        : const Text('SIGN OUT'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

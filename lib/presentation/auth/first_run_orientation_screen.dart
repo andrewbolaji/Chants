@@ -25,40 +25,58 @@ class _FirstRunOrientationScreenState extends State<FirstRunOrientationScreen> {
       label: 'SONGBOOK',
       headline: 'KNOW EVERY WORD',
       body:
-          'Find chants by club and player, then save the ones you need to your phone for matchday.',
+          'Find chants by club or player. Save the ones you need for matchday.',
       badge: 'LEARN AND SAVE',
       icon: Icons.menu_book_outlined,
-      accent: AppColors.gold,
     ),
     _OrientationStep(
       label: 'CHANT LAB',
       headline: 'BACK WHAT COMES NEXT',
       body:
-          'New ideas live in Chant Lab. Votes help them rise, but only real-world evidence makes a chant Terrace Proven.',
+          'Back new ideas with your vote. Evidence they have been sung at matches earns Terrace Proven.',
       badge: 'IDEAS ARE NOT PROOF',
       icon: Icons.lightbulb_outline,
-      accent: AppColors.chantLab,
     ),
     _OrientationStep(
       label: 'STAGE',
       headline: 'ADD YOUR VOICE',
-      body:
-          'Write a chant or perform one. Performance videos stay private until a moderator reviews them.',
+      body: 'Write a chant or perform one. Videos stay private until reviewed.',
       badge: 'CREATE WITH CONFIDENCE',
       icon: Icons.mic_none_outlined,
-      accent: AppColors.goldBright,
     ),
   ];
 
+  late final PageController _pageController;
   int _stepIndex = 0;
   String? _leavingLabel;
 
   bool get _isLastStep => _stepIndex == _steps.length - 1;
   bool get _isLeaving => _leavingLabel != null;
 
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
   void _next() {
     if (_isLeaving || _isLastStep) return;
-    setState(() => _stepIndex += 1);
+    final nextStep = _stepIndex + 1;
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _pageController.jumpToPage(nextStep);
+      return;
+    }
+    _pageController.animateToPage(
+      nextStep,
+      duration: const Duration(milliseconds: 240),
+      curve: Curves.easeOutCubic,
+    );
   }
 
   Future<void> _leave(String label, Future<void> Function() action) async {
@@ -70,141 +88,112 @@ class _FirstRunOrientationScreenState extends State<FirstRunOrientationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final step = _steps[_stepIndex];
-    final reduceMotion = MediaQuery.disableAnimationsOf(context);
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
-              key: const Key('first-run-orientation-scroll'),
-              padding: const EdgeInsets.fromLTRB(
-                Spacing.xl,
-                Spacing.lg,
-                Spacing.xl,
-                Spacing.xl,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            Spacing.xl,
+            Spacing.lg,
+            Spacing.xl,
+            Spacing.xl,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _OrientationHeader(
+                enabled: !_isLeaving,
+                onSkip: () => _leave('CONTINUING TO SIGN IN', widget.onSkip),
               ),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight - Spacing.lg - Spacing.xl,
+              const SizedBox(height: Spacing.xl),
+              Text(
+                'HOW CHANTS WORKS  ${_stepIndex + 1} / ${_steps.length}',
+                key: const Key('first-run-step-label'),
+                style: const TextStyle(
+                  color: AppColors.textMuted,
+                  fontFamily: 'SpaceMono',
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1,
                 ),
-                child: IntrinsicHeight(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _OrientationHeader(
-                        enabled: !_isLeaving,
-                        onSkip: () =>
-                            _leave('CONTINUING TO SIGN IN', widget.onSkip),
-                      ),
-                      const SizedBox(height: Spacing.xl),
-                      Text(
-                        'HOW CHANTS WORKS  ${_stepIndex + 1} / ${_steps.length}',
-                        key: const Key('first-run-step-label'),
-                        style: const TextStyle(
-                          color: AppColors.textMuted,
-                          fontFamily: 'SpaceMono',
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 1,
-                        ),
-                      ),
-                      const SizedBox(height: Spacing.md),
-                      Expanded(
-                        child: Align(
-                          alignment: Alignment.center,
-                          child: AnimatedSwitcher(
-                            duration: reduceMotion
-                                ? Duration.zero
-                                : const Duration(milliseconds: 220),
-                            switchInCurve: Curves.easeOut,
-                            switchOutCurve: Curves.easeIn,
-                            transitionBuilder: (child, animation) =>
-                                FadeTransition(
-                                  opacity: animation,
-                                  child: SlideTransition(
-                                    position: Tween<Offset>(
-                                      begin: const Offset(0.035, 0),
-                                      end: Offset.zero,
-                                    ).animate(animation),
-                                    child: child,
-                                  ),
-                                ),
-                            child: _OrientationContent(
-                              key: ValueKey(_stepIndex),
-                              step: step,
-                              number: _stepIndex + 1,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: Spacing.xl),
-                      _StepDots(currentIndex: _stepIndex, count: _steps.length),
-                      const SizedBox(height: Spacing.lg),
-                      if (_isLeaving) ...[
-                        Semantics(
-                          liveRegion: true,
-                          label: _leavingLabel,
-                          child: Column(
-                            children: [
-                              const LinearProgressIndicator(
-                                color: AppColors.gold,
-                                backgroundColor: AppColors.surfaceRaised,
-                              ),
-                              const SizedBox(height: Spacing.sm),
-                              Text(
-                                _leavingLabel!,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  color: AppColors.textMuted,
-                                  fontFamily: 'SpaceMono',
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 0.8,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ] else ...[
-                        FilledButton(
-                          key: const Key('first-run-primary-action'),
-                          onPressed: _isLastStep
-                              ? () => _leave(
-                                  'CONTINUING TO SIGN IN',
-                                  widget.onContinue,
-                                )
-                              : _next,
-                          child: Text(
-                            _isLastStep ? 'CONTINUE TO SIGN IN' : 'NEXT',
-                          ),
-                        ),
-                        const SizedBox(height: Spacing.sm),
-                        OutlinedButton.icon(
-                          key: const Key('first-run-create-account'),
-                          style: OutlinedButton.styleFrom(
-                            minimumSize: const Size(double.infinity, 48),
-                            foregroundColor: AppColors.gold,
-                            side: const BorderSide(color: AppColors.outline),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(Radii.lg),
-                            ),
-                          ),
-                          onPressed: () => _leave(
-                            'OPENING ACCOUNT CREATION',
-                            widget.onCreateAccount,
-                          ),
-                          icon: const Icon(Icons.person_add_alt_1_outlined),
-                          label: const Text('CREATE ACCOUNT'),
-                        ),
-                      ],
-                    ],
+              ),
+              const SizedBox(height: Spacing.lg),
+              Expanded(
+                child: PageView.builder(
+                  key: const Key('first-run-pages'),
+                  controller: _pageController,
+                  physics: _isLeaving
+                      ? const NeverScrollableScrollPhysics()
+                      : const PageScrollPhysics(),
+                  allowImplicitScrolling: true,
+                  itemCount: _steps.length,
+                  onPageChanged: (index) {
+                    if (_isLeaving || index == _stepIndex) return;
+                    setState(() => _stepIndex = index);
+                  },
+                  itemBuilder: (context, index) => SingleChildScrollView(
+                    key: Key('first-run-page-scroll-${index + 1}'),
+                    padding: const EdgeInsets.only(bottom: Spacing.sm),
+                    child: _OrientationContent(
+                      step: _steps[index],
+                      number: index + 1,
+                    ),
                   ),
                 ),
               ),
-            );
-          },
+              const SizedBox(height: Spacing.md),
+              _StepDots(currentIndex: _stepIndex, count: _steps.length),
+              const SizedBox(height: Spacing.lg),
+              if (_isLeaving) ...[
+                Semantics(
+                  liveRegion: true,
+                  label: _leavingLabel,
+                  child: Column(
+                    children: [
+                      const LinearProgressIndicator(
+                        color: AppColors.gold,
+                        backgroundColor: AppColors.surfaceRaised,
+                      ),
+                      const SizedBox(height: Spacing.sm),
+                      Text(
+                        _leavingLabel!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: AppColors.textMuted,
+                          fontFamily: 'SpaceMono',
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ] else ...[
+                FilledButton(
+                  key: const Key('first-run-primary-action'),
+                  onPressed: _isLastStep
+                      ? () => _leave('CONTINUING TO SIGN IN', widget.onContinue)
+                      : _next,
+                  child: Text(_isLastStep ? 'CONTINUE TO SIGN IN' : 'NEXT'),
+                ),
+                const SizedBox(height: Spacing.xs),
+                TextButton.icon(
+                  key: const Key('first-run-create-account'),
+                  style: TextButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 48),
+                    foregroundColor: AppColors.gold,
+                  ),
+                  onPressed: () => _leave(
+                    'OPENING ACCOUNT CREATION',
+                    widget.onCreateAccount,
+                  ),
+                  icon: const Icon(Icons.person_add_alt_1_outlined),
+                  label: const Text('CREATE ACCOUNT'),
+                ),
+              ],
+            ],
+          ),
         ),
       ),
     );
@@ -221,17 +210,13 @@ class _OrientationHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Container(
-          width: 38,
-          height: 38,
-          decoration: BoxDecoration(
-            color: AppColors.gold,
-            borderRadius: BorderRadius.circular(Radii.md),
-          ),
-          child: const Icon(
-            Icons.graphic_eq,
-            color: AppColors.goldOnDark,
-            size: 24,
+        ExcludeSemantics(
+          child: Image.asset(
+            'assets/icon/splash.png',
+            key: const Key('first-run-brand-mark'),
+            width: 42,
+            height: 42,
+            fit: BoxFit.contain,
           ),
         ),
         const SizedBox(width: Spacing.md),
@@ -260,11 +245,7 @@ class _OrientationContent extends StatelessWidget {
   final _OrientationStep step;
   final int number;
 
-  const _OrientationContent({
-    super.key,
-    required this.step,
-    required this.number,
-  });
+  const _OrientationContent({required this.step, required this.number});
 
   @override
   Widget build(BuildContext context) {
@@ -275,68 +256,52 @@ class _OrientationContent extends StatelessWidget {
         Container(
           key: Key('first-run-visual-$number'),
           clipBehavior: Clip.antiAlias,
-          constraints: const BoxConstraints(minHeight: 176),
+          height: 148,
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: AppColors.surfaceRaised,
             borderRadius: BorderRadius.circular(Radii.lg),
-            border: Border.all(color: step.accent.withValues(alpha: 0.52)),
+            border: Border.all(color: AppColors.outline),
           ),
           child: Stack(
+            fit: StackFit.expand,
             children: [
-              Positioned(
-                right: -4,
-                bottom: -24,
-                child: ExcludeSemantics(
-                  child: Text(
-                    number.toString().padLeft(2, '0'),
-                    style: TextStyle(
-                      color: step.accent.withValues(alpha: 0.08),
-                      fontFamily: 'Anton',
-                      fontSize: 132,
-                      height: 1,
-                    ),
-                  ),
+              Positioned.fill(
+                child: CustomPaint(
+                  key: Key('first-run-dot-field-$number'),
+                  painter: const _OrientationDotFieldPainter(),
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.all(Spacing.xl),
+                padding: const EdgeInsets.all(Spacing.lg),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Container(
-                      width: 64,
-                      height: 64,
-                      decoration: BoxDecoration(
-                        color: step.accent.withValues(alpha: 0.14),
-                        borderRadius: BorderRadius.circular(Radii.md),
-                        border: Border.all(
-                          color: step.accent.withValues(alpha: 0.72),
-                        ),
-                      ),
-                      child: Icon(step.icon, color: step.accent, size: 34),
-                    ),
-                    const SizedBox(height: Spacing.xl),
-                    DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: step.accent,
-                        borderRadius: BorderRadius.circular(Radii.sm),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: Spacing.md,
-                          vertical: Spacing.xs,
-                        ),
-                        child: Text(
-                          step.badge,
+                    Row(
+                      children: [
+                        Icon(step.icon, color: AppColors.gold, size: 31),
+                        const Spacer(),
+                        Text(
+                          'STEP ${number.toString().padLeft(2, '0')}',
                           style: const TextStyle(
-                            color: AppColors.goldOnDark,
+                            color: AppColors.textFaint,
                             fontFamily: 'SpaceMono',
-                            fontSize: 10,
+                            fontSize: 9,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 0.8,
                           ),
                         ),
+                      ],
+                    ),
+                    const SizedBox(height: Spacing.xl),
+                    Text(
+                      step.badge,
+                      style: const TextStyle(
+                        color: AppColors.gold,
+                        fontFamily: 'SpaceMono',
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.8,
                       ),
                     ),
                   ],
@@ -345,11 +310,11 @@ class _OrientationContent extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: Spacing.xl),
+        const SizedBox(height: Spacing.lg),
         Text(
           step.label,
-          style: TextStyle(
-            color: step.accent,
+          style: const TextStyle(
+            color: AppColors.gold,
             fontFamily: 'SpaceMono',
             fontSize: 11,
             fontWeight: FontWeight.w700,
@@ -364,8 +329,8 @@ class _OrientationContent extends StatelessWidget {
             key: const Key('first-run-headline'),
             style: Theme.of(context).textTheme.headlineLarge?.copyWith(
               color: AppColors.textHeadline,
-              fontSize: 32,
-              height: 1.04,
+              fontSize: 29,
+              height: 1.06,
               letterSpacing: 0.5,
             ),
           ),
@@ -383,6 +348,37 @@ class _OrientationContent extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+class _OrientationDotFieldPainter extends CustomPainter {
+  const _OrientationDotFieldPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final dot = Paint();
+    const horizontalGap = 17.0;
+    const verticalGap = 15.0;
+    var row = 0;
+    for (var y = 0.0; y < size.height + verticalGap; y += verticalGap) {
+      final progress = (y / size.height).clamp(0.0, 1.0);
+      final alpha = 0.012 + (0.043 * progress);
+      dot.color = AppColors.textHeadline.withValues(alpha: alpha);
+      final inset = row.isOdd ? horizontalGap / 2 : 0.0;
+      for (
+        var x = -horizontalGap + inset;
+        x < size.width + horizontalGap;
+        x += horizontalGap
+      ) {
+        canvas.drawCircle(Offset(x, y), 1.1, dot);
+      }
+      row += 1;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _OrientationDotFieldPainter oldDelegate) {
+    return false;
   }
 }
 
@@ -429,7 +425,6 @@ class _OrientationStep {
   final String body;
   final String badge;
   final IconData icon;
-  final Color accent;
 
   const _OrientationStep({
     required this.label,
@@ -437,6 +432,5 @@ class _OrientationStep {
     required this.body,
     required this.badge,
     required this.icon,
-    required this.accent,
   });
 }

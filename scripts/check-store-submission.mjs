@@ -81,6 +81,8 @@ const EXPECTED_ALLOWED_DRIFT = [
   'lib/presentation/feed/chant_stage_screen.dart',
   'lib/presentation/saved/saved_songbook_screen.dart',
   'lib/presentation/shared/club_crest.dart',
+  'lib/presentation/shared/club_signal.dart',
+  'lib/presentation/shared/gold_foil_badge.dart',
   'lib/presentation/shared/vote_controls.dart',
   'lib/presentation/submit/submit_chant_screen.dart',
   'pubspec.lock',

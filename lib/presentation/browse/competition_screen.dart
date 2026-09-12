@@ -75,7 +75,7 @@ class CompetitionScreen extends ConsumerWidget {
                     eyebrow: 'Premier League',
                     title: 'Find your club',
                     message:
-                        'Open the terrace-proven Songbook, see new ideas, or save a set for matchday.',
+                        "Open your club's verified Songbook, see new ideas, or save a set for matchday.",
                   ),
                 ),
                 SliverPadding(

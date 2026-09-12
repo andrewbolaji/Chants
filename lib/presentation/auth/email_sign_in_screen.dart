@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:chants/app/colors.dart';
 import 'package:chants/app/providers.dart';
 import 'package:chants/app/router.dart';
@@ -14,6 +16,8 @@ class EmailSignInScreen extends ConsumerStatefulWidget {
 }
 
 class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
+  static const _signInTimeout = Duration(seconds: 15);
+
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -34,13 +38,44 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
       _loading = true;
       _error = null;
     });
+    StreamSubscription<User?>? authSubscription;
     try {
-      await ref
-          .read(authRepositoryProvider)
+      final repository = ref.read(authRepositoryProvider);
+      if (repository.currentUser != null) {
+        if (!mounted) return;
+        Navigator.of(context).popUntil((route) => route.isFirst);
+        return;
+      }
+      final authStateAccepted = Completer<void>();
+      authSubscription = repository.authStateChanges.listen(
+        (user) {
+          if (user != null && !authStateAccepted.isCompleted) {
+            authStateAccepted.complete();
+          }
+        },
+        onError: (Object _, StackTrace _) {
+          // The credential future remains authoritative for written recovery.
+        },
+      );
+      final credentialAccepted = repository
           .signIn(
             email: _emailController.text.trim(),
             password: _passwordController.text,
-          );
+          )
+          .then<void>((_) {});
+      await Future.any<void>([
+        credentialAccepted,
+        authStateAccepted.future,
+      ]).timeout(_signInTimeout);
+      if (!mounted) return;
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    } on TimeoutException {
+      if (!mounted) return;
+      setState(() {
+        _error =
+            'Sign in is taking too long. Check your connection and try again.';
+        _loading = false;
+      });
     } catch (error) {
       if (!mounted) return;
       setState(() {
@@ -51,6 +86,12 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
             : 'Wrong email or password. Check both and try again.';
         _loading = false;
       });
+    } finally {
+      try {
+        await authSubscription?.cancel();
+      } catch (_) {
+        // Subscription cleanup must not replace the sign-in result.
+      }
     }
   }
 
@@ -140,10 +181,17 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
               FilledButton(
                 onPressed: _loading ? null : _signIn,
                 child: _loading
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                    ? const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                          SizedBox(width: Spacing.sm),
+                          Text('SIGNING IN'),
+                        ],
                       )
                     : const Text('SIGN IN'),
               ),

@@ -56,10 +56,13 @@ class _MockUser extends Mock implements User {
 
 class _FakeAuthRepository extends Mock implements AuthRepository {
   int signOutCalls = 0;
+  Completer<void>? pendingSignOut;
 
   @override
   Future<void> signOut() async {
     signOutCalls += 1;
+    final pending = pendingSignOut;
+    if (pending != null) await pending.future;
   }
 
   @override
@@ -100,11 +103,13 @@ class _FakeSavedSongbookRepository extends Mock
   SongbookAccountDeletionState state = SongbookAccountDeletionState.none;
   Object? stateError;
   Object? recoveryError;
+  int stateCalls = 0;
   int confirmationCalls = 0;
   int recoveryCalls = 0;
 
   @override
   Future<SongbookAccountDeletionState> accountDeletionState(String uid) async {
+    stateCalls += 1;
     if (stateError != null) throw stateError!;
     return state;
   }
@@ -515,6 +520,98 @@ void main() {
     });
 
     testWidgets(
+      'a stalled signed-in gate becomes recoverable and retry reloads it',
+      (tester) async {
+        tester.view.physicalSize = const Size(390, 844);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        var profileListens = 0;
+        final profiles = StreamController<UserProfile?>.broadcast(
+          onListen: () => profileListens += 1,
+        );
+        final savedSongbookRepository = _FakeSavedSongbookRepository();
+        addTearDown(profiles.close);
+
+        await tester.pumpWidget(
+          wrap(
+            authStream: Stream.value(fakeUser as User?),
+            makeProfileStream: () => profiles.stream,
+            savedSongbookRepository: savedSongbookRepository,
+          ),
+        );
+        await tester.pump();
+        await tester.pump();
+
+        expect(find.text('GETTING THINGS READY'), findsOneWidget);
+
+        await tester.pump(kSignedInGateWaitTimeout);
+        await tester.pump();
+
+        expect(
+          find.byKey(const Key('signed-in-loading-recovery')),
+          findsOneWidget,
+        );
+        expect(find.text('PROFILE COULD NOT LOAD'), findsOneWidget);
+        expect(find.textContaining('Your sign-in worked'), findsOneWidget);
+        expect(find.byType(AppShell), findsNothing);
+        final deletionStateCallsBeforeRetry =
+            savedSongbookRepository.stateCalls;
+
+        await tester.tap(find.byKey(const Key('signed-in-loading-retry')));
+        await tester.pump();
+        profiles.add(
+          _makeProfile(acceptedPolicyVersion: kCurrentPolicyVersion),
+        );
+        await tester.pumpAndSettle();
+
+        expect(profileListens, greaterThanOrEqualTo(2));
+        expect(
+          savedSongbookRepository.stateCalls,
+          greaterThan(deletionStateCallsBeforeRetry),
+        );
+        expect(find.byType(AppShell), findsOneWidget);
+        expect(
+          find.byKey(const Key('signed-in-loading-recovery')),
+          findsNothing,
+        );
+      },
+    );
+
+    testWidgets('a stalled signed-in gate offers sign out', (tester) async {
+      final authRepository = _FakeAuthRepository()
+        ..pendingSignOut = Completer<void>();
+      final profile = StreamController<UserProfile?>();
+      addTearDown(profile.close);
+
+      await tester.pumpWidget(
+        wrap(
+          authStream: Stream.value(fakeUser as User?),
+          makeProfileStream: () => profile.stream,
+          authRepository: authRepository,
+        ),
+      );
+      await tester.pump();
+      await tester.pump(kSignedInGateWaitTimeout);
+      await tester.pump();
+
+      await tester.tap(find.byKey(const Key('signed-in-loading-sign-out')));
+      await tester.pump();
+
+      expect(authRepository.signOutCalls, 1);
+      expect(find.text('SIGNING OUT'), findsOneWidget);
+
+      await tester.pump(kSignedInGateWaitTimeout);
+      await tester.pump();
+
+      expect(
+        find.text('Could not sign out. Check your connection and try again.'),
+        findsOneWidget,
+      );
+      expect(find.text('SIGN OUT'), findsOneWidget);
+    });
+
+    testWidgets(
       'verified account with no profile enters recoverable onboarding',
       (tester) async {
         await tester.pumpWidget(
@@ -815,28 +912,49 @@ void main() {
       },
     );
 
-    testWidgets('an initial profile-stream error never authorizes the shell', (
-      tester,
-    ) async {
-      await tester.pumpWidget(
-        wrap(
-          authStream: Stream.value(fakeUser as User?),
-          makeProfileStream: () => Stream.error('transient read failure'),
-        ),
-      );
-      await tester.pump();
-      await tester.pump();
+    testWidgets(
+      'an initial profile-stream error retries once then becomes recoverable',
+      (tester) async {
+        var profileListens = 0;
+        await tester.pumpWidget(
+          wrap(
+            authStream: Stream.value(fakeUser as User?),
+            makeProfileStream: () {
+              profileListens += 1;
+              return Stream.error('transient read failure');
+            },
+          ),
+        );
+        await tester.pump();
+        await tester.pump();
 
-      expect(find.byType(LaunchRevealScreen), findsOneWidget);
-      expect(
-        tester
-            .widget<LaunchRevealScreen>(find.byType(LaunchRevealScreen))
-            .animationDuration,
-        Duration.zero,
-      );
-      expect(find.byType(AppShell), findsNothing);
-      expect(find.byType(PolicyAcceptanceGateScreen), findsNothing);
-    });
+        expect(find.byType(LaunchRevealScreen), findsOneWidget);
+        expect(
+          tester
+              .widget<LaunchRevealScreen>(find.byType(LaunchRevealScreen))
+              .animationDuration,
+          Duration.zero,
+        );
+        expect(profileListens, 1);
+
+        await tester.pump(kSignedInProfileRetryDelay);
+        await tester.pump();
+        await tester.pump();
+
+        expect(profileListens, 2);
+        expect(
+          find.byKey(const Key('signed-in-loading-recovery')),
+          findsOneWidget,
+        );
+        expect(find.text('PROFILE COULD NOT LOAD'), findsOneWidget);
+        expect(
+          find.textContaining('securely load your profile'),
+          findsOneWidget,
+        );
+        expect(find.byType(AppShell), findsNothing);
+        expect(find.byType(PolicyAcceptanceGateScreen), findsNothing);
+      },
+    );
 
     testWidgets('a later stream error keeps the last verified active gate', (
       tester,

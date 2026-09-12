@@ -5,9 +5,9 @@ import 'package:flutter/services.dart';
 
 /// The calm utility half of the Chants release system.
 ///
-/// Stage owns the black broadcast treatment. Club directories, club Songbooks,
-/// and saved matchday copies use this light, club-neutral signal treatment so
-/// supporters can scan names and saved status quickly.
+/// Stage owns the expressive broadcast treatment. Club directories, club
+/// Songbooks, and saved matchday copies use flat dark surfaces so supporters
+/// can scan names and saved status without leaving the Chants visual system.
 abstract final class ClubSignalTheme {
   static ThemeData from(ThemeData base) {
     final signalTextTheme = base.textTheme
@@ -31,16 +31,16 @@ abstract final class ClubSignalTheme {
         );
 
     return base.copyWith(
-      brightness: Brightness.light,
+      brightness: Brightness.dark,
       scaffoldBackgroundColor: AppColors.signalCanvas,
-      colorScheme: const ColorScheme.light(
+      colorScheme: const ColorScheme.dark(
         surface: AppColors.signalPaper,
-        primary: AppColors.signalForest,
-        onPrimary: AppColors.signalPaper,
+        primary: AppColors.signalGold,
+        onPrimary: AppColors.goldOnDark,
         secondary: AppColors.signalGold,
-        onSecondary: AppColors.signalInk,
+        onSecondary: AppColors.goldOnDark,
         error: AppColors.error,
-        onError: Colors.white,
+        onError: AppColors.signalInk,
         onSurface: AppColors.signalInk,
         onSurfaceVariant: AppColors.signalTextMuted,
         outline: AppColors.signalRule,
@@ -49,17 +49,17 @@ abstract final class ClubSignalTheme {
       textTheme: signalTextTheme,
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.signalForest,
-        foregroundColor: AppColors.signalPaper,
+        foregroundColor: AppColors.signalInk,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
         titleTextStyle: TextStyle(
           fontFamily: 'Anton',
-          color: AppColors.signalPaper,
+          color: AppColors.signalInk,
           fontSize: 21,
           letterSpacing: 0.5,
         ),
-        iconTheme: IconThemeData(color: AppColors.signalPaper, size: 24),
+        iconTheme: IconThemeData(color: AppColors.signalInk, size: 24),
         systemOverlayStyle: SystemUiOverlayStyle(
           statusBarBrightness: Brightness.dark,
           statusBarIconBrightness: Brightness.light,
@@ -92,8 +92,8 @@ abstract final class ClubSignalTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: AppColors.signalForest,
-          foregroundColor: AppColors.signalPaper,
+          backgroundColor: AppColors.signalGold,
+          foregroundColor: AppColors.goldOnDark,
           disabledBackgroundColor: AppColors.signalPaperMuted,
           disabledForegroundColor: AppColors.signalForestMuted,
           minimumSize: const Size(double.infinity, 48),
@@ -109,15 +109,15 @@ abstract final class ClubSignalTheme {
         ),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: AppColors.signalForest,
-        foregroundColor: AppColors.signalPaper,
+        backgroundColor: AppColors.signalGold,
+        foregroundColor: AppColors.goldOnDark,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(Radii.sm),
         ),
       ),
       tabBarTheme: const TabBarThemeData(
         labelColor: AppColors.gold,
-        unselectedLabelColor: AppColors.signalPaperMuted,
+        unselectedLabelColor: AppColors.signalTextMuted,
         indicatorColor: AppColors.gold,
         dividerColor: Colors.transparent,
         labelStyle: TextStyle(
@@ -137,13 +137,13 @@ abstract final class ClubSignalTheme {
         style: ButtonStyle(
           backgroundColor: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.selected)) {
-              return AppColors.signalForest;
+              return AppColors.signalGold;
             }
             return AppColors.signalPaper;
           }),
           foregroundColor: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.selected)) {
-              return AppColors.signalPaper;
+              return AppColors.goldOnDark;
             }
             return AppColors.signalTextMuted;
           }),

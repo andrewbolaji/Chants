@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:chants/app/colors.dart';
 import 'package:chants/app/theme.dart';
 import 'package:chants/presentation/auth/first_run_orientation_screen.dart';
 import 'package:flutter/material.dart';
@@ -47,15 +48,78 @@ void main() {
     expect(find.text('HOW CHANTS WORKS  1 / 3'), findsOneWidget);
     expect(find.text('SKIP'), findsOneWidget);
     expect(find.text('CREATE ACCOUNT'), findsOneWidget);
+    expect(find.byKey(const Key('first-run-brand-mark')), findsOneWidget);
+    expect(find.byKey(const Key('first-run-dot-field-1')), findsOneWidget);
+    final panelBottom = tester
+        .getBottomLeft(find.byKey(const Key('first-run-visual-1')))
+        .dy;
+    final badgeBottom = tester.getBottomLeft(find.text('LEARN AND SAVE')).dy;
+    expect(panelBottom - badgeBottom, lessThanOrEqualTo(24));
+    final brandMark = tester.widget<Image>(
+      find.byKey(const Key('first-run-brand-mark')),
+    );
+    expect((brandMark.image as AssetImage).assetName, 'assets/icon/splash.png');
+    expect(
+      find.text(
+        'Find chants by club or player. Save the ones you need for matchday.',
+      ),
+      findsOneWidget,
+    );
 
     await _advance(tester, 1);
     expect(find.text('BACK WHAT COMES NEXT'), findsOneWidget);
     expect(find.text('HOW CHANTS WORKS  2 / 3'), findsOneWidget);
+    expect(find.text('STEP 02'), findsOneWidget);
+    expect(find.byKey(const Key('first-run-dot-field-2')), findsOneWidget);
+    final chantLabPanel = tester.widget<Container>(
+      find.byKey(const Key('first-run-visual-2')),
+    );
+    final chantLabDecoration = chantLabPanel.decoration! as BoxDecoration;
+    expect(chantLabDecoration.color, AppColors.surfaceRaised);
+    expect(chantLabDecoration.border!.top.color, AppColors.outline);
+    expect(
+      find.text(
+        'Back new ideas with your vote. Evidence they have been sung at matches earns Terrace Proven.',
+      ),
+      findsOneWidget,
+    );
 
     await _advance(tester, 1);
     expect(find.text('ADD YOUR VOICE'), findsOneWidget);
     expect(find.text('HOW CHANTS WORKS  3 / 3'), findsOneWidget);
     expect(find.text('CONTINUE TO SIGN IN'), findsOneWidget);
+    expect(find.text('STEP 03'), findsOneWidget);
+    expect(find.byKey(const Key('first-run-dot-field-3')), findsOneWidget);
+    expect(
+      find.text(
+        'Write a chant or perform one. Videos stay private until reviewed.',
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('horizontal drags move forward and backward between steps', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_app());
+
+    await tester.drag(
+      find.byKey(const Key('first-run-pages')),
+      const Offset(-520, 0),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('BACK WHAT COMES NEXT'), findsOneWidget);
+    expect(find.text('HOW CHANTS WORKS  2 / 3'), findsOneWidget);
+
+    await tester.drag(
+      find.byKey(const Key('first-run-pages')),
+      const Offset(520, 0),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('KNOW EVERY WORD'), findsOneWidget);
+    expect(find.text('HOW CHANTS WORKS  1 / 3'), findsOneWidget);
   });
 
   for (var step = 0; step < 3; step++) {
@@ -161,17 +225,18 @@ void main() {
     await tester.pumpWidget(_app(textScale: 1.8));
     await tester.pumpAndSettle();
 
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('first-run-create-account')),
-      200,
-      scrollable: find
-          .descendant(
-            of: find.byKey(const Key('first-run-orientation-scroll')),
-            matching: find.byType(Scrollable),
-          )
-          .first,
+    final body = find.text(
+      'Find chants by club or player. Save the ones you need for matchday.',
     );
+    final bodyTopBefore = tester.getTopLeft(body).dy;
 
+    await tester.drag(
+      find.byKey(const Key('first-run-page-scroll-1')),
+      const Offset(0, -220),
+    );
+    await tester.pumpAndSettle();
+
+    expect(tester.getTopLeft(body).dy, lessThan(bodyTopBefore));
     expect(find.byKey(const Key('first-run-create-account')), findsOneWidget);
     expect(find.byKey(const Key('first-run-primary-action')), findsOneWidget);
     expect(tester.takeException(), isNull);
