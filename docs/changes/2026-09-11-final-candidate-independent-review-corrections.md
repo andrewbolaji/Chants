@@ -1,0 +1,59 @@
+# Final candidate independent-review corrections
+
+## Outcome
+
+The complete staged release-candidate range received the planned independent Claude Code review. All eight findings were accepted, reproduced, corrected within the approved Lane 2 boundary, and covered by replacement local evidence. Andrew authorized the exact commit and push, then separately authorized pull request 38 into `main`. After two bounded Linux-reference corrections, exact-head run `34598537127` passed all eight jobs at commit `3f26e66239c1c12237b26127e7decafe6baa85ee`. A final exact-head Claude Code review then found five additional lower-severity issues. All five were reproduced and corrected locally. Fresh signed native artifacts now replace the prior source-bound receipts before distribution.
+
+## Authority and boundary
+
+- Andrew supplied the completed review report and said to continue after Codex had defined the correction and final-handoff phase.
+- The reviewer covered the direct range from Claude-reviewed PR 37 pre-correction tree `5a95c93d0749796af65dc6c9a43707944dc66855` through the 91-path staged candidate at repository head `b3e65636dd50e72f87685289a75b43585a206522`.
+- The review was read only. This correction phase did not open or read production, change workers or generation, touch the private pending-review canary, deploy, publish, upload to a store, request review, release, commit, push, or merge.
+- Production remains generation 35 maintenance with destructive workers false by the prior recorded receipt. One pending-review canary draft and matching staged object remain private, with no active grant or public performance.
+
+## Accepted findings and corrections
+
+1. **P1, cancellation during admission:** Persist cancellation intent while draft admission is unresolved. When the exact ticket arrives, cancel its draft and do not start transfer. A failed admission clears the pending cancellation state and supplies a truthful next action.
+2. **P1, stale strict Linux golden:** Regenerate only the strict Linux chant-detail reference using the documented Flutter 3.47.2 Linux renderer and retain exact comparison. The replacement SHA-256 is `3de74f47f98bdef1b0bbff260ed43de20006f78f99b895d026d96199173120ee`.
+3. **P2, final-handoff race:** Remove Cancel after transfer completion and before the review submission callable, so a pending-review success cannot race a valid server cancellation.
+4. **P2, hidden cancel semantics:** Limit the live-region exclusion to changing status content and keep the actual Cancel button focusable and activatable for VoiceOver and TalkBack.
+5. **P3, player sheet keyboard:** Pad the searchable player selector by the current bottom view inset, keeping the final row reachable with the keyboard open.
+6. **P3, onboarding selection:** Add a gold selected border and stronger selected type weight, so the first destination is not distinguished only by surface and text color.
+7. **P3, inert app-bar back:** Remove the visible leading back action throughout upload, cancellation, and final handoff while route popping is blocked.
+8. **P3, permission recovery:** Recognize camera and media-library denial codes and provide written Settings guidance plus the alternate picker.
+
+## Replacement verification
+
+- Corrected focused Flutter set: 43 tests passed.
+- Complete Flutter suite: 563 tests passed.
+- `flutter analyze --no-pub lib test`: no issues.
+- Strict Linux Flutter 3.47.2 chant-detail golden: one exact comparison passed after visual inspection.
+- Functions production compilation: passed.
+- Functions unit suite: 230 passed, with 24 emulator-only cases correctly excluded from that process.
+- Real Firestore Functions integration: 24 passed.
+- Combined Java-backed Firestore and Storage rules: 174 passed.
+- Seed suite: 87 passed; seed TypeScript check reports no error.
+- Store-packet, launch-services, launch-guide, public-site, device-readiness, crest, project-memory, writing, governance, native-project, staged whitespace, and bounded staged credential-value gates pass at final staging.
+
+## Corrected native receipts
+
+- Android AAB: 65,259,947 bytes, SHA-256 `2c847a1bf33ce5b3b3c7dca7eeb4740624e8e9c8fdc17b0049ebd0c9b9950102`.
+- Android APK: 64,045,551 bytes, SHA-256 `f5bdc859fc0087cc5b4a136d92e324db25e4ec5fbe349f03670a8eef9707d836`.
+- Android package `com.chants.chants`, version 1.0.0, code 1, existing upload-certificate SHA-256 `8277987e342dc5a2de3f2a96c36ce11efe5c33a66582cfd2f00953a0daf2fc55`; AAB JAR and APK v2 verification and archive integrity pass. No rejected advertising or ad-services permission is present.
+- iOS archive: 537,640,960 allocated bytes, content-tree SHA-256 `e1c4bc40e09f5de32e69d8ba45ac6315dd947e5ae0e0dbb9977502de4c261d11`.
+- iOS IPA: 51,670,635 bytes, SHA-256 `7d2a586fb49c72e288f077a1dd153a7ec327f47623db6e154f36b0270f95b4d5`; ZIP integrity and strict deep-signature verification pass.
+- iOS reports `com.chants.chants`, version 1.0.0, build 1, iPhone family, minimum iOS 15, Apple Distribution team `J7V95LBCWR`, profile expiry 2027-09-10, `get-task-allow` false, TestFlight reporting, Sign in with Apple, and only the two approved associated domains.
+- Both native builds left tracked Android, iOS, and pubspec state unchanged beyond the already reviewed staged manifest correction. Build outputs and signing material remain ignored and untracked.
+
+## Residual gates
+
+- Fresh replacement Android and iOS receipts are recorded in `docs/EXECUTION.md`; neither artifact has been uploaded or installed through a store.
+- Commit `f2e405f92f5ac0592e5c5c959f3b1a9d68e4aea7` was pushed to `codex/android-v1-release-bundle`, and pull request 38 targets `main`. No merge is authorized.
+- The first pull-request clean runner passed project governance, analysis, Functions, seed, and rules. Flutter passed 559 cases and failed four tests containing five screenshot assertions. Retained output showed 1.54 to 1.89 percent Linux edge antialiasing drift, with no layout, copy, color, or state difference.
+- Linux-only references now preserve those exact clean-runner renders for the two creation and three submission screenshots. The other platform references and shared 1.5 percent comparator ceiling are unchanged. Replacement exact-head CI must pass before merge consideration.
+- The focused comparator, creation, and submission set passes 20 tests. The complete Flutter suite passes 564 tests, and `flutter analyze --no-pub lib test` reports no issue after the correction.
+- Replacement run `34597535791` showed that Flutter widget-test target selection still chose the parent paths on the Linux host. The five percentages and pixel counts were identical, proving no new renderer drift. The path helper now reads the actual host operating system and exposes an injected boolean only to its focused regression. After that correction, the focused 20-test set and complete 564-test suite pass, scoped analysis reports no issue, and every staged repository gate passes locally.
+- Exact-head run `34598537127` passed all eight jobs at `3f26e66239c1c12237b26127e7decafe6baa85ee`, including the five Linux-only reference assertions, 564 Flutter tests, scoped analysis, project governance, Functions, seed, rules, Android debug, and iOS simulator builds on pinned Flutter 3.47.3.
+- The final exact-head review reported one P2, two P3, and two P4 findings. The accepted corrections make the upload completion future the sole error authority, remove a disposed field callback, pin CI Flutter 3.47.3, remove dead barrier semantics, and count lyric grapheme clusters. Focused coverage passes 32 tests, the full suite passes 567 tests, and scoped analysis reports no issue.
+- The signed Android and iOS receipts above predate the final runtime corrections and remain historical only. Fresh replacements are verified: Android AAB SHA-256 `ac60bb412d2c668e61410d03f3dd69a4bffff7126ce44df6ffe83fdb6717b4c6`, Android APK SHA-256 `291a062dbe11ef070d0e220947a3d404bd648811572e7079cdaf72bc34b641b7`, iOS archive content-tree SHA-256 `ccb5b26b69fac3c9a36a372210a1a0b03c450ae959b3bdb06110917671adf074`, and iOS IPA SHA-256 `8e645f704685754e8dc547d447efd9082f0d7a54e60a8101ce01978751a9408e`. Package, version, certificate continuity, archive integrity, permissions, entitlements, and strict iOS signature checks pass. Replacement exact-head CI remains required before merge consideration.
+- Physical Android installation, TestFlight upload and iPhone walk, provider and public-site evidence, store submission, and release remain separate gates.

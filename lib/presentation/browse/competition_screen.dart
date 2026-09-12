@@ -75,7 +75,7 @@ class CompetitionScreen extends ConsumerWidget {
                     eyebrow: 'Premier League',
                     title: 'Find your club',
                     message:
-                        'Open the terrace-proven Songbook, see new ideas, or save a set for matchday.',
+                        "Open your club's verified Songbook, see new ideas, or save a set for matchday.",
                   ),
                 ),
                 SliverPadding(
@@ -88,7 +88,7 @@ class CompetitionScreen extends ConsumerWidget {
                   sliver: SliverList.separated(
                     itemCount: teams.length,
                     separatorBuilder: (_, _) =>
-                        const Divider(indent: 60, color: AppColors.signalRule),
+                        const Divider(indent: 64, color: AppColors.signalRule),
                     itemBuilder: (context, index) {
                       final team = teams[index];
                       return _ClubSignalRow(
@@ -125,7 +125,7 @@ class _ClubSignalRow extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(Radii.sm),
         child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 64),
+          constraints: const BoxConstraints(minHeight: 72),
           child: Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: Spacing.sm,
@@ -133,7 +133,16 @@ class _ClubSignalRow extends StatelessWidget {
             ),
             child: Row(
               children: [
-                ClubCrest(teamId: team.id, clubName: team.name, size: 44),
+                SizedBox.square(
+                  dimension: 48,
+                  child: Center(
+                    child: ClubCrest(
+                      teamId: team.id,
+                      clubName: team.name,
+                      size: 40,
+                    ),
+                  ),
+                ),
                 const SizedBox(width: Spacing.md),
                 Expanded(
                   child: Text(

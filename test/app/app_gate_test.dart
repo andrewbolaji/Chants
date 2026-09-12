@@ -5,12 +5,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mockito/mockito.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:chants/app/app.dart';
 import 'package:chants/app/policy.dart';
 import 'package:chants/app/providers.dart';
 import 'package:chants/data/models/user_profile.dart';
 import 'package:chants/data/repositories/auth_repository.dart';
 import 'package:chants/data/repositories/creator_profile_repository.dart';
+import 'package:chants/data/repositories/first_run_orientation_repository.dart';
 import 'package:chants/data/repositories/performance_repository.dart';
 import 'package:chants/data/repositories/performance_draft_repository.dart';
 import 'package:chants/data/repositories/profile_repository.dart';
@@ -23,7 +25,9 @@ import 'package:chants/presentation/auth/policy_acceptance_gate_screen.dart';
 import 'package:chants/presentation/auth/launch_reveal_screen.dart';
 import 'package:chants/presentation/auth/sign_in_screen.dart';
 import 'package:chants/presentation/auth/email_verification_screen.dart';
+import 'package:chants/presentation/auth/first_run_orientation_screen.dart';
 import 'package:chants/presentation/auth/onboarding_screen.dart';
+import 'package:chants/presentation/auth/sign_up_screen.dart';
 import 'package:chants/presentation/profile/creator_profile_screen.dart';
 import 'package:chants/presentation/shell/app_shell.dart';
 
@@ -52,10 +56,13 @@ class _MockUser extends Mock implements User {
 
 class _FakeAuthRepository extends Mock implements AuthRepository {
   int signOutCalls = 0;
+  Completer<void>? pendingSignOut;
 
   @override
   Future<void> signOut() async {
     signOutCalls += 1;
+    final pending = pendingSignOut;
+    if (pending != null) await pending.future;
   }
 
   @override
@@ -94,13 +101,18 @@ class _FakeAccountDeletionService extends Mock
 class _FakeSavedSongbookRepository extends Mock
     implements SavedSongbookRepository {
   SongbookAccountDeletionState state = SongbookAccountDeletionState.none;
+  Future<SongbookAccountDeletionState> Function()? stateLoader;
   Object? stateError;
   Object? recoveryError;
+  int stateCalls = 0;
   int confirmationCalls = 0;
   int recoveryCalls = 0;
 
   @override
   Future<SongbookAccountDeletionState> accountDeletionState(String uid) async {
+    stateCalls += 1;
+    final loader = stateLoader;
+    if (loader != null) return loader();
     if (stateError != null) throw stateError!;
     return state;
   }
@@ -170,6 +182,36 @@ class _FakePerformanceDraftRepository extends PerformanceDraftRepository {
       );
 }
 
+class _FakeFirstRunOrientationRepository extends FirstRunOrientationRepository {
+  bool complete;
+  Object? readError;
+  Object? writeError;
+  Completer<void>? pendingWrite;
+  int writeCalls = 0;
+
+  _FakeFirstRunOrientationRepository({this.complete = true})
+    : super(preferences: _UnusedPreferences());
+
+  @override
+  Future<bool> isComplete() async {
+    if (readError != null) throw readError!;
+    return complete;
+  }
+
+  @override
+  Future<void> markComplete() async {
+    writeCalls += 1;
+    if (pendingWrite != null) await pendingWrite!.future;
+    if (writeError != null) throw writeError!;
+    complete = true;
+  }
+}
+
+class _UnusedPreferences implements SharedPreferencesAsync {
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
 UserProfile _makeProfile({
   String? acceptedPolicyVersion,
   bool deletionPending = false,
@@ -197,6 +239,7 @@ void main() {
     AuthRepository? authRepository,
     AccountDeletionService? accountDeletionService,
     _FakeSavedSongbookRepository? savedSongbookRepository,
+    _FakeFirstRunOrientationRepository? firstRunOrientationRepository,
     Duration? launchRevealDuration = Duration.zero,
   }) {
     final fakeProfileRepo = _FakeProfileRepository()
@@ -219,6 +262,9 @@ void main() {
         ),
         savedSongbookRepositoryProvider.overrideWithValue(fakeSavedRepository),
         authRepositoryProvider.overrideWithValue(fakeAuthRepository),
+        firstRunOrientationRepositoryProvider.overrideWithValue(
+          firstRunOrientationRepository ?? _FakeFirstRunOrientationRepository(),
+        ),
         if (accountDeletionService != null)
           accountDeletionServiceProvider.overrideWithValue(
             accountDeletionService,
@@ -260,7 +306,7 @@ void main() {
       expect(find.byType(LaunchRevealScreen), findsOneWidget);
 
       await tester.pump(const Duration(milliseconds: 1));
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       expect(find.byType(LaunchRevealScreen), findsNothing);
       expect(find.byType(SignInScreen), findsOneWidget);
@@ -283,7 +329,7 @@ void main() {
       expect(find.byType(SignInScreen), findsNothing);
 
       await tester.pump(const Duration(milliseconds: 500));
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       expect(find.byType(LaunchRevealScreen), findsNothing);
       expect(find.byType(SignInScreen), findsOneWidget);
@@ -306,7 +352,7 @@ void main() {
           launchRevealDuration: null,
         ),
       );
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       expect(find.byType(LaunchRevealScreen), findsNothing);
       expect(find.byType(SignInScreen), findsOneWidget);
@@ -320,8 +366,132 @@ void main() {
           makeProfileStream: () => const Stream.empty(),
         ),
       );
-      await tester.pump();
+      await tester.pumpAndSettle();
 
+      expect(find.byType(SignInScreen), findsOneWidget);
+    });
+
+    testWidgets('first signed-out run shows product orientation', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        wrap(
+          authStream: Stream.value(null),
+          makeProfileStream: () => const Stream.empty(),
+          firstRunOrientationRepository: _FakeFirstRunOrientationRepository(
+            complete: false,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(FirstRunOrientationScreen), findsOneWidget);
+      expect(find.byType(SignInScreen), findsNothing);
+    });
+
+    testWidgets('orientation skip records completion and reaches sign in', (
+      tester,
+    ) async {
+      final orientation = _FakeFirstRunOrientationRepository(complete: false);
+      await tester.pumpWidget(
+        wrap(
+          authStream: Stream.value(null),
+          makeProfileStream: () => const Stream.empty(),
+          firstRunOrientationRepository: orientation,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('first-run-skip')));
+      await tester.pumpAndSettle();
+
+      expect(orientation.writeCalls, 1);
+      expect(orientation.complete, isTrue);
+      expect(find.byType(SignInScreen), findsOneWidget);
+    });
+
+    testWidgets(
+      'orientation account action records completion and opens signup',
+      (tester) async {
+        final orientation = _FakeFirstRunOrientationRepository(complete: false);
+        await tester.pumpWidget(
+          wrap(
+            authStream: Stream.value(null),
+            makeProfileStream: () => const Stream.empty(),
+            firstRunOrientationRepository: orientation,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byKey(const Key('first-run-create-account')));
+        await tester.pumpAndSettle();
+
+        expect(orientation.writeCalls, 1);
+        expect(find.byType(SignUpScreen), findsOneWidget);
+      },
+    );
+
+    testWidgets('orientation read failure fails open to sign in', (
+      tester,
+    ) async {
+      final orientation = _FakeFirstRunOrientationRepository(complete: false)
+        ..readError = StateError('preferences unavailable');
+      await tester.pumpWidget(
+        wrap(
+          authStream: Stream.value(null),
+          makeProfileStream: () => const Stream.empty(),
+          firstRunOrientationRepository: orientation,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(SignInScreen), findsOneWidget);
+      expect(find.byType(FirstRunOrientationScreen), findsNothing);
+    });
+
+    testWidgets('orientation write failure cannot block sign in', (
+      tester,
+    ) async {
+      final orientation = _FakeFirstRunOrientationRepository(complete: false)
+        ..writeError = StateError('preferences unavailable');
+      await tester.pumpWidget(
+        wrap(
+          authStream: Stream.value(null),
+          makeProfileStream: () => const Stream.empty(),
+          firstRunOrientationRepository: orientation,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('first-run-skip')));
+      await tester.pumpAndSettle();
+
+      expect(orientation.writeCalls, 1);
+      expect(find.byType(SignInScreen), findsOneWidget);
+    });
+
+    testWidgets('stalled orientation write times out and reaches sign in', (
+      tester,
+    ) async {
+      final orientation = _FakeFirstRunOrientationRepository(complete: false)
+        ..pendingWrite = Completer<void>();
+      await tester.pumpWidget(
+        wrap(
+          authStream: Stream.value(null),
+          makeProfileStream: () => const Stream.empty(),
+          firstRunOrientationRepository: orientation,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('first-run-skip')));
+      await tester.pump();
+      expect(find.text('CONTINUING TO SIGN IN'), findsOneWidget);
+
+      await tester.pump(kFirstRunOrientationWriteTimeout);
+      await tester.pumpAndSettle();
+
+      expect(orientation.writeCalls, 1);
       expect(find.byType(SignInScreen), findsOneWidget);
     });
 
@@ -350,6 +520,98 @@ void main() {
       expect(find.text('GETTING THINGS READY'), findsOneWidget);
       expect(find.byType(PolicyAcceptanceGateScreen), findsNothing);
       expect(find.byType(AppShell), findsNothing);
+    });
+
+    testWidgets(
+      'a stalled signed-in gate becomes recoverable and retry reloads it',
+      (tester) async {
+        tester.view.physicalSize = const Size(390, 844);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        var profileListens = 0;
+        final profiles = StreamController<UserProfile?>.broadcast(
+          onListen: () => profileListens += 1,
+        );
+        final savedSongbookRepository = _FakeSavedSongbookRepository();
+        addTearDown(profiles.close);
+
+        await tester.pumpWidget(
+          wrap(
+            authStream: Stream.value(fakeUser as User?),
+            makeProfileStream: () => profiles.stream,
+            savedSongbookRepository: savedSongbookRepository,
+          ),
+        );
+        await tester.pump();
+        await tester.pump();
+
+        expect(find.text('GETTING THINGS READY'), findsOneWidget);
+
+        await tester.pump(kSignedInGateWaitTimeout);
+        await tester.pump();
+
+        expect(
+          find.byKey(const Key('signed-in-loading-recovery')),
+          findsOneWidget,
+        );
+        expect(find.text('PROFILE COULD NOT LOAD'), findsOneWidget);
+        expect(find.textContaining('Your sign-in worked'), findsOneWidget);
+        expect(find.byType(AppShell), findsNothing);
+        final deletionStateCallsBeforeRetry =
+            savedSongbookRepository.stateCalls;
+
+        await tester.tap(find.byKey(const Key('signed-in-loading-retry')));
+        await tester.pump();
+        profiles.add(
+          _makeProfile(acceptedPolicyVersion: kCurrentPolicyVersion),
+        );
+        await tester.pumpAndSettle();
+
+        expect(profileListens, greaterThanOrEqualTo(2));
+        expect(
+          savedSongbookRepository.stateCalls,
+          greaterThan(deletionStateCallsBeforeRetry),
+        );
+        expect(find.byType(AppShell), findsOneWidget);
+        expect(
+          find.byKey(const Key('signed-in-loading-recovery')),
+          findsNothing,
+        );
+      },
+    );
+
+    testWidgets('a stalled signed-in gate offers sign out', (tester) async {
+      final authRepository = _FakeAuthRepository()
+        ..pendingSignOut = Completer<void>();
+      final profile = StreamController<UserProfile?>();
+      addTearDown(profile.close);
+
+      await tester.pumpWidget(
+        wrap(
+          authStream: Stream.value(fakeUser as User?),
+          makeProfileStream: () => profile.stream,
+          authRepository: authRepository,
+        ),
+      );
+      await tester.pump();
+      await tester.pump(kSignedInGateWaitTimeout);
+      await tester.pump();
+
+      await tester.tap(find.byKey(const Key('signed-in-loading-sign-out')));
+      await tester.pump();
+
+      expect(authRepository.signOutCalls, 1);
+      expect(find.text('SIGNING OUT'), findsOneWidget);
+
+      await tester.pump(kSignedInGateWaitTimeout);
+      await tester.pump();
+
+      expect(
+        find.text('Could not sign out. Check your connection and try again.'),
+        findsOneWidget,
+      );
+      expect(find.text('SIGN OUT'), findsOneWidget);
     });
 
     testWidgets(
@@ -653,28 +915,182 @@ void main() {
       },
     );
 
-    testWidgets('an initial profile-stream error never authorizes the shell', (
+    testWidgets(
+      'an initial profile-stream error retries once then becomes recoverable',
+      (tester) async {
+        var profileListens = 0;
+        await tester.pumpWidget(
+          wrap(
+            authStream: Stream.value(fakeUser as User?),
+            makeProfileStream: () {
+              profileListens += 1;
+              return Stream.error('transient read failure');
+            },
+          ),
+        );
+        await tester.pump();
+        await tester.pump();
+
+        expect(find.byType(LaunchRevealScreen), findsOneWidget);
+        expect(
+          tester
+              .widget<LaunchRevealScreen>(find.byType(LaunchRevealScreen))
+              .animationDuration,
+          Duration.zero,
+        );
+        expect(profileListens, 1);
+
+        await tester.pump(kSignedInProfileRetryDelay);
+        await tester.pump();
+        await tester.pump();
+
+        expect(profileListens, 2);
+        expect(
+          find.byKey(const Key('signed-in-loading-recovery')),
+          findsOneWidget,
+        );
+        expect(find.text('PROFILE COULD NOT LOAD'), findsOneWidget);
+        expect(
+          find.textContaining('securely load your profile'),
+          findsOneWidget,
+        );
+        expect(find.byType(AppShell), findsNothing);
+        expect(find.byType(PolicyAcceptanceGateScreen), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'a slow profile retry remains loading until its current result settles',
+      (tester) async {
+        final retryStream = StreamController<UserProfile?>();
+        addTearDown(retryStream.close);
+        var profileListens = 0;
+        await tester.pumpWidget(
+          wrap(
+            authStream: Stream.value(fakeUser as User?),
+            makeProfileStream: () {
+              profileListens += 1;
+              return profileListens == 1
+                  ? Stream.error('initial read failure')
+                  : retryStream.stream;
+            },
+          ),
+        );
+        await tester.pump();
+        await tester.pump();
+
+        await tester.pump(kSignedInProfileRetryDelay);
+        await tester.pump();
+        expect(profileListens, 2);
+        expect(find.byType(LaunchRevealScreen), findsOneWidget);
+        expect(
+          find.byKey(const Key('signed-in-loading-recovery')),
+          findsNothing,
+        );
+
+        await tester.pump(const Duration(seconds: 1));
+        expect(profileListens, 2);
+        expect(find.byType(LaunchRevealScreen), findsOneWidget);
+
+        retryStream.addError('retry failed');
+        await tester.pump();
+        await tester.pump();
+        expect(
+          find.byKey(const Key('signed-in-loading-recovery')),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets('manual profile retry is not restarted after 650 ms', (
       tester,
     ) async {
+      final manualRetry = StreamController<UserProfile?>();
+      addTearDown(manualRetry.close);
+      var profileListens = 0;
       await tester.pumpWidget(
         wrap(
           authStream: Stream.value(fakeUser as User?),
-          makeProfileStream: () => Stream.error('transient read failure'),
+          makeProfileStream: () {
+            profileListens += 1;
+            if (profileListens <= 2) {
+              return Stream.error('read failure');
+            }
+            return manualRetry.stream;
+          },
         ),
       );
       await tester.pump();
       await tester.pump();
+      await tester.pump(kSignedInProfileRetryDelay);
+      await tester.pump();
+      await tester.pump();
+      expect(profileListens, 2);
+      expect(find.text('TRY AGAIN'), findsOneWidget);
 
+      await tester.tap(find.text('TRY AGAIN'));
+      await tester.pump();
+      expect(profileListens, 3);
       expect(find.byType(LaunchRevealScreen), findsOneWidget);
-      expect(
-        tester
-            .widget<LaunchRevealScreen>(find.byType(LaunchRevealScreen))
-            .animationDuration,
-        Duration.zero,
-      );
-      expect(find.byType(AppShell), findsNothing);
-      expect(find.byType(PolicyAcceptanceGateScreen), findsNothing);
+
+      await tester.pump(kSignedInProfileRetryDelay);
+      await tester.pump();
+      expect(profileListens, 3);
+      expect(find.byType(LaunchRevealScreen), findsOneWidget);
     });
+
+    testWidgets(
+      'local safety retry preserves the unused automatic profile retry',
+      (tester) async {
+        final initialSafety = Completer<SongbookAccountDeletionState>();
+        final retriedSafety = Completer<SongbookAccountDeletionState>();
+        var safetyLoads = 0;
+        final savedRepository = _FakeSavedSongbookRepository()
+          ..stateLoader = () {
+            safetyLoads += 1;
+            return safetyLoads == 1
+                ? initialSafety.future
+                : retriedSafety.future;
+          };
+        var profileListens = 0;
+
+        await tester.pumpWidget(
+          wrap(
+            authStream: Stream.value(fakeUser as User?),
+            makeProfileStream: () {
+              profileListens += 1;
+              return Stream<UserProfile?>.error('profile read failure');
+            },
+            savedSongbookRepository: savedRepository,
+          ),
+        );
+        await tester.pump();
+        await tester.pump();
+        expect(profileListens, 1);
+
+        await tester.pump(kSignedInGateWaitTimeout);
+        await tester.pump();
+        expect(find.text('ACCOUNT CHECK IS TAKING TOO LONG'), findsOneWidget);
+
+        await tester.tap(find.text('TRY AGAIN'));
+        await tester.pump();
+        expect(safetyLoads, 2);
+        expect(profileListens, 1);
+
+        retriedSafety.complete(SongbookAccountDeletionState.none);
+        await tester.pump();
+        await tester.pump();
+        expect(profileListens, 1);
+        expect(
+          find.byKey(const Key('signed-in-loading-recovery')),
+          findsNothing,
+        );
+
+        await tester.pump(kSignedInProfileRetryDelay);
+        await tester.pump();
+        expect(profileListens, 2);
+      },
+    );
 
     testWidgets('a later stream error keeps the last verified active gate', (
       tester,

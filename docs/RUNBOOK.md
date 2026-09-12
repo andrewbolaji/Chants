@@ -340,11 +340,19 @@ node scripts/check-device-readiness.mjs --platform ios
 node scripts/check-device-readiness.mjs --platform android
 # Optional local discovery, no build/install/Firebase calls:
 node scripts/check-device-readiness.mjs --platform ios --devices --json
+# Frozen Android APK verification, no device action:
+node scripts/prepare-android-device.mjs --json
+# Durable handoff verification, no device action:
+node scripts/prepare-android-device.mjs --apk ../Chants-v1-release-handoff/Chants-1.0.0-1-release.apk --json
+# After exactly one unlocked physical Android phone is connected and trusted:
+node scripts/prepare-android-device.mjs --apk ../Chants-v1-release-handoff/Chants-1.0.0-1-release.apk --install --json
 ```
 
 The default checks file presence/readability and executable locations without reading config contents or invoking SDK tools. `--devices` opts into bounded local discovery, which may start OS/ADB services; only counts and states are emitted. Exit 0 means no inventory issue, 1 means missing/unknown/attention, and 2 means invalid usage. None grants live-test or release authority. Config identity, tool compatibility, provisioning and signing remain unverified. The helper resolves its own checkout, not Terminal's current directory.
 
-The guide is maintained in `chants-v1-production-rollout-plan` on the post-merge guide branch. That is a documentation location, not proof of configured client readiness. Prior prepared client files are recorded in `chants-v1-seed-live-rollout`. Arrange controlled client-configuration/dependency setup in a current reviewed run checkout; do not run an old branch merely because it contains configuration, overwrite real files with examples, or access the Admin credential for a device check. Use `flutter devices` and one explicitly selected target only after the backend and test gates below. Keep the debug session for hot reload; do not archive repeatedly for layout edits.
+The Android candidate helper is intentionally narrower. It is bound to the current signed release APK receipt and accepts only its default build output or one explicit `--apk` path. Before its explicit install mode touches a phone, it rechecks the exact APK hash, package, version, SDK range, complete merged permission inventory, 16 KB ZIP alignment, v2 signature, upload certificate, and rejected advertising permissions. It then requires exactly one authorized physical phone, rejects emulator serials and emulator runtime properties, checks Android 7.0 or later, performs a replacement install, and launches Chants without printing the device identifier or raw ADB output. A replacement install preserves app data only when the installed and candidate signatures are compatible. `INSTALL_FAILED_UPDATE_INCOMPATIBLE` requires an explicit owner decision to uninstall the old app, which deletes its local app data. `INSTALL_FAILED_USER_RESTRICTED` requires enabling the phone maker's USB installation permission instead of weakening the helper. Any candidate rebuild requires a reviewed receipt update before this helper can pass.
+
+The guide and candidate helper are maintained in the current reviewed release-candidate checkout. Do not run an older branch merely because it contains configuration, overwrite real files with examples, or access an Admin credential for a device check. Use the guarded Android installer above for the frozen APK. Use `flutter devices` and one explicitly selected target only for separately approved development work. Keep a debug session for hot reload; do not archive repeatedly for layout edits.
 
 The guide's result record is self-reported, not release approval. Fill candidate source, backend record and per-platform build references. Context changes make old results stale; notes do not renew a pass. Use Record result after observing/retesting and inspect the copied report for secrets. Browser storage may be unavailable; the page says so. Visual/browser verification of this new guide is pending because Browser Use rejected the local-file URL; source/logic tests are not a substitute.
 

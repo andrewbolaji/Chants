@@ -48,6 +48,7 @@ export function collectLaunchServiceErrors(root = defaultRoot) {
   const appGradle = read(root, "android/app/build.gradle.kts", errors);
   const xcodeProject = read(root, "ios/Runner.xcodeproj/project.pbxproj", errors);
   const entitlements = read(root, "ios/Runner/Runner.entitlements", errors);
+  const infoPlist = read(root, "ios/Runner/Info.plist", errors);
   const manifest = read(root, "android/app/src/main/AndroidManifest.xml", errors);
   const main = read(root, "lib/main.dart", errors);
   const functionsIndex = read(root, "functions/src/index.ts", errors);
@@ -109,6 +110,40 @@ export function collectLaunchServiceErrors(root = defaultRoot) {
     'android:pathPrefix="/performances/"',
     'android:pathPrefix="/creators/"',
   ]) expectIncludes(manifest, manifestPart, `Missing Android route ${manifestPart}`, errors);
+  for (const permission of [
+    'com.google.android.gms.permission.AD_ID',
+    'android.permission.ACCESS_ADSERVICES_ATTRIBUTION',
+    'android.permission.ACCESS_ADSERVICES_AD_ID',
+    'android.permission.ACCESS_ADSERVICES_CUSTOM_AUDIENCE',
+    'android.permission.ACCESS_ADSERVICES_TOPICS',
+  ]) {
+    const removal = new RegExp(
+      `<uses-permission\\s+android:name="${permission.replaceAll('.', '\\.')}"\\s+tools:node="remove"\\s*/>`,
+    );
+    if (!removal.test(manifest)) {
+      errors.push(`Android release does not remove transitive permission ${permission}`);
+    }
+  }
+  for (const metadata of [
+    'com.facebook.sdk.AutoLogAppEventsEnabled',
+    'com.facebook.sdk.AdvertiserIDCollectionEnabled',
+  ]) {
+    const disabled = new RegExp(
+      `<meta-data\\s+android:name="${metadata.replaceAll('.', '\\.')}"\\s+android:value="false"\\s*/>`,
+    );
+    if (!disabled.test(manifest)) {
+      errors.push(`Android release does not disable ${metadata}`);
+    }
+  }
+  for (const key of [
+    'FacebookAutoLogAppEventsEnabled',
+    'FacebookAdvertiserIDCollectionEnabled',
+  ]) {
+    const disabled = new RegExp(`<key>${key}</key>\\s*<false\\s*/>`);
+    if (!disabled.test(infoPlist)) {
+      errors.push(`iOS release does not disable ${key}`);
+    }
+  }
 
   expectIncludes(
     settings,

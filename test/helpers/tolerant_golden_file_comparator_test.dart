@@ -38,6 +38,21 @@ Future<Uint8List> _pngWithBlackPixels(int blackPixels) async {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  test('platform golden path selects only the Linux reference', () {
+    expect(
+      platformGoldenPath('goldens/example.png', isLinux: false),
+      'goldens/example.png',
+    );
+    expect(
+      platformGoldenPath('goldens/example.png', isLinux: true),
+      'goldens/linux/example.png',
+    );
+    expect(
+      platformGoldenPath('example.png', isLinux: true),
+      'linux/example.png',
+    );
+  });
+
   test(
     'golden tolerance accepts renderer drift but rejects a regression',
     () async {

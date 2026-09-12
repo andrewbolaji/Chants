@@ -234,6 +234,8 @@ Authentication adds no credential logging or provider discovery. Raw provider ex
 
 Public pages omit lyrics, private UIDs, raw Storage paths, report state, and unrestricted user HTML. Creator bios are escaped. Hidden and missing public targets are indistinguishable. Signed media creates a bounded two-minute residual after moderation.
 
+The final independent review correction keeps asynchronous recovery tied to current authority. A profile refresh stays inside the neutral launch boundary while Riverpod reports loading, and a late successful email authentication dismisses the stale sign-in route after its written timeout. Early upload cancellation no longer replaces the actual admission error when no draft exists. Approved media copied before publication is removed if the publication transaction fails, while the original moderation failure remains authoritative. These behaviors are pinned by focused Flutter and Functions regressions.
+
 The product stores user-created video. Policy, privacy, takedown, retention, moderation staffing, and billing controls are not optional documentation polish; they are release gates.
 
 ## Dependencies and native platforms

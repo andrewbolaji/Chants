@@ -1,59 +1,150 @@
-# Change spec: V1 final candidate closeout and player Call-Up copy correction
+# Change spec: Final candidate freeze, native rebuild, and consolidated review
 
-**Status:** Approved on 2026-09-08; implementation and verification in progress
+**Status:** Approved; pull request 38 is extended on 2026-09-11 with the bounded first-run orientation and physical-device correction pass before merge consideration
 
-**Approval phrase:** `approved V1 final candidate closeout and player call-up copy correction`
+**Owner approval:** Andrew replied `ok next phase` after the phase was defined as freezing the exact source, rebuilding Android and iOS, running the consolidated review, resolving accepted findings, and completing exact-head verification.
+
+**Extension approval:** After exact-head pull-request CI passed, Andrew asked for a light, logical, beautiful, skippable V1 onboarding that can jump directly to account creation and approved adding it to pull request 38 before merge.
+
+**Presentation refinement approval:** After inspecting the first rebuilt-phone orientation, Andrew approved horizontal drag navigation, the official supporter-shield mark in the header, quieter secondary action treatment, tighter copy, and a calmer, more refined visual hierarchy before repeating the device walk.
+
+**Physical-device correction approval:** After completing the rebuilt-phone walk, Andrew approved the proposed onboarding polish and asked to begin the pinned release fixes. The observed scope is the stalled successful email sign-in route, the later stalled signed-in account gate, calmer onboarding panels, one clear supporter mark on the sign-in welcome, dark Club Signal continuity, a smaller inline posting identity, and a compact Terrace Proven badge with plain-language meaning.
+
+**Independent-review follow-up approval:** After pull request 38 reached exact head `bb15ca62e4a169b52a4413e68a5d52bc48f3faab` with clean-runner CI passing, Andrew supplied the final Claude Code report and instructed Codex to apply the reported fixes, rebuild both platforms, and run CI. This approval covers the reproduced signed-in retry, late authentication, cancellation copy, failed-approval media cleanup, native privacy opt-out, bounded Android handoff, and receipt-accuracy corrections. It does not enable providers, mutate production, upload artifacts, merge, or release.
+
+**Closure-review follow-up approval:** After the first follow-up reached exact head `6d004d3b00024cab568d1835a932f20de8e356b7` with all eight clean-runner jobs passing, Andrew supplied the narrow Claude closure review and approved applying its four findings, rebuilding, and rerunning CI. This covers immediate sign-in re-entry protection, phase-scoped signed-in recovery, approval reconciliation after an ambiguous transaction result, and current-working-directory resolution for an explicit Android APK. It retains the same no-production, no-provider, no-upload, no-merge, and no-release boundary.
+
+**Closure packaging receipt:** Runtime source `02179bbb879d525403ba25679fb1545201ecedab` passes the full local matrix and produced fresh signed Android and App Store artifacts. The release records bind the exact sizes and SHA-256 values to that source. A receipt-only commit, push to pull request 38, and exact-head CI remain required before merge consideration.
 
 **Owner:** Andrew, through ThunderRiver Tech LLC
 
-**Lane:** 2, bounded release-candidate presentation correction and evidence closeout
+**Lane:** 2, local release packaging, artifact verification, and review closure
 
-**Baseline:** Clean reviewed PR 37 head `f4b3891a68eefdd3d006d7947589efe71f0c6564`, after the successful exact North London Forever production seed, paired-iPhone walkthrough, 30-minute observation, and generation-13 maintenance closure.
+**Baseline:** Repository head `b3e65636dd50e72f87685289a75b43585a206522` on `codex/android-v1-release-bundle`, with the accumulated reviewed and owner-observed release-candidate changes present across a mixed Git index and working tree. The full local Flutter suite passes 558 tests, scoped analysis reports no issues, and the launch guide, project memory, governance, writing, and whitespace checks pass. Production is separately contained at generation 35 maintenance with destructive workers false, one matching private pending-review canary draft and staged object, no active grant, and no public performance.
 
-## Outcome
+## Outcomes
 
-Make the Chant Call-Up invitation address its selected player by name, preserve the existing eligibility and submission behavior, record sanitized receipts from the completed live walkthrough, package one amended candidate, and prove it with replacement exact-head CI and a short paired-iPhone presentation check.
+1. Capture the proposed football-thoughts timeline as a post-V1 product direction without changing V1 behavior, architecture, store positioning, or release scope.
+2. Turn the accumulated local candidate into one exact staged handoff without losing, rewriting, or silently omitting existing owner changes.
+3. Rebuild Android and iOS from that exact source boundary, then bind each artifact to source, version, identity, signing state, and a SHA-256 receipt.
+4. Run one consolidated review of the direct tree difference from Claude-reviewed PR 37 pre-correction tree `5a95c93d0749796af65dc6c9a43707944dc66855` through the frozen candidate.
+5. Resolve accepted in-scope findings, rerun the complete local verification matrix, and leave the reviewed candidate ready for an explicitly authorized commit, push, and clean-runner CI gate.
+6. Add one device-local first-run orientation that teaches only Songbook, Chant Lab, and Stage, can be skipped from every step, links directly to account creation, and never changes authentication or account authority.
+7. Resolve the bounded presentation and route-completion defects reproduced during the physical iPhone walk without changing provider, backend, production, or moderation authority.
 
 ## Included
 
-1. Replace generic pronouns in the Call-Up question and absence explanation with the already displayed `playerName`, for example `Who's got a song for Ben White?` and `No chant for Ben White at Arsenal in Chants yet.`
-2. Preserve the current club name, player selection, eligibility, sign-in, submission, navigation, and accessibility behavior.
-3. Update focused semantic assertions and the affected macOS and Linux golden references using rendered evidence. Keep existing comparison tolerances unchanged.
-4. Record only sanitized production receipts: the exact target match, 193 total chants, 13 Arsenal chants, restored three-vote baseline, empty local Songbook, clean 30-minute observation, and generation 13 `maintenance` with destructive workers false.
-5. Update the launch command center, execution trail, interface contract, roadmap status, and store packet source binding for the amended presentation source.
-6. Run focused Flutter tests, inspect the affected renders, run the full Flutter suite and analysis, governance and store checks, package and push the amended PR 37 head, and require replacement exact-head CI.
-7. Build, install, and launch the amended signed iPhone candidate when the paired phone remains available. The owner check is limited to the changed Call-Up wording and surrounding layout.
+1. Add the post-V1 supporter-timeline concept to `docs/ROADMAP.md` with a smallest exploratory slice, chant-first differentiation, safety and operational boundaries, success signals, and a revisit trigger.
+2. Inventory every staged, unstaged, and untracked nonignored path. Inspect the complete diff, generated assets, executable source, platform declarations, store evidence, tests, and durable records. Scan the intended handoff for secrets and private production artifacts without printing their contents.
+3. Preserve the current ignored Firebase client configuration and signing material. Validate project, bundle, and package identity through bounded checks that do not expose keys, passwords, device identifiers, or credentials.
+4. Stage only the intended tracked and new repository paths. Keep `.private-report-repair`, Firebase client configuration, signing keys, key properties, build outputs, logs, credentials, and other ignored local state outside the handoff.
+5. Run staged project-memory, writing-style, governance, whitespace, source-contract, Flutter, Functions, seed, Firestore and Storage rules, and native-project checks in proportion to the complete review range.
+6. Build fresh Android release APK and AAB artifacts from the staged-equivalent tree. Inspect package, version, merged permissions, signatures, certificate continuity, size, and SHA-256.
+7. Build a fresh iOS release archive from the same source. Use the existing approved Chants bundle and local distribution setup if it is available and coherent. Inspect bundle, version, team, entitlements, signing state, embedded provisioning, size, and SHA-256. Record an unsigned or environment-blocked result honestly rather than weakening signing or changing native ownership.
+8. Snapshot tracked native state before each build and inspect it afterward. Treat tool-driven native changes as outputs requiring review, not as automatically accepted migration.
+9. Give the consolidated reviewer the exact base, candidate boundary, included subsystems, known older-installed-build distinction, production exclusions, and verification commands. Record findings by severity with evidence and disposition.
+10. Correct only reproduced, accepted findings that remain within this phase. A finding that requires a new product decision, production mutation, dependency migration, or materially broader architecture stops for a new approval.
+11. Update `docs/EXECUTION.md`, `docs/INTERFACE.md`, `docs/ROADMAP.md`, the command center, the completed-change rationale, and the repository rationale only where the frozen candidate makes their current-state statements stale.
+12. Show the orientation only to a signed-out installation that has not completed or skipped its versioned V1 guide. Keep the existing sign-in welcome as the destination after Skip or Continue, and keep the verified-account profile setup as a separate required gate.
+13. Persist completion locally with a versioned, nonidentifying flag. If that local read fails, fail open to sign-in. If the completion write fails, let the current session continue so orientation storage cannot trap a supporter.
+14. Keep Skip, Next, Continue to Sign In, and Create Account written and reachable. Give each step a semantic heading, position announcement, concise product truth, horizontal swipe navigation, and its own vertical overflow path at narrow widths and enlarged text. Keep the official supporter-shield mark visible beside `CHANTS`, preserve `SKIP` at the opposite edge, and keep the primary and account actions anchored while page content moves.
+15. Replace the onboarding panel's ghost numerals, translucent accent fills, and outlined micro-cards with one solid charcoal panel, one flat icon treatment, one quiet written cue, one restrained lower dot field derived from the launch atmosphere, and one consistent supporter-gold accent. Keep the official supporter shield and all established navigation behavior.
+16. Use the small supporter shield as the sign-in welcome's single left-hand brand mark beside written `CHANTS`. Remove the temporary waveform tile and duplicate far-edge shield without weakening method hierarchy or narrow-width wrapping.
+17. Treat a successful email and password authentication as route completion. Dismiss the pushed email route to the root account gate, tolerate an authentication state that arrives before a delayed repository future, and restore a written retry state on timeout or failure.
+18. Move Club Signal's in-app club and Songbook surfaces from warm paper to the shared dark Chants canvas while preserving crest-led identification, hierarchy, rows, routes, data, and recovery behavior. The public site and historical store evidence remain unchanged until their separately scoped refresh.
+19. Render the performance posting identity as a content-sized inline chip. Replace the rotated gold Terrace Proven strip with a compact level badge and explain it in plain language as verified evidence that the chant has been sung at matches. A performance never changes that trust state.
+20. Bound the signed-in root gate while it waits for the first verified profile and saved-deletion-state result. After 15 seconds, remain outside the product shell and present written Try Again and Sign Out actions. Retry must reload both account sources and sign out must retain its own bounded failure recovery.
+21. Keep a retried profile stream in the neutral loading boundary while Riverpod reports refresh in progress. Show profile recovery immediately only after the retry has produced a current error, and cover the slow-retry boundary with a regression.
+22. Keep listening for a late authenticated user after the email route's 15-second written timeout so a successful result dismisses the stale form. Preserve the timeout's retryable state when no user arrives.
+23. Preserve the original upload-admission failure when cancellation was requested before any draft existed. A missing draft is not a failed cancellation and must not replace maintenance, quota, or grant copy with a connectivity claim.
+24. If approved-media copying succeeds but the approval transaction fails, remove the exact copied destination before returning the failure. Preserve the original moderation error if cleanup also fails, keep media private, and cover the failure path with a Functions regression.
+25. Set the iOS Facebook automatic event logging and advertiser identifier collection flags to false, matching Android's fail-closed native defaults without enabling Facebook authentication.
+26. Let the Android helper accept one explicit APK path while retaining the fixed hash, package, version, SDK, permission, signature, and certificate checks. Reject emulators through both ADB serial shape and bounded device properties, classify common installation failures without reporting device identifiers, and document destructive uninstall recovery as an explicit last resort.
+27. Correct the CI toolchain description and extend the Android receipt with the complete merged permission inventory and the verified 16 KB ZIP-alignment result.
+28. Close sign-in re-entry before awaiting subscription cancellation so a rapid second press cannot start a second authentication operation or replace the first listener.
+29. Keep local-safety recovery and profile recovery as separate retry phases. A local-safety retry must not consume the profile phase's one automatic retry.
+30. Reconcile a reported approval-transaction failure through a fresh authoritative draft read. Remove canonical media only when the draft is proven unapproved, retain it when commit state is unknown, and complete successfully when the approved projection already names that media.
+31. Resolve an explicitly supplied relative Android APK path from the operator's current working directory while preserving all identity, hash, permission, signing, alignment, and physical-device checks.
 
 ## Excluded
 
-- Any Firebase, production-data, operational-control, Hosting, DNS, IAM, App Check, provider, authentication, media, worker, schedule, or store-console change.
-- Any new chant, lyrics, seed command, vote mutation, save mutation, account change, recording, upload, moderation, deletion, or public-content action.
-- A second core opening, destructive workers, or any use of the production credential.
-- PR merge, tag, release archive, TestFlight, Play testing, store submission, or public launch.
-- Any unrelated interface, copy, feature, dependency, native-project, backend, rules, index, or asset change.
+- Merge, tag, GitHub Actions dispatch, a new pull request, or remote mutation beyond the focused orientation extension to the existing pull request 38 branch without a further explicit owner instruction. Andrew's extension request authorizes the focused commit and push needed to put this work into pull request 38, but it does not authorize merge.
+- Store upload, TestFlight upload, Play upload, store submission, store review request, managed publishing change, or public release.
+- Production mode, worker, IAM, rule, Function, Hosting, DNS, App Check, provider, data, canary, moderation, publication, playback, deletion, or object change.
+- Another performance upload or reuse, review, preview, download, moderation, publication, or deletion of the private canary.
+- Dependency upgrades, CocoaPods-to-SwiftPM migration, Gradle migration, identifier change, version or build-number change, new permission, signing-material change, or new native capability unless a reproduced release blocker receives separate approval.
+- Implementation of the supporter timeline, text posts, reposts, ranking, new feed schemas, new social graph behavior, or related moderation systems.
+- Enabling Apple, Google, Facebook, magic-link, phone, or any other Firebase provider; changing provider console, entitlement, URL-scheme, callback, secret, key, or production configuration. The already requested Apple, Google, Facebook, magic-link, and email-password release setup remains a later independent gate.
+- Rewriting unrelated user work, deleting ignored local state, bulk formatting, or normalizing goldens without a reproduced visual reason.
 
 ## Acceptance criteria
 
-1. Every visible Call-Up question and absence explanation names the selected player and club without a generic pronoun.
-2. Focused tests prove the copy changes when the selected player changes, the two relevant main-club views carry the selected name, and enlarged text remains operable.
-3. Updated goldens are rendered and inspected on their actual platform evidence path; no tolerance is widened.
-4. The command center and execution record accurately close the generation-12 walkthrough and generation-13 maintenance receipts without credentials, account identifiers, raw logs, or user content.
-5. The store packet permits and hash-binds the amended Call-Up source while remaining honestly `prepared_not_submitted` with all release screenshots pending.
-6. The complete local verification matrix and replacement exact-head CI are green on one clean pushed head.
-7. The paired-iPhone spot check shows the named-player wording without clipping or navigation regression, or is explicitly retained as the only pending owner presentation check.
-
-## Stop conditions
-
-- The change requires a schema, query, eligibility, route, backend, production, or store-console mutation.
-- The selected player name is unavailable, stale, unsafe to display, or differs from the existing card heading.
-- Normal or enlarged text clips controls, hides the club qualification, or requires a broad visual redesign.
-- A focused, full-suite, governance, store, or CI failure cannot be explained and corrected within this exact presentation boundary.
-- The worktree contains unrelated user changes or the remote PR head changes unexpectedly.
+1. One inventory accounts for every nonignored changed path. No private credential, Firebase client file, signing file, operational plan, raw production payload, or build output enters the staged handoff.
+2. The intended handoff is staged and `git diff --cached --check`, staged project memory, writing style, and governance checks pass. There is no unintended unstaged source or documentation drift at the freeze boundary.
+3. The complete Flutter suite and scoped analysis pass from the frozen tree. Every touched source-contract suite passes, and representative changed goldens are inspected.
+4. Functions build and unit tests, seed tests and typecheck, Firestore and Storage rules tests, the real Firestore transaction suite, native-project checks, launch-service checks, store-packet checks, public-site checks, and guide checks pass or carry a precise environment blocker.
+5. Fresh Android APK and AAB receipts name the exact source boundary, package, version, signing certificate, signature state, size, and SHA-256. The merged release manifest contains no rejected advertising or ad-services permissions.
+6. A fresh iOS archive receipt names the exact source boundary, bundle, version, team, entitlements, signing state, size, and SHA-256. It uses the project-owned CocoaPods graph and introduces no unreviewed SwiftPM state.
+7. The consolidated review covers the entire direct range from `5a95c93d0749796af65dc6c9a43707944dc66855`, distinguishes older installed-device evidence from rebuilt artifacts, and reports no unresolved high or medium finding before handoff.
+8. Every accepted finding has a reproduced boundary, focused regression where behavior changed, recorded correction, and replacement verification.
+9. Production remains generation 35 maintenance with destructive workers false by prior receipt. This phase performs no production read or write merely to refresh elapsed-time evidence.
+10. The resulting staged candidate is committed and pushed only as the focused orientation extension Andrew requested for pull request 38. Clean-runner exact-head CI passes before merge consideration. Merge remains a separate explicit gate.
+11. A fresh signed-out installation reaches the three-step orientation after the launch reveal. Skip works from every step, Create Account reaches the existing signup route, Continue reaches the existing sign-in welcome, and all three exits mark the V1 guide complete for later launches.
+12. Signed-in users, verified-account profile onboarding, policy admission, deletion recovery, provider configuration, and server authority remain unchanged. Local preference read or write failure cannot block sign-in.
+13. Focused tests cover first install, repeat launch, every exit, storage failure, reduced motion, semantics, horizontal swipe in both directions, official brand-asset use, 390 by 844 presentation, 320-pixel width, vertical overflow, and enlarged text. The full Flutter suite and exact-head CI pass after the extension.
+14. The refined orientation goldens contain no ghost step numeral or coral panel, and the sign-in welcome contains the supporter-shield mark at representative and narrow phone widths.
+15. Email sign-in tests prove immediate success, delayed auth-state success, timeout recovery, invalid credentials, and post-success root-route dismissal without trapping the fan behind a spinner.
+16. Representative Club Signal goldens use the shared dark canvas and remain readable at 390 by 844, 320-pixel width, and enlarged text. Route, query, crest, save, and vote behavior is unchanged.
+17. The posting identity stays content sized, the Terrace Proven badge is unrotated, and adjacent copy says what the trust state means without implying club endorsement, correctness, or automatic promotion.
+18. A slow profile retry remains on the neutral reveal until it resolves, fails, or reaches the 15-second boundary. Repeated Try Again actions do not prematurely show recovery while a refreshed stream is loading.
+19. A late email authentication result dismisses the timed-out route, while a genuinely unresolved attempt remains written and retryable.
+20. A cancellation request made before admission cannot overwrite the specific admission failure, and no nonexistent draft is presented as requiring cancellation.
+21. Every moderation approval path that copied destination media and then failed removes that exact destination. Cleanup failure cannot replace the original moderation error or make the object public.
+22. iOS and Android both explicitly disable Facebook automatic event logging and advertiser identifier collection in their native source defaults.
+23. Android helper tests cover the durable handoff path, property-detected emulators, incompatible signatures, OEM install restriction copy, and continued identifier redaction. The handoff documentation distinguishes data-preserving replacement from destructive uninstall recovery.
+24. Project and release receipts name CI Flutter 3.47.3 accurately and record the complete merged Android permission and 16 KB alignment evidence for the rebuilt exact candidate.
+25. Rapid repeated sign-in presses still start exactly one authentication request and retain exactly one authoritative authentication listener.
+26. Retrying the local-safety phase does not suppress the profile phase's first bounded automatic retry.
+27. Approval reconciliation tests cover a committed-but-reported-failed transaction and an unreadable post-failure draft. The former returns approved and removes only staging media; the latter preserves canonical media and the original error.
+28. Android helper coverage proves that a relative explicit APK path works when the helper is launched from the artifact handoff directory.
 
 ## Recovery
 
-Keep production closed at generation 13 maintenance with destructive workers false. Revert only this unmerged local correction if its presentation cannot be made safe. Do not compensate through production data, another operational opening, or a wider product change.
+Before staging, preserve the current mixed index and working-tree inventory. If staging reveals an omitted or unrelated path, stop and repair the index without discarding its working-tree content. Never use a destructive reset or checkout to force cleanliness.
 
-## Approval boundary
+Before each native build, record the tracked platform diff. If Flutter, Xcode, CocoaPods, Gradle, or another tool changes tracked scaffolding or lock state, inspect the exact change. Retain it only when already authorized and necessary; otherwise reverse it with a bounded patch that preserves all unrelated work. Generated build outputs remain ignored.
 
-Andrew's exact approval authorizes this bounded named-player copy correction, its focused visual evidence, sanitized live-walk documentation closeout, store source binding, one amended commit and push to PR 37, replacement exact-head CI, and the limited paired-iPhone spot check. It does not authorize any excluded action, PR merge, tag, store action, submission, or release.
+If signing identity, provisioning, Firebase client identity, package identity, or version is ambiguous, stop that platform build and record the blocker. Do not generate replacement keys, profiles, registrations, identifiers, or versions in this phase.
+
+If the reviewer cannot run or reaches a usage or environment limit, preserve the exact frozen handoff and reviewer brief. Do not substitute self-review for the required independent result. If a finding expands scope, leave it unresolved with its evidence and request a new decision.
+
+## Next gate
+
+After the staged orientation extension, rebuilt artifacts, and local verification are complete, use Andrew's pull request 38 extension authority for one focused commit and push, then require exact-head clean-runner CI. A rebuilt-phone presentation check and a separate explicit merge instruction remain before merge. Store upload and submission remain later, separately approved gates.
+
+## Completion receipt
+
+- Claude Code independently reviewed the complete direct range from `5a95c93d0749796af65dc6c9a43707944dc66855` through the frozen staged candidate at head `b3e65636dd50e72f87685289a75b43585a206522` and reported two P1, two P2, and four P3 findings.
+- All eight findings were accepted, reproduced, corrected within this Lane 2 boundary, and covered by replacement regressions. The correction record is `docs/changes/2026-09-11-final-candidate-independent-review-corrections.md`.
+- The corrected focused Flutter set passes 43 tests, the complete Flutter suite passes 563 tests, scoped analysis reports no issue, Functions and seed checks pass, and the Java-backed rules and transaction suites pass 174 and 24 cases respectively.
+- Fresh corrected Android AAB and APK artifacts and an App Store-signed iOS archive and IPA were rebuilt and inspected. Their final hashes and signing receipts are recorded in `docs/EXECUTION.md` and the command center.
+- Project memory, writing, governance, native-project, store-packet, launch-service, public-site, guide, source-contract, staged whitespace, and bounded staged credential-value checks pass at final staging.
+- No production, canary, provider, Hosting, DNS, store, release, commit, push, merge, or signing-material mutation occurred in this correction and packaging phase.
+- Andrew later authorized the exact staged commit and push, then separately authorized opening the release-candidate pull request into `main`. Commit `f2e405f92f5ac0592e5c5c959f3b1a9d68e4aea7` is the initial head of pull request 38.
+- The first pull-request clean runner passed every completed non-Flutter job and all 559 nonfailing Flutter cases. It found five Linux screenshot differences between 1.54 and 1.89 percent, all confined to glyph, icon, and border-edge antialiasing after retained artifact inspection. The bounded correction adds Linux-only references from that exact runner and does not raise the shared 1.5 percent tolerance. The focused 20-test set, complete 564-test Flutter suite, and scoped analysis pass locally. Replacement exact-head CI is required.
+- The first replacement run proved that Flutter widget-test target selection does not identify the Linux host. It repeated the same five parent-reference differences with identical percentages and pixel counts while every other completed job passed. The helper now uses the actual host operating system with an injectable regression seam. Another replacement exact-head run is required.
+- Commit `3f26e66239c1c12237b26127e7decafe6baa85ee` passed all eight jobs in exact-head GitHub Actions run `34598537127`, including 564 Flutter tests, scoped analysis, project governance, Functions, seed, Firestore and Storage rules, Android debug build, and iOS simulator build under pinned Flutter 3.47.3.
+- Andrew supplied a final exact-head Claude Code review. Its one P2, two P3, and two P4 findings were reproduced and accepted: duplicate Storage progress-stream errors, a disposed player-field callback, unpinned CI Flutter, dead modal semantics, and UTF-16 lyric counting.
+- The corrections deliberately consume observational progress-stream errors while the upload completion future remains authoritative, remove the stale field callback, count user-perceived lyric characters, pin all CI jobs to Flutter 3.47.3, and remove the dead semantics label. Focused coverage passes 32 tests, the complete Flutter suite passes 567 tests, and scoped analysis reports no issue.
+- The previous signed Android and iOS receipts remain valid only for their recorded source boundary. Fresh corrected candidates replace them: Android AAB SHA-256 `ac60bb412d2c668e61410d03f3dd69a4bffff7126ce44df6ffe83fdb6717b4c6`, Android APK SHA-256 `291a062dbe11ef070d0e220947a3d404bd648811572e7079cdaf72bc34b641b7`, iOS archive content-tree SHA-256 `ccb5b26b69fac3c9a36a372210a1a0b03c450ae959b3bdb06110917671adf074`, and iOS IPA SHA-256 `8e645f704685754e8dc547d447efd9082f0d7a54e60a8101ce01978751a9408e`. Replacement exact-head CI remains required before merge consideration.
+- The first-run orientation extension passes 45 focused repository, interaction, gate, failure, timeout, reduced-motion, semantics, responsive, and golden tests. All three 390 by 844 references were inspected. The complete Flutter suite passes 588 tests and scoped analysis reports no issue.
+- Fresh orientation-source Android artifacts replace the prior Android receipts: AAB 65,358,385 bytes, SHA-256 `97d28f20e1862ea27e71fb5bdcd6bf63861b6d2c8e2e055401e71dca0bc07fc3`; APK 64,078,519 bytes, SHA-256 `83f49ef7c6f8eb5f7062791cd0e222512263884b07fc56022dfe69bdb1f2c700`. Identity, version, SDK, architecture, merged permissions, AAB JAR signature, APK v2 signature, and upload-certificate continuity pass.
+- Fresh orientation-source iOS artifacts replace the prior iOS receipts: archive 537,710,592 allocated bytes with content-tree SHA-256 `9181dc16e379716053e3d7fb695e111d59e44e9ab29845471231846c037ab7d7`; IPA 51,686,765 bytes with SHA-256 `7c2e1dc8311f7c1061956d21992bbeac18784c3a5f4dd53ddc38f1c1b144b483`. ZIP integrity and strict deep-signature verification pass with the approved Apple Distribution identity, team, profile, and entitlements. Temporary verification files and keychain were removed.
+- The first rebuilt-phone presentation exposed no structural onboarding failure, but Andrew requested one approved polish pass before accepting the walk. The refined source supports horizontal swipes, uses the official supporter shield, tightens the three product truths, reduces visual weight, and keeps each page vertically scrollable beneath anchored actions. Its focused set passes 46 tests, the complete Flutter suite passes 589 tests, scoped analysis reports no issue, and all three refreshed 390 by 844 references were inspected. The preceding signed receipts are now historical for their exact source and must be replaced before final candidate closure.
+- Andrew completed the rest of the iPhone presentation walk and approved the observed correction set. The source now gives email sign-in a bounded route-completion path, uses dark in-app Club Signal surfaces, keeps the posting identity content sized, and replaces the diagonal Terrace Proven strip with a compact badge plus plain match-use meaning. Seventy-four focused cases and all 594 Flutter tests pass, scoped analysis reports no issue, the source-bound prepared store packet and all 20 regressions pass, and every changed representative reference was inspected. Staged governance and replacement Android and iOS device-artifact gates pass; the corrected iOS build is installed and running. The short visible confirmation, focused push, and exact-head CI remain before merge consideration.
+- The short confirmation accepted the refined onboarding composition and exposed a distinct post-authentication root-gate stall on `GETTING THINGS READY`. The current source adds a restrained lower dot field to all three panels, makes the shield the signed-out welcome's single left-hand brand mark, and replaces that unbounded root wait with fail-closed retry and sign-out recovery after 15 seconds. The new 72-case focused onboarding and authentication group passes. Complete matrix, replacement native artifacts, phone confirmation, focused push, and exact-head CI must be renewed for this latest source boundary.
+- Claude Code independently reviewed exact head `bb15ca62e4a169b52a4413e68a5d52bc48f3faab` and reported no P0 or P1 findings, one P2 finding, and nine P3 findings. Every accepted finding is corrected at runtime source commit `fedfe2cc2ea0d5cf2da26b3525fd15961a2ac248` with focused regressions or exact release evidence. The follow-up record is `docs/changes/2026-09-12-pr38-independent-review-follow-up.md`.
+- The replacement verification matrix passes 80 focused and 599 complete Flutter tests, scoped analysis, 232 Functions unit tests, 24 real-Firestore cases, 174 Firestore and Storage rules assertions, 87 seed tests and typecheck, 50 helper and guide regressions, the prepared store packet and 20 regressions, native checks, privacy defaults, and staged-source checks.
+- Fresh corrected artifacts replace every prior candidate in the durable local handoff. The Android AAB SHA-256 is `b19015b6572629177d22f46ca4074474ddd2c2b18a19dbfc82de084eb5765b1f`; the APK SHA-256 is `b5eb1cca78069f25574aec4b9f6d1b659a68698775451bc07ca7adef58f14151`; the iOS archive content-tree SHA-256 is `131450bdeff907730948815c8803a69cf1d3ec56e527f18e1917b16a9b4c565c`; and the IPA SHA-256 is `9a2ebb076df62d7abded2002f20d31eddeb35096ee54a2559bb7e0545aa47d9a`. Artifact identity, version, signatures, certificates, permissions, alignment, profile, privacy flags, and entitlements pass. Exact-head CI remains the final gate for this follow-up.
+- Commits `fedfe2cc2ea0d5cf2da26b3525fd15961a2ac248` and `6d004d3b00024cab568d1835a932f20de8e356b7` were pushed to pull request 38. All eight exact-head jobs passed at `6d004d3b00024cab568d1835a932f20de8e356b7` before the closure review began.
+- The narrow closure review reported four low-severity edge cases and no release-blocking defect. Andrew accepted all four. The double-submit guard, retry-phase ownership, ambiguous-commit reconciliation, and current-directory APK behavior are implemented with focused regressions. Replacement native receipts and replacement exact-head CI are still required for this new source boundary.

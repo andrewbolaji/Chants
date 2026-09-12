@@ -16,19 +16,20 @@ class AppColors extends ThemeExtension<AppColors> {
   static const stageRule = Color(0xFF2A2924);
   static const stageScrim = Color(0xD9000000);
 
-  // Club Signal: the calm, light half of the same Chants matchnight system.
-  static const signalCanvas = Color(0xFFF0EEE8);
-  static const signalPaper = Color(0xFFFFFCF4);
-  static const signalPaperMuted = Color(0xFFE6E1D7);
-  static const signalInk = Color(0xFF0A0A08);
-  static const signalTextMuted = Color(0xFF676157);
-  static const signalRule = Color(0xFFD0C9BC);
-  static const signalGold = Color(0xFFA76F00);
+  // Club Signal: the calm, dark utility half of the Chants matchnight system.
+  // Flat rows and restrained rules distinguish it from expressive Stage media.
+  static const signalCanvas = Color(0xFF060606);
+  static const signalPaper = Color(0xFF161616);
+  static const signalPaperMuted = Color(0xFF1C1C1C);
+  static const signalInk = Color(0xFFE9E0CE);
+  static const signalTextMuted = Color(0xFFA1937D);
+  static const signalRule = Color(0xFF2B2B28);
+  static const signalGold = Color(0xFFF2AE2E);
 
-  // Compatibility names for existing Club Signal components. These now map
-  // to Chants ink and warm neutral, not to a second green product palette.
-  static const signalForest = signalInk;
-  static const signalForestMuted = Color(0xFF70685B);
+  // Compatibility names for existing Club Signal components. These map to
+  // shared dark Chants structure, not a separate green product palette.
+  static const signalForest = Color(0xFF090907);
+  static const signalForestMuted = Color(0xFFA1937D);
 
   // Text hierarchy: softened off pure white for comfort
   static const textHeadline = Color(0xFFE9E0CE); // titles, headlines
@@ -39,9 +40,9 @@ class AppColors extends ThemeExtension<AppColors> {
   // Legacy alias so existing code compiles during migration
   static const textPrimary = textHeadline;
 
-  // The single accent: trophy gold (Ink and Gold, punchier).
-  static const gold = Color(0xFFFFC02E);
-  static const goldBright = Color(0xFFFFD04D);
+  // The single accent: supporter gold, vivid without reading as neon.
+  static const gold = Color(0xFFF2AE2E);
+  static const goldBright = Color(0xFFFFC94D);
   static const goldOnDark = Color(0xFF060606);
 
   // A restrained secondary accent for community creativity on Home.
@@ -49,8 +50,8 @@ class AppColors extends ThemeExtension<AppColors> {
   static const chantLab = Color(0xFFE35A45);
 
   // Gold foil gradient for the verified sticker
-  static const goldFoilStart = Color(0xFFFFC02E);
-  static const goldFoilEnd = Color(0xFFFFD04D);
+  static const goldFoilStart = gold;
+  static const goldFoilEnd = goldBright;
 
   // Semantic
   static const error = Color(0xFFEF6461);
@@ -61,7 +62,7 @@ class AppColors extends ThemeExtension<AppColors> {
   static const outline = Color(0xFF2B2B28);
 
   // Floodlight glow (detail hero)
-  static const glowGold = Color(0x0FFFC02E); // gold at ~6%
+  static const glowGold = Color(0x0FF2AE2E); // supporter gold at ~6%
 
   // Instance fields for ThemeExtension
   final Color accentColor;

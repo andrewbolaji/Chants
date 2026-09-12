@@ -6,7 +6,7 @@
 
 **Use this packet for:** App Store Connect and Google Play Console preparation for Chants FC V1.
 
-**Do not submit yet.** The guarded production walkthrough is complete and production is safely closed. The named-player Call-Up correction still needs its exact-candidate phone spot check and merge authority; final screenshots, public URL readback, review access, release signing, exact-binary checks, store questionnaires, console entry, and submission remain later gates. The machine-readable source for the copy below is `store/submission.json`.
+**Do not submit yet.** The guarded production walkthrough is complete and production is safely closed. Pull request 38 is open and unmerged. Its pre-orientation head passed exact-head CI, then Andrew approved one bounded first-run orientation extension. The complete local matrix and fresh signed Android and iOS receipts for that extension pass; focused push, exact-head CI, rebuilt-phone proof, and final source-bound release evidence remain open. The Google Play developer account and Chants draft now exist, Android developer verification is registered, and the default listing text, icon, feature graphic, category, tags, contact email, website, privacy policy, and six unambiguous app-content declarations are saved in Play Console. Final screenshots, support-channel readback, review access, exact release artifacts, remaining store questionnaires, and submission remain later gates. The machine-readable source for the copy below is `store/submission.json`.
 
 **Store creative status:** The screenshot storyboard retains owner visual acceptance. Andrew approved the corrected canonical explicit-sRGB Google Play feature graphic PNG on 7 September 2026, and its separate approved digests match the current asset and renderer.
 
@@ -17,6 +17,7 @@
 | Store name | Chants FC |
 | Installed name | Chants |
 | Operator | ThunderRiver Tech LLC |
+| Google Play developer name | ThunderRiverTech |
 | Support | support@chantsfc.com |
 | iOS bundle ID | com.chants.chants |
 | Android package name | com.chants.chants |
@@ -142,9 +143,12 @@ Use default language `English (United States)` unless the existing record has an
 |---|---|
 | App name | Chants FC |
 | Category | Sports |
-| Contact email | support@chantsfc.com |
+| Tags | Lyrics, Social, Sports |
+| Contact email | play@thunderrivertech.com |
 | Website | https://chantsfc.com/ |
 | Privacy policy | https://chantsfc.com/privacy |
+
+The fields above, the app icon, and the approved feature graphic are saved in the existing Chants Play Console draft. The privacy policy URL is saved as `https://chantsfc.com/privacy`. The Ads declaration says the app does not contain ads. Government apps says no. Financial features says the app provides none. Health says the app has no health features. Advertising ID says the app does not use an advertising ID. All remain draft changes in Publishing overview. Phone screenshots are intentionally absent until truthful release-candidate captures exist. No Play submission or review request has been made.
 
 **Short description**
 
@@ -195,6 +199,10 @@ Select that some functionality is restricted. Enter only the dedicated review ac
 
 Use `docs/STORE_PRIVACY_WORKSHEET.md`, verify the public deletion page, complete the content-rating questionnaire, declare the moderated user-generated-content behavior, and provide the reviewer account. Do not mark the listing ready while any of these remain incomplete.
 
+The target-audience questionnaire is currently blocked by Play Console until Sign in details is complete. Create and test the dedicated reviewer account first, then enter its credentials only in Play Console and continue the target-audience flow from the app's 17+ account rule and actual release content.
+
+The Advertising ID declaration is complete and saved as a draft with `No`. The Android release manifest explicitly removes `com.google.android.gms.permission.AD_ID` and the four inherited Privacy Sandbox ad-services permissions from Facebook Core 18.1.3. A fresh `processReleaseMainManifest` build on 9 September 2026 rejected all five transitive permissions, and the resulting `build/app/intermediates/merged_manifest/release/processReleaseMainManifest/AndroidManifest.xml` contains none of them. Automatic Meta app-event logging and advertiser-ID collection are also disabled. Rebuild and inspect the exact final bundle manifest again if native dependencies or provider configuration change before submission.
+
 ## 5. Claims that must stay out
 
 Do not claim or visually imply:
@@ -227,7 +235,7 @@ Complete these as prerequisites. The operational order may vary, but do not mark
 
 `prepared_not_submitted` is the correct status until every gate above except actual submission is complete.
 
-The machine-readable packet binds the source baseline, every approved release-candidate source difference, store assets, release artifacts, source captures, and framed outputs to exact hashes. That boundary includes all 20 shipped crest binaries and their provenance record. A pending item keeps its evidence null. If bytes or release source change, clear the affected gate and recapture or reapprove it. The current bound differences include the iPhone-only native correction, Club Signal identity and vote clarity, the reviewed Arsenal source addition, and its exact-target seed guard; all ten screenshots remain pending until they are captured from the final release artifact.
+The machine-readable packet binds the source baseline, every approved release-candidate source difference, store assets, release artifacts, source captures, and framed outputs to exact hashes. That boundary includes all 20 shipped crest binaries and their provenance record. A pending item keeps its evidence null. If bytes or release source change, clear the affected gate and recapture or reapprove it. The current bound differences include the iPhone-only native correction, Club Signal identity and vote clarity, the reviewed Arsenal source addition and its exact-target seed guard, reproducible Android packaging, the dependency lock, the current public landing source, and the versioned first-run orientation gate and presentation. All ten screenshots remain pending until they are captured from the final release artifact.
 
 ## 7. Official references used
 

@@ -24,6 +24,7 @@ const paths = [
   "android/app/src/main/AndroidManifest.xml",
   "ios/Runner.xcodeproj/project.pbxproj",
   "ios/Runner/Runner.entitlements",
+  "ios/Runner/Info.plist",
   "lib/main.dart",
   "functions/src/index.ts",
   "functions/src/operations.ts",
@@ -63,6 +64,38 @@ try {
     error.includes("Crashlytics plugin")
   ));
   cpSync(join(root, "android/settings.gradle.kts"), settingsPath);
+
+  const manifestPath = join(
+    tempRoot,
+    "android/app/src/main/AndroidManifest.xml",
+  );
+  writeFileSync(
+    manifestPath,
+    readFileSync(manifestPath, "utf8").replace(
+      'android:name="com.google.android.gms.permission.AD_ID"\n        tools:node="remove"',
+      'android:name="com.google.android.gms.permission.AD_ID"',
+    ),
+  );
+  assert.ok(collectLaunchServiceErrors(tempRoot).some((error) =>
+    error.includes("com.google.android.gms.permission.AD_ID")
+  ));
+  cpSync(
+    join(root, "android/app/src/main/AndroidManifest.xml"),
+    manifestPath,
+  );
+
+  const infoPlistPath = join(tempRoot, "ios/Runner/Info.plist");
+  writeFileSync(
+    infoPlistPath,
+    readFileSync(infoPlistPath, "utf8").replace(
+      "<key>FacebookAutoLogAppEventsEnabled</key>",
+      "<key>FacebookAutoLogAppEventsMissing</key>",
+    ),
+  );
+  assert.ok(collectLaunchServiceErrors(tempRoot).some((error) =>
+    error.includes("FacebookAutoLogAppEventsEnabled")
+  ));
+  cpSync(join(root, "ios/Runner/Info.plist"), infoPlistPath);
 
   const invalidAssetLinks = join(
     tempRoot,

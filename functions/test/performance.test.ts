@@ -43,6 +43,13 @@ type Operation =
 
 class FirestoreHarness {
   private readonly store = new Map<string, Map<string, Data>>();
+  private readonly directGetCalls = new Map<string, number>();
+  private directGetFailure: {
+    path: string;
+    afterSuccessfulReads: number;
+    error: Error;
+  } | undefined;
+  transactionErrorAfterCommit: Error | undefined;
 
   readonly firestore = {
     collection: (name: string) => this.collection(name),
@@ -57,6 +64,14 @@ class FirestoreHarness {
   get(collection: string, id: string): Data | undefined {
     const data = this.bucket(collection).get(id);
     return data ? { ...data } : undefined;
+  }
+
+  failDirectGetAfter(
+    path: string,
+    afterSuccessfulReads: number,
+    error: Error
+  ): void {
+    this.directGetFailure = { path, afterSuccessfulReads, error };
   }
 
   private bucket(collection: string): Map<string, Data> {
@@ -106,7 +121,17 @@ class FirestoreHarness {
     return {
       doc: (id: string) => {
         const ref = this.reference(name, id);
-        return { ...ref, get: async () => this.snapshot(ref),
+        return { ...ref, get: async () => {
+          const calls = (this.directGetCalls.get(ref.path) ?? 0) + 1;
+          this.directGetCalls.set(ref.path, calls);
+          if (
+            this.directGetFailure?.path === ref.path &&
+            calls > this.directGetFailure.afterSuccessfulReads
+          ) {
+            throw this.directGetFailure.error;
+          }
+          return this.snapshot(ref);
+        },
           update: async (data: Data) => this.apply({ kind: "update", ref, data }),
         };
       },
@@ -159,6 +184,9 @@ class FirestoreHarness {
       delete: (ref) => operations.push({ kind: "delete", ref }),
     });
     operations.forEach((operation) => this.apply(operation));
+    const transactionError = this.transactionErrorAfterCommit;
+    this.transactionErrorAfterCommit = undefined;
+    if (transactionError) throw transactionError;
     return result;
   }
 }
@@ -174,6 +202,7 @@ class MediaHarness implements PerformanceMediaGateway {
   copied: Array<[string, string]> = [];
   removed: string[] = [];
   signed: Array<[string, number]> = [];
+  removeError: Error | undefined;
 
   async inspect(_path: string): Promise<StagedMediaMetadata> {
     this.inspectCalls++;
@@ -186,6 +215,7 @@ class MediaHarness implements PerformanceMediaGateway {
 
   async remove(path: string): Promise<void> {
     this.removed.push(path);
+    if (this.removeError) throw this.removeError;
   }
 
   async signReadUrl(path: string, expiresAtMs: number): Promise<string> {
@@ -604,6 +634,89 @@ describe("performance admission", () => {
     assert.strictEqual(projection.publicationState, "approved");
     assert.strictEqual(projection.chantStatus, "community");
     assert.strictEqual(db.get("performanceDrafts", "draft-1")?.state, "approved");
+  });
+
+  it("removes copied media when approval validation fails", async () => {
+    db.set("profiles", "operator", activeAccount({ role: "operator" }));
+    db.set("creatorProfiles", "fan", visibleCreator({ hidden: true }));
+    db.set("performanceDrafts", "draft-1", awaitingDraft({ state: "pending_review" }));
+
+    await assert.rejects(handleModeratePerformance({
+      actorUid: "operator",
+      data: { draftId: "draft-1", action: "approve", reason: "" },
+      firestore: db.firestore,
+      media,
+      now: () => NOW,
+    }), (error: { code?: string }) => error.code === "failed-precondition");
+
+    assert.deepStrictEqual(media.copied, [[
+      "performance-staging/fan/draft-1/source",
+      "performance-media/draft-1/source",
+    ]]);
+    assert.deepStrictEqual(media.removed, ["performance-media/draft-1/source"]);
+    assert.strictEqual(db.get("performances", "draft-1"), undefined);
+    assert.strictEqual(db.get("performanceDrafts", "draft-1")?.state, "pending_review");
+  });
+
+  it("keeps the original approval error when copied-media cleanup fails", async () => {
+    db.set("profiles", "operator", activeAccount({ role: "operator" }));
+    db.set("creatorProfiles", "fan", visibleCreator({ hidden: true }));
+    db.set("performanceDrafts", "draft-1", awaitingDraft({ state: "pending_review" }));
+    media.removeError = new Error("storage unavailable");
+
+    await assert.rejects(handleModeratePerformance({
+      actorUid: "operator",
+      data: { draftId: "draft-1", action: "approve", reason: "" },
+      firestore: db.firestore,
+      media,
+      now: () => NOW,
+    }), (error: { code?: string }) => error.code === "failed-precondition");
+    assert.deepStrictEqual(media.removed, ["performance-media/draft-1/source"]);
+  });
+
+  it("reconciles an approved draft when the transaction response is lost", async () => {
+    db.set("profiles", "operator", activeAccount({ role: "operator" }));
+    db.set("performanceDrafts", "draft-1", awaitingDraft({ state: "pending_review" }));
+    db.transactionErrorAfterCommit = new Error("commit response unavailable");
+
+    const result = await handleModeratePerformance({
+      actorUid: "operator",
+      data: { draftId: "draft-1", action: "approve", reason: "" },
+      firestore: db.firestore,
+      media,
+      now: () => NOW,
+    });
+
+    assert.deepStrictEqual(result, { state: "approved", performanceId: "draft-1" });
+    assert.strictEqual(db.get("performanceDrafts", "draft-1")?.state, "approved");
+    assert.strictEqual(db.get("performances", "draft-1")?.mediaPath,
+      "performance-media/draft-1/source");
+    assert.deepStrictEqual(media.removed, ["performance-staging/fan/draft-1/source"]);
+  });
+
+  it("retains copied media when approval reconciliation cannot read authority", async () => {
+    db.set("profiles", "operator", activeAccount({ role: "operator" }));
+    db.set("creatorProfiles", "fan", visibleCreator({ hidden: true }));
+    db.set("performanceDrafts", "draft-1", awaitingDraft({ state: "pending_review" }));
+    db.failDirectGetAfter(
+      "performanceDrafts/draft-1",
+      1,
+      new Error("reconciliation unavailable")
+    );
+
+    await assert.rejects(handleModeratePerformance({
+      actorUid: "operator",
+      data: { draftId: "draft-1", action: "approve", reason: "" },
+      firestore: db.firestore,
+      media,
+      now: () => NOW,
+    }), (error: { code?: string }) => error.code === "failed-precondition");
+
+    assert.deepStrictEqual(media.copied, [[
+      "performance-staging/fan/draft-1/source",
+      "performance-media/draft-1/source",
+    ]]);
+    assert.deepStrictEqual(media.removed, []);
   });
 
   it("requires a rejection reason and never publishes a rejected draft", async () => {

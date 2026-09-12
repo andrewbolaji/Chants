@@ -87,11 +87,17 @@ class ChantCallUpCard extends StatelessWidget {
               key: const Key('call-up-write'),
               style: FilledButton.styleFrom(
                 backgroundColor: signalAppearance
-                    ? AppColors.signalForest
+                    ? AppColors.signalGold
                     : AppColors.chantLab,
                 foregroundColor: signalAppearance
-                    ? AppColors.signalPaper
+                    ? AppColors.goldOnDark
                     : AppColors.goldOnDark,
+                disabledBackgroundColor: signalAppearance
+                    ? AppColors.signalPaperMuted
+                    : null,
+                disabledForegroundColor: signalAppearance
+                    ? AppColors.signalTextMuted
+                    : null,
               ),
               onPressed: onWrite,
               icon: const Icon(Icons.edit_outlined, size: 20),
@@ -102,7 +108,7 @@ class ChantCallUpCard extends StatelessWidget {
                 key: const Key('call-up-next'),
                 style: TextButton.styleFrom(
                   foregroundColor: signalAppearance
-                      ? AppColors.signalForest
+                      ? AppColors.signalGold
                       : AppColors.gold,
                 ),
                 onPressed: () {

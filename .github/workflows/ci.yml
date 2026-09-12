@@ -37,7 +37,7 @@ jobs:
       - name: Test club crest provenance and binaries
         run: node --test scripts/test-api-football-crests.mjs
       - name: Test local device preparation and walkthrough guide
-        run: node --test scripts/test-device-readiness.mjs scripts/test-launch-guide.mjs scripts/test-launch-policy.mjs scripts/test-public-landing-page.mjs
+        run: node --test scripts/test-device-readiness.mjs scripts/test-prepare-android-device.mjs scripts/test-launch-guide.mjs scripts/test-launch-policy.mjs scripts/test-public-landing-page.mjs
 
   flutter-test:
     runs-on: ubuntu-latest
@@ -45,6 +45,7 @@ jobs:
       - uses: actions/checkout@v5
       - uses: subosito/flutter-action@v2
         with:
+          flutter-version: 3.47.3
           channel: stable
       - run: flutter pub get
       - run: flutter test
@@ -65,6 +66,7 @@ jobs:
       - uses: actions/checkout@v5
       - uses: subosito/flutter-action@v2
         with:
+          flutter-version: 3.47.3
           channel: stable
       - run: flutter pub get
       - name: Configure Firebase options for static analysis
@@ -84,6 +86,7 @@ jobs:
       - uses: actions/checkout@v5
       - uses: subosito/flutter-action@v2
         with:
+          flutter-version: 3.47.3
           channel: stable
       - run: flutter pub get
       - name: Configure non-secret Android build fixtures
@@ -113,6 +116,7 @@ jobs:
       - uses: actions/checkout@v5
       - uses: subosito/flutter-action@v2
         with:
+          flutter-version: 3.47.3
           channel: stable
       - run: flutter pub get
       - name: Configure non-secret iOS build fixtures

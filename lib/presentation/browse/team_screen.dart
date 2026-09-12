@@ -495,7 +495,7 @@ class _TeamSongbookView extends StatelessWidget {
       const Padding(
         padding: EdgeInsets.symmetric(horizontal: Spacing.lg),
         child: Text(
-          'Sourced or operator-reviewed chants live in the Songbook.',
+          'Verified with accepted evidence of being sung at matches.',
           style: TextStyle(
             fontFamily: 'Nunito',
             fontSize: 13,

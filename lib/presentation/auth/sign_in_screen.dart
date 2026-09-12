@@ -58,12 +58,16 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
               'LEARN THE SONGS.\nBACK WHAT COMES NEXT.\nTAKE THE STAGE.',
               style: Theme.of(
                 context,
-              ).textTheme.headlineLarge?.copyWith(height: 1.12, fontSize: 34),
+              ).textTheme.headlineLarge?.copyWith(height: 1.14, fontSize: 30),
             ),
             const SizedBox(height: Spacing.md),
             const Text(
               'The matchday songbook and creator stage for football chants.',
-              style: TextStyle(color: AppColors.textBody, fontSize: 16),
+              style: TextStyle(
+                color: AppColors.textBody,
+                fontSize: 15,
+                height: 1.4,
+              ),
             ),
             const SizedBox(height: Spacing.xl),
             const _PromiseStrip(),
@@ -171,26 +175,41 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
               alignment: WrapAlignment.center,
               children: [
                 TextButton(
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.textMuted,
+                  ),
                   onPressed: () =>
                       Navigator.pushNamed(context, AppRouter.privacy),
                   child: const Text('PRIVACY'),
                 ),
                 TextButton(
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.textMuted,
+                  ),
                   onPressed: () =>
                       Navigator.pushNamed(context, AppRouter.terms),
                   child: const Text('TERMS'),
                 ),
                 TextButton(
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.textMuted,
+                  ),
                   onPressed: () =>
                       Navigator.pushNamed(context, AppRouter.community),
                   child: const Text('COMMUNITY'),
                 ),
                 TextButton(
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.textMuted,
+                  ),
                   onPressed: () =>
                       Navigator.pushNamed(context, AppRouter.support),
                   child: const Text('SUPPORT'),
                 ),
                 TextButton(
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.textMuted,
+                  ),
                   onPressed: () =>
                       Navigator.pushNamed(context, AppRouter.policyHub),
                   child: const Text('HELP & POLICIES'),
@@ -209,31 +228,27 @@ class _WelcomeMark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      crossAxisAlignment: WrapCrossAlignment.center,
-      spacing: Spacing.md,
-      runSpacing: Spacing.sm,
+    return Row(
       children: [
-        Container(
-          width: 46,
-          height: 46,
-          decoration: BoxDecoration(
-            color: AppColors.gold,
-            borderRadius: BorderRadius.circular(Radii.md),
-          ),
-          child: const Icon(
-            Icons.graphic_eq,
-            color: AppColors.goldOnDark,
-            size: 30,
+        ExcludeSemantics(
+          child: Image.asset(
+            'assets/icon/splash.png',
+            key: const Key('sign-in-supporter-mark'),
+            width: 44,
+            height: 44,
+            fit: BoxFit.contain,
           ),
         ),
-        const Text(
-          'CHANTS',
-          style: TextStyle(
-            fontFamily: 'Anton',
-            fontSize: 30,
-            color: AppColors.textHeadline,
-            letterSpacing: 1.5,
+        const SizedBox(width: Spacing.md),
+        const Expanded(
+          child: Text(
+            'CHANTS',
+            style: TextStyle(
+              fontFamily: 'Anton',
+              fontSize: 26,
+              color: AppColors.textHeadline,
+              letterSpacing: 1.5,
+            ),
           ),
         ),
       ],
@@ -249,7 +264,7 @@ class _PromiseStrip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: Spacing.md,
-        vertical: Spacing.lg,
+        vertical: Spacing.md,
       ),
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -283,7 +298,7 @@ class _Promise extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Icon(icon, color: AppColors.gold),
+        Icon(icon, color: AppColors.gold, size: 22),
         const SizedBox(height: Spacing.xs),
         Text(
           text,

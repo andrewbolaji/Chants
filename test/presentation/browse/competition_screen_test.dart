@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:chants/app/colors.dart';
 import 'package:chants/app/providers.dart';
 import 'package:chants/app/router.dart';
 import 'package:chants/app/theme.dart';
@@ -94,6 +95,10 @@ void main() {
       tester.getTopLeft(find.text('Arsenal')).dy,
       lessThan(tester.getTopLeft(find.text('Aston Villa')).dy),
     );
+    final clubTheme = Theme.of(tester.element(find.text('Arsenal')));
+    expect(clubTheme.brightness, Brightness.dark);
+    expect(clubTheme.scaffoldBackgroundColor, AppColors.background);
+    expect(clubTheme.colorScheme.surface, AppColors.surface);
 
     await tester.tap(find.text('Arsenal'));
     await tester.pumpAndSettle();

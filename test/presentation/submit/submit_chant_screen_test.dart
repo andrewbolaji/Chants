@@ -71,7 +71,14 @@ Widget _wrap(
   _FakeChantRepository repository, {
   Stream<List<Player>>? players,
   String? prefilledPlayerId,
+  MediaQueryData? mediaQueryData,
 }) {
+  final screen = SubmitChantScreen(
+    teamId: 'arsenal',
+    sportId: 'football',
+    competitionId: 'premier-league',
+    prefilledPlayerId: prefilledPlayerId,
+  );
   return ProviderScope(
     overrides: [
       authStateProvider.overrideWith((ref) => Stream.value(_MockUser())),
@@ -81,12 +88,9 @@ Widget _wrap(
       ),
     ],
     child: MaterialApp(
-      home: SubmitChantScreen(
-        teamId: 'arsenal',
-        sportId: 'football',
-        competitionId: 'premier-league',
-        prefilledPlayerId: prefilledPlayerId,
-      ),
+      home: mediaQueryData == null
+          ? screen
+          : MediaQuery(data: mediaQueryData, child: screen),
     ),
   );
 }
@@ -287,6 +291,196 @@ void main() {
 
     expect(repository.lookups, 1);
     expect(repository.created, hasLength(1));
+  });
+
+  testWidgets('chant entry uses compact UI type and a sung-line cue', (
+    tester,
+  ) async {
+    final repository = _FakeChantRepository();
+    await tester.pumpWidget(_wrap(repository));
+    await tester.pumpAndSettle();
+
+    final titleField = tester.widget<EditableText>(
+      find.descendant(
+        of: find.byKey(const Key('chant-title-field')),
+        matching: find.byType(EditableText),
+      ),
+    );
+    final lyricsField = tester.widget<EditableText>(
+      find.descendant(
+        of: find.byKey(const Key('chant-lyrics-field')),
+        matching: find.byType(EditableText),
+      ),
+    );
+    expect(titleField.style.fontFamily, 'Nunito');
+    expect(titleField.style.fontSize, 17);
+    expect(lyricsField.style.fontFamily, 'Fraunces');
+    expect(lyricsField.style.fontSize, 18);
+    expect(lyricsField.minLines, 5);
+    expect(lyricsField.maxLines, 10);
+    expect(find.text('Use a new line for each sung line.'), findsOneWidget);
+    expect(find.byKey(const Key('chant-lyrics-count')), findsOneWidget);
+
+    await tester.enterText(
+      find.byKey(const Key('chant-lyrics-field')),
+      '👨‍👩‍👧‍👦',
+    );
+    await tester.pump();
+    expect(find.text('1/5000'), findsOneWidget);
+  });
+
+  testWidgets('player choice survives a squad update while the sheet is open', (
+    tester,
+  ) async {
+    final players = StreamController<List<Player>>();
+    addTearDown(players.close);
+    await tester.pumpWidget(
+      _wrap(_FakeChantRepository(), players: players.stream),
+    );
+    players.add(const [
+      Player(id: 'ben', teamId: 'arsenal', name: 'Ben White'),
+      Player(id: 'bukayo', teamId: 'arsenal', name: 'Bukayo Saka'),
+    ]);
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Player'),
+      400,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Player'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('player-picker-field')),
+      400,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.byKey(const Key('player-picker-field')));
+    await tester.pumpAndSettle();
+
+    players.add(const [
+      Player(id: 'ben', teamId: 'arsenal', name: 'Ben White'),
+      Player(id: 'bukayo', teamId: 'arsenal', name: 'Bukayo Saka'),
+      Player(id: 'declan', teamId: 'arsenal', name: 'Declan Rice'),
+    ]);
+    await tester.pump();
+    await tester.tap(find.text('Bukayo Saka'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('CHOOSE A PLAYER'), findsNothing);
+    expect(find.text('Bukayo Saka'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('player picker is searchable and can close without a choice', (
+    tester,
+  ) async {
+    final repository = _FakeChantRepository();
+    await tester.pumpWidget(
+      _wrap(
+        repository,
+        players: Stream.value(const [
+          Player(id: 'ben', teamId: 'arsenal', name: 'Ben White'),
+          Player(id: 'bukayo', teamId: 'arsenal', name: 'Bukayo Saka'),
+        ]),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Player'),
+      400,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Player'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('player-picker-field')),
+      400,
+      scrollable: find.byType(Scrollable).first,
+    );
+
+    await tester.tap(find.byKey(const Key('player-picker-field')));
+    await tester.pumpAndSettle();
+    expect(find.text('CHOOSE A PLAYER'), findsOneWidget);
+    expect(find.byKey(const Key('player-picker-close')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('player-picker-close')));
+    await tester.pumpAndSettle();
+    expect(find.text('CHOOSE A PLAYER'), findsNothing);
+    expect(find.text('Choose a player'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('player-picker-field')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('player-picker-search')),
+      'saka',
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Ben White'), findsNothing);
+    expect(find.text('Bukayo Saka'), findsOneWidget);
+
+    await tester.tap(find.text('Bukayo Saka'));
+    await tester.pumpAndSettle();
+    expect(find.text('CHOOSE A PLAYER'), findsNothing);
+    expect(find.text('Bukayo Saka'), findsOneWidget);
+  });
+
+  testWidgets('player picker keeps its final row above the keyboard', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final players = List.generate(
+      20,
+      (index) => Player(
+        id: 'player-$index',
+        teamId: 'arsenal',
+        name: 'Player ${index + 1}',
+      ),
+    );
+    await tester.pumpWidget(
+      _wrap(
+        _FakeChantRepository(),
+        players: Stream.value(players),
+        mediaQueryData: const MediaQueryData(
+          size: Size(390, 844),
+          viewInsets: EdgeInsets.only(bottom: 300),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Player'),
+      400,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Player'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('player-picker-field')),
+      400,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.byKey(const Key('player-picker-field')));
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('Player 20'),
+      120,
+      scrollable: find.descendant(
+        of: find.byKey(const Key('player-picker-list')),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.getRect(find.text('Player 20')).bottom,
+      lessThanOrEqualTo(544),
+    );
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('missing prefilled Player clears without a dropdown assertion', (

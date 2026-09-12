@@ -12,6 +12,66 @@ This is durable, evidence-backed project memory. It prevents the same failure or
 
 ## Entries
 
+### 2026-09-12T13:40:36Z Refresh state and retry ownership must remain authoritative through recovery
+
+- **Status:** applied
+- **Scope:** Riverpod-backed launch gates and authentication routes that can resolve after a written timeout.
+- **Observed:** A manual profile retry could expose the prior error while the refreshed stream was still loading, the email route stopped listening when its 15-second timeout appeared even though Firebase could authenticate afterward, a rapid second sign-in press could start before asynchronous listener cancellation completed, and retrying the local-safety phase could consume the profile phase's automatic retry.
+- **Evidence:** Focused regressions hold profile refresh beyond 650 milliseconds, deliver authentication after timeout, rapidly press sign-in twice after timeout, and force local-safety recovery before a first profile failure. They prove refresh stays neutral, manual retry is not restarted, late authentication dismisses the stale route, only one new authentication request starts, and the profile phase retains its automatic retry. The complete Flutter suite passes 601 tests.
+- **Rule:** Treat refresh-in-progress and late authoritative success as live states, not as expired UI attempts. Close re-entry synchronously before awaiting cleanup, and keep retry ownership scoped to the phase whose authority is being recovered.
+- **Applied control:** The signed-in gate checks loading before exposing recovery, marks manual retry ownership only for profile recovery, and invalidates only the sources owned by the active phase. The email screen sets its loading guard before asynchronous subscription cancellation and retains one bounded auth-state subscription until success, another attempt, or disposal.
+- **Revisit:** A provider SDK with different completion semantics, a cancellable authentication API, a router migration, or a new account-bootstrap source.
+
+### 2026-09-12T13:40:36Z Cross-service publication needs reconciliation before compensation
+
+- **Status:** applied
+- **Scope:** Workflows that copy private media before a database transaction makes it public.
+- **Observed:** Performance approval copies staged media to its canonical path before the Firestore publication transaction. A pre-commit failure can strand an unreferenced object, but a reported transaction failure can also hide a committed write after SDK retries. Blind compensation in the second case would make a live performance point at deleted media.
+- **Evidence:** Functions regressions force a proven pre-commit failure, cleanup failure, a commit followed by a reported error, and failure of the authoritative reconciliation read. They prove safe failures remove the exact destination, committed approval returns success and removes only staging media, unknown commit state retains canonical media, and the original authority error remains caller-visible when reconciliation cannot prove success. The complete Functions unit suite passes 234 tests with 24 emulator-only cases pending in that process.
+- **Rule:** When an external media mutation must precede a database commit, reconcile any ambiguous commit result before compensation. Delete the canonical object only when fresh authority proves the publication did not commit; unknown state must favor recoverable retained data over irreversible loss.
+- **Applied control:** Performance approval reads the draft after a reported transaction failure. Matching approved state completes idempotently, proven unapproved state removes only `performance-media/{draftId}/source`, and an unreadable or contradictory state retains canonical media while preserving the original error.
+- **Revisit:** Resumable approval, multi-object media, cross-region replication, background compensation, or any workflow where post-commit acknowledgement can be ambiguous.
+
+### 2026-09-11T13:53:16Z One upload needs one authoritative error channel
+
+- **Status:** applied
+- **Scope:** Upload APIs that expose both an observational progress stream and a terminal completion future.
+- **Observed:** Firebase Storage emitted the same cancellation or network failure on its snapshot stream and its completion future. The screen handled the future for written recovery, but the stream had no error listener, so the duplicate asynchronous error could escape to the root Crashlytics fatal handler.
+- **Evidence:** The final exact-head review identified the missing stream error boundary. A replacement widget regression emits one `FirebaseException` through both channels and proves deliberate cancellation reaches its acknowledged cancelled state without an escaped asynchronous error. The focused set passes 32 tests and the complete suite passes 567 tests.
+- **Rule:** Choose one terminal result as the authority for UI state and telemetry. Treat progress as observation, consume its duplicate errors deliberately, and never let two channels independently report the same transfer failure.
+- **Applied control:** Perform a Chant listens to progress values but consumes progress-stream errors. The upload completion future remains the single path for failure mapping, cancellation acknowledgement, retry state, and telemetry.
+- **Revisit:** Background uploads, resumable sessions, another Storage SDK, progress persistence, or any API that exposes both event and terminal error channels.
+
+### 2026-09-11T03:20:00Z Cancellation intent must survive admission and stop before final handoff
+
+- **Status:** applied
+- **Scope:** Multi-step uploads whose cancellable phase begins before a server ticket exists and ends before a terminal review handoff.
+- **Observed:** A user could request cancellation while draft admission was still in flight. The client immediately displayed a cancelled outcome, then accepted the late ticket and uploaded anyway. At the opposite boundary, keeping Cancel visible during the final review callable allowed submission and cancellation to race toward contradictory terminal states.
+- **Evidence:** The independent review reproduced both state-machine gaps. Replacement widget regressions hold admission and review handoff behind separate barriers. They prove that early cancellation waits for the exact ticket, cancels the exact draft, never starts transfer, and reports setup failure truthfully; they also prove that Cancel is absent once final handoff starts. The corrected focused set passes 43 tests and the complete Flutter suite passes 563 tests.
+- **Rule:** Treat cancellation as durable intent across asynchronous admission, not as a terminal UI flag. Expose cancellation only while the server operation remains cancellable, keep its control accessible, and choose the final screen from acknowledged authority rather than call completion order.
+- **Applied control:** Perform a Chant records pre-ticket cancellation intent, resolves it against the admitted draft, blocks transfer, preserves the semantic Cancel button, removes inert route actions during operation, and removes cancellation before review submission.
+- **Revisit:** Any resumable upload, background transfer, multi-device draft ownership, changed draft lifecycle, or new terminal handoff.
+
+### 2026-09-09T22:00:47Z Store declarations require a fresh merged manifest
+
+- **Status:** applied
+- **Scope:** Android release declarations affected by permissions contributed by transitive SDK manifests.
+- **Observed:** The app does not contain ads, but Facebook Core 18.1.3 contributed Advertising ID and four Privacy Sandbox ad-services permissions to the merged release manifest.
+- **Evidence:** The app manifest now rejects all five permissions and disables automatic Meta app-event logging and advertiser-ID collection. A fresh `processReleaseMainManifest` build marks all five dependency entries `REJECTED`, and its exact merged output contains no matching permission. A similarly named older Gradle output still contained the former permissions, proving that an unverified path can report stale policy state.
+- **Rule:** Do not answer a permission-sensitive store declaration from product intent or source inspection alone. Rebuild the exact release merge, identify the output produced by that task, inspect the merger report, and reject unneeded transitive permissions explicitly.
+- **Applied control:** The Android source uses `tools:node="remove"` for all five permissions, launch-services checks pin those removals and both Meta flags, and the store packet hash-binds the manifest.
+- **Revisit:** Any Android dependency, manifest, provider configuration, Facebook SDK, build variant, application ID, or release-bundle change.
+
+### 2026-09-09T17:50:12Z Editorial line rhythm must be source-owned
+
+- **Status:** applied
+- **Scope:** Large public-site promises whose approved composition depends on specific phrase grouping.
+- **Observed:** The hero sentence appeared as three balanced phrase lines in one reviewed desktop viewport, but a wider owner-browser presentation allowed the same natural text run to collapse into mostly one-word lines.
+- **Evidence:** The corrected page exposes three block-level phrase nodes. Browser checks at 1280 by 900, 1000 by 800, 390 by 844, and 320 by 780 report those exact three lines, `white-space: nowrap` on each phrase, and no document overflow. The public-landing contract fails if the structure or no-wrap control disappears.
+- **Rule:** When line rhythm is part of the approved identity, encode meaningful phrase groups in the markup and protect each group from internal wrapping. Font size and container width alone do not make editorial line breaks deterministic across browser widths and zoom levels.
+- **Applied control:** The public hero owns `Every chant`, `starts with`, and `one voice.` as three responsive phrase lines with a focused contract test.
+- **Revisit:** Hero-copy changes, localization, a font-family change, or a supported width below 320 CSS pixels.
+
 ### 2026-09-01T17:55:17Z Responsive regressions must intersect state, viewport, and text scale
 
 - **Status:** promoted

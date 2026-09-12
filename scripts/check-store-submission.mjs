@@ -36,6 +36,8 @@ const EXPECTED_TRACKED_PATHS = [
   'android',
 ];
 const EXPECTED_ALLOWED_DRIFT = [
+  'android/app/src/main/AndroidManifest.xml',
+  'android/gradle.properties',
   'assets/clubs/crests/arsenal.png',
   'assets/clubs/crests/aston-villa.png',
   'assets/clubs/crests/bournemouth.png',
@@ -57,15 +59,35 @@ const EXPECTED_ALLOWED_DRIFT = [
   'assets/clubs/crests/provenance.json',
   'assets/clubs/crests/sunderland.png',
   'assets/clubs/crests/tottenham-hotspur.png',
+  'functions/src/performance.ts',
+  'functions/test/performance.test.ts',
+  'hosting/index.html',
+  'hosting/site.css',
   'ios/Runner.xcodeproj/project.pbxproj',
   'ios/Runner/Info.plist',
+  'lib/app/app.dart',
   'lib/app/colors.dart',
+  'lib/app/providers.dart',
+  'lib/data/repositories/first_run_orientation_repository.dart',
+  'lib/data/services/performance_media_selection.dart',
+  'lib/presentation/auth/email_sign_in_screen.dart',
+  'lib/presentation/auth/first_run_orientation_screen.dart',
+  'lib/presentation/auth/launch_reveal_screen.dart',
+  'lib/presentation/auth/onboarding_screen.dart',
+  'lib/presentation/auth/sign_in_screen.dart',
+  'lib/presentation/auth/sign_up_screen.dart',
   'lib/presentation/browse/chant_call_up_card.dart',
   'lib/presentation/browse/competition_screen.dart',
   'lib/presentation/browse/team_screen.dart',
+  'lib/presentation/create/perform_chant_screen.dart',
+  'lib/presentation/feed/chant_stage_screen.dart',
   'lib/presentation/saved/saved_songbook_screen.dart',
   'lib/presentation/shared/club_crest.dart',
+  'lib/presentation/shared/club_signal.dart',
+  'lib/presentation/shared/gold_foil_badge.dart',
   'lib/presentation/shared/vote_controls.dart',
+  'lib/presentation/submit/submit_chant_screen.dart',
+  'pubspec.lock',
   'pubspec.yaml',
   'seed/catalogue_content.test.ts',
   'seed/exact_chant_seed.test.ts',
@@ -597,6 +619,7 @@ export function validateStorePacket({ projectRoot, submission, manifest } = {}) 
   add(errors, identity.productName === 'Chants FC', 'productName must remain Chants FC');
   add(errors, identity.installedDisplayName === 'Chants', 'installedDisplayName must remain Chants');
   add(errors, identity.operator === 'ThunderRiver Tech LLC', 'operator identity drifted');
+  add(errors, identity.googleDeveloperName === 'ThunderRiverTech', 'Google developer name drifted');
   add(errors, identity.supportEmail === 'support@chantsfc.com', 'support email drifted');
   add(errors, identity.iosBundleId === 'com.chants.chants', 'iOS bundle ID drifted');
   add(errors, identity.androidPackageName === 'com.chants.chants', 'Android package name drifted');
@@ -646,6 +669,17 @@ export function validateStorePacket({ projectRoot, submission, manifest } = {}) 
   textLength(errors, google.fullDescription, 4000, 'Google full description');
   textLength(errors, google.appAccessInstructions, 4000, 'Google app access instructions');
   add(errors, google.category === 'Sports', 'Google category must be Sports');
+  add(
+    errors,
+    JSON.stringify(google.tags) === JSON.stringify(['Lyrics', 'Social', 'Sports']),
+    'Google discovery tags must remain Lyrics, Social, and Sports',
+  );
+  add(
+    errors,
+    google.contactEmail === 'play@thunderrivertech.com',
+    'Google public contact email drifted',
+  );
+  add(errors, google.website === 'https://chantsfc.com', 'Google website drifted');
   add(errors, google.featureGraphicPath === 'store/assets/google-feature-graphic.png', 'Google feature graphic path drifted');
 
   add(errors, isPlainObject(metadata.readiness), 'readiness must be an object');

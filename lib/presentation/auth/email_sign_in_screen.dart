@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:chants/app/colors.dart';
 import 'package:chants/app/providers.dart';
 import 'package:chants/app/router.dart';
@@ -14,33 +16,88 @@ class EmailSignInScreen extends ConsumerStatefulWidget {
 }
 
 class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
+  static const _signInTimeout = Duration(seconds: 15);
+
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _loading = false;
   bool _obscurePassword = true;
   String? _error;
+  StreamSubscription<User?>? _authSubscription;
+  bool _awaitingLateAuthentication = false;
+
+  Future<void> _cancelAuthSubscription() async {
+    final subscription = _authSubscription;
+    _authSubscription = null;
+    try {
+      await subscription?.cancel();
+    } catch (_) {
+      // Listener cleanup must not replace the sign-in result.
+    }
+  }
 
   @override
   void dispose() {
+    unawaited(_cancelAuthSubscription());
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
   Future<void> _signIn() async {
+    if (_loading) return;
     if (!_formKey.currentState!.validate()) return;
+    _awaitingLateAuthentication = false;
     setState(() {
       _loading = true;
       _error = null;
     });
+    await _cancelAuthSubscription();
+    if (!mounted) return;
     try {
-      await ref
-          .read(authRepositoryProvider)
+      final repository = ref.read(authRepositoryProvider);
+      if (repository.currentUser != null) {
+        if (!mounted) return;
+        Navigator.of(context).popUntil((route) => route.isFirst);
+        return;
+      }
+      final authStateAccepted = Completer<void>();
+      _authSubscription = repository.authStateChanges.listen(
+        (user) {
+          if (user != null && !authStateAccepted.isCompleted) {
+            authStateAccepted.complete();
+          }
+          if (user != null && _awaitingLateAuthentication && mounted) {
+            _awaitingLateAuthentication = false;
+            Navigator.of(context).popUntil((route) => route.isFirst);
+            unawaited(_cancelAuthSubscription());
+          }
+        },
+        onError: (Object _, StackTrace _) {
+          // The credential future remains authoritative for written recovery.
+        },
+      );
+      final credentialAccepted = repository
           .signIn(
             email: _emailController.text.trim(),
             password: _passwordController.text,
-          );
+          )
+          .then<void>((_) {});
+      await Future.any<void>([
+        credentialAccepted,
+        authStateAccepted.future,
+      ]).timeout(_signInTimeout);
+      if (!mounted) return;
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    } on TimeoutException {
+      if (!mounted) return;
+      _awaitingLateAuthentication = true;
+      setState(() {
+        _error =
+            'Sign in is taking too long. Check your connection and try again.';
+        _loading = false;
+      });
     } catch (error) {
       if (!mounted) return;
       setState(() {
@@ -51,6 +108,8 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
             : 'Wrong email or password. Check both and try again.';
         _loading = false;
       });
+    } finally {
+      if (!_awaitingLateAuthentication) await _cancelAuthSubscription();
     }
   }
 
@@ -82,6 +141,9 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
               const SizedBox(height: Spacing.xl),
               TextFormField(
                 controller: _emailController,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(fontSize: 16),
                 decoration: const InputDecoration(labelText: 'Email'),
                 keyboardType: TextInputType.emailAddress,
                 autofillHints: const [AutofillHints.email],
@@ -97,6 +159,9 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
               const SizedBox(height: Spacing.md),
               TextFormField(
                 controller: _passwordController,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(fontSize: 16),
                 decoration: InputDecoration(
                   labelText: 'Password',
                   suffixIcon: IconButton(
@@ -134,10 +199,17 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
               FilledButton(
                 onPressed: _loading ? null : _signIn,
                 child: _loading
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                    ? const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                          SizedBox(width: Spacing.sm),
+                          Text('SIGNING IN'),
+                        ],
                       )
                     : const Text('SIGN IN'),
               ),

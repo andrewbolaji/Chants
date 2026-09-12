@@ -16,40 +16,45 @@ test('HTML has unique IDs, valid local anchors/copy targets and labeled static f
   assert.match(html, /<script src="launch-command-center.js"><\/script>/);
 });
 
-test('guide excludes stale seed, broad deployment and config-overwrite recipes', () => {
-  assert.match(html, /20 clubs, 622 players and 192 chants/);
-  assert.doesNotMatch(html, /Arsenal is the only club|Keep verifying the remaining|firebase deploy.*--only functions|ef7195cf5159c45/);
-  assert.doesNotMatch(html, /cp\s+lib\/firebase_options\.dart\.example\s+lib\/firebase_options\.dart/);
-  assert.match(html, /PR 32 merged/);
-  assert.match(html, /88ce483/);
-  assert.match(html, /33562025155/);
-  assert.match(html, /Production closed, client check passed/);
-  assert.match(html, /Updated 3 September 2026/);
-  assert.match(html, /Corrected iPhone client proven/);
-  assert.doesNotMatch(html, />approved V1 Lane 3 Gate 3 owner walkthrough retry</);
-  assert.doesNotMatch(html, />approved V1 Lane 3 Gate 3 immediate owner walkthrough retry</);
-  assert.doesNotMatch(html, />approved V1 Lane 3 Gate 3 30-second countdown owner walkthrough retry</);
-  assert.match(html, /does not reopen production/);
-  assert.match(html, /maintenance generation 9/);
-  assert.match(html, /All four core windows had zero backend requests/);
-  assert.match(html, /null-task-runner failure/);
-  assert.match(html, /Repeated cold launch, force quit, background, and resume checks/);
-  assert.match(html, /owner-observed device check/);
-  assert.match(html, /visible saving feedback, truthful maintenance result, and no crash/);
-  assert.match(html, /functional smoke is incomplete/);
-  assert.match(html, /Gate 4 is not next/);
-  assert.match(html, /all eight jobs successfully/);
-  assert.match(html, /Android Play Integrity configurations exist/);
-  assert.match(html, /dedicated runtime account remains keyless/);
-  assert.match(html, /all 16 composite indexes are ready/);
-  assert.match(html, /46 non-scheduled/);
-  assert.match(html, /196 complete repair checkpoints/);
-  assert.match(html, /no scheduled Function or Scheduler job exists/);
-  assert.match(html, /missed events/);
-  assert.match(html, /ROADMAP.md#automated-media-cleanup-monitoring/);
-  assert.doesNotMatch(html, /combined Claude review still needs|Source merged; review pending/);
+test('guide states the current release candidate status, physical-phone boundary and six exact walk steps', () => {
+  assert.match(html, /PR 37 merged/);
+  assert.match(html, /1482e1f/);
+  assert.match(html, /3066474/);
+  assert.match(html, /34667543812/);
+  assert.match(html, /PR 38 exact-head CI passed/);
+  assert.match(html, /Follow-up CI required before merge/);
+  assert.match(html, /iPhone walk passed/);
+  assert.match(html, /Android install preflight ready/);
+  assert.match(html, /Private media canary passed/);
+  assert.match(html, /Production closed at generation 35/);
+  assert.match(html, /Fresh signed artifacts rebuilt/);
+  assert.match(html, /Fresh corrected signed release AAB and APK artifacts were rebuilt/);
+  assert.match(html, /fresh corrected App Store-signed IPA was rebuilt/i);
+  assert.match(html, /1dd1baa6406f8976d46e03c6036b03c21c2b5f24933358ba8570dd8c76956a44/);
+  assert.match(html, /cf6bada848fc759df9e2e5ef3114e96d6f444819bd41274668cb24fea6a1a985/);
+  assert.match(html, /prepare-android-device\.mjs --apk \.\.\/Chants-v1-release-handoff\/Chants-1\.0\.0-1-release\.apk --install --json/);
+  assert.match(html, /9104f1e62b80a95466587abb2b33b23af91f0830ef127e15fd94351cfe5901dd/);
+  assert.match(html, /c5d1c6260d5812ad9ee7705aedf378f199e5b13e95e4af081782402dccb8c2c4/);
+  assert.match(html, /one physical iPhone and one physical Android phone/);
+  assert.match(html, /locally exported IPA does not count as TestFlight proof/);
+  assert.match(html, /Play Integrity and App Attest evidence must come from valid signed store traffic/);
+  assert.match(html, /Production is currently closed/);
+  assert.match(html, /recorded as <strong>Blocked<\/strong>/);
+  assert.match(html, /generation 35 in maintenance mode, with destructive workers false/);
+  assert.match(html, /one private canary object and matching pending-review draft remain/i);
+  assert.match(html, /The consolidated independent review and narrow closure review are complete/);
+  assert.match(html, /complete local Flutter suite passes 601 tests/);
+  assert.match(html, /No accepted finding remains unresolved/);
+  assert.doesNotMatch(html, /exact-head replacement CI remains required/);
+  assert.doesNotMatch(html, /Claude review sign-in needed|local CLI is signed out|No independent review result is claimed/);
+  assert.match(html, /REMOVE FROM DEVICE/);
+  assert.match(html, /It should not say “them” or “him.”/);
+  assert.match(html, /Submission approval alone does not authorize publication/);
   assert.match(html, /explicit destructive-test approval/);
-  for (const id of ['walk-core', 'walk-songbook', 'walk-creator', 'walk-social-safety', 'walk-deletion', 'walk-polish', 'walk-updates']) assert.match(html, new RegExp(`id="${id}"`));
+  assert.doesNotMatch(html, /firebase deploy.*--only functions|cp\s+lib\/firebase_options\.dart\.example\s+lib\/firebase_options\.dart/);
+
+  const walkIds = [...html.matchAll(/id="(walk-[^"]+)" type="checkbox" data-check/g)].map(match => match[1]);
+  assert.deepEqual(walkIds, ['walk-install', 'walk-account', 'walk-clubs', 'walk-songbook', 'walk-create', 'walk-platform']);
 });
 
 test('unavailable or malformed storage returns truthful defaults and never deletes data', () => {

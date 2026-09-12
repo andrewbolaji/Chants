@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -46,4 +48,16 @@ void installTolerantGoldenComparator({
     precisionTolerance: precisionTolerance,
   );
   addTearDown(() => goldenFileComparator = previousComparator);
+}
+
+/// Selects a Linux-specific reference when clean-runner rendering differs from
+/// the locally inspected reference without changing the visual contract.
+String platformGoldenPath(String goldenPath, {bool? isLinux}) {
+  if (!(isLinux ?? Platform.isLinux)) return goldenPath;
+
+  final separator = goldenPath.lastIndexOf('/');
+  if (separator < 0) return 'linux/$goldenPath';
+
+  return '${goldenPath.substring(0, separator)}/linux/'
+      '${goldenPath.substring(separator + 1)}';
 }

@@ -186,6 +186,15 @@ button { font: inherit; }
 
 .header-nav a { color: var(--muted); }
 
+.header-nav a,
+.header-link {
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.025em;
+}
+
+.header-nav a { color: #b1a797; }
+
 .header-nav a:hover,
 .header-nav a:focus-visible,
 .site-footer a:hover,
@@ -257,6 +266,24 @@ button { font: inherit; }
   line-height: 0.91;
 }
 
+.hero h1 {
+  font-family: "Oswald", "Arial Narrow", sans-serif;
+  font-size: clamp(4.15rem, 5.2vw, 5.9rem);
+  font-variation-settings: normal;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 0.92;
+  text-transform: uppercase;
+}
+
+.hero h1 span,
+.hero h1 em {
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  white-space: nowrap;
+}
+
 .hero h1 em,
 .product-intro h2 em,
 .matchday-copy h2 em {
@@ -264,6 +291,28 @@ button { font: inherit; }
   font-variation-settings: "wght" 420;
   font-weight: 420;
   font-style: normal;
+}
+
+.hero h1 em {
+  font-variation-settings: normal;
+  font-weight: 700;
+}
+
+.product-intro h2,
+.showcase-copy h2,
+.matchday-copy h2 {
+  font-variation-settings: "wght" 760;
+  font-weight: 760;
+  letter-spacing: -0.05em;
+  line-height: 0.95;
+}
+
+.product-intro h2 { font-size: clamp(3.5rem, 5.4vw, 5.7rem); }
+
+.product-intro h2 em,
+.matchday-copy h2 em {
+  font-variation-settings: "wght" 520;
+  font-weight: 520;
 }
 
 .hero-intro {
@@ -711,7 +760,7 @@ button { font: inherit; }
   color: var(--headline);
   font-family: "Oswald", "Arial Narrow", sans-serif;
 }
-.club-row b { color: var(--ink); font-size: 0.68rem; }
+.club-row b { color: var(--ink); font-size: 0.65rem; }
 .club-row i { color: var(--club-muted); font-size: 0.47rem; font-style: normal; font-weight: 900; }
 
 .product-intro {
@@ -756,7 +805,7 @@ button { font: inherit; }
 .showcase-copy h2 {
   max-width: 600px;
   color: var(--ink);
-  font-size: clamp(3.4rem, 5.3vw, 5.8rem);
+  font-size: clamp(2.9rem, 4.1vw, 4.45rem);
 }
 
 .showcase-copy > p:not(.card-label):not(.feature-line) {
@@ -931,7 +980,13 @@ button { font: inherit; }
 
 .trust-heading h2 {
   max-width: 900px;
-  font-size: clamp(4rem, 7vw, 7.3rem);
+  font-family: "Oswald", "Arial Narrow", sans-serif;
+  font-size: clamp(3.7rem, 5.7vw, 6.1rem);
+  font-variation-settings: normal;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 0.92;
+  text-transform: uppercase;
 }
 
 .trust-list { border-top: 1px solid var(--line); }
@@ -1012,7 +1067,7 @@ button { font: inherit; }
 .matchday-screen div span { color: #976800; font-family: "Oswald", "Arial Narrow", sans-serif; }
 .matchday-screen div small { color: var(--club-muted); font-size: 0.52rem; font-weight: 800; letter-spacing: 0.06em; }
 
-.matchday-copy h2 { font-size: clamp(4rem, 6.8vw, 7rem); }
+.matchday-copy h2 { font-size: clamp(3.5rem, 5.3vw, 5.6rem); }
 .matchday-copy > p:last-child { max-width: 590px; margin: 32px 0 0; color: var(--dark-body); font-size: clamp(1.05rem, 1.2vw, 1.18rem); line-height: 1.7; }
 
 .closing {
@@ -1056,7 +1111,15 @@ button { font: inherit; }
 }
 
 .closing-copy img { width: 92px; height: 92px; margin-bottom: 28px; border-radius: 24px; }
-.closing h2 { font-size: clamp(4.6rem, 8.5vw, 8.8rem); }
+.closing h2 {
+  font-family: "Oswald", "Arial Narrow", sans-serif;
+  font-size: clamp(4rem, 6.5vw, 7rem);
+  font-variation-settings: normal;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 0.92;
+  text-transform: uppercase;
+}
 .closing-copy > p:not(.eyebrow) { margin: 30px 0 28px; color: var(--muted); font-size: 1.08rem; }
 
 .site-footer {
@@ -1108,7 +1171,7 @@ button { font: inherit; }
   }
 
   .hero-copy { max-width: 760px; }
-  .hero h1 { font-size: clamp(4.7rem, 13vw, 7.2rem); }
+  .hero h1 { font-size: clamp(4rem, 9.2vw, 5.4rem); }
 
   .product-stage {
     width: min(100%, 650px);
@@ -1141,7 +1204,7 @@ button { font: inherit; }
   .brand > span:last-child { font-size: 1rem; }
 
   .hero { padding-top: 62px; }
-  .hero h1 { font-size: clamp(3.75rem, 17vw, 5.6rem); }
+  .hero h1 { font-size: clamp(3rem, 14vw, 4.25rem); }
   .hero-intro { font-size: 1rem; }
   .hero-actions { align-items: flex-start; flex-direction: column; }
   .hero-principles { flex-wrap: wrap; gap: 16px 22px; }
@@ -1157,10 +1220,10 @@ button { font: inherit; }
   .performance-visual > p { font-size: 1.65rem; }
   .product-intro { padding-block: 100px 62px; }
   .product-intro h2,
-  .showcase-copy h2,
+  .matchday-copy h2 { font-size: clamp(3rem, 13.5vw, 4.5rem); }
+  .showcase-copy h2 { font-size: clamp(2.7rem, 12vw, 4rem); }
   .trust-heading h2,
-  .matchday-copy h2,
-  .closing h2 { font-size: clamp(3.25rem, 15vw, 5rem); }
+  .closing h2 { font-size: clamp(3.15rem, 14vw, 4.65rem); }
 
   .showcase-row { padding-block: 68px; }
   .product-panel { min-height: 400px; padding: 26px 22px; border-radius: 24px; }
@@ -1194,7 +1257,7 @@ button { font: inherit; }
   .hero { padding-inline: 14px; }
   .brand { gap: 8px; }
   .brand-mark { width: 32px; height: 32px; }
-  .hero h1 { font-size: 3.55rem; }
+  .hero h1 { font-size: 2.95rem; }
   .product-stage { height: 540px; transform: scale(0.92); transform-origin: center top; }
   .primary-phone { right: -28px; }
   .secondary-phone { left: -36px; }

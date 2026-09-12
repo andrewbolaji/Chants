@@ -44,16 +44,18 @@ class ClubCrest extends StatelessWidget {
       child: ExcludeSemantics(
         child: SizedBox.square(
           dimension: size,
-          child: Image.asset(
-            _assetPath,
-            fit: BoxFit.contain,
-            filterQuality: FilterQuality.medium,
-            cacheWidth: cacheSize,
-            frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-              if (wasSynchronouslyLoaded || frame != null) return child;
-              return _ClubShieldFallback(size: size);
-            },
-            errorBuilder: (_, _, _) => _ClubShieldFallback(size: size),
+          child: ClipRect(
+            child: Image.asset(
+              _assetPath,
+              fit: BoxFit.contain,
+              filterQuality: FilterQuality.medium,
+              cacheWidth: cacheSize,
+              frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                if (wasSynchronouslyLoaded || frame != null) return child;
+                return _ClubShieldFallback(size: size);
+              },
+              errorBuilder: (_, _, _) => _ClubShieldFallback(size: size),
+            ),
           ),
         ),
       ),

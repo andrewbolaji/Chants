@@ -12,7 +12,7 @@ Current V1 includes Firebase Authentication, App Check, Firestore, Functions, St
 
 Apple, Google, Facebook, phone, and magic-link entry points are disabled unless their explicit release flags and external configuration are approved. Email and password is the current launch path. Reopen this worksheet before enabling another provider.
 
-The iOS dependency lock includes `FBSDKCoreKit` and `FBSDKLoginKit` 18.0.2 through `flutter_facebook_auth`, even though the Facebook button is hidden. The current native project has no Facebook app ID, client token, Facebook Android application metadata, or iOS tracking-usage description. Those absences support the statement that Facebook login is not configured; they do not justify ignoring a linked SDK. Inspect the exact archive privacy report, Play SDK guidance, native manifests, and runtime network behavior before answering either store form. If the exact binary reports Meta collection, disclose it or remove the dependency in a separately approved product change.
+The iOS dependency lock includes `FBSDKCoreKit` and `FBSDKLoginKit` 18.0.2 through `flutter_facebook_auth`, even though the Facebook button is hidden. The current native project has no Facebook app ID, client token, Facebook Android application metadata, or iOS tracking-usage description. Those absences support the statement that Facebook login is not configured; they do not justify ignoring a linked SDK. The iOS source also sets `FacebookAutoLogAppEventsEnabled` and `FacebookAdvertiserIDCollectionEnabled` to false. On Android, the release manifest explicitly removes the transitive Advertising ID and four Privacy Sandbox ad-services permissions contributed by Facebook Core 18.1.3, disables automatic Meta app-event logging, and disables advertiser-ID collection. A fresh release manifest merge rejects those permissions. Inspect the exact Android bundle manifest and exact iOS archive privacy report again if dependencies or provider configuration change, and inspect runtime behavior before answering Apple's form. If an exact binary reports Meta collection, disclose it or remove the dependency in a separately approved product change.
 
 Chants does not sell personal data, run targeted advertising, or use data to track people across other companies' apps or websites. Firebase is treated as an infrastructure processor only if the final contracts and configuration satisfy the applicable store service-provider exception. The operator must confirm that statement before selecting `not shared` in Google Play.
 
@@ -105,7 +105,7 @@ Do not select provider data types merely because a dormant entry point exists. A
 | Provider or feature | Additional likely disclosure work |
 |---|---|
 | Apple or Google sign-in | Provider identifiers, email or name returned by the provider, provider privacy review |
-| Facebook sign-in and linked Meta SDK | Provider identifiers, email or name if enabled; exact-binary Meta SDK collection, sharing, tracking, and purpose review even while disabled |
+| Facebook sign-in and linked Meta SDK | Provider identifiers, email or name if enabled; Android final-bundle confirmation that the five ad permissions remain absent and Meta automatic collection remains disabled; exact-binary collection, sharing, tracking, and purpose review even while sign-in is disabled |
 | Phone sign-in | Phone number and SMS authentication processing |
 | Magic email link | Email delivery provider and link telemetry |
 | Notifications | Device push token and notification interaction |
@@ -118,10 +118,10 @@ Do not select provider data types merely because a dormant entry point exists. A
 Before entering either form:
 
 1. Build the exact release binary with the exact provider flags.
-2. Confirm the dependency lockfiles and included native SDKs, including `FBSDKCoreKit` and `FBSDKLoginKit` in the current iOS graph.
+2. Confirm the dependency lockfiles and included native SDKs, including `FBSDKCoreKit` and `FBSDKLoginKit` in the current iOS graph and Facebook Core 18.1.3 in Android.
 3. Search source for Analytics, Performance Monitoring, advertising, user-ID attachment to Crashlytics, location APIs, push tokens, and new third-party SDKs.
 4. Read Apple's generated privacy manifest report for the archive.
-5. Read the current Google Play SDK Index and Firebase disclosure guidance for the locked Android dependencies.
+5. Read the current Google Play SDK Index and Firebase disclosure guidance for the locked Android dependencies, then confirm the exact final Android merged manifest still omits Advertising ID and ad-services permissions.
 6. Reconfirm whether Firebase is a processor under the store's current sharing definition.
 7. Verify in-app and public-web deletion from a disposable account.
 8. Enter the forms, save screenshots or exports privately, and set the matching readiness fields in `store/submission.json` only after readback.

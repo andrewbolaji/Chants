@@ -1249,24 +1249,24 @@ class _EmptyStage extends StatelessWidget {
           children: [
             const Icon(
               Icons.campaign_outlined,
-              size: 64,
-              color: AppColors.chantLab,
+              size: 48,
+              color: AppColors.textMuted,
             ),
-            const SizedBox(height: Spacing.lg),
-            const SectionEyebrow(text: 'The stage is yours', gold: true),
+            const SizedBox(height: Spacing.md),
+            const SectionEyebrow(text: 'The stage is yours'),
             const SizedBox(height: Spacing.sm),
             const Text(
-              'No approved performances are here yet. Start with a chant idea '
-              'or find the one you want to give a voice.',
+              'No performances yet. Start a chant, or find one from your club.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.textMuted),
+              style: TextStyle(color: AppColors.textMuted, height: 1.4),
             ),
-            const SizedBox(height: Spacing.xl),
+            const SizedBox(height: Spacing.lg),
             FilledButton(
               onPressed: onCreate,
               child: const Text('START A CHANT'),
             ),
             TextButton(
+              style: TextButton.styleFrom(foregroundColor: AppColors.textMuted),
               onPressed: onBrowseClubs,
               child: const Text('BROWSE CLUBS'),
             ),

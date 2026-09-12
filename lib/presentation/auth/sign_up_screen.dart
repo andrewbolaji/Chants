@@ -68,6 +68,13 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         // The app gate now owns recovery. It shows a resend action without
         // deleting the successfully created Firebase account.
       }
+      if (!mounted) return;
+      final navigator = Navigator.of(context);
+      if (navigator.canPop()) {
+        navigator.popUntil((route) => route.isFirst);
+      } else {
+        setState(() => _loading = false);
+      }
     } catch (error) {
       if (!mounted) return;
       setState(() {
@@ -87,24 +94,29 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(
               Spacing.xl,
-              Spacing.xl,
+              Spacing.lg,
               Spacing.xl,
               Spacing.xxxl,
             ),
             children: [
               Text(
                 'JOIN THE TERRACE',
-                style: Theme.of(context).textTheme.headlineMedium,
+                style: Theme.of(
+                  context,
+                ).textTheme.headlineMedium?.copyWith(fontSize: 22),
               ),
               const SizedBox(height: Spacing.sm),
               const Text(
                 'Create your login first. We will verify your email, then '
                 'set up your supporter profile.',
-                style: TextStyle(color: AppColors.textBody),
+                style: TextStyle(color: AppColors.textBody, height: 1.4),
               ),
-              const SizedBox(height: Spacing.xl),
+              const SizedBox(height: Spacing.lg),
               TextFormField(
                 controller: _emailController,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(fontSize: 16),
                 decoration: const InputDecoration(labelText: 'Email'),
                 keyboardType: TextInputType.emailAddress,
                 autofillHints: const [AutofillHints.email],
@@ -120,6 +132,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               const SizedBox(height: Spacing.md),
               TextFormField(
                 controller: _passwordController,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(fontSize: 16),
                 decoration: InputDecoration(
                   labelText: 'Password',
                   helperText: 'At least 8 characters.',
@@ -146,6 +161,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               const SizedBox(height: Spacing.md),
               TextFormField(
                 controller: _confirmPasswordController,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(fontSize: 16),
                 decoration: InputDecoration(
                   labelText: 'Confirm password',
                   suffixIcon: IconButton(

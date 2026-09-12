@@ -80,7 +80,7 @@ void main() {
     );
     await expectLater(
       find.byType(MaterialApp),
-      matchesGoldenFile('goldens/submit_chant_origin.png'),
+      matchesGoldenFile(platformGoldenPath('goldens/submit_chant_origin.png')),
     );
 
     await tester.scrollUntilVisible(
@@ -96,7 +96,9 @@ void main() {
     );
     await expectLater(
       find.byType(MaterialApp),
-      matchesGoldenFile('goldens/submit_chant_evidence.png'),
+      matchesGoldenFile(
+        platformGoldenPath('goldens/submit_chant_evidence.png'),
+      ),
     );
   });
 
@@ -141,7 +143,9 @@ void main() {
     expect(find.byKey(const Key('player-selection-notice')), findsOneWidget);
     await expectLater(
       find.byType(MaterialApp),
-      matchesGoldenFile('goldens/submit_chant_stale_player.png'),
+      matchesGoldenFile(
+        platformGoldenPath('goldens/submit_chant_stale_player.png'),
+      ),
     );
   });
 }

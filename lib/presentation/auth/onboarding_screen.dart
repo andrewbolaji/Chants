@@ -131,13 +131,23 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         calculateAge(_dateOfBirth!, DateTime.now()) < kMinimumAge;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('WELCOME TO CHANTS'),
+        titleSpacing: Spacing.xl,
+        title: const Text(
+          'WELCOME TO CHANTS',
+          maxLines: 1,
+          overflow: TextOverflow.fade,
+          style: TextStyle(fontSize: 18),
+        ),
         actions: [
-          TextButton(
-            onPressed: _loading
-                ? null
-                : () => ref.read(authRepositoryProvider).signOut(),
-            child: const Text('SIGN OUT'),
+          Padding(
+            padding: const EdgeInsets.only(right: Spacing.md),
+            child: TextButton(
+              style: TextButton.styleFrom(foregroundColor: AppColors.textMuted),
+              onPressed: _loading
+                  ? null
+                  : () => ref.read(authRepositoryProvider).signOut(),
+              child: const Text('SIGN OUT'),
+            ),
           ),
         ],
       ),
@@ -146,26 +156,37 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(
             Spacing.xl,
-            Spacing.xl,
+            Spacing.lg,
             Spacing.xl,
             Spacing.xxxl,
           ),
           children: [
             Text(
               'ONE LAST VERSE',
-              style: Theme.of(context).textTheme.headlineMedium,
+              style: Theme.of(
+                context,
+              ).textTheme.headlineMedium?.copyWith(fontSize: 20),
             ),
             const SizedBox(height: Spacing.sm),
             const Text(
-              'Set up your supporter profile. Your date of birth stays on '
-              'this device. Chants only records that you meet the age limit.',
-              style: TextStyle(color: AppColors.textBody),
+              'Choose a display name. Your birth date stays on this device. '
+              'We only save that you are 17 or older.',
+              style: TextStyle(color: AppColors.textBody, height: 1.4),
             ),
-            const SizedBox(height: Spacing.xl),
+            const SizedBox(height: Spacing.lg),
+            const _FormLabel('DISPLAY NAME'),
+            const SizedBox(height: Spacing.sm),
             TextFormField(
+              key: const Key('onboarding-display-name-field'),
               controller: _displayNameController,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(fontSize: 16),
               enabled: !_loading && !_setupSaved,
-              decoration: const InputDecoration(labelText: 'Display name'),
+              decoration: const InputDecoration(
+                hintText: 'What should fans call you?',
+              ),
               autofillHints: const [AutofillHints.name],
               textInputAction: TextInputAction.done,
               validator: (value) {
@@ -176,56 +197,128 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               },
             ),
             const SizedBox(height: Spacing.md),
+            const _FormLabel('DATE OF BIRTH'),
+            const SizedBox(height: Spacing.sm),
             InkWell(
               onTap: _loading || _setupSaved ? null : _pickDateOfBirth,
+              borderRadius: BorderRadius.circular(Radii.sm),
               child: InputDecorator(
+                key: const Key('onboarding-date-field'),
                 decoration: InputDecoration(
-                  labelText: 'Date of birth',
                   enabled: !_loading && !_setupSaved,
+                  suffixIcon: const Icon(
+                    Icons.calendar_today_outlined,
+                    size: 20,
+                  ),
                 ),
                 child: Text(
                   _dateOfBirth == null
                       ? 'Tap to choose'
                       : _formatDate(_dateOfBirth!),
-                  style: TextStyle(
-                    color: _dateOfBirth == null ? AppColors.textMuted : null,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontSize: 16,
+                    color: _dateOfBirth == null
+                        ? AppColors.textMuted
+                        : AppColors.textBody,
                   ),
                 ),
               ),
             ),
             const SizedBox(height: Spacing.lg),
-            CheckboxListTile(
-              contentPadding: EdgeInsets.zero,
-              value: _policyAccepted,
-              controlAffinity: ListTileControlAffinity.leading,
-              onChanged: _loading || _setupSaved
-                  ? null
-                  : (value) => setState(() => _policyAccepted = value ?? false),
-              title: const Text('I agree to the Terms and Community Rules.'),
-              subtitle: Wrap(
-                spacing: Spacing.sm,
+            Container(
+              key: const Key('onboarding-policy-consent'),
+              padding: const EdgeInsets.symmetric(
+                horizontal: Spacing.md,
+                vertical: Spacing.sm,
+              ),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(Radii.md),
+                border: Border.all(color: AppColors.outline, width: 0.5),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  TextButton(
-                    style: TextButton.styleFrom(padding: EdgeInsets.zero),
-                    onPressed: () =>
-                        Navigator.pushNamed(context, AppRouter.terms),
-                    child: const Text('READ TERMS'),
+                  Semantics(
+                    key: const Key('onboarding-policy-toggle'),
+                    label: 'Agree to the Terms and Community Rules',
+                    checked: _policyAccepted,
+                    enabled: !_loading && !_setupSaved,
+                    button: true,
+                    child: InkWell(
+                      onTap: _loading || _setupSaved
+                          ? null
+                          : () => setState(
+                              () => _policyAccepted = !_policyAccepted,
+                            ),
+                      borderRadius: BorderRadius.circular(Radii.sm),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(minHeight: 48),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            ExcludeSemantics(
+                              child: Checkbox(
+                                value: _policyAccepted,
+                                materialTapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
+                                visualDensity: const VisualDensity(
+                                  horizontal: -4,
+                                  vertical: -4,
+                                ),
+                                onChanged: _loading || _setupSaved
+                                    ? null
+                                    : (value) => setState(
+                                        () => _policyAccepted = value ?? false,
+                                      ),
+                              ),
+                            ),
+                            const SizedBox(width: Spacing.sm),
+                            const Expanded(
+                              child: Text(
+                                'I agree to the Terms and Community Rules.',
+                                style: TextStyle(
+                                  fontFamily: 'Nunito',
+                                  fontSize: 15,
+                                  height: 1.35,
+                                  color: AppColors.textBody,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
-                  TextButton(
-                    style: TextButton.styleFrom(padding: EdgeInsets.zero),
-                    onPressed: () =>
-                        Navigator.pushNamed(context, AppRouter.community),
-                    child: const Text('COMMUNITY RULES'),
-                  ),
-                  TextButton(
-                    style: TextButton.styleFrom(padding: EdgeInsets.zero),
-                    onPressed: () =>
-                        Navigator.pushNamed(context, AppRouter.privacy),
-                    child: const Text('PRIVACY NOTICE'),
+                  Padding(
+                    padding: const EdgeInsets.only(left: Spacing.xxl),
+                    child: Wrap(
+                      spacing: Spacing.md,
+                      runSpacing: 0,
+                      children: [
+                        _PolicyLink(
+                          label: 'Terms',
+                          onPressed: () =>
+                              Navigator.pushNamed(context, AppRouter.terms),
+                        ),
+                        _PolicyLink(
+                          label: 'Community Rules',
+                          onPressed: () =>
+                              Navigator.pushNamed(context, AppRouter.community),
+                        ),
+                        _PolicyLink(
+                          label: 'Privacy notice',
+                          onPressed: () =>
+                              Navigator.pushNamed(context, AppRouter.privacy),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
+            const SizedBox(height: Spacing.md),
+            Divider(color: AppColors.divider, height: 1),
             const SizedBox(height: Spacing.lg),
             Text(
               'WHERE FIRST?',
@@ -233,8 +326,41 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             ),
             const SizedBox(height: Spacing.sm),
             SegmentedButton<int>(
-              style: const ButtonStyle(
-                minimumSize: WidgetStatePropertyAll(Size(0, 48)),
+              key: const Key('onboarding-destination'),
+              showSelectedIcon: false,
+              style: ButtonStyle(
+                minimumSize: const WidgetStatePropertyAll(Size(0, 48)),
+                backgroundColor: WidgetStateProperty.resolveWith((states) {
+                  if (states.contains(WidgetState.selected)) {
+                    return AppColors.surfaceRaised;
+                  }
+                  return AppColors.surface;
+                }),
+                foregroundColor: WidgetStateProperty.resolveWith((states) {
+                  if (states.contains(WidgetState.selected)) {
+                    return AppColors.textHeadline;
+                  }
+                  return AppColors.textMuted;
+                }),
+                iconColor: WidgetStateProperty.resolveWith((states) {
+                  if (states.contains(WidgetState.selected)) {
+                    return AppColors.textHeadline;
+                  }
+                  return AppColors.textMuted;
+                }),
+                side: WidgetStateProperty.resolveWith((states) {
+                  if (states.contains(WidgetState.selected)) {
+                    return const BorderSide(color: AppColors.gold, width: 1.5);
+                  }
+                  return const BorderSide(color: AppColors.outline, width: 0.5);
+                }),
+                textStyle: WidgetStateProperty.resolveWith((states) {
+                  return TextStyle(
+                    fontWeight: states.contains(WidgetState.selected)
+                        ? FontWeight.w800
+                        : FontWeight.w600,
+                  );
+                }),
               ),
               segments: const [
                 ButtonSegment(value: 0, label: Text('Stage')),
@@ -295,6 +421,45 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _PolicyLink extends StatelessWidget {
+  final String label;
+  final VoidCallback onPressed;
+
+  const _PolicyLink({required this.label, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton(
+      style: TextButton.styleFrom(
+        foregroundColor: AppColors.textMuted,
+        minimumSize: const Size(48, 48),
+        padding: EdgeInsets.zero,
+        alignment: Alignment.centerLeft,
+        tapTargetSize: MaterialTapTargetSize.padded,
+      ),
+      onPressed: onPressed,
+      child: Text(label),
+    );
+  }
+}
+
+class _FormLabel extends StatelessWidget {
+  final String text;
+
+  const _FormLabel(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+        color: AppColors.textMuted,
+        fontWeight: FontWeight.w700,
       ),
     );
   }
